@@ -1,0 +1,15 @@
+{
+  "name": "@koikoi4x/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "preview": "vite preview",
+    "build": "vite build",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "pixi.js": "8.19.0"
+  }
+}

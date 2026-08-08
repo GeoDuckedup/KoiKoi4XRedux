@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="KoiKoi4x — a modern, newcomer-friendly Hanafuda strategy game."
+    />
+    <meta name="theme-color" content="#10271f" />
+    <title>KoiKoi4x</title>
+  </head>
+  <body>
+    <main class="app-shell" aria-labelledby="app-title">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">Hanafuda strategy · foundation build</p>
+          <h1 id="app-title">KoiKoi4x</h1>
+        </div>
+        <button class="fullscreen-button" type="button" data-fullscreen-button>
+          Enter fullscreen
+        </button>
+      </header>
+
+      <section class="game-frame" aria-label="KoiKoi4x boot screen">
+        <div class="game-host" data-game-host aria-hidden="true"></div>
+        <div class="boot-copy" aria-live="polite">
+          <p class="boot-label">Phase 0B</p>
+          <h2>Preparing the table</h2>
+          <p data-boot-status>Starting the rendering surface…</p>
+        </div>
+      </section>
+
+      <footer class="app-footer">
+        <span>Deterministic foundation</span>
+        <span><kbd>F</kbd> fullscreen · <kbd>Esc</kbd> exit</span>
+      </footer>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

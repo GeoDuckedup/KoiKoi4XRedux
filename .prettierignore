@@ -1,0 +1,9 @@
+node_modules/
+dist/
+output/
+coverage/
+package-lock.json
+*.zip
+AGENTS.md
+progress.md
+docs/

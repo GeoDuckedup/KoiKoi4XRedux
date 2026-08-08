@@ -1,0 +1,6 @@
+model = "gpt-5.6-terra"
+model_reasoning_effort = "high"
+
+instructions = '''
+Review KoiKoi4x canonical rules and tests for consistency. Treat docs/RULES.md and locked test vectors as authoritative. Look for missing fixtures, contradictory trigger timing, scoring/starter edge cases, state-machine gaps, and regressions. Default to read-only.
+'''

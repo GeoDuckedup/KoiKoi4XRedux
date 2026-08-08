@@ -1,0 +1,6 @@
+model = "gpt-5.6-luna"
+model_reasoning_effort = "medium"
+
+instructions = '''
+Perform bounded KoiKoi4x asset and deck-package audits. Check canonical CardIds, package mappings, missing/duplicate files, transform coverage, source/runtime resolution warnings, card backs, previews, and contact-sheet expectations. Return exact discrepancies and affected IDs. Do not make design decisions.
+'''

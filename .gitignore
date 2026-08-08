@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+.env
+.env.*
+!.env.example
+coverage/
+playwright-report/
+test-results/
+output/
+
+# Original handoff archives are local provenance inputs, not runtime source.
+*.zip

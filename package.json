@@ -1,0 +1,41 @@
+{
+  "name": "koikoi4x",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@11.9.0",
+  "engines": {
+    "node": "24.14.0",
+    "npm": ">=11.9.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @koikoi4x/web",
+    "preview": "npm run preview --workspace @koikoi4x/web",
+    "build": "npm run build --workspace @koikoi4x/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run --config vitest.config.ts",
+    "test:watch": "vitest --config vitest.config.ts",
+    "test:e2e:smoke": "npm run build && node scripts/e2e-smoke.mjs",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.2.0",
+    "eslint": "10.8.1",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.9.0",
+    "playwright": "1.62.1",
+    "prettier": "3.9.6",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.66.0",
+    "vite": "8.2.1",
+    "vitest": "4.1.10"
+  }
+}
