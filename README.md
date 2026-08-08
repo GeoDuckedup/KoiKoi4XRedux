@@ -1,8 +1,9 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository is
-currently at **Phase 0B: project scaffold**: it contains the canonical rules authority, strict
-workspace boundaries, and a tested PixiJS boot surface. Gameplay intentionally begins in Phase 1.
+currently at **Phase 0C: canonical card catalog**: it contains the canonical rules authority, all 48
+artwork-independent card records, strict workspace boundaries, and a tested PixiJS boot surface.
+Gameplay intentionally begins in Phase 1.
 
 ## Prerequisites
 
@@ -22,6 +23,7 @@ Open the URL printed by Vite. Press `F` to enter or leave fullscreen; `Esc` exit
 
 ```sh
 npm run check
+npm run validate:cards
 npx playwright install chromium
 npm run test:e2e:smoke
 ```
@@ -32,7 +34,7 @@ The browser smoke produces responsive screenshots and the serialized runtime sta
 ## Workspace map
 
 - `apps/web` — Vite/Pixi browser presentation.
-- `packages/engine` — pure deterministic gameplay domain (Phase 1).
+- `packages/engine` — pure card domain now; deterministic gameplay domain follows in Phase 1.
 - `packages/protocol` — versioned shared contracts.
 - `packages/test-fixtures` — deterministic fixture ownership.
 - `functions` — reserved for the Phase 7 authoritative Firebase service.
@@ -49,4 +51,4 @@ Pages workflow. Set **Settings → Pages → Build and deployment → Source** t
 workflow derives the correct Vite base path from the repository name and deploys `apps/web/dist` only
 after checks pass.
 
-No Firebase project, credentials, database, or production domain is needed in Phase 0B.
+No Firebase project, credentials, database, or production domain is needed in Phase 0C.

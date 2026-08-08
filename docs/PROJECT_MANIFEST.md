@@ -10,6 +10,7 @@
 | Canonical gameplay rules | `docs/RULES.md` |
 | Approved rules/product decision log | `docs/RULES_DECISIONS.md` |
 | Locked scenario/test vectors | `docs/TEST_VECTORS.md` |
+| Canonical card identity and metadata | `docs/CARD_CATALOG.md` |
 | Deck art/package/import workflow | `docs/DECK_ART.md` |
 | Intentional differences from legacy | `docs/LEGACY_DIFFERENCES.md` |
 | Runtime/package ownership boundaries | `docs/ARCHITECTURE.md` |

@@ -2,7 +2,7 @@
 
 **Plan version:** 1.0  
 **Updated:** August 8, 2026  
-**Current gate:** Phase 0B owner review
+**Current gate:** Phase 0C owner review
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -39,7 +39,7 @@ Gate:
 
 ### Phase 0B — New repository scaffold
 
-Status: **implemented; awaiting owner review**.
+Status: **completed and owner-approved**.
 
 Deliver:
 
@@ -70,13 +70,25 @@ Result:
 
 ### Phase 0C — Canonical card catalog
 
-Status: **next after Phase 0B approval**.
+Status: **implemented; awaiting owner review**.
 
 Deliver descriptive stable CardIds, all 48 card records, metadata/yaku flags, catalog validation, and CardId-bound versions of the Phase 0A vectors.
 
 Gate: exactly 48 unique cards, four per month, correct Sake Cup/Rain flags, and no artwork fields in domain types.
 
+Result:
+
+- stable descriptive CardIds and all 48 frozen domain records are exported from `packages/engine`;
+- the normalized twelve-month/flower table and lookup helpers are available without art-package data;
+- validation proves the 5/9/10/24 category totals, Scroll subtypes, special flags, exact fixed-yaku
+  memberships, stable month order, and domain-only record keys;
+- independent literal bindings lock Phase 0A's concrete and qualifying CardId subsets without
+  prematurely defining Phase 1's runnable state/action fixture schema;
+- `npm run validate:cards` and the full repository check pass.
+
 ### Phase 0D — Deck package and art specification foundation
+
+Status: **next after Phase 0C approval**.
 
 Deliver versioned package/transform schemas, inheritance, validation, `ART_SPEC v1` constants, immutable-source workflow, primary-deck skeleton, generated Art Guide, and dense/simple/Bright/Plain pilot inputs.
 

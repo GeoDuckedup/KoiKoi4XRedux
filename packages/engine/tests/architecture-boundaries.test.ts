@@ -39,4 +39,14 @@ describe("headless engine architecture boundary", () => {
       expect.arrayContaining(["pixi.js", "firebase"]),
     );
   });
+
+  it("keeps artwork and deck-package fields out of card-domain types", () => {
+    const forbiddenCardField =
+      /(?:^|\n)\s*(?:readonly\s+)?[A-Za-z_$][\w$]*(?:asset|atlas|coordinate|crop|file|focus|frame|image|package|path|source|sprite|texture|transform|url)[\w$]*\??\s*:/iu;
+    const cardsRoot = join(engineSourceRoot, "cards");
+
+    for (const sourcePath of collectTypeScriptFiles(cardsRoot)) {
+      expect(readFileSync(sourcePath, "utf8"), sourcePath).not.toMatch(forbiddenCardField);
+    }
+  });
 });

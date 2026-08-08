@@ -74,3 +74,28 @@ Original prompt: read the package and understand it, then let me know when we ar
 - Ran the bundled web-game client against the public URL and inspected its canvas capture and text
   state: `screen: "boot"`, `ready: true`, exactly one canvas, and six deterministic frame steps.
 - The live Phase 0B deployment is correct. Next: Phase 0C canonical card catalog after owner approval.
+
+## 2026-08-08 — Phase 0C implemented
+
+- Owner approved the live Phase 0B baseline and authorized Phase 0C.
+- Audited the canonical rules, deck-art contract, locked test-vector binding gate, and legacy factual
+  card taxonomy before integration.
+- Locked descriptive `<english-month>-<stable-subject-or-role>` CardIds and stable Plain-card
+  `-a`/`-b`/`-c` ordinals.
+- Implemented the normalized twelve-month table and all 48 frozen artwork-independent records in the
+  headless engine package.
+- Added exact categories, Scroll kinds, fixed-yaku memberships, Sake Cup/Rain flags, lookup helpers,
+  and catalog validation with domain-only key enforcement.
+- Added independent literal Phase 0A bindings for Bright subsets, named fixed yaku, category
+  thresholds, the seven-Scroll 13-point set, and scheduled/nonscheduled complete-month sets.
+- Published the human-readable card authority and updated the locked vector specification to use
+  canonical IDs while leaving full state/action scenario schemas for Phase 1.
+- `npm run validate:cards` passed 2 files / 10 tests.
+- `npm run check` passed format, zero-warning lint, all four workspace typechecks, 4 test files / 15
+  tests, and the 711-module production build.
+- Independent review found no factual catalog error. Its metadata-lock, broader art-field guard, and
+  duplicate-metadata validation findings were implemented; focused follow-up found no blocker.
+- Phase 0C changes no browser presentation code; the deployed UI is expected to remain the Phase 0B
+  boot surface.
+- Phase 0C is implemented and awaits owner review/deployment.
+- Next: Phase 0D deck package and art specification foundation after owner approval.

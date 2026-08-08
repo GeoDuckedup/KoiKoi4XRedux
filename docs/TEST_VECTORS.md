@@ -2,7 +2,7 @@
 
 **Vector specification version:** 1.0  
 **Locked:** August 8, 2026  
-**Status:** Phase 0A specification; runnable binding follows in Phase 0C/Phase 1
+**Status:** Phase 0C CardId bindings locked; runnable scenarios follow in Phase 1
 
 These vectors are the behavioral contract for the deterministic engine. [`RULES.md`](./RULES.md) defines the rules; this file defines the scenarios that must prove them.
 
@@ -36,7 +36,23 @@ Requirements:
 - `then.visibility` distinguishes public, actor-private, opponent-private, and server-only information.
 - `then.history` verifies reason codes, arithmetic, evidence, starter, and privilege consequences.
 - Every fixture verifies the global invariants unless it intentionally asserts rejection of malformed state.
-- Phase 0A uses unambiguous month/card names. Phase 0C replaces those references with canonical `CardId` values without changing the expected behavior.
+- Concrete card references use canonical `CardId` values from [`CARD_CATALOG.md`](./CARD_CATALOG.md).
+- Phase 0C's machine-readable subsets live in `packages/test-fixtures/src/rules/card-bindings.ts`.
+- Generic roles such as “played card,” “same-month target,” and “fifth Animal” remain predicates; Phase 1 binds full states and command traces.
+
+### 1.1 Locked CardId groups
+
+The binding manifest locks all five Brights, the four non-Rain Brights, both viewing pairs, Animal
+Trio, both named Scroll sets, all ordinary Red Scrolls, deterministic category-threshold sequences,
+and scheduled/nonscheduled four-card month sets. In particular:
+
+- Rain Bright is `november-rain` and Sake Cup is `september-sake-cup`.
+- Blossom Viewing is `march-curtain` + `september-sake-cup`.
+- Moon Viewing is `august-moon` + `september-sake-cup`.
+- Animal Trio is `june-butterfly` + `july-boar` + `october-deer`.
+- Red Text Scrolls are `january-red-text-scroll`, `february-red-text-scroll`, and `march-red-text-scroll`.
+- Blue Scrolls are `june-blue-scroll`, `september-blue-scroll`, and `october-blue-scroll`.
+- `april-red-scroll` is the locked ordinary-Red negative substitute and seventh-Scroll companion.
 
 ## 2. Capture vectors
 
@@ -82,15 +98,15 @@ Each negative fixture supplies the closest nonqualifying capture set and asserts
 | `YAKU-FIX-BRIGHT-FOUR-RAIN-NEG` | Four non-Rain Brights do not activate the Rain tier. |
 | `YAKU-FIX-BRIGHT-FIVE-POS` | All five Brights activate Five Brights for 10. |
 | `YAKU-FIX-BRIGHT-FIVE-NEG` | Any four-Bright set does not activate Five Brights. |
-| `YAKU-FIX-BLOSSOM-POS` | March Cherry Curtain plus September Sake Cup activate Blossom Viewing for 5. |
+| `YAKU-FIX-BLOSSOM-POS` | `march-curtain` plus `september-sake-cup` activate Blossom Viewing for 5. |
 | `YAKU-FIX-BLOSSOM-NEG` | Either required Blossom Viewing card missing means no trigger. |
-| `YAKU-FIX-MOON-POS` | August Moon plus September Sake Cup activate Moon Viewing for 5. |
+| `YAKU-FIX-MOON-POS` | `august-moon` plus `september-sake-cup` activate Moon Viewing for 5. |
 | `YAKU-FIX-MOON-NEG` | Either required Moon Viewing card missing means no trigger. |
-| `YAKU-FIX-ANIMAL-TRIO-POS` | June Butterfly, July Boar, and October Deer activate Animal Trio for 5. |
+| `YAKU-FIX-ANIMAL-TRIO-POS` | `june-butterfly`, `july-boar`, and `october-deer` activate Animal Trio for 5. |
 | `YAKU-FIX-ANIMAL-TRIO-NEG` | Any one trio member missing means no Animal Trio trigger. |
-| `YAKU-FIX-RED-TEXT-POS` | January, February, and March text Scrolls activate Red Text Scrolls for 5. |
-| `YAKU-FIX-RED-TEXT-NEG` | A plain red Scroll cannot substitute for a required text Scroll. |
-| `YAKU-FIX-BLUE-POS` | June, September, and October blue Scrolls activate Blue Scrolls for 5. |
+| `YAKU-FIX-RED-TEXT-POS` | `january-red-text-scroll`, `february-red-text-scroll`, and `march-red-text-scroll` activate Red Text Scrolls for 5. |
+| `YAKU-FIX-RED-TEXT-NEG` | `april-red-scroll` cannot substitute for a required text Scroll. |
+| `YAKU-FIX-BLUE-POS` | `june-blue-scroll`, `september-blue-scroll`, and `october-blue-scroll` activate Blue Scrolls for 5. |
 | `YAKU-FIX-BLUE-NEG` | Any one required blue Scroll missing means no Blue Scroll trigger. |
 | `YAKU-FIX-CURRENT-MONTH-POS` | All four scheduled-month cards in captures activate Current-Month Set for 5. |
 | `YAKU-FIX-CURRENT-MONTH-NEG` | Four cards from a nonscheduled month do not activate Current-Month Set. |
@@ -99,10 +115,10 @@ Each negative fixture supplies the closest nonqualifying capture set and asserts
 
 | ID | Given / When | Required result |
 |---|---|---|
-| `YAKU-BRIGHT-UPGRADE-THREE-TO-FOUR-RAIN` | Three Brights was seen; Rain becomes the fourth Bright. | Four Brights with Rain replaces the 5-point tier with 7 and creates its own new trigger. |
+| `YAKU-BRIGHT-UPGRADE-THREE-TO-FOUR-RAIN` | Three Brights was seen; `november-rain` becomes the fourth Bright. | Four Brights with Rain replaces the 5-point tier with 7 and creates its own new trigger. |
 | `YAKU-BRIGHT-UPGRADE-FOUR-TO-FIVE` | Four Brights was seen; fifth Bright is captured. | Five Brights replaces the 8-point tier with 10 and creates its own new trigger. |
-| `YAKU-BRIGHT-INDEPENDENT-STACK-020` | Captures contain all five Brights and Sake Cup. | Active yaku are Five Brights 10, Moon Viewing 5, Blossom Viewing 5; total is exactly 20 before other possible yaku. |
-| `YAKU-SAKE-ANIMAL-NOT-PLAIN` | Categorize and score a capture set containing Sake Cup. | Sake Cup increments Animals and both viewing sets when applicable; it never increments Plain Cards. |
+| `YAKU-BRIGHT-INDEPENDENT-STACK-020` | Captures contain all five bound Bright IDs and `september-sake-cup`. | Active yaku are Five Brights 10, Moon Viewing 5, Blossom Viewing 5; total is exactly 20 before other possible yaku. |
+| `YAKU-SAKE-ANIMAL-NOT-PLAIN` | Categorize and score a capture set containing `september-sake-cup`. | `september-sake-cup` increments Animals and both viewing sets when applicable; it never increments Plain Cards. |
 | `YAKU-INCR-ANIMAL-005` | Capture fifth Animal. | Animals activates at 3 with one new trigger. |
 | `YAKU-INCR-ANIMAL-006` | Add sixth Animal after trigger was seen. | Animals value becomes 4 with no new trigger. |
 | `YAKU-INCR-ANIMAL-007` | Add seventh Animal after trigger was seen. | Animals value becomes 5 with no new trigger. |
@@ -116,7 +132,7 @@ Each negative fixture supplies the closest nonqualifying capture set and asserts
 | `YAKU-CURRENT-MONTH-SWEEP` | A Four-Card Sweep captures the scheduled month. | The sweep action also activates Current-Month Set. |
 | `YAKU-MULTI-NEW-ONE-DECISION` | One capture completes multiple unseen yaku. | All new trigger keys are marked seen and one combined decision contains them all. |
 | `YAKU-INCREMENT-NO-RETRIGGER` | A seen Animals/Scrolls/Plain Cards yaku increases above threshold. | Total points change but no new `YakuDecisionRequired` event occurs. |
-| `YAKU-SCROLL-SEVEN-013` | Captures contain all Red Text Scrolls, all Blue Scrolls, and one other Scroll. | Scores 5 + 5 + 3 = 13 across three active yaku. |
+| `YAKU-SCROLL-SEVEN-013` | Captures contain both named Scroll groups plus `april-red-scroll`. | Scores 5 + 5 + 3 = 13 across three active yaku. |
 | `YAKU-SCROLL-NO-RED-BLUE-BONUS` | Both named Scroll sets are present. | No fourth combined Red+Blue yaku or extra 10-point bonus exists. |
 
 ## 6. Bank, Koi-Koi, and End-of-Play vectors
@@ -218,12 +234,12 @@ Each negative fixture supplies the closest nonqualifying capture set and asserts
 
 ## 11. Binding gates
 
-Phase 0C must:
+Phase 0C completed:
 
-- assign every referenced card a canonical `CardId`;
-- prove exactly 48 unique cards and four per month;
-- verify Sake Cup and Rain Bright metadata;
-- update these vectors to reference only canonical IDs.
+- every referenced card has a canonical `CardId`;
+- validation proves exactly 48 unique cards and four per month;
+- Sake Cup and Rain Bright metadata are exact;
+- concrete vector references and machine-readable subsets use canonical IDs.
 
 Phase 1 must:
 
@@ -232,4 +248,3 @@ Phase 1 must:
 - include vector IDs in test names and failure output;
 - report the RNG seed and state/command trace on failure;
 - run invariant checks after every accepted command.
-
