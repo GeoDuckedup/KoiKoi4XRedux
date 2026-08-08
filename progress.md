@@ -54,3 +54,17 @@ Original prompt: read the package and understand it, then let me know when we ar
 - Remaining owner deployment check: confirm GitHub Actions CI, select GitHub Actions as the Pages
   source if required, and inspect the deployed Pages URL when available.
 - Next: Phase 0C canonical card catalog after owner approval.
+
+## 2026-08-08 — Phase 0B deployment correction
+
+- Owner enabled GitHub Pages with GitHub Actions and reported that the live page looked incorrect.
+- Confirmed the live URL was serving GitHub's Jekyll rendering of the repository README from the
+  fallback `pages-build-deployment` workflow, not the Vite/Pixi artifact.
+- Confirmed the custom Pages workflow had failed before Pages was enabled and therefore needed a new
+  run after enablement.
+- Hosted CI completed the five-viewport smoke assertions in eight seconds but remained alive until
+  the 15-minute job timeout because the spawned Vite preview process retained an orphan child.
+- Replaced the smoke script's spawned preview process with an in-process static server that has
+  explicit startup and shutdown ownership, removing the hosted-runner process leak.
+- Next: push the correction, verify both workflows, inspect the deployed Pixi page, then resume the
+  Phase 0C approval gate.

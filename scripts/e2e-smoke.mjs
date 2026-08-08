@@ -1,12 +1,22 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import { spawn } from "node:child_process";
-import { resolve } from "node:path";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createServer } from "node:http";
+import { extname, resolve } from "node:path";
 
 import { chromium } from "playwright";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
+const distributionDirectory = resolve(repositoryRoot, "apps/web/dist");
 const outputDirectory = resolve(repositoryRoot, "output/phase-0b/e2e");
 const baseUrl = "http://127.0.0.1:4173";
+const contentTypes = {
+  ".css": "text/css; charset=utf-8",
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".map": "application/json; charset=utf-8",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+};
 const viewports = [
   { width: 360, height: 640 },
   { width: 390, height: 844 },
@@ -21,73 +31,58 @@ function assert(condition, message) {
   }
 }
 
-async function waitForServer(process) {
-  for (let attempt = 0; attempt < 100; attempt += 1) {
-    if (process.exitCode !== null) {
-      throw new Error(`Vite preview exited before becoming ready (exit ${process.exitCode}).`);
-    }
-
+async function startStaticServer() {
+  const server = createServer(async (request, response) => {
     try {
-      const response = await fetch(baseUrl);
-      if (response.ok) {
+      const requestUrl = new URL(request.url ?? "/", baseUrl);
+      const relativePath =
+        decodeURIComponent(requestUrl.pathname).replace(/^\/+/, "") || "index.html";
+      const filePath = resolve(distributionDirectory, relativePath);
+      const allowedPrefix = `${distributionDirectory}/`;
+
+      if (
+        filePath !== resolve(distributionDirectory, "index.html") &&
+        !filePath.startsWith(allowedPrefix)
+      ) {
+        response.writeHead(403).end("Forbidden");
         return;
       }
+
+      const body = await readFile(filePath);
+      const contentType = contentTypes[extname(filePath)] ?? "application/octet-stream";
+      response.writeHead(200, { "Content-Type": contentType });
+      response.end(request.method === "HEAD" ? undefined : body);
     } catch {
-      // The preview server is still starting.
+      response.writeHead(404).end("Not found");
     }
+  });
 
-    await new Promise((resolvePromise) => setTimeout(resolvePromise, 100));
-  }
-
-  throw new Error("Timed out waiting for the Vite preview server.");
+  await new Promise((resolvePromise, rejectPromise) => {
+    server.once("error", rejectPromise);
+    server.listen(4173, "127.0.0.1", resolvePromise);
+  });
+  return server;
 }
 
-async function stopServer(process) {
-  if (process.exitCode !== null) {
-    return;
-  }
-
-  process.kill("SIGTERM");
-  await Promise.race([
-    new Promise((resolvePromise) => process.once("exit", resolvePromise)),
-    new Promise((resolvePromise) => setTimeout(resolvePromise, 3_000)),
-  ]);
+async function stopStaticServer(server) {
+  server.closeAllConnections();
+  await new Promise((resolvePromise, rejectPromise) => {
+    server.close((error) => {
+      if (error) {
+        rejectPromise(error);
+      } else {
+        resolvePromise();
+      }
+    });
+  });
 }
 
 await mkdir(outputDirectory, { recursive: true });
-
-const preview = spawn(
-  "npm",
-  [
-    "run",
-    "preview",
-    "--workspace",
-    "@koikoi4x/web",
-    "--",
-    "--host",
-    "127.0.0.1",
-    "--port",
-    "4173",
-    "--strictPort",
-  ],
-  {
-    cwd: repositoryRoot,
-    env: process.env,
-    stdio: ["ignore", "pipe", "pipe"],
-  },
-);
-
-let serverOutput = "";
-preview.stdout.on("data", (chunk) => {
-  serverOutput += chunk.toString();
-});
-preview.stderr.on("data", (chunk) => {
-  serverOutput += chunk.toString();
-});
+const staticServer = await startStaticServer();
+process.stdout.write(`Static smoke server ready at ${baseUrl}.\n`);
 
 let browser;
 try {
-  await waitForServer(preview);
   browser = await chromium.launch({
     headless: true,
     args: ["--enable-webgl", "--ignore-gpu-blocklist", "--use-gl=swiftshader"],
@@ -148,6 +143,7 @@ try {
       path: resolve(outputDirectory, `boot-${viewport.width}x${viewport.height}.png`),
       fullPage: true,
     });
+    process.stdout.write(`Validated ${viewport.width}x${viewport.height}.\n`);
   }
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -172,10 +168,7 @@ try {
     "utf8",
   );
   process.stdout.write(`Smoke test passed for ${viewports.length} viewports.\n`);
-} catch (error) {
-  process.stderr.write(`${serverOutput}\n`);
-  throw error;
 } finally {
   await browser?.close();
-  await stopServer(preview);
+  await stopStaticServer(staticServer);
 }
