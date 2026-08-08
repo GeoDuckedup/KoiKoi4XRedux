@@ -66,5 +66,11 @@ Original prompt: read the package and understand it, then let me know when we ar
   the 15-minute job timeout because the spawned Vite preview process retained an orphan child.
 - Replaced the smoke script's spawned preview process with an in-process static server that has
   explicit startup and shutdown ownership, removing the hosted-runner process leak.
-- Next: push the correction, verify both workflows, inspect the deployed Pixi page, then resume the
-  Phase 0C approval gate.
+- Pushed correction commit `2954a07`; hosted CI then passed the full suite, five-viewport browser
+  smoke, and artifact upload in 58 seconds.
+- The custom Pages workflow passed its build and deploy jobs after Pages enablement.
+- Verified the cache-busted public HTML references repository-prefixed Vite assets rather than Jekyll
+  output.
+- Ran the bundled web-game client against the public URL and inspected its canvas capture and text
+  state: `screen: "boot"`, `ready: true`, exactly one canvas, and six deterministic frame steps.
+- The live Phase 0B deployment is correct. Next: Phase 0C canonical card catalog after owner approval.

@@ -80,8 +80,9 @@ artifacts for inspection.
 - Canonical CardIds and verified 48-card metadata belong to Phase 0C.
 - Deck package schemas and approved pilot artwork inputs belong to Phase 0D.
 - Firebase, persistence, and multiplayer are intentionally absent.
-- The Phase 0B baseline is committed and pushed to `origin/main`. The Pages environment still depends
-  on the repository's GitHub Pages setting and successful workflow completion.
+- The Phase 0B baseline is committed and pushed to `origin/main`. GitHub Actions CI and the custom
+  Pages workflow pass, and the Vite/Pixi build is live at
+  `https://geoduckedup.github.io/KoiKoi4XRedux/`.
 - Final repository name/host and other previously listed nonblocking product decisions remain open.
 
 ## Owner verification and deployment steps
@@ -92,10 +93,10 @@ artifacts for inspection.
 3. The Phase 0B baseline is already pushed to
    [`GeoDuckedup/KoiKoi4XRedux`](https://github.com/GeoDuckedup/KoiKoi4XRedux). The supplied ZIP
    archives remain local provenance inputs and are ignored by Git.
-4. In GitHub, set **Settings → Pages → Build and deployment → Source** to **GitHub Actions**. The
-   included workflow validates and deploys `apps/web/dist` on `main`.
-5. Confirm both the CI and Deploy GitHub Pages workflows pass, then open the Pages URL and repeat the
-   portrait/desktop/fullscreen smoke check.
+4. GitHub Pages is already configured to use **GitHub Actions**. The included workflow validates and
+   deploys `apps/web/dist` on `main`.
+5. Open the [live Pages app](https://geoduckedup.github.io/KoiKoi4XRedux/) and repeat the
+   portrait/desktop/fullscreen smoke check when convenient.
 
 No Firebase deployment, secrets, database, or production domain setup is required for Phase 0B.
 
