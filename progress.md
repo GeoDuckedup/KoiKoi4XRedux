@@ -126,5 +126,10 @@ Original prompt: read the package and understand it, then let me know when we ar
 - Added architecture enforcement and ADR 0002 for the engine/deck-format and portable/Node boundaries.
 - Independent follow-up review found no remaining blocker, high, or medium issue and declared Phase
   0D ready to commit and push.
-- Commit/push and hosted CI/Pages verification remain before the Phase 0D handoff is closed.
+- Committed the Phase 0D implementation as `15ba6b7` and pushed `main` to GitHub.
+- Hosted CI run `31284468169` passed in 1m04s, including the five-viewport browser smoke and artifact
+  upload. Pages run `31284468195` passed build and deployment.
+- Verified the cache-busted public URL returns HTTP 200 and repository-prefixed Vite assets; the live
+  boot surface is intentionally unchanged because Phase 0D adds no browser runtime UI.
+- Phase 0D is implemented, independently reviewed, pushed, deployed, and awaiting owner approval.
 - Next: Phase 1A deterministic headless state, seeded RNG, and deal foundation after owner approval.

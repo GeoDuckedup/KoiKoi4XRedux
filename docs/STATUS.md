@@ -77,7 +77,10 @@ See [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`DECK_ART.md`](./DECK_ART.md), and
 - Independent read-only review found no remaining blocker, high, or medium issue after repairs to
   corrupt-image checks, schema/runtime path alignment, cross-file identity, release approval,
   generation preflight, and safe-area typing.
-- Hosted CI and Pages evidence will be recorded after the Phase 0D push.
+- Commit `15ba6b7` was pushed to `origin/main`. Hosted CI run `31284468169` passed in 1m04s,
+  including the clean install, repository check, five-viewport browser smoke, and artifact upload.
+- Pages run `31284468195` passed its build and deploy jobs. A cache-busted live request returned HTTP
+  200 with the expected `/KoiKoi4XRedux/assets/` Vite paths and the unchanged KoiKoi4x boot document.
 
 ## Known constraints and risks
 
@@ -99,6 +102,9 @@ See [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`DECK_ART.md`](./DECK_ART.md), and
    should remain the same boot surface because Phase 0D adds no runtime UI.
 5. Approve Phase 0D only as a technical authoring foundation; finished artwork and real phone-board
    visual approval are deferred by design.
+
+The deployed Phase 0D baseline is live at
+[`https://geoduckedup.github.io/KoiKoi4XRedux/`](https://geoduckedup.github.io/KoiKoi4XRedux/).
 
 ## Next subphase
 
