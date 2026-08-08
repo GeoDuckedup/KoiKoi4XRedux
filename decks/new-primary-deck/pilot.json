@@ -1,0 +1,27 @@
+{
+  "formatVersion": 1,
+  "packageId": "new-primary-deck",
+  "approvalStatus": "technical-placeholder",
+  "cards": [
+    {
+      "role": "dense",
+      "cardId": "november-rain",
+      "rationale": "Multi-element Rain Bright stress case for dense composition and manual crop metadata."
+    },
+    {
+      "role": "simple",
+      "cardId": "september-sake-cup",
+      "rationale": "Singular symbolic subject for checking simple-composition scale and focus."
+    },
+    {
+      "role": "brightLargeFocal",
+      "cardId": "december-phoenix",
+      "rationale": "Bright card with a large focal subject for safe-area and phone-size readability checks."
+    },
+    {
+      "role": "plain",
+      "cardId": "january-pine-plain-a",
+      "rationale": "Representative lower-value Plain card for collection-level legibility."
+    }
+  ]
+}

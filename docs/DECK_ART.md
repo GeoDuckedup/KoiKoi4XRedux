@@ -104,6 +104,7 @@ Illustrative schema:
   "extends": null,
   "framePolicy": "game",
   "sourceDefaults": {
+    "mode": "auto",
     "fit": "cover",
     "focusX": 0.5,
     "focusY": 0.5
@@ -373,7 +374,7 @@ An optional `extends` field supports partial variants:
   "id": "new-primary-winter",
   "extends": "new-primary-deck",
   "cards": {
-    "december-bright": { "file": "source/december-bright.png" }
+    "december-phoenix": { "file": "source/december-phoenix.png" }
   }
 }
 ```
@@ -602,6 +603,20 @@ Lock canonical card IDs independent from art.
 ## Phase 0D
 
 Lock package schema, transform schema, inheritance, validator, and `ART_SPEC v1`. Produce/export the 5:8 Art Guide and prepare the four-card pilot. The spec may be used for art production immediately, but final bulk-deck visual approval waits for the four-card pilot's real `390 × 844` board check in Phase 2.
+
+Phase 0D implementation paths:
+
+- portable contract and resolver: `packages/deck-format/src/`;
+- versioned JSON Schemas: `packages/deck-format/schemas/`;
+- generated Art Guide: `docs/generated/koikoi4x-art-guide-v1.svg`;
+- complete logical skeleton and immutable technical pilots: `decks/new-primary-deck/`;
+- validation: `npm run validate:decks`;
+- deterministic regeneration: `npm run generate:deck-artifacts`.
+
+The four checked-in pilot images are explicitly technical process placeholders, not approved visual
+direction or finished card art. They prove input readability, geometry, hashing, transform planning,
+and immutable-source handling. The real board, Workshop, contact-sheet, and visual-approval checks
+remain Phase 2 gates.
 
 ## Phase 2B
 

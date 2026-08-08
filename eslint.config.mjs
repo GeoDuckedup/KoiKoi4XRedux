@@ -67,5 +67,27 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    files: ["packages/deck-format/src/**/*.ts"],
+    ignores: ["packages/deck-format/src/node/**/*.ts", "packages/deck-format/src/cli.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["node:*", "pixi.js", "pixi.js/*", "firebase", "firebase/*", "@firebase/*"],
+              message:
+                "The portable deck-format core cannot depend on Node, rendering, or Firebase.",
+            },
+            {
+              group: ["@koikoi4x/web", "@koikoi4x/web/*", "apps/*"],
+              message: "The deck-format core cannot depend on the browser app.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   prettier,
 );

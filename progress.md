@@ -99,3 +99,32 @@ Original prompt: read the package and understand it, then let me know when we ar
   boot surface.
 - Phase 0C is implemented and awaits owner review/deployment.
 - Next: Phase 0D deck package and art specification foundation after owner approval.
+
+## 2026-08-08 — Phase 0D implemented
+
+- Owner approved Phase 0C and authorized the deck package/art specification foundation.
+- Added `@koikoi4x/deck-format` with versioned package/transform contracts, strict validation,
+  deterministic root-to-child inheritance and provenance, and normalized Auto/Manual transform math.
+- Locked `ART_SPEC v1` in executable constants: 5:8 geometry, source thresholds, critical-subject
+  safe area, game-owned frame, format policy, and initial derivative sizes.
+- Added isolated Node adapters for source metadata/digest inspection, immutable technical-pilot
+  seeding, artifact generation, and CLI validation.
+- Created the complete logical `new-primary-deck` 48-card mapping, default back, transforms, pilot
+  manifest, and four 1600×2560 technical placeholders covering dense, simple, Bright, and Plain
+  process cases.
+- Generated the versioned JSON Schemas, SVG Art Guide, and digest-bearing pilot import plan from the
+  same locked implementation constants.
+- Visually inspected the Art Guide and four pilot PNGs; these are processability evidence only and
+  are explicitly not final artwork or visual approval.
+- Focused validation passed 6 test files / 26 tests; lint and all five workspace TypeScript checks
+  passed; development deck validation resolved exactly 48 cards with 47 Auto / 1 Manual and the
+  expected warning for 44 Phase 2 sources not yet present.
+- Independent review found and prompted repairs for corrupt-image validation, generated-schema path
+  alignment, cross-file package identity, missing release approval, and pre-generation gate reuse.
+- The post-repair clean repository check passed 10 files / 41 tests plus format, lint, all five
+  typechecks, deck validation, and the 711-module production build.
+- Added architecture enforcement and ADR 0002 for the engine/deck-format and portable/Node boundaries.
+- Independent follow-up review found no remaining blocker, high, or medium issue and declared Phase
+  0D ready to commit and push.
+- Commit/push and hosted CI/Pages verification remain before the Phase 0D handoff is closed.
+- Next: Phase 1A deterministic headless state, seeded RNG, and deal foundation after owner approval.

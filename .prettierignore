@@ -3,6 +3,7 @@ dist/
 output/
 coverage/
 package-lock.json
+packages/deck-format/schemas/
 *.zip
 AGENTS.md
 progress.md

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="2560" viewBox="0 0 1600 2560" role="img" aria-labelledby="title description" data-art-spec-version="1">
+  <title id="title">KoiKoi4x Art Template v1</title>
+  <desc id="description">Preferred 1600 by 2560 full-bleed source canvas with centered 84% by 88% critical-subject safe area and an informational game-frame overlay.</desc>
+  <rect width="1600" height="2560" fill="#f4eee1"/>
+  <path d="M0 0H1600V2560H0Z" fill="none" stroke="#8b1e2d" stroke-width="12"/>
+  <rect x="24" y="24" width="1552" height="2512" rx="48" fill="none" stroke="#273f37" stroke-width="48" opacity="0.72"/>
+  <rect x="128" y="153.6" width="1344" height="2252.8" fill="none" stroke="#087e8b" stroke-width="10" stroke-dasharray="30 20"/>
+  <line x1="800" y1="0" x2="800" y2="2560" stroke="#705d56" stroke-width="4" stroke-dasharray="14 18" opacity="0.65"/>
+  <line x1="0" y1="1280" x2="1600" y2="1280" stroke="#705d56" stroke-width="4" stroke-dasharray="14 18" opacity="0.65"/>
+  <g font-family="system-ui, sans-serif" text-anchor="middle">
+    <rect x="180" y="190" width="1240" height="340" rx="42" fill="#fffaf0" opacity="0.94"/>
+    <text x="800" y="280" font-size="64" font-weight="700" fill="#231f20">KoiKoi4x Art Template v1</text>
+    <text x="800" y="360" font-size="42" fill="#4a3f3c">1600 × 2560 px · 5:8 portrait · sRGB · full bleed</text>
+    <text x="800" y="440" font-size="34" fill="#8b1e2d">Red outer line: final/full-bleed boundary</text>
+    <text x="800" y="492" font-size="34" fill="#087e8b">Blue dashed line: informational 84% × 88% safe area</text>
+    <rect x="220" y="2010" width="1160" height="350" rx="42" fill="#fffaf0" opacity="0.94"/>
+    <text x="800" y="2100" font-size="36" fill="#273f37">Dark overlay: approximate 3% game-owned frame</text>
+    <text x="800" y="2170" font-size="32" fill="#4a3f3c">Safe/frame guides are informational; they are not source crops.</text>
+    <text x="800" y="2230" font-size="32" fill="#4a3f3c">Background art may bleed to the edge. Keep critical subjects inside blue.</text>
+    <text x="800" y="2290" font-size="30" fill="#4a3f3c">The game owns masking, corners, shadows, hitboxes, labels, and interaction effects.</text>
+  </g>
+</svg>

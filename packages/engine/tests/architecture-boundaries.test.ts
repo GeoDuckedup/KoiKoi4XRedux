@@ -21,7 +21,7 @@ function collectTypeScriptFiles(directory: string): string[] {
 describe("headless engine architecture boundary", () => {
   it("does not import browser, rendering, Firebase, or web-app modules", () => {
     const forbiddenModule =
-      /(?:from\s+|import\s*\()\s*["'](?:pixi\.js(?:\/[^"']*)?|firebase(?:\/[^"']*)?|@firebase\/[^"']+|@koikoi4x\/web(?:\/[^"']*)?|apps\/[^"']+)["']/u;
+      /(?:from\s+|import\s*\()\s*["'](?:pixi\.js(?:\/[^"']*)?|firebase(?:\/[^"']*)?|@firebase\/[^"']+|@koikoi4x\/(?:web|deck-format)(?:\/[^"']*)?|apps\/[^"']+)["']/u;
 
     for (const sourcePath of collectTypeScriptFiles(engineSourceRoot)) {
       expect(readFileSync(sourcePath, "utf8"), sourcePath).not.toMatch(forbiddenModule);

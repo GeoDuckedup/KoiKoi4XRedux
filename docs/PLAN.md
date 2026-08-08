@@ -2,7 +2,7 @@
 
 **Plan version:** 1.0  
 **Updated:** August 8, 2026  
-**Current gate:** Phase 0C owner review
+**Current gate:** Phase 0D owner review
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -70,7 +70,7 @@ Result:
 
 ### Phase 0C — Canonical card catalog
 
-Status: **implemented; awaiting owner review**.
+Status: **completed and owner-approved**.
 
 Deliver descriptive stable CardIds, all 48 card records, metadata/yaku flags, catalog validation, and CardId-bound versions of the Phase 0A vectors.
 
@@ -88,11 +88,27 @@ Result:
 
 ### Phase 0D — Deck package and art specification foundation
 
-Status: **next after Phase 0C approval**.
+Status: **implemented; awaiting owner review**.
 
 Deliver versioned package/transform schemas, inheritance, validation, `ART_SPEC v1` constants, immutable-source workflow, primary-deck skeleton, generated Art Guide, and dense/simple/Bright/Plain pilot inputs.
 
 Gate: resolved 48-card coverage, deterministic normalized transforms, validation failures for missing/duplicate/cyclic packages, and pilot readiness.
+
+Result:
+
+- `@koikoi4x/deck-format` owns the versioned package and transform contracts, strict runtime
+  validation, deterministic root-to-child inheritance with provenance, and normalized auto/manual
+  transform math;
+- `ART_SPEC v1` locks the 5:8 geometry, 1600×2560 preferred master, quality thresholds, 84%×88% safe
+  area, game-controlled frame, and 640×1024 / 160×256 derivatives;
+- `new-primary-deck` resolves all 48 canonical CardIds and includes a required card back plus four
+  immutable technical pilot sources covering dense, simple, Bright, and Plain roles;
+- the JSON Schemas, SVG Art Guide, and digest-bearing pilot import plan are reproducible generated
+  artifacts;
+- focused validation passes 6 test files / 26 tests, and development validation reports 48 resolved
+  cards with 47 auto / 1 manual transforms;
+- final art, derivative raster generation, dual contact sheets, runtime switching, Deck Workshop UI,
+  and the 390×844 visual pilot decision remain intentionally assigned to Phase 2.
 
 ## Later phases
 

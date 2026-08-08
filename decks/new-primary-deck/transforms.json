@@ -1,0 +1,35 @@
+{
+  "formatVersion": 1,
+  "packageId": "new-primary-deck",
+  "cards": {
+    "november-rain": {
+      "mode": "manual",
+      "crop": {
+        "x": 0.04,
+        "y": 0.03,
+        "width": 0.92,
+        "height": 0.94
+      },
+      "zoom": 1.04,
+      "rotationDeg": 0
+    },
+    "september-sake-cup": {
+      "mode": "auto",
+      "fit": "cover",
+      "focusX": 0.5,
+      "focusY": 0.46
+    },
+    "december-phoenix": {
+      "mode": "auto",
+      "fit": "cover",
+      "focusX": 0.5,
+      "focusY": 0.42
+    },
+    "january-pine-plain-a": {
+      "mode": "auto",
+      "fit": "cover",
+      "focusX": 0.46,
+      "focusY": 0.52
+    }
+  }
+}

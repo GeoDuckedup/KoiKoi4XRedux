@@ -1,0 +1,293 @@
+{
+  "formatVersion": 1,
+  "builderVersion": 1,
+  "artSpecVersion": 1,
+  "packageId": "new-primary-deck",
+  "packageVersion": "0.1.0",
+  "pilotApprovalStatus": "technical-placeholder",
+  "completeRuntimeManifest": false,
+  "note": "Phase 0D transform/import plan only; raster derivatives and visual approval remain Phase 2E.",
+  "cards": [
+    {
+      "role": "dense",
+      "cardId": "november-rain",
+      "source": {
+        "file": "source/november-rain.png",
+        "sha256": "a39655e715eb1cb3454c4c440df9ef866b572cb3727d4a17b59c5dcc1f2028df",
+        "width": 1600,
+        "height": 2560,
+        "format": "png"
+      },
+      "transform": {
+        "mode": "manual",
+        "crop": {
+          "x": 0.04,
+          "y": 0.03,
+          "width": 0.92,
+          "height": 0.94
+        },
+        "zoom": 1.04,
+        "rotationDeg": 0
+      },
+      "derivatives": {
+        "table": {
+          "output": {
+            "width": 640,
+            "height": 1024
+          },
+          "normalizedSourceCrop": {
+            "x": 0.057692307692,
+            "y": 0.057692307692,
+            "width": 0.884615384615,
+            "height": 0.884615384615
+          },
+          "sourcePixelCrop": {
+            "x": 92,
+            "y": 148,
+            "width": 1416,
+            "height": 2264
+          },
+          "normalizedContentBox": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1
+          },
+          "rotationDeg": 0
+        },
+        "thumbnail": {
+          "output": {
+            "width": 160,
+            "height": 256
+          },
+          "normalizedSourceCrop": {
+            "x": 0.057692307692,
+            "y": 0.057692307692,
+            "width": 0.884615384615,
+            "height": 0.884615384615
+          },
+          "sourcePixelCrop": {
+            "x": 92,
+            "y": 148,
+            "width": 1416,
+            "height": 2264
+          },
+          "normalizedContentBox": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1
+          },
+          "rotationDeg": 0
+        }
+      }
+    },
+    {
+      "role": "simple",
+      "cardId": "september-sake-cup",
+      "source": {
+        "file": "source/september-sake-cup.png",
+        "sha256": "6d139c16529171b56c1b2cfd7042f87d85235cab743b6ce6d4a2065bf59292ed",
+        "width": 1600,
+        "height": 2560,
+        "format": "png"
+      },
+      "transform": {
+        "mode": "auto",
+        "fit": "cover",
+        "focusX": 0.5,
+        "focusY": 0.46
+      },
+      "derivatives": {
+        "table": {
+          "output": {
+            "width": 640,
+            "height": 1024
+          },
+          "normalizedSourceCrop": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1
+          },
+          "sourcePixelCrop": {
+            "x": 0,
+            "y": 0,
+            "width": 1600,
+            "height": 2560
+          },
+          "normalizedContentBox": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1
+          },
+          "rotationDeg": 0
+        },
+        "thumbnail": {
+          "output": {
+            "width": 160,
+            "height": 256
+          },
+          "normalizedSourceCrop": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1
+          },
+          "sourcePixelCrop": {
+            "x": 0,
+            "y": 0,
+            "width": 1600,
+            "height": 2560
+          },
+          "normalizedContentBox": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1
+          },
+          "rotationDeg": 0
+        }
+      }
+    },
+    {
+      "role": "brightLargeFocal",
+      "cardId": "december-phoenix",
+      "source": {
+        "file": "source/december-phoenix.png",
+        "sha256": "e2d0e9f95d3449bba06e0855ae9c18599f7dbd7452fdf6bbe11dcb28a424914e",
+        "width": 1600,
+        "height": 2560,
+        "format": "png"
+      },
+      "transform": {
+        "mode": "auto",
+        "fit": "cover",
+        "focusX": 0.5,
+        "focusY": 0.42
+      },
+      "derivatives": {
+        "table": {
+          "output": {
+            "width": 640,
+            "height": 1024
+          },
+          "normalizedSourceCrop": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1
+          },
+          "sourcePixelCrop": {
+            "x": 0,
+            "y": 0,
+            "width": 1600,
+            "height": 2560
+          },
+          "normalizedContentBox": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1
+          },
+          "rotationDeg": 0
+        },
+        "thumbnail": {
+          "output": {
+            "width": 160,
+            "height": 256
+          },
+          "normalizedSourceCrop": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1
+          },
+          "sourcePixelCrop": {
+            "x": 0,
+            "y": 0,
+            "width": 1600,
+            "height": 2560
+          },
+          "normalizedContentBox": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1
+          },
+          "rotationDeg": 0
+        }
+      }
+    },
+    {
+      "role": "plain",
+      "cardId": "january-pine-plain-a",
+      "source": {
+        "file": "source/january-pine-plain-a.png",
+        "sha256": "27dbfaf9d05a930a8c3a18196cdc27adac14fd919b917008a2a2c0468c7106c5",
+        "width": 1600,
+        "height": 2560,
+        "format": "png"
+      },
+      "transform": {
+        "mode": "auto",
+        "fit": "cover",
+        "focusX": 0.46,
+        "focusY": 0.52
+      },
+      "derivatives": {
+        "table": {
+          "output": {
+            "width": 640,
+            "height": 1024
+          },
+          "normalizedSourceCrop": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1
+          },
+          "sourcePixelCrop": {
+            "x": 0,
+            "y": 0,
+            "width": 1600,
+            "height": 2560
+          },
+          "normalizedContentBox": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1
+          },
+          "rotationDeg": 0
+        },
+        "thumbnail": {
+          "output": {
+            "width": 160,
+            "height": 256
+          },
+          "normalizedSourceCrop": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1
+          },
+          "sourcePixelCrop": {
+            "x": 0,
+            "y": 0,
+            "width": 1600,
+            "height": 2560
+          },
+          "normalizedContentBox": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1
+          },
+          "rotationDeg": 0
+        }
+      }
+    }
+  ]
+}

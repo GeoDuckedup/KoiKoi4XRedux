@@ -1,0 +1,16 @@
+{
+  "name": "@koikoi4x/deck-format",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/node/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@koikoi4x/engine": "0.0.0"
+  }
+}
