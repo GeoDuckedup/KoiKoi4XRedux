@@ -226,4 +226,11 @@ Original prompt: read the package and understand it, then let me know when we ar
 - The bundled browser client reported the expected ready boot state; the 1280x720 screenshot was
   inspected and every requested asset returned successfully with no browser error output.
 - Three independent final reviews report no blocker, high, or medium issue.
-- Remaining: commit, push, hosted CI/Pages monitoring, and cache-busted live verification.
+- Committed Phase 1D as `3ab3c44` and pushed it to `origin/main`.
+- Hosted CI run `31292265288` passed in 58 seconds, including install, the full check, five-viewport
+  browser smoke, and artifact upload. Its only annotation is nonblocking Node.js action-runtime
+  maintenance.
+- Pages run `31292265276` passed. A cache-busted request returned HTTP 200 with repository-prefixed
+  assets, and the live bundled browser client confirmed the ready boot state, deterministic time,
+  and inspected unchanged composition without browser errors.
+- Remaining: record and push this deployment-verification note, then owner review before Phase 1E.

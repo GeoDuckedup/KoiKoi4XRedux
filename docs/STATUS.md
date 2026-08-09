@@ -2,8 +2,8 @@
 
 **Updated:** August 8, 2026
 
-**Overall state:** Greenfield rewrite, Phase 1D implemented, fully verified, and independently
-accepted; deployment pending
+**Overall state:** Greenfield rewrite, Phase 1D implemented, independently accepted, pushed, and
+deployed; awaiting owner review
 
 **Runtime state:** Deterministic headless round/match lifecycle through Bank, Koi-Koi, End of Play,
 history, and next-round deals; visible site remains the tested PixiJS boot surface
@@ -92,6 +92,11 @@ The Phase 1D lifecycle split is recorded in
   ready boot state and its screenshot was inspected with no browser error output.
 - Three independent final reviews found no blocker, high, or medium issue after the owner-selected
   Option A rule correction and direct literal-fixture binding.
+- Implementation commit `3ab3c44` was pushed to `origin/main`. Hosted CI run `31292265288` passed in
+  58 seconds, including the full repository check, five-viewport browser smoke, and artifact upload.
+- Pages run `31292265276` passed build and deployment. A cache-busted live request returned HTTP 200
+  with repository-prefixed assets; the live bundled client reported `screen: "boot"`, `ready: true`,
+  one canvas, and deterministic 100 ms simulated time, and its screenshot was inspected.
 
 ## Known constraints and risks
 
@@ -108,16 +113,19 @@ The Phase 1D lifecycle split is recorded in
   turn 16's final Draw. The owner selected Option A: their stable IDs now assert authoritative
   `ROUND_PRIVILEGE_INVALID` rejection rather than impossible scoring outcomes.
 - The visible runtime remains the Phase 0B boot surface. Phase 1D has no gameplay UI.
+- Hosted CI currently emits a nonblocking maintenance annotation that v4 checkout/setup/artifact
+  actions target deprecated Node.js 20 and are being forced onto Node.js 24. The run remains green;
+  workflow-action upgrades can be handled as isolated infrastructure maintenance.
 - Final artwork, Firebase, persistence, multiplayer, CPU play, and finished rendering remain deferred.
 
 ## Owner verification and deployment steps
 
 1. No owner-side configuration is required for this headless phase.
-2. Rerun the focused, full, and browser gates, obtain final independent sign-off, then commit and
-   push `main`.
-3. The existing GitHub Actions and Pages workflows perform deployment from `main`.
-4. No secret, Firebase project, database migration, asset upload, Pages setting, or cache action is
-   required. The public page will remain the same boot surface because Phase 1D is headless.
+2. Pull `main` if you want a local copy, then run `npm ci` and `npm run validate:phase1d` for an
+   optional local verification.
+3. Open the deployed page and confirm the intentionally unchanged KoiKoi4x boot surface loads.
+4. Review Phase 1D through its automated lifecycle fixtures; visible Bank/Koi-Koi controls will
+   arrive when a later renderer consumes the headless transition contracts.
 
 The deployed baseline is
 [`https://geoduckedup.github.io/KoiKoi4XRedux/`](https://geoduckedup.github.io/KoiKoi4XRedux/).

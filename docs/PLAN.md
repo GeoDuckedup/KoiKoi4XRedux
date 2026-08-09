@@ -2,7 +2,7 @@
 
 **Plan version:** 1.0  
 **Updated:** August 8, 2026  
-**Current gate:** Phase 1D deployment
+**Current gate:** Phase 1D owner review
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -204,7 +204,7 @@ Result:
 
 ### Phase 1D — Bank, Koi-Koi, End of Play, and round/match lifecycle
 
-Status: **implemented, fully verified, and independently accepted; deployment pending**.
+Status: **implemented, independently accepted, pushed, and deployed; awaiting owner review**.
 
 Deliver executable Bank/Koi-Koi decisions, 1×–4× table progression, latest-caller End-of-Play
 scoring, special 2× privilege, final-round leader restriction, next-starter policy, durable typed
@@ -239,7 +239,9 @@ Current result:
   711-module build; the five-viewport Playwright suite and bundled runtime inspection pass;
 - all implementation repair findings are closed; the selected rule correction and direct fixture
   expectation bindings are applied; three independent final reviews report no blocker, high, or
-  medium issue; the phase is ready to commit, push, and verify in deployment.
+  medium issue;
+- implementation commit `3ab3c44` is on `origin/main`; hosted CI run `31292265288` and Pages run
+  `31292265276` passed, and the cache-busted live runtime was inspected successfully.
 
 ## Later phases
 
