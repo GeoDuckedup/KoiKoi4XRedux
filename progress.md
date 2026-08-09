@@ -279,7 +279,7 @@ Original prompt: read the package and understand it, then let me know when we ar
 - Next: Phase 2A responsive Pixi scene layers, pure layout service, and mobile/desktop table skeleton
   after owner approval. Persistent cards, animation, and input remain 2B–2D.
 
-## 2026-08-09 — Phase 2A responsive table in progress
+## 2026-08-09 — Phase 2A responsive table completed and deployed
 
 - Owner approved Phase 2A.
 - Re-read the project manifest, AI workflow, complete Phase 2A design authority, current web runtime,
@@ -311,4 +311,11 @@ Original prompt: read the package and understand it, then let me know when we ar
   proof, and missing hosted Pages-prefix enforcement. CI now runs the combined Phase 2A gate; Pages
   installs Chromium and validates the prefixed build before artifact upload.
 - Three independent follow-up reviews report no remaining blocker, high, or medium issue.
-- Remaining: commit/push and verify hosted CI, Pages, and the live responsive presentation.
+- Committed the accepted implementation as `5fccfc9` and pushed `main` to GitHub.
+- Hosted CI run `31296702209` passed in 3m42s. Pages run `31296702171` passed the full prefixed
+  browser build and deployment gate.
+- The cache-busted live Pages URL returned HTTP 200. A real game-client render reported the expected
+  desktop layout with ten stable layers, fourteen zones, eight field slots, and no diagnostics; the
+  desktop and 390×844 portrait screenshots were inspected and approved.
+- No owner-side deployment action is required. Phase 2A is awaiting owner review; Phase 2B is the
+  next proposed subphase.

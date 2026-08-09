@@ -2,8 +2,8 @@
 
 **Updated:** August 9, 2026
 
-**Overall state:** Greenfield rewrite, Phase 2A responsive Pixi table implemented and independently
-accepted; commit and deployment verification pending
+**Overall state:** Greenfield rewrite, Phase 2A responsive Pixi table implemented, independently
+accepted, committed, and deployed; awaiting owner review
 
 **Runtime state:** Complete deterministic headless match engine with formal projections, replay,
 hashes, retry-safe command receipts, and protocol records, plus a presentation-only responsive Pixi
@@ -126,10 +126,12 @@ Phase 1E privacy, replay, hash, retry, and protocol choices are recorded in
 - Three independent Phase 2A reviews found no remaining blocker, high, or medium issue after
   immutable-contract, minimum-viewport, literal-fixture, actual-layer-token, and deployment-workflow
   repairs.
-- Implementation commit `b0c4d06` is on `origin/main`. Hosted CI run `31294666605` passed the full
-  repository/browser/artifact gate in 3m33s; Pages run `31294666580` passed build and deployment.
-- A cache-busted live request returned HTTP 200 with repository-prefixed assets. The live game client
-  reported the expected ready boot state and its screenshot was inspected without browser errors.
+- Phase 2A implementation commit `5fccfc9` is on `origin/main`. Hosted CI run `31296702209` passed
+  the full repository/browser/artifact gate in 3m42s; Pages run `31296702171` passed its prefixed
+  browser build and deployment gate.
+- A cache-busted live request returned HTTP 200. The deployed game client reported the expected
+  desktop table state with ten stable layers, fourteen zones, eight field slots, and no geometry
+  diagnostics; desktop and 390×844 portrait screenshots were visually inspected.
 
 ## Known constraints and risks
 

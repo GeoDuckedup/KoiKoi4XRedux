@@ -2,7 +2,7 @@
 
 **Plan version:** 1.1
 **Updated:** August 9, 2026
-**Current gate:** Phase 2A implementation and acceptance
+**Current gate:** Phase 2A deployed and awaiting owner review; Phase 2B is next
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -282,7 +282,7 @@ Current result:
 
 ### Phase 2A — Responsive Pixi table
 
-Status: **implemented and independently accepted; commit and deployment pending**.
+Status: **implemented, independently accepted, committed, and deployed; awaiting owner review**.
 
 Deliver:
 
@@ -327,7 +327,9 @@ Current result:
   a primary-mobile action-bar overflow found during runtime review was repaired;
 - independent architecture, visual/runtime, and test/deployment reviews report no blocker, high, or
   medium finding after immutable-contract, minimum-viewport, fixture, scene-token, and workflow
-  repairs.
+  repairs;
+- implementation commit `5fccfc9` passed hosted CI run `31296702209` and Pages run `31296702171`;
+  cache-busted desktop and 390×844 live renders were inspected successfully.
 
 ## Later phases
 

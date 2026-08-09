@@ -1,7 +1,7 @@
 # KoiKoi4x
 
-KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository is
-has completed local implementation of **Phase 2A: responsive Pixi table**. It contains the canonical rules
+KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository
+has completed and deployed **Phase 2A: responsive Pixi table**. It contains the canonical rules
 authority, all 48 artwork-independent card records, the complete deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
 boundaries, and the first mobile/desktop Pixi table skeleton.
