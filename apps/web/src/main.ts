@@ -7,6 +7,18 @@ import {
 } from "./app/table-preview-state";
 import { computeBoardLayout, inspectBoardLayout } from "./presentation/board/board-layout";
 import { CARD_ZONES, type BoardLayout } from "./presentation/board/types";
+import { createAnimationDirector } from "./presentation/animation/animation-director";
+import {
+  getTechnicalAnimationScenario,
+  TECHNICAL_ANIMATION_SCENARIO_IDS,
+  type TechnicalAnimationScenarioId,
+} from "./presentation/animation/technical-scenarios";
+import {
+  ANIMATION_MODES,
+  type AnimationDirectorV1,
+  type AnimationInspectionV1,
+  type AnimationMode,
+} from "./presentation/animation/types";
 import type { CardRuntimeInspection } from "./presentation/cards/types";
 import {
   createPixiCardAssetManager,
@@ -28,6 +40,12 @@ const host = queryRequired<HTMLElement>("[data-game-host]");
 const status = queryRequired<HTMLElement>("[data-table-status]");
 const fullscreenButton = queryRequired<HTMLButtonElement>("[data-fullscreen-button]");
 const deckSelect = queryRequired<HTMLSelectElement>("[data-deck-select]");
+const scenarioSelect = queryRequired<HTMLSelectElement>("[data-animation-scenario]");
+const modeSelect = queryRequired<HTMLSelectElement>("[data-animation-mode]");
+const playButton = queryRequired<HTMLButtonElement>("[data-animation-play]");
+const accelerateButton = queryRequired<HTMLButtonElement>("[data-animation-accelerate]");
+const finishButton = queryRequired<HTMLButtonElement>("[data-animation-finish]");
+const cancelButton = queryRequired<HTMLButtonElement>("[data-animation-cancel]");
 
 let application: Application | undefined;
 let tableScene: TableScene | undefined;
@@ -36,6 +54,24 @@ let currentLayout: BoardLayout | undefined;
 let ready = false;
 let simulationTimeMs = 0;
 let deckStatus: "error" | "loading" | "ready" = "loading";
+let animationDirector: AnimationDirectorV1 | undefined;
+let scenarioId: TechnicalAnimationScenarioId = "handToField";
+let manualAnimationClock = false;
+let animationFrameId: number | undefined;
+let previousFrameTime: number | undefined;
+
+const unavailableAnimation: AnimationInspectionV1 = Object.freeze({
+  status: "idle",
+  mode: "normal",
+  planId: null,
+  activeClip: null,
+  queuedPlanCount: 0,
+  queuedClipCount: 0,
+  speedMultiplier: 1,
+  lastCompletion: null,
+  displayFingerprint: "unavailable",
+  targetFingerprint: "unavailable",
+});
 
 const unavailableCards: CardRuntimeInspection = Object.freeze({
   activeDeckId: "unavailable",
@@ -60,6 +96,7 @@ function snapshot() {
   };
   const activeManifest = cardAssetManager?.active?.manifest ?? null;
   return createTablePreviewSnapshot({
+    animation: animationDirector?.inspect() ?? unavailableAnimation,
     ready,
     canvasCount: document.querySelectorAll("canvas").length,
     viewport: {
@@ -69,6 +106,7 @@ function snapshot() {
     boardViewport,
     fullscreen: document.fullscreenElement !== null,
     simulationTimeMs,
+    scenarioId,
     layout,
     scene,
     deck: {
@@ -79,6 +117,83 @@ function snapshot() {
     },
     diagnostics: inspectBoardLayout(layout),
   });
+}
+
+function readScenarioId(value: string): TechnicalAnimationScenarioId {
+  if (!TECHNICAL_ANIMATION_SCENARIO_IDS.includes(value as TechnicalAnimationScenarioId)) {
+    throw new Error(`Unknown technical animation scenario: ${value}.`);
+  }
+  return value as TechnicalAnimationScenarioId;
+}
+
+function readAnimationMode(value: string): AnimationMode {
+  if (!ANIMATION_MODES.includes(value as AnimationMode)) {
+    throw new Error(`Unknown animation mode: ${value}.`);
+  }
+  return value as AnimationMode;
+}
+
+function requiredScenarioProjection(
+  scenario: ReturnType<typeof getTechnicalAnimationScenario>,
+  index: number,
+) {
+  const projection = index < 0 ? scenario.projections.at(index) : scenario.projections[index];
+  if (!projection) throw new Error(`Scenario ${scenario.id} is missing projection ${index}.`);
+  return projection;
+}
+
+function updateAnimationControls(): void {
+  const busy = animationDirector?.isBusy() ?? false;
+  playButton.disabled = !ready || busy;
+  scenarioSelect.disabled = !ready || busy;
+  modeSelect.disabled = !ready || busy;
+  accelerateButton.disabled = !busy;
+  finishButton.disabled = !busy;
+  cancelButton.disabled = !busy;
+}
+
+function stopAnimationLoop(): void {
+  if (animationFrameId !== undefined) cancelAnimationFrame(animationFrameId);
+  animationFrameId = undefined;
+  previousFrameTime = undefined;
+}
+
+function ensureAnimationLoop(): void {
+  if (manualAnimationClock || animationFrameId !== undefined || !animationDirector?.isBusy())
+    return;
+  const frame = (time: number): void => {
+    animationFrameId = undefined;
+    const deltaMs =
+      previousFrameTime === undefined ? 0 : Math.min(50, Math.max(0, time - previousFrameTime));
+    previousFrameTime = time;
+    simulationTimeMs = advancePreviewTime(simulationTimeMs, deltaMs);
+    animationDirector?.advanceBy(deltaMs);
+    application?.render();
+    updateAnimationControls();
+    if (animationDirector?.isBusy()) {
+      animationFrameId = requestAnimationFrame(frame);
+    } else {
+      previousFrameTime = undefined;
+    }
+  };
+  animationFrameId = requestAnimationFrame(frame);
+}
+
+async function playTechnicalScenario(): Promise<void> {
+  if (!animationDirector || !application) return;
+  scenarioId = readScenarioId(scenarioSelect.value);
+  const mode = readAnimationMode(modeSelect.value);
+  const scenario = getTechnicalAnimationScenario(scenarioId);
+  await animationDirector.cancelAndSnapTo(requiredScenarioProjection(scenario, 0));
+  animationDirector.setMode(mode);
+  const completion = animationDirector.play(scenario.events, { projections: scenario.projections });
+  status.textContent = `${scenario.label} playing in ${mode} mode. This is presentation-only.`;
+  updateAnimationControls();
+  application.render();
+  ensureAnimationLoop();
+  const result = await completion;
+  status.textContent = `${scenario.label} ${result}; display projection matches its trusted target.`;
+  updateAnimationControls();
 }
 
 function redraw(): void {
@@ -148,8 +263,12 @@ window.__KOIKOI4X_READY__ = false;
 window.__KOIKOI4X_SNAPSHOT__ = snapshot;
 window.render_game_to_text = () => serializeTablePreviewSnapshot(snapshot());
 window.advanceTime = (milliseconds: number) => {
+  manualAnimationClock = true;
+  stopAnimationLoop();
   simulationTimeMs = advancePreviewTime(simulationTimeMs, milliseconds);
+  animationDirector?.advanceBy(milliseconds);
   application?.render();
+  updateAnimationControls();
 };
 
 fullscreenButton.addEventListener("click", () => {
@@ -157,6 +276,37 @@ fullscreenButton.addEventListener("click", () => {
 });
 deckSelect.addEventListener("change", () => {
   void switchDeck(deckSelect.value);
+});
+scenarioSelect.addEventListener("change", () => {
+  scenarioId = readScenarioId(scenarioSelect.value);
+});
+modeSelect.addEventListener("change", () => {
+  animationDirector?.setMode(readAnimationMode(modeSelect.value));
+});
+playButton.addEventListener("click", () => {
+  void playTechnicalScenario();
+});
+accelerateButton.addEventListener("click", () => {
+  animationDirector?.accelerate();
+  status.textContent = "Animation accelerated. Press Faster again to finish immediately.";
+  application?.render();
+  updateAnimationControls();
+  ensureAnimationLoop();
+});
+finishButton.addEventListener("click", () => {
+  void animationDirector?.finishImmediately().then(() => {
+    status.textContent = "Animation finished immediately at the trusted target projection.";
+    application?.render();
+    updateAnimationControls();
+  });
+});
+cancelButton.addEventListener("click", () => {
+  const scenario = getTechnicalAnimationScenario(scenarioId);
+  void animationDirector?.cancelAndSnapTo(requiredScenarioProjection(scenario, -1)).then(() => {
+    status.textContent = "Animation cancelled and snapped to the trusted target projection.";
+    application?.render();
+    updateAnimationControls();
+  });
 });
 
 document.addEventListener("fullscreenchange", updateFullscreenLabel);
@@ -206,6 +356,16 @@ async function start(): Promise<void> {
     throw new Error("The initial runtime deck activation was superseded.");
   }
   tableScene = createTableScene(app, initialActivation.bundle);
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const initialMode: AnimationMode = prefersReducedMotion ? "reducedMotion" : "normal";
+  modeSelect.value = initialMode;
+  scenarioSelect.value = scenarioId;
+  const initialScenario = getTechnicalAnimationScenario(scenarioId);
+  animationDirector = createAnimationDirector({
+    initialProjection: requiredScenarioProjection(initialScenario, 0),
+    mode: initialMode,
+    surface: tableScene,
+  });
   const resizeObserver = new ResizeObserver(redraw);
   resizeObserver.observe(host);
 
@@ -216,7 +376,8 @@ async function start(): Promise<void> {
   window.__KOIKOI4X_READY__ = true;
   document.documentElement.dataset.appReady = "true";
   status.textContent =
-    "Technical Sunrise ready. Switch decks to verify persistent cards; gameplay controls arrive in Phase 2D.";
+    "Technical Sunrise ready. Play a semantic animation scenario; gameplay controls arrive in Phase 2D.";
+  updateAnimationControls();
   redraw();
 }
 

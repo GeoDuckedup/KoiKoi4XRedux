@@ -2,25 +2,42 @@
 
 **Updated:** August 9, 2026
 
-**Overall state:** Greenfield rewrite, Phase 2B persistent-card/deck runtime implemented,
-independently accepted, committed, and deployed; awaiting owner review
+**Overall state:** Greenfield rewrite, Phase 2C semantic AnimationDirector implemented and locally
+accepted; commit, hosted deployment, and owner review pending
 
 **Runtime state:** Complete deterministic headless match engine with formal projections, replay,
 hashes, retry-safe command receipts, and protocol records, plus a presentation-only responsive Pixi
-table with 48 persistent canonical CardViews and two locally switchable technical packages
+table with 48 persistent canonical CardViews, two locally switchable technical packages, and one
+deterministic semantic animation queue
 
 ## Current result
 
-Phase 2B replaces the Phase 2A silhouettes with one persistent Pixi CardView for every canonical
-CardId. Responsive redraw reparents/resizes the same objects, and each prescribed scene layer now
-separates persistent cards from redrawable chrome.
+Phase 2C translates projected public semantic events into a deterministic presentation plan. One
+FIFO director advances display state toward a trusted recipient-safe target without mutating engine
+state or inferring rules from Pixi coordinates.
 
 The browser consumes a strict, complete runtime manifest rather than authoring source/transform
 data. Two generated technical packages exercise all 48 faces, a back, repository-base routing, and
-atomic local switching. They are intentionally non-final development fixtures, and the visible
-allocation remains a presentation-only showcase rather than a playable or privacy-safe match.
+atomic local switching. Five animation scenarios exercise persistent identities and interruption
+behavior. They remain intentionally non-final development fixtures rather than a playable or
+privacy-safe match.
 
-## Phase 2B presentation runtime now present
+## Phase 2C presentation runtime now present
+
+- Pure immutable event-boundary projections and planner output for Hand-to-Field, Pair Capture,
+  Draw/Reveal/Flip, Four-Card Sweep, and semantic Koi-Koi feedback.
+- One FIFO AnimationDirector with Normal, Fast, Instant, and Reduced Motion duration policies; all
+  four settle to the same exact projection.
+- Deterministic `advanceBy`, first-tap acceleration, second-tap/immediate finish, explicit
+  cancel-and-snap, destruction safety, and rejection of a queued plan with the wrong source.
+- Persistent CardViews move through Effects/transit and flip at a dedicated midpoint; settlement
+  leaves no transit view or queued clip.
+- Live resize rebases active source/target geometry at the same normalized progress. A mid-flight
+  deck change alters only texture bindings and preserves the clip, position, identity, and queue.
+- Accessible technical scenario/motion/Play/Faster/Finish/Cancel controls overlay the previously
+  reserved action area, preserving the minimum supported 320×568 canvas.
+- `render_game_to_text` now reports only presentation-safe animation mode/status/clip/counts and
+  projection fingerprints in addition to prior scene/deck/layout diagnostics.
 
 - Pure deterministic layout modes for compact portrait, portrait/tablet, short landscape, and
   desktop, derived from the actual canvas rather than the browser window.
@@ -119,32 +136,32 @@ Phase 1E privacy, replay, hash, retry, and protocol choices are recorded in
 [`ADR 0007`](./adr/0007-phase-1e-projection-replay-integrity.md).
 The authored/runtime deck boundary, persistent-card identity, and atomic local-switch policy are
 recorded in [`ADR 0008`](./adr/0008-phase-2b-persistent-card-runtime.md).
+Phase 2C semantic planning, queue, motion, and interruption choices are recorded in
+[`ADR 0009`](./adr/0009-phase-2c-animation-director.md).
 
 ## Validation
 
-- `npm run validate:phase2b` passes 6 focused files / 42 tests, byte-checks 100 generated technical
-  artifacts, and passes both seven-viewport root and `/KoiKoi4XRedux/` browser matrices.
+- Phase 2C's focused unit gate passes 7 files / 60 tests and byte-checks all 100 generated technical
+  artifacts. Both seven-viewport root and `/KoiKoi4XRedux/` browser matrices pass.
 - `npm run validate:phase1e` passes 16 test files / 176 tests, including all prior Phase 1A–1D
   regressions, canonical/hash/projection/protocol/replay fixtures, and the generated gate.
 - The generated gate passes 10,002 complete matches, exactly 3,334 per 3/6/12-round format, with
   production validation after every transition and sampled full replay/privacy/hash equality.
-- `npm run check` passes formatting, zero-warning lint, all five workspace TypeScript checks, deck
-  validation, 29 test files / 301 tests, and the 750-module production build.
-- Seven-viewport Phase 2B browser smoke passes root and repository-prefixed builds, including live
-  resize, fullscreen, deterministic geometry, 98 package textures, local deck switching, stable
-  scene/CardView identities, and zero console/network errors.
-- The bundled game-client canvas/text-state pass reports 48 unique persistent CardViews, every
-  expected showcase zone, the active technical package, 15 draw cards, one revealed card, and no
-  diagnostics. Its desktop screenshot plus representative portrait/desktop Sunrise and Moonlight
-  browser screenshots were visually inspected.
-- Independent manifest/asset, Pixi/runtime, and test/deployment reviews report no remaining blocker,
-  high, or medium issue after inactive/stale texture eviction and provenance repairs.
-- Phase 2B implementation commit `7549973` is on `origin/main`. Hosted CI run `31300988963` passed
-  the full check, Phase 2B validation, and screenshot artifact upload in 4m22s. Pages run
-  `31300988958` passed its complete repository-prefixed browser build and deployed successfully.
-- A cache-busted live 390×844 request returned HTTP 200. Technical Sunrise and Technical Moonlight
-  screenshots were visually inspected; the runtime reported 48/48 unique views, stable tokens,
-  changed texture bindings, empty geometry diagnostics, and no console/page/network errors.
+- The last uncontended full `npm run check` passed 30 files / 317 tests and the 756-module build.
+  Post-review hardening adds two passing web tests; current format/lint/five-workspace typecheck,
+  focused 60-test gate, and build pass. A final combined 319-test local rerun passed 318 assertions,
+  but the unchanged 10,002-match Phase 1E stress test was starved by an external 99%-CPU Steam
+  process and timed out after 566 seconds; the same gate passed earlier in 68.74 seconds. Hosted CI
+  remains the uncontended full-gate authority for the pending commit.
+- Seven-viewport Phase 2C smoke passes root and repository-prefixed builds, all four modes, live
+  mid-clip resize, mid-clip deck switching, accelerate, finish, cancel/snap, fullscreen, stable scene
+  and CardView identities, exact target settlement, and zero console/network errors.
+- The bundled game-client reported `animationRuntime`, 48 unique persistent CardViews, idle equal
+  display/target fingerprints, the active technical package, and no diagnostics. Its canvas and
+  representative 320×568, 390×844 mid-draw, and 1366×768 browser screenshots were inspected.
+- Three independent Phase 2C planner/privacy, Pixi/runtime, and fixture/deployment reviews report no
+  blocker, high, or medium finding after FIFO empty-plan, exact projection-equality, and settled
+  chrome-refresh hardening.
 
 ## Known constraints and risks
 
@@ -160,9 +177,10 @@ recorded in [`ADR 0008`](./adr/0008-phase-2b-persistent-card-runtime.md).
   the only privilege holder, the starter takes turns 1/3/.../15, and the nonstarter necessarily owns
   turn 16's final Draw. The owner selected Option A: their stable IDs now assert authoritative
   `ROUND_PRIVILEGE_INVALID` rejection rather than impossible scoring outcomes.
-- The Phase 2B table is a technical showcase, not a playable match. Its visible CardIds include
-  presentation-only opponent/draw allocations and must not be mistaken for a public engine
-  observation. Animation and gameplay input remain 2C and 2D.
+- The Phase 2C table is a technical animation harness, not a playable match. Its visible CardIds
+  include local opponent/draw fixture allocations and must not be mistaken for a public engine
+  observation. A real recipient adapter must represent hidden identities as opaque backs/counts.
+  Gameplay input remains Phase 2D.
 - Both installed packages are generated technical placeholders. The real four-card pilot decision,
   complete art production, Workshop/importer, and final visual approval remain Phase 2E.
 - Hosted CI currently emits a nonblocking maintenance annotation that v4 checkout/setup/artifact
@@ -172,11 +190,12 @@ recorded in [`ADR 0008`](./adr/0008-phase-2b-persistent-card-runtime.md).
 
 ## Owner verification and deployment steps
 
-1. No owner-side configuration is required for Phase 2B.
-2. After deployment, refresh the live page and switch the Deck selector between Technical Sunrise
-   and Technical Moonlight. The same cards should change palette without leaving or reshaping their
-   positions; the page remains a noninteractive showcase.
-3. Pull `main`, run `npm ci`, and run `npm run validate:phase2b` only if optional local verification
+1. No owner-side configuration is required for Phase 2C.
+2. After deployment, refresh the live page. Choose a Scenario and Motion mode, press Play, then try
+   Faster, Finish, and Cancel + snap. The animation should always settle cleanly; the controls remain
+   a technical demo and do not play a game.
+3. Optionally switch Technical Sunrise/Moonlight during a scenario; only the palette should change.
+4. Pull `main`, run `npm ci`, and run `npm run validate:phase2c` only if optional local verification
    is desired.
 
 The deployed baseline is
@@ -184,6 +203,6 @@ The deployed baseline is
 
 ## Next subphase
 
-**Phase 2C — AnimationDirector:** translate semantic presentation events into a single cancellable
-animation queue with Normal/Fast/Instant/reduced-motion policies, interruption-safe snap-to-final
-behavior, and identical final projections. Gameplay card input remains Phase 2D.
+**Phase 2D — Selection and input:** add card hit areas, legal-target highlighting, tap/click and
+keyboard/focus navigation, disabled/opponent-turn behavior, and accessible command intents that
+remain separate from authoritative engine execution.

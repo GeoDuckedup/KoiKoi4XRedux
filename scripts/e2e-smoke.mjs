@@ -6,7 +6,7 @@ import { chromium } from "playwright";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-2b/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-2c/e2e");
 const baseUrl = "http://127.0.0.1:4173";
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/g, "")}`.replace(/^\/$/, "/");
@@ -101,6 +101,24 @@ async function stopStaticServer(server) {
   });
 }
 
+async function waitForApplicationReady(page, browserErrors, networkErrors) {
+  try {
+    await page.waitForFunction(() => document.documentElement.dataset.appReady === "true", null, {
+      timeout: 30_000,
+    });
+  } catch (error) {
+    const diagnostic = await page.evaluate(() => ({
+      appReady: document.documentElement.dataset.appReady ?? null,
+      status: document.querySelector("[data-table-status]")?.textContent ?? null,
+      canvasCount: document.querySelectorAll("canvas").length,
+    }));
+    throw new Error(
+      `Application readiness failed: ${JSON.stringify({ diagnostic, browserErrors, networkErrors })}`,
+      { cause: error },
+    );
+  }
+}
+
 await mkdir(outputDirectory, { recursive: true });
 const staticServer = await startStaticServer();
 process.stdout.write(`Static smoke server ready at ${pageUrl}.\n`);
@@ -137,7 +155,7 @@ try {
   for (const viewport of viewports) {
     await page.setViewportSize(viewport);
     await page.goto(pageUrl, { waitUntil: "networkidle" });
-    await page.waitForFunction(() => document.documentElement.dataset.appReady === "true");
+    await waitForApplicationReady(page, browserErrors, networkErrors);
 
     const result = await page.evaluate(() => {
       const before = JSON.parse(window.render_game_to_text());
@@ -160,19 +178,19 @@ try {
     });
 
     assert(
-      result.before.screen === "cardRuntime",
-      "render_game_to_text must identify the Phase 2B card runtime.",
+      result.before.screen === "animationRuntime",
+      "render_game_to_text must identify the Phase 2C animation runtime.",
     );
     assert(
-      result.before.presentationMode === "technicalShowcase",
-      "The visible 48-card allocation must remain explicitly identified as a technical fixture.",
+      result.before.presentationMode === "technicalAnimationDemo",
+      "The visible animation harness must remain explicitly identified as a technical fixture.",
     );
     assert(result.before.ready === true, "The table state must report ready.");
     assert(result.before.canvasCount === 1, "The table surface must contain exactly one canvas.");
     assert(result.after.simulationTimeMs === 250, "advanceTime must advance exactly 250ms.");
     assert(
       JSON.stringify(result.before.layout) === JSON.stringify(result.after.layout),
-      "Advancing deterministic time must not change Phase 2B geometry.",
+      "Advancing idle deterministic time must not change Phase 2C geometry.",
     );
     assert(result.heading === "KoiKoi4x", "The semantic page heading is missing.");
     assert(
@@ -232,7 +250,7 @@ try {
             faceUp,
           })),
         ),
-      "Deterministic time advance replaced or moved a CardView.",
+      "Idle deterministic time advance replaced or moved a CardView.",
     );
     assert(
       result.before.layout.mode === viewport.mode,
@@ -269,8 +287,60 @@ try {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(pageUrl, { waitUntil: "networkidle" });
-  await page.waitForFunction(() => document.documentElement.dataset.appReady === "true");
-  const beforeDeckSwitch = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
+  await waitForApplicationReady(page, browserErrors, networkErrors);
+  await page.evaluate(() => window.advanceTime(0));
+  const animationBaseline = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
+  const baselineTokens = animationBaseline.cards.views.map(({ cardId, token }) => ({
+    cardId,
+    token,
+  }));
+
+  for (const mode of ["normal", "fast", "instant", "reducedMotion"]) {
+    await page.selectOption("[data-animation-scenario]", "pairCapture");
+    await page.selectOption("[data-animation-mode]", mode);
+    await page.getByRole("button", { name: "Play" }).click();
+    await page.waitForFunction(() => {
+      const state = JSON.parse(window.render_game_to_text());
+      return state.animation.status === "playing" || state.animation.status === "completed";
+    });
+    await page.evaluate(() => window.advanceTime(20_000));
+    await page.waitForFunction(() => {
+      const state = JSON.parse(window.render_game_to_text());
+      return state.animation.queuedPlanCount === 0;
+    });
+    const settled = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
+    assert(settled.animation.mode === mode, `${mode} did not remain the active motion policy.`);
+    assert(
+      settled.animation.displayFingerprint === settled.animation.targetFingerprint &&
+        settled.animation.transitCardCount === 0 &&
+        settled.animation.queuedClipCount === 0,
+      `${mode} did not settle to the exact target projection.`,
+    );
+    assert(
+      JSON.stringify(settled.cards.views.map(({ cardId, token }) => ({ cardId, token }))) ===
+        JSON.stringify(baselineTokens),
+      `${mode} replaced a persistent CardView.`,
+    );
+  }
+
+  await page.selectOption("[data-animation-scenario]", "drawReveal");
+  await page.selectOption("[data-animation-mode]", "normal");
+  await page.getByRole("button", { name: "Play" }).click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).animation.status === "playing",
+  );
+  await page.evaluate(() => window.advanceTime(130));
+  const midDraw = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
+  assert(
+    midDraw.animation.transitCardCount > 0 && midDraw.animation.activeClip?.kind === "draw",
+    "The deterministic draw sample did not enter the transit layer.",
+  );
+  await page.screenshot({
+    path: resolve(outputDirectory, "animation-draw-midflight-390x844.png"),
+    fullPage: true,
+  });
+
+  const beforeDeckSwitch = midDraw;
   await page.selectOption("[data-deck-select]", "technical-moonlight");
   await page.waitForFunction(() => {
     const state = JSON.parse(window.render_game_to_text());
@@ -300,30 +370,25 @@ try {
           faceUp,
         })),
       ),
-    "Deck switching changed CardView identity or presentation state.",
+    "Deck switching changed CardView identity or the in-flight presentation frame.",
   );
   assert(
     JSON.stringify(beforeDeckSwitch.cards.views.map(({ textureBinding }) => textureBinding)) !==
       JSON.stringify(afterDeckSwitch.cards.views.map(({ textureBinding }) => textureBinding)),
     "Deck switching did not replace face/back texture bindings.",
   );
+  assert(
+    beforeDeckSwitch.animation.activeClip?.kind === afterDeckSwitch.animation.activeClip?.kind &&
+      beforeDeckSwitch.animation.activeClip?.progress ===
+        afterDeckSwitch.animation.activeClip?.progress,
+    "Deck switching reset the active animation clip.",
+  );
   await page.screenshot({
-    path: resolve(outputDirectory, "table-technical-moonlight-390x844.png"),
+    path: resolve(outputDirectory, "animation-moonlight-midflight-390x844.png"),
     fullPage: true,
   });
-  assert(await page.evaluate(() => document.fullscreenEnabled), "Fullscreen API is unavailable.");
 
-  await page.getByRole("button", { name: "Enter fullscreen" }).click();
-  await page.waitForFunction(() => document.fullscreenElement !== null);
-  await page.keyboard.press("Escape");
-  await page.waitForFunction(() => document.fullscreenElement === null);
-
-  await page.keyboard.press("f");
-  await page.waitForFunction(() => document.fullscreenElement !== null);
-  await page.keyboard.press("Escape");
-  await page.waitForFunction(() => document.fullscreenElement === null);
-
-  const runtimeBeforeResize = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
+  const runtimeBeforeResize = afterDeckSwitch;
   await page.setViewportSize({ width: 844, height: 390 });
   await page.waitForFunction(() => {
     const state = JSON.parse(window.render_game_to_text());
@@ -341,11 +406,81 @@ try {
     "Portrait-to-landscape resize replaced a persistent CardView instance.",
   );
   assert(
+    resizedState.animation.activeClip?.kind === "draw" &&
+      resizedState.animation.activeClip.progress ===
+        runtimeBeforeResize.animation.activeClip?.progress,
+    "Live resize reset the normalized animation progress.",
+  );
+  assert(
     resizedState.diagnostics.clippedZones.length === 0 &&
       resizedState.diagnostics.invalidZones.length === 0 &&
       resizedState.diagnostics.overlapViolations.length === 0,
     "Live portrait-to-landscape resize produced an invalid layout.",
   );
+  await page.getByRole("button", { name: "Finish" }).click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).animation.queuedPlanCount === 0,
+  );
+  const finishedAfterInterruptions = await page.evaluate(() =>
+    JSON.parse(window.render_game_to_text()),
+  );
+  assert(
+    finishedAfterInterruptions.animation.status === "finished" &&
+      finishedAfterInterruptions.animation.displayFingerprint ===
+        finishedAfterInterruptions.animation.targetFingerprint &&
+      finishedAfterInterruptions.animation.transitCardCount === 0,
+    "Finish after resize/deck interruption did not settle exactly.",
+  );
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).layout.mode === "portrait",
+  );
+  await page.selectOption("[data-animation-scenario]", "pairCapture");
+  await page.getByRole("button", { name: "Play" }).click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).animation.status === "playing",
+  );
+  await page.evaluate(() => window.advanceTime(250));
+  await page.getByRole("button", { name: "Cancel + snap" }).click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).animation.status === "cancelled",
+  );
+  const cancelled = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
+  assert(
+    cancelled.animation.queuedClipCount === 0 &&
+      cancelled.animation.transitCardCount === 0 &&
+      cancelled.animation.displayFingerprint === cancelled.animation.targetFingerprint,
+    "Cancel-and-snap left stale work or transit cards.",
+  );
+
+  await page.selectOption("[data-animation-scenario]", "fourCardSweep");
+  await page.getByRole("button", { name: "Play" }).click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).animation.status === "playing",
+  );
+  await page.getByRole("button", { name: "Faster" }).click();
+  assert(
+    (await page.evaluate(() => JSON.parse(window.render_game_to_text()))).animation
+      .speedMultiplier === 4,
+    "The first Faster action did not accelerate the queue.",
+  );
+  await page.getByRole("button", { name: "Faster" }).click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).animation.status === "finished",
+  );
+
+  assert(await page.evaluate(() => document.fullscreenEnabled), "Fullscreen API is unavailable.");
+
+  await page.getByRole("button", { name: "Enter fullscreen" }).click();
+  await page.waitForFunction(() => document.fullscreenElement !== null);
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() => document.fullscreenElement === null);
+
+  await page.keyboard.press("f");
+  await page.waitForFunction(() => document.fullscreenElement !== null);
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() => document.fullscreenElement === null);
 
   assert(browserErrors.length === 0, `Browser errors:\n${browserErrors.join("\n")}`);
   assert(networkErrors.length === 0, `Network errors:\n${networkErrors.join("\n")}`);
@@ -355,7 +490,7 @@ try {
     "utf8",
   );
   process.stdout.write(
-    `Persistent card/deck runtime smoke passed for ${viewports.length} viewports at ${mountedBasePath}.\n`,
+    `Animation/CardView runtime smoke passed for ${viewports.length} viewports at ${mountedBasePath}.\n`,
   );
 } finally {
   await browser?.close();

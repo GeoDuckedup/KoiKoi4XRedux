@@ -14,7 +14,7 @@
     <main class="app-shell" aria-labelledby="app-title">
       <header class="app-header">
         <div>
-          <p class="eyebrow">Hanafuda strategy · Phase 2B</p>
+          <p class="eyebrow">Hanafuda strategy · Phase 2C</p>
           <h1 id="app-title">KoiKoi4x</h1>
         </div>
         <div class="header-actions">
@@ -33,10 +33,38 @@
 
       <section
         class="game-frame"
-        aria-label="Responsive KoiKoi4x persistent card and deck runtime preview"
+        aria-label="Responsive KoiKoi4x technical animation runtime preview"
         aria-describedby="table-status"
       >
         <div class="game-host" data-game-host></div>
+        <div class="animation-toolbar" aria-label="Technical animation controls">
+          <label>
+            <span>Scenario</span>
+            <select data-animation-scenario>
+              <option value="handToField">Hand → field</option>
+              <option value="pairCapture">Pair capture</option>
+              <option value="drawReveal">Draw + reveal</option>
+              <option value="fourCardSweep">Four-card sweep</option>
+              <option value="multiplierFeedback">Koi-Koi feedback</option>
+            </select>
+          </label>
+          <label>
+            <span>Motion</span>
+            <select data-animation-mode>
+              <option value="normal">Normal</option>
+              <option value="fast">Fast</option>
+              <option value="instant">Instant</option>
+              <option value="reducedMotion">Reduced Motion</option>
+            </select>
+          </label>
+          <div class="animation-buttons">
+            <button type="button" data-animation-play>Play</button>
+            <button type="button" data-animation-accelerate disabled>Faster</button>
+            <button type="button" data-animation-finish disabled>Finish</button>
+            <button type="button" data-animation-cancel disabled>Cancel + snap</button>
+          </div>
+          <span class="technical-label">Presentation-only demo · gameplay input arrives in 2D</span>
+        </div>
       </section>
 
       <footer class="app-footer">

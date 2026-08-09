@@ -97,18 +97,28 @@ resulting public hash. Future Firebase transaction storage/publication remains P
 ## Runtime baseline
 
 - The web app is framework-free TypeScript on Vite and PixiJS.
-- The Pixi ticker is stopped on the Phase 2B table surface; test time advances only through
-  `window.advanceTime(ms)`.
+- The Pixi ticker remains stopped. One presentation-owned AnimationDirector advances through an
+  explicit delta; the browser supplies `requestAnimationFrame` only while a technical plan is
+  active, and `window.advanceTime(ms)` switches to the same director's deterministic manual clock.
 - The prescribed ten scene layers persist, with separate chrome and card child containers. Chrome
   redraws for resize never recreate the scene layers or the 48 canonical CardViews.
-- One persistent CardView exists per canonical CardId. The current Phase 2B allocation is explicitly
-  a technical presentation showcase, not an engine projection.
+- One persistent CardView exists per canonical CardId. Animation reparents that same object through
+  Effects/transit and settles it back to its target layer without recreating it.
+- The Phase 2C event planner consumes projected public semantic events plus trusted recipient-safe
+  event-boundary projections. Events choose clips; projections choose final zones/faces. Pixi
+  coordinates never determine capture legality, scoring, commands, or authoritative state.
+- Normal, Fast, Instant, and Reduced Motion share one FIFO clip plan and exact final projection.
+  Finish, cancel/snap, resize rebase, destruction, and deck switching cannot leave stale queued work
+  or a CardView in transit.
+- The installed scenario controls are an explicitly local technical animation fixture, not a match,
+  command source, replay record, or privacy-safe player observation. A future real observation must
+  use opaque backs/counts for hidden opponent-hand and draw identities.
 - The browser asset manager validates and preloads every candidate face/back before atomically
   switching local textures. Candidate failure leaves the active deck unchanged.
-- `window.render_game_to_text()` returns stable JSON describing the responsive layout, scene layers,
-  local technical-showcase placements, CardView identity tokens, active technical deck, and geometry
-  diagnostics. These diagnostics are development-only and do not represent a privacy-safe match
-  observation.
+- `window.render_game_to_text()` returns stable JSON describing responsive layout, scene/CardView
+  identity, active technical deck, animation status/mode/clip/counts/projection fingerprints, and
+  geometry diagnostics. It omits raw events, commands, engine state, RNG, texture URLs, and runtime
+  coordinates. These diagnostics remain development-only and do not represent a player observation.
 - The Vite base path is configurable with `VITE_BASE_PATH` for repository-relative GitHub Pages
   deployment.
 - Firebase dependencies and configuration are deliberately deferred to Phase 7 so Phase 0B cannot
@@ -128,3 +138,6 @@ client provides an additional artifact-compatible canvas/text-state pass during 
 Phase 2B additionally validates two complete technical runtime packages, all 48 persistent view
 identities, exact zone coverage, 5:8 placement containment, atomic package failure, root/Pages asset
 resolution, live deck switching, and identity preservation across resize.
+Phase 2C adds literal semantic-plan/director tests, all-mode exact settlement, FIFO/rejection,
+accelerate/finish/cancel/destroy, draw-back/flip ordering, reduced-motion/no-transit behavior, and
+root/Pages browser matrices covering mid-flight deck switching and resize rebasing.

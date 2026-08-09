@@ -30,6 +30,18 @@ describe("Phase 2B table diagnostics", () => {
     >;
     for (const placement of placements) zoneCounts[placement.zone] += 1;
     const snapshot = createTablePreviewSnapshot({
+      animation: {
+        status: "completed",
+        mode: "normal",
+        planId: null,
+        activeClip: null,
+        queuedPlanCount: 0,
+        queuedClipCount: 0,
+        speedMultiplier: 1,
+        lastCompletion: "completed",
+        displayFingerprint: "projection-v1:test",
+        targetFingerprint: "projection-v1:test",
+      },
       boardViewport: { width: 390, height: 720 },
       canvasCount: 1,
       diagnostics: inspectBoardLayout(layout),
@@ -62,6 +74,7 @@ describe("Phase 2B table diagnostics", () => {
         },
       },
       simulationTimeMs: 500,
+      scenarioId: "handToField",
       viewport: { width: 390, height: 844 },
     });
     const serialized = serializeTablePreviewSnapshot(snapshot);
@@ -76,6 +89,12 @@ describe("Phase 2B table diagnostics", () => {
       boardViewport: { width: 390, height: 720 },
       fullscreen: false,
       simulationTimeMs: 500,
+      animation: {
+        status: "completed",
+        mode: "normal",
+        scenarioId: "handToField",
+        transitCardCount: 0,
+      },
       coordinateSystem: COORDINATE_SYSTEM,
       layerOrder: BOARD_LAYER_ORDER,
       scene: {

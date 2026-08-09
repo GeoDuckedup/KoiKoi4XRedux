@@ -5,6 +5,13 @@ import { computeCardPlacements } from "../cards/card-layout";
 import { createCardViewRegistry } from "../cards/card-view-registry";
 import { CARD_SHOWCASE_ASSIGNMENTS } from "../cards/showcase";
 import type { CardRuntimeInspection } from "../cards/types";
+import { computeAnimatedCardPlacements } from "../animation/card-animation-frame";
+import { createPresentationProjection } from "../animation/projection";
+import type {
+  AnimationClipV1,
+  AnimationMode,
+  PresentationBoardProjection,
+} from "../animation/types";
 import type { ActiveDeckTextures } from "../deck/card-asset-manager";
 import type { BoardLayout, BoardRect, BoardSceneInspection, CardZone } from "../board/types";
 import { BOARD_LAYER_ORDER } from "../board/types";
@@ -18,7 +25,9 @@ export interface TableScene {
   applyDeck: (textures: ActiveDeckTextures<Texture>) => void;
   destroy: () => void;
   inspect: () => BoardSceneInspection & { readonly cards: CardRuntimeInspection };
+  renderClip: (clip: AnimationClipV1, progress: number, mode: AnimationMode) => void;
   redraw: (frame: TableSceneFrame) => void;
+  snapTo: (projection: PresentationBoardProjection) => void;
 }
 
 let nextSceneObjectToken = 1;
@@ -401,6 +410,14 @@ export function createTableScene(
     layerTokens.set(layer, createSceneObjectToken("layer"));
   }
   const cardRegistry = createCardViewRegistry(initialDeck);
+  let currentLayout: BoardLayout | null = null;
+  let currentFullscreen = false;
+  let displayProjection = createPresentationProjection(CARD_SHOWCASE_ASSIGNMENTS);
+  let currentAnimationFrame: {
+    readonly clip: AnimationClipV1;
+    readonly mode: AnimationMode;
+    readonly progress: number;
+  } | null = null;
 
   const requiredLayer = (name: (typeof BOARD_LAYER_ORDER)[number]): Container => {
     const layer = layers.get(name);
@@ -417,11 +434,20 @@ export function createTableScene(
   };
 
   const redraw = ({ fullscreen, layout }: TableSceneFrame): void => {
+    currentLayout = layout;
+    currentFullscreen = fullscreen;
     for (const layer of chromeLayers.values()) {
       clearLayer(layer);
     }
     cardRegistry.applyPlacements(
-      computeCardPlacements(layout, CARD_SHOWCASE_ASSIGNMENTS),
+      currentAnimationFrame
+        ? computeAnimatedCardPlacements(
+            layout,
+            currentAnimationFrame.clip,
+            currentAnimationFrame.progress,
+            currentAnimationFrame.mode,
+          )
+        : computeCardPlacements(layout, displayProjection),
       cardLayers as ReadonlyMap<(typeof BOARD_LAYER_ORDER)[number], Container>,
     );
 
@@ -482,6 +508,22 @@ export function createTableScene(
       cardRegistry.applyDeck(textures);
     },
     redraw,
+    snapTo: (projection) => {
+      displayProjection = createPresentationProjection(projection);
+      currentAnimationFrame = null;
+      if (currentLayout) {
+        redraw({ fullscreen: currentFullscreen, layout: currentLayout });
+      }
+    },
+    renderClip: (clip, progress, mode) => {
+      currentAnimationFrame = Object.freeze({ clip, progress, mode });
+      if (currentLayout) {
+        cardRegistry.applyPlacements(
+          computeAnimatedCardPlacements(currentLayout, clip, progress, mode),
+          cardLayers as ReadonlyMap<(typeof BOARD_LAYER_ORDER)[number], Container>,
+        );
+      }
+    },
     inspect: () =>
       Object.freeze({
         root: Object.freeze({ label: "TableScene" as const, token: rootToken }),

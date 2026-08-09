@@ -49,6 +49,74 @@ select:focus-visible {
   gap: clamp(5px, 1vw, 12px);
 }
 
+.animation-toolbar {
+  position: absolute;
+  z-index: 5;
+  right: clamp(8px, 1.2vw, 18px);
+  bottom: clamp(7px, 1vw, 14px);
+  left: clamp(8px, 1.2vw, 18px);
+  display: flex;
+  min-width: 0;
+  align-items: end;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 6px 8px;
+  border: 1px solid rgb(233 187 90 / 24%);
+  border-radius: 14px;
+  background: rgb(10 33 24 / 94%);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 28%);
+  scrollbar-width: thin;
+}
+
+.animation-toolbar label {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 3px;
+  color: rgb(255 243 207 / 68%);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.animation-toolbar select,
+.animation-toolbar button {
+  min-height: 44px;
+  border: 1px solid rgb(255 243 207 / 32%);
+  border-radius: 10px;
+  color: #fff3cf;
+  background: #173b2c;
+}
+
+.animation-toolbar select {
+  min-width: 132px;
+  padding: 0.45rem 1.6rem 0.45rem 0.55rem;
+}
+
+.animation-buttons {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 5px;
+}
+
+.animation-buttons button {
+  padding-inline: 0.72rem;
+  cursor: pointer;
+}
+
+.animation-buttons button:disabled {
+  cursor: default;
+  opacity: 0.42;
+}
+
+.technical-label {
+  flex: 0 0 auto;
+  align-self: center;
+  color: rgb(233 187 90 / 78%);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+}
+
 .app-header,
 .app-footer {
   display: flex;
@@ -209,6 +277,18 @@ kbd {
   .app-footer span:last-child {
     display: none;
   }
+
+  .animation-toolbar {
+    padding-block: 4px;
+  }
+
+  .technical-label {
+    display: none;
+  }
+
+  .animation-toolbar label > span {
+    display: none;
+  }
 }
 
 @media (max-height: 480px) and (orientation: landscape) {
@@ -251,6 +331,15 @@ kbd {
   }
 
   .app-footer {
+    display: none;
+  }
+
+  .animation-toolbar {
+    padding-block: 2px;
+  }
+
+  .animation-toolbar label > span,
+  .technical-label {
     display: none;
   }
 }

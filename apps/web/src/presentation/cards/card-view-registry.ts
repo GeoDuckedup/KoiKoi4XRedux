@@ -3,14 +3,14 @@ import { Container, Graphics, Sprite, type Texture } from "pixi.js";
 
 import { CARD_ZONES, type BoardLayerName, type CardZone } from "../board/types";
 import type { ActiveDeckTextures } from "../deck/card-asset-manager";
-import type { CardPlacement, CardRuntimeInspection, CardViewInspection } from "./types";
+import type { CardDisplayPlacement, CardRuntimeInspection, CardViewInspection } from "./types";
 
 interface CardView {
   readonly cardId: CardId;
   readonly container: Container;
   readonly token: string;
   applyDeck: (textures: ActiveDeckTextures<Texture>) => void;
-  applyPlacement: (placement: CardPlacement) => void;
+  applyPlacement: (placement: CardDisplayPlacement) => void;
   destroy: () => void;
   inspect: () => CardViewInspection;
 }
@@ -34,7 +34,9 @@ function createCardView(cardId: CardId, initialDeck: ActiveDeckTextures<Texture>
   sprite.mask = mask;
 
   let deck = initialDeck;
-  let placement: CardPlacement | null = null;
+  let placement: CardDisplayPlacement | null = null;
+  let renderedWidth = -1;
+  let renderedHeight = -1;
 
   const applyTexture = (): void => {
     sprite.texture = placement?.faceUp === false ? deck.back : deck.faces[cardId];
@@ -54,26 +56,37 @@ function createCardView(cardId: CardId, initialDeck: ActiveDeckTextures<Texture>
       }
       placement = nextPlacement;
       applyTexture();
-      container.position.set(nextPlacement.bounds.x, nextPlacement.bounds.y);
+      const scaleX = nextPlacement.scaleX ?? 1;
+      const scaleY = nextPlacement.scaleY ?? 1;
+      container.position.set(
+        nextPlacement.bounds.x + (nextPlacement.bounds.width * (1 - scaleX)) / 2,
+        nextPlacement.bounds.y + (nextPlacement.bounds.height * (1 - scaleY)) / 2,
+      );
+      container.scale.set(scaleX, scaleY);
+      container.alpha = nextPlacement.alpha ?? 1;
       container.zIndex = nextPlacement.zIndex;
       container.visible = true;
 
       const width = nextPlacement.bounds.width;
       const height = nextPlacement.bounds.height;
-      const radius = Math.max(2, width * 0.1);
-      const frameWidth = Math.max(1, width * 0.03);
-      shadow
-        .clear()
-        .roundRect(Math.max(1, width * 0.035), Math.max(1, height * 0.025), width, height, radius)
-        .fill({ color: 0x020805, alpha: 0.32 });
-      sprite.position.set(0, 0);
-      sprite.width = width;
-      sprite.height = height;
-      mask.clear().roundRect(0, 0, width, height, radius).fill({ color: 0xffffff });
-      frame
-        .clear()
-        .roundRect(0, 0, width, height, radius)
-        .stroke({ color: 0xfff3cf, alpha: 0.9, width: frameWidth });
+      if (width !== renderedWidth || height !== renderedHeight) {
+        renderedWidth = width;
+        renderedHeight = height;
+        const radius = Math.max(2, width * 0.1);
+        const frameWidth = Math.max(1, width * 0.03);
+        shadow
+          .clear()
+          .roundRect(Math.max(1, width * 0.035), Math.max(1, height * 0.025), width, height, radius)
+          .fill({ color: 0x020805, alpha: 0.32 });
+        sprite.position.set(0, 0);
+        sprite.width = width;
+        sprite.height = height;
+        mask.clear().roundRect(0, 0, width, height, radius).fill({ color: 0xffffff });
+        frame
+          .clear()
+          .roundRect(0, 0, width, height, radius)
+          .stroke({ color: 0xfff3cf, alpha: 0.9, width: frameWidth });
+      }
     },
     inspect: () => {
       if (!placement) throw new Error(`CardView ${cardId} has no placement.`);
@@ -98,7 +111,7 @@ function createCardView(cardId: CardId, initialDeck: ActiveDeckTextures<Texture>
 export interface CardViewRegistry {
   applyDeck: (textures: ActiveDeckTextures<Texture>) => void;
   applyPlacements: (
-    placements: readonly CardPlacement[],
+    placements: readonly CardDisplayPlacement[],
     cardLayers: ReadonlyMap<BoardLayerName, Container>,
   ) => void;
   destroy: () => void;
@@ -117,7 +130,7 @@ export function createCardViewRegistry(initialDeck: ActiveDeckTextures<Texture>)
       activeDeckId = textures.manifest.packageId;
     },
     applyPlacements: (placements, cardLayers) => {
-      const byCardId = new Map<CardId, CardPlacement>();
+      const byCardId = new Map<CardId, CardDisplayPlacement>();
       for (const placement of placements) {
         if (byCardId.has(placement.cardId)) {
           throw new Error(`Duplicate CardView placement for ${placement.cardId}.`);
@@ -134,7 +147,7 @@ export function createCardViewRegistry(initialDeck: ActiveDeckTextures<Texture>)
         if (!view || !placement) throw new Error(`Missing CardView placement for ${cardId}.`);
         const layer = cardLayers.get(placement.layer);
         if (!layer) throw new Error(`Missing card container for ${placement.layer}.`);
-        layer.addChild(view.container);
+        if (view.container.parent !== layer) layer.addChild(view.container);
         view.applyPlacement(placement);
       }
     },

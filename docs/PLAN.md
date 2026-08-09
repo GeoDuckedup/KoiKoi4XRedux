@@ -2,7 +2,7 @@
 
 **Plan version:** 1.1
 **Updated:** August 9, 2026
-**Current gate:** Phase 2B deployed and awaiting owner review; Phase 2C is next
+**Current gate:** Phase 2C implemented and locally accepted; commit/deployment and owner review next
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -373,9 +373,69 @@ Current result:
 - a cache-busted live 390×844 browser check returned HTTP 200, switched Sunrise to Moonlight,
   preserved all 48 CardView tokens, changed texture bindings, and reported no geometry/browser error.
 
+### Phase 2C — Semantic AnimationDirector
+
+Status: **implemented and locally accepted; commit/deployment and owner review pending**.
+
+Deliver:
+
+- immutable complete presentation projections and a pure public-semantic-event planner;
+- one deterministic FIFO director with Normal, Fast, Instant, and Reduced Motion policies;
+- persistent CardView travel, capture, draw-back/flip/reveal, reflow, and feedback clips;
+- acceleration, immediate finish, explicit cancel-and-snap, and destruction/stale-frame safety;
+- exact target settlement across motion policies, live resize, and deck switching;
+- a clearly labeled presentation-only technical scenario harness and animation diagnostics;
+- literal unit/adapter fixtures plus root/repository-prefixed browser matrices.
+
+Gate:
+
+- `ANIM-001` through `ANIM-012` prove semantic clip ordering, draw-back/flip boundaries, FIFO queue
+  behavior, deterministic completion, all-mode target equality, accelerate/finish/cancel/destroy,
+  resize rebase, reduced-motion no-transit behavior, persistent identity, and invalid-input rejection;
+- event planning consumes only projected public events plus trusted recipient-safe before/after
+  projections and never infers gameplay rules from coordinates;
+- accepted plans cannot interleave, a mismatched queued source rejects without mutation, and skip or
+  cancel leaves no clip/card in transit;
+- the Pixi ticker remains stopped; browser RAF and deterministic `advanceTime` drive the same pure
+  delta API, while commands/engine/RNG remain outside presentation code;
+- all four policies settle to the identical projection fingerprint and persistent CardView tokens;
+- mid-flight resize preserves normalized progress and rebases geometry; mid-flight deck switch
+  preserves progress/identity and changes textures only;
+- seven root and seven `/KoiKoi4XRedux/` browser viewports exercise all modes, interruption controls,
+  fullscreen, exact settlement, and zero console/network errors;
+- technical fixtures remain explicitly non-authoritative and non-privacy-safe; a future real
+  observation uses opaque backs/counts for hidden identities;
+- no selection/hit testing, legal-command submission, gameplay, final art, or Workshop behavior
+  enters Phase 2C.
+
+Phase ownership remains strict: selection/target/keyboard input is Phase 2D, Deck Workshop/final art
+is 2E, and full round presentation integration is Phase 3.
+
+Current result:
+
+- five frozen technical scenarios produce selection/travel/alignment/capture/reflow/draw/flip/pause
+  and feedback clips from projected semantic event shapes;
+- one delta-driven director executes FIFO plans with fixed motion policies and exact completion,
+  cancellation, finish, destruction, and queue-source contracts;
+- persistent CardViews interpolate through EffectsLayer without recreation, cache unchanged geometry,
+  and settle face/layer/zone state exactly;
+- the focused gate passes 7 files / 60 tests plus 100 generated technical artifacts;
+- the last uncontended full repository check passed 30 files / 317 tests and a 756-module build,
+  including the complete 10,002-match deterministic engine regression in 68.74 seconds; two later
+  review-repair web tests pass in the focused 60-test gate. A final combined 319-test rerun passed
+  318 assertions, but the unchanged generated gate was starved by an external 99%-CPU process and
+  hit its timeout after 566 seconds; hosted CI remains the uncontended full-gate authority;
+- both seven-viewport browser bases pass every policy, mid-flight deck switch and resize, accelerate,
+  finish, cancel/snap, fullscreen, exact no-transit settlement, and zero browser/network errors;
+- compact 320×568 runtime inspection caught and closed a control-row canvas regression before
+  acceptance by overlaying controls on the already-reserved action area;
+- three independent final reviews report no blocker, high, or medium finding after FIFO empty-plan,
+  exact source-equality, and settled chrome-refresh repairs;
+- commit, hosted CI/Pages, and live verification remain before Phase 2C deployment is complete.
+
 ## Later phases
 
-1. **Phase 2C–2E — Remaining rendering foundation:** AnimationDirector, input, and Deck Workshop.
+1. **Phase 2D–2E — Remaining rendering foundation:** input and Deck Workshop.
 2. **Phase 3 — One-round vertical slice:** complete playable local round and presentation.
 3. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook.
 4. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, and pass-and-play.

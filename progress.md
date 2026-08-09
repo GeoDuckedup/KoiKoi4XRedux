@@ -378,3 +378,53 @@ Original prompt: read the package and understand it, then let me know when we ar
   screenshots were inspected and are readable and contained.
 - Phase 2B is implemented, independently accepted, pushed, deployed, and ready for owner review.
   Next: Phase 2C AnimationDirector after owner approval; gameplay input remains Phase 2D.
+
+## 2026-08-09 — Phase 2C semantic AnimationDirector started
+
+- Owner approved Phase 2C.
+- Re-read the manifest, AI workflow, complete Phase 2C animation/replay/testing design authority,
+  current Pixi/CardView/deck seams, and the web-game development skill.
+- Three parallel read-only audits agreed Phase 2C is presentation-only: projected public semantic
+  events choose clip language, trusted before/after projections choose the exact board, and no
+  engine command, rule inference, gameplay input, RNG, or protocol mutation enters this slice.
+- Locked a single deterministic FIFO director, Normal/Fast/Instant/Reduced Motion policies,
+  first-accelerate/second-finish behavior, explicit finish/cancel-snap, persistent CardViews, resize
+  rebase, and texture-only deck switching.
+
+## 2026-08-09 — Phase 2C implementation and local acceptance
+
+- Added immutable complete presentation projections, deterministic fingerprints, semantic public
+  event planning, and ordered selection/travel/alignment/capture/reflow/draw/flip/pause/feedback
+  clips. Draw travel keeps the back visible until its dedicated flip midpoint.
+- Added the pure delta-driven FIFO AnimationDirector with exact queue-source validation, all four
+  motion policies, accelerate, immediate finish, explicit cancel-and-snap, destruction safety, and
+  no timer/Pixi/engine ownership.
+- Extended persistent CardViews with transient alpha/scale/EffectsLayer frames while retaining the
+  same 48 objects and caching unchanged geometry. Resize recomputes in-flight geometry at the same
+  progress; deck switching consults the displayed face and leaves the queue unchanged.
+- Added five labeled technical scenarios and accessible Scenario/Motion/Play/Faster/Finish/Cancel
+  controls. The harness remains explicitly presentation-only and not a playable/privacy-safe match.
+- The focused gate passes 7 files / 60 tests and validates all 100 technical runtime artifacts.
+  Root and `/KoiKoi4XRedux/` browser matrices pass seven viewports, all modes, mid-flight deck switch
+  and resize, accelerate/finish/cancel, fullscreen, exact target/no-transit settlement, stable
+  scene/CardView tokens, and zero console/network errors.
+- The last uncontended `npm run check` passed formatting, zero-warning lint, all five workspace
+  typechecks, authored-deck validation, 30 files / 317 tests (including 10,002 complete generated
+  matches in 68.74 seconds), and the 756-module build. Two later review-repair web tests pass in the
+  focused 60-test gate.
+- Browser validation found the first control layout reduced 320×568 below the Phase 2A canvas
+  minimum. Controls now overlay the reserved action area; the complete matrix was rerun successfully.
+- The bundled game-client reported `animationRuntime`, equal idle display/target fingerprints, 48
+  unique CardViews, Technical Sunrise, and no diagnostics. Its canvas plus representative compact,
+  desktop, and mid-draw screenshots were inspected.
+- Independent reviews found and closed two medium queue-integrity issues: an empty plan appended
+  behind active work could complete the wrong FIFO head, and source equality relied on a diagnostic
+  fingerprint that omitted interaction fields. Exact structural equality and queued-empty-plan
+  regressions now guard both. Settled projections also redraw capture-summary chrome after resize.
+- Three final reviews report no remaining blocker, high, or medium issue.
+- A final combined 319-test check passed 318 assertions, but the unchanged Phase 1E 10,002-match
+  stress test was starved by an external Steam process consuming about 99% CPU and timed out after
+  566 seconds. This is recorded as environmental rather than hidden: the same gate passed earlier,
+  Phase 2C's complete current gate passed, and hosted CI will rerun the full repository uncontended.
+- Remaining: commit/push, hosted CI/Pages, and cache-busted live verification. Next after acceptance:
+  Phase 2D selection and input.

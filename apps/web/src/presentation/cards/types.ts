@@ -18,6 +18,12 @@ export interface CardPlacement extends CardPresentationState {
   readonly layer: BoardLayerName;
 }
 
+export interface CardDisplayPlacement extends CardPlacement {
+  readonly alpha?: number;
+  readonly scaleX?: number;
+  readonly scaleY?: number;
+}
+
 export interface CardViewInspection {
   readonly cardId: CardId;
   readonly faceUp: boolean;
