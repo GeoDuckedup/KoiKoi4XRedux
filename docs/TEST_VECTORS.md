@@ -35,7 +35,9 @@ Requirements:
 - `then.events` is ordered and names semantic outcomes, not tweens.
 - `then.visibility` distinguishes public, actor-private, opponent-private, and server-only information.
 - `then.history` verifies reason codes, arithmetic, evidence, starter, and privilege consequences.
-- Every fixture verifies the global invariants unless it intentionally asserts rejection of malformed state.
+- Every fixture verifies the global invariants unless it intentionally asserts rejection of a
+  malformed or rules-unreachable state. `KOI-015A/B` are the named defensive-policy cases for an
+  impossible final-Draw privilege assignment.
 - Concrete card references use canonical `CardId` values from [`CARD_CATALOG.md`](./CARD_CATALOG.md).
 - Phase 0C's machine-readable subsets live in `packages/test-fixtures/src/rules/card-bindings.ts`.
 - Generic roles such as “played card,” “same-month target,” and “fifth Animal” remain predicates; Phase 1 binds full states and command traces.
@@ -155,8 +157,8 @@ Each negative fixture supplies the closest nonqualifying capture set and asserts
 | `KOI-012C-FINAL-DRAW-3X-TO-4X` | Final Draw Phase creates a new yaku at 3×; actor calls. | Table becomes 4× and actor immediately scores at 4×. |
 | `KOI-013-FINAL-DRAW-AT-4X` | Another player was latest caller; final actor completes new yaku at 4× and calls. | Multiplier stays 4×, caller changes to final actor, and final actor immediately scores. |
 | `KOI-014-END-SCORER-DIFFERS-FINAL-ACTOR` | Final actor completes the turn without a new decision; other player is most recent caller. | Other player scores at End of Play. |
-| `KOI-015A-FINAL-DRAW-PRIVILEGED-BANK` | Eligible player's first trigger occurs on final draw at visible 1×; actor Banks. | `tableMultiplierAtDecision = 1`, `scoringMultiplier = 2`; round ends at that score. |
-| `KOI-015B-FINAL-DRAW-PRIVILEGED-KOI` | Same eligible final-draw state; actor calls. | Actual table jumps 1×→3×; actor immediately scores at 3×. |
+| `KOI-015A-FINAL-DRAW-PRIVILEGED-BANK` | Intentionally malformed final-Draw candidate assigns the starter-only privilege to the nonstarter final actor, then proposes Bank. | Authoritative validation reports `ROUND_PRIVILEGE_INVALID`; no Bank command is accepted. |
+| `KOI-015B-FINAL-DRAW-PRIVILEGED-KOI` | The same rules-unreachable final-Draw privilege assignment proposes Koi-Koi. | Authoritative validation reports `ROUND_PRIVILEGE_INVALID`; no Koi-Koi command is accepted. |
 | `KOI-016-FINAL-LEADER-FORCED-KOI` | Frozen leader creates round's first trigger on final draw with applicable Bank at 1×. | Bank is unavailable; required call raises table and immediately resolves End of Play. |
 | `END-PLAY-001-SIXTEEN-TURNS-EIGHT-UNUSED` | Play a legal round to natural completion. | Both hands empty after sixteen turns; sixteen draw cards revealed; eight draw cards remain server-only and unrevealed. |
 
@@ -225,10 +227,10 @@ Each negative fixture supplies the closest nonqualifying capture set and asserts
 | R-006 | `KOI-006`, `KOI-009` |
 | R-007 | Current-Month fixed, accumulated, and sweep fixtures |
 | R-008 | `KOI-010`, `KOI-011`, `KOI-014`, `END-PLAY-001-SIXTEEN-TURNS-EIGHT-UNUSED` |
-| R-009 | `KOI-012A`–`KOI-016` final-draw fixtures |
+| R-009 | Reachable `KOI-012A`–`KOI-014` and `KOI-016` final-draw traces; `KOI-015A/B` unreachable-provenance rejection |
 | R-010 | All `FINAL-LEADER-*`, `FINAL-OPPONENT-*`, and `FINAL-TIE-*` fixtures |
 | R-011 | `TRANS-JANUARY-ZERO-ALTERNATES`, `TRANS-LATER-ZERO-PRESERVES`, `TRANS-ZERO-CLEARS-PRIVILEGE` |
-| R-012 | All `TRANS-PRIVILEGED-*`, `TRANS-PRIVILEGE-*`, and `KOI-015*` fixtures |
+| R-012 | All `TRANS-PRIVILEGED-*` and `TRANS-PRIVILEGE-*` traces, plus defensive privilege-provenance rejection in `KOI-015A/B` |
 | R-013 | All `FINAL-MONTH-*` fixtures |
 | R-014 | Scroll fixed, incremental, seven-Scroll, and no-combined-bonus fixtures |
 
@@ -244,7 +246,9 @@ Phase 0C completed:
 Phase 1 must:
 
 - implement the fixture schema and scenario runner;
-- make every vector executable and deterministic;
+- make every reachable vector executable and deterministic;
+- execute intentionally malformed or rules-unreachable vectors as literal validation-rejection
+  assertions without evaluating gameplay policy on invalid state;
 - include vector IDs in test names and failure output;
 - report the RNG seed and state/command trace on failure;
 - run invariant checks after every accepted command.

@@ -144,7 +144,8 @@ The Phase 0A test-vector pack must include all approved rules above and expressl
 - Current-Month Set accumulated across turns;
 - sixteen-turn natural completion with eight unused draw cards;
 - final-draw Koi-Koi at 1×–3× and at 4×;
-- final-draw interaction with the special 2× privilege;
+- the invariant that the starter-only special 2× privilege cannot belong to turn 16's nonstarter
+  final-Draw actor;
 - final-draw interaction with the final-round forced-Koi rule;
 - January 0–0 starter alternation;
 - later 0–0 starter preservation;

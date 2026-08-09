@@ -2,7 +2,7 @@
 
 **Plan version:** 1.0  
 **Updated:** August 8, 2026  
-**Current gate:** Phase 1C owner review
+**Current gate:** Phase 1D deployment
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -174,7 +174,7 @@ Result:
 
 ### Phase 1C — Yaku and trigger system
 
-Status: **implemented, independently reviewed, and deployed; awaiting owner review**.
+Status: **completed, deployed, and owner-approved**.
 
 Deliver all approved fixed, hierarchy, and incremental yaku; deterministic active totals; closed
 trigger keys; player-local seen-trigger state; separate Hand/Draw checks; and one combined decision
@@ -196,16 +196,55 @@ Result:
   validation recomputes them and proves that decision keys are the exact atomic suffix added for the
   triggering capture phase;
 - Hand, direct Draw, pending-choice Draw, and final Draw transitions stop at an immutable
-  `awaitingYakuDecision` context with the correct resume marker and no Bank/Koi-Koi command;
+  `awaitingYakuDecision` context with the correct resume marker;
 - public yaku completion/value/decision events contain only capture-derived information, while both
-  players receive no executable legal action during the Phase 1D-owned decision window;
+  players received no executable decision action until Phase 1D;
 - all 39 locked evaluator vectors and targeted production-transition fixtures pass, including
   simultaneous viewing yaku, scheduled-month sweep, seen-value increment, Player B, and final Draw.
 
+### Phase 1D — Bank, Koi-Koi, End of Play, and round/match lifecycle
+
+Status: **implemented, fully verified, and independently accepted; deployment pending**.
+
+Deliver executable Bank/Koi-Koi decisions, 1×–4× table progression, latest-caller End-of-Play
+scoring, special 2× privilege, final-round leader restriction, next-starter policy, durable typed
+history, automatic-result continuation, final match completion, and deterministic checkpointed
+round advancement.
+
+Gate: all 45 reachable KOI/END-PLAY/TRANS/FINAL/HIST vectors have literal fixtures and production
+traces, while the two rules-unreachable `KOI-015A/B` fixtures execute literal authoritative
+rejection assertions; production transition paths have complete 48-card traces where gameplay state
+matters; accepted commands
+increment exactly once; rejected commands do not mutate state or consume external RNG; all results
+record canonical reason/arithmetic/evidence/transition data; every final-month outcome terminates;
+new deals preserve score/history and event privacy; and the Phase 1C regression remains green.
+
+Current result:
+
+- `chooseYakuDecision` exposes actor-only Bank/Koi-Koi legal actions, including privileged 1×/2×
+  Bank, privileged 1×→3× Koi-Koi, and forced final-leader Koi-Koi;
+- Koi-Koi consumes the Phase 1C continuation in the same accepted command, including Hand-to-Draw,
+  Draw-to-next-turn, and final-Draw-to-immediate-End-of-Play paths;
+- Bank and natural End of Play commit immutable typed round results, point deltas, cumulative score,
+  canonical history, next starter/privilege, or final match totals;
+- `advanceRound` validates before restoring the external RNG checkpoint; its ordered-deck fixture
+  sibling proves reset/retention and automatic final-month outcomes without exposing RNG or deck
+  ordering publicly;
+- the 47 in-scope Phase 1D IDs have literal metadata/expectations, 45 reachable cases have production
+  traces, and Phase 1E retains formal projection/observation and replay/hash vectors;
+- `KOI-015A/B` are unreachable under the locked rules because the privilege holder is necessarily
+  the next starter and therefore cannot own alternating turn 16's final Draw; under owner-selected
+  Option A, those stable IDs assert literal `ROUND_PRIVILEGE_INVALID` rejection;
+- focused validation passes 13 files / 158 tests; the full check passes 22 files / 245 tests and a
+  711-module build; the five-viewport Playwright suite and bundled runtime inspection pass;
+- all implementation repair findings are closed; the selected rule correction and direct fixture
+  expectation bindings are applied; three independent final reviews report no blocker, high, or
+  medium issue; the phase is ready to commit, push, and verify in deployment.
+
 ## Later phases
 
-1. **Phase 1D–1E — Complete the headless engine:** round/match rules, projections,
-   visibility, and replay.
+1. **Phase 1E — Complete the headless engine:** projections, visibility, replay, hashes, and
+   idempotent command-log verification.
 2. **Phase 2 — Rendering foundation:** responsive Pixi table, persistent cards, deck-package runtime, AnimationDirector, input, and Deck Workshop.
 3. **Phase 3 — One-round vertical slice:** complete playable local round and presentation.
 4. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook.

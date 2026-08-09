@@ -3,9 +3,9 @@ import {
   getCardDefinition,
   startMatchFromOrderedDeck,
   validateInitialSetupState,
-  type AutomaticOpeningResult,
   type CompleteMonthEvidence,
   type LuckyHandEvidence,
+  type RoundResultV1,
   type SetupEventV1,
   type StartMatchCommandV1,
 } from "@koikoi4x/engine";
@@ -31,25 +31,26 @@ function runFixture(fixture: Phase1ADealFixture) {
   return startMatchFromOrderedDeck(command, action.orderedDeck, action.starterId);
 }
 
-function outcomeEvidenceMonths(result: AutomaticOpeningResult | null): readonly number[] {
+function outcomeEvidenceMonths(result: RoundResultV1 | null): readonly number[] {
   if (result === null) return [];
-  if (result.kind === "fieldCancellation") {
-    return result.completeFieldMonths.map((entry) => entry.month);
+  if (result.evidence?.kind === "fieldCancellation") {
+    return result.evidence.completeFieldMonths.map((entry) => entry.month);
   }
-  return result.evidence.flatMap((entry) =>
+  if (result.evidence?.kind !== "luckyHands") return [];
+  return result.evidence.hands.flatMap((entry) =>
     entry.qualification.kind === "fourMonth"
       ? entry.qualification.completeMonths.map((group) => group.month)
       : entry.qualification.pairs.map((group) => group.month),
   );
 }
 
-function evidencePlayers(result: AutomaticOpeningResult | null): readonly string[] {
-  return result !== null && (result.kind === "luckyWin" || result.kind === "bothLuckyDraw")
-    ? result.evidence.map((entry) => entry.playerId)
+function evidencePlayers(result: RoundResultV1 | null): readonly string[] {
+  return result?.evidence?.kind === "luckyHands"
+    ? result.evidence.hands.map((entry) => entry.playerId)
     : [];
 }
 
-function resultFromFixture(fixture: Phase1ADealFixture): AutomaticOpeningResult | null {
+function resultFromFixture(fixture: Phase1ADealFixture): RoundResultV1 | null {
   const phase = runFixture(fixture).state.phase;
   return phase.kind === "roundComplete" ? phase.result : null;
 }
@@ -79,7 +80,7 @@ describe("Phase 1A deal fixture contract", () => {
     const expected = fixture.then.state;
     expect(actualKind, fixture.id).toBe(expected.openingKind);
     expect(result?.reasonCode ?? null, fixture.id).toBe(expected.reasonCode);
-    expect(result?.kind === "luckyWin" ? result.winnerId : null, fixture.id).toBe(
+    expect(result?.kind === "luckyWin" ? result.scorerId : null, fixture.id).toBe(
       expected.winnerId,
     );
     expect(result?.pointDeltas ?? { "player-a": 0, "player-b": 0 }, fixture.id).toEqual(
@@ -106,9 +107,7 @@ describe("Phase 1A deal fixture contract", () => {
     const result = resultFromFixture(fixture);
     const detectedCount = events.filter((event) => event.type === "luckyHandDetected").length;
     const expectedDetectedCount =
-      result !== null && (result.kind === "luckyWin" || result.kind === "bothLuckyDraw")
-        ? result.evidence.length
-        : 0;
+      result?.evidence?.kind === "luckyHands" ? result.evidence.hands.length : 0;
     expect(detectedCount, fixture.id).toBe(expectedDetectedCount);
   });
 
@@ -152,7 +151,7 @@ describe("Phase 1A deal fixture contract", () => {
     const { state, events } = runFixture(fixture);
     expect(state.phase).toMatchObject({
       kind: "roundComplete",
-      result: { kind: "fieldCancellation", luckyHandsEvaluated: false },
+      result: { kind: "fieldCancellation" },
     });
     expect(events.some((event) => event.type === "luckyHandDetected")).toBe(false);
     expect(events.some((event) => event.type === "luckyHandEvidenceRevealed")).toBe(false);
@@ -195,7 +194,7 @@ describe("Phase 1A deal fixture contract", () => {
     const { state } = runFixture(fixture);
     expect(state.phase).toMatchObject({
       kind: "roundComplete",
-      result: { kind: "luckyWin", awardedPoints: 6, ordinaryYakuPoints: 0 },
+      result: { kind: "luckyWin", awardedPoints: 6, activeYaku: [] },
     });
     expect(state.players.map((player) => player.captured)).toEqual([[], []]);
     expect(state.players.map((player) => player.seenYakuKeys)).toEqual([[], []]);
@@ -206,8 +205,11 @@ describe("Phase 1A deal fixture contract", () => {
     if (fixture === undefined) throw new Error("DEAL-004 fixture missing.");
     const result = resultFromFixture(fixture);
     if (result?.kind !== "fieldCancellation") throw new Error("DEAL-004 did not cancel.");
+    if (result.evidence?.kind !== "fieldCancellation") {
+      throw new Error("DEAL-004 cancellation evidence missing.");
+    }
     expect(
-      result.completeFieldMonths.map((group: CompleteMonthEvidence) => [
+      result.evidence.completeFieldMonths.map((group: CompleteMonthEvidence) => [
         group.month,
         group.cardIds.length,
       ]),

@@ -24,7 +24,7 @@ point. Phase 0D does not install deck packages into the browser runtime.
 
 ## Deterministic headless engine
 
-Phases 1A through 1C establish deterministic gameplay transitions wholly inside `packages/engine`:
+Phases 1A through 1D establish deterministic gameplay transitions wholly inside `packages/engine`:
 
 - `random/` owns the versioned `xoshiro128**` source, snapshots, unbiased bounded integers, and
   immutable Fisher–Yates shuffle;
@@ -38,9 +38,13 @@ Phases 1A through 1C establish deterministic gameplay transitions wholly inside 
   pair, and Four-Card Sweep resolution;
 - `rules/yaku.ts` owns the pure 13-key active-yaku evaluator, Bright replacement hierarchy,
   Current-Month Set, incremental category values, totals, and unseen-trigger derivation;
+- `rules/round-results.ts` owns score arithmetic, canonical result normalization, next-starter and
+  privilege plans, frozen-leader selection, and final match totals;
+- `rules/round-advance.ts` owns validated checkpoint restoration, next-month setup, round-local
+  resets, automatic-result continuation, and private/server-only deal events;
 - `rules/turn.ts` owns command validation, legal-action generation, hand resolution, ordered draw
-  reveal/resolution, pending draw choices, per-phase yaku checks, decision pauses, turn completion,
-  and the End-of-Play handoff.
+  reveal/resolution, pending draw choices, per-phase yaku checks, Bank/Koi-Koi execution, turn and
+  End-of-Play completion, and atomic round-result commitment.
 
 The RNG checkpoint is returned alongside, not embedded in, authoritative gameplay state. Production
 setup uses the random source; authored ordered decks are available only as a deterministic
@@ -56,16 +60,23 @@ does not consume randomness, so callers carry the Phase 1A RNG checkpoint forwar
 After every resolved Hand or Draw capture window, active yaku are recomputed from public captures.
 All unseen active keys are appended atomically and produce one `awaitingYakuDecision` context for
 that phase. A Hand decision pauses before draw reveal; a Draw decision pauses before turn completion;
-and a final-Draw decision records an End-of-Play resume marker. Phase 1C exposes no decision command
-or legal Bank/Koi-Koi action: Phase 1D owns those options, scoring, and round/match consequences.
-Legal actions are requested for one player at a time, while Phase 1E still owns formal client
-projections, redaction, replay, and full idempotency storage.
+and a final-Draw decision records an End-of-Play resume marker. Phase 1D exposes actor-only executable
+Bank/Koi-Koi actions, applies ordinary/special/final-leader availability, and consumes that marker in
+one accepted decision command. Bank and natural exhaustion commit a typed round result and durable
+history; final-month results commit a cumulative match result.
+
+Result commitment and next-round dealing are separate transitions. `advanceRound` validates the
+completed state and command before restoring the external RNG checkpoint, then returns the newly
+advanced checkpoint. Its ordered-deck sibling supports authored fixtures. New deals reset all
+round-local zones/yaku/multiplier/caller/trigger state while retaining scores and history. Legal
+actions remain requested for one player at a time, while Phase 1E still owns formal client
+projections, redaction, replay, hashes, and full idempotency storage.
 
 Every setup event declares an audience: public, private to one player, or server-only. Phase 1A
 preserves those semantics but does not yet construct formal client projections. Full projection,
-redaction, command replay, and hashes remain Phase 1E responsibilities. Likewise, Phase 1A records an
-automatic result and leaves its transition pending; Phase 1D owns future starter, privilege,
-round/month advancement, and match recap/history behavior.
+redaction, command replay, and hashes remain Phase 1E responsibilities. Automatic opening outcomes
+now use the same typed round history and transition plan as played results; they remain explicitly
+visible at `roundComplete` until the host advances the next scheduled month.
 
 ## Runtime baseline
 
@@ -81,7 +92,8 @@ round/month advancement, and match recap/history behavior.
 ## Testing layers
 
 Vitest owns pure unit, fixture, invariant, determinism, privacy-semantics, and boundary checks. The
-DEAL-001 through DEAL-012, CAP-000 through CAP-DRAW-003, and 39 locked YAKU suites live in
-`packages/test-fixtures` while production behavior stays in the engine. The project smoke script owns browser, responsive,
+DEAL-001 through DEAL-012, CAP-000 through CAP-DRAW-003, 39 locked YAKU vectors, and 47 Phase 1D
+Bank/Koi/transition/final/history vectors live in `packages/test-fixtures` while production behavior
+stays in the engine. The project smoke script owns browser, responsive,
 fullscreen, semantic DOM, canvas, diagnostic-hook, and browser-error checks. The bundled web-game
 client provides an additional artifact-compatible canvas/text-state pass during local validation.

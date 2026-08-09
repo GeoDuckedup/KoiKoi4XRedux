@@ -10,6 +10,8 @@ export * from "./random/types";
 export * from "./random/xoshiro128ss";
 export * from "./rules/opening-outcomes";
 export * from "./rules/round-setup";
+export * from "./rules/round-advance";
+export * from "./rules/round-results";
 export * from "./rules/capture";
 export * from "./rules/yaku";
 export * from "./rules/turn";

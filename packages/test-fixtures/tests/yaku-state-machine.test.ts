@@ -277,7 +277,11 @@ describe("Phase 1C yaku state-machine integration", () => {
     expect(transition.events.every((event) => event.audience.kind === "public")).toBe(true);
     expect(JSON.stringify(transition.events)).not.toContain(unrevealedDraw);
     expect(JSON.stringify(transition.events)).not.toContain(privateOpponentCard);
-    expect(getLegalActions(transition.state, "player-a")).toEqual([]);
+    expect(
+      getLegalActions(transition.state, "player-a").map((action) =>
+        action.type === "chooseYakuDecision" ? action.choice : action.type,
+      ),
+    ).toEqual(["bank", "koiKoi"]);
     expect(getLegalActions(transition.state, "player-b")).toEqual([]);
     expect(validateAuthoritativeState(transition.state)).toEqual([]);
     expect(Object.isFrozen(transition.state.phase)).toBe(true);
@@ -308,7 +312,7 @@ describe("Phase 1C yaku state-machine integration", () => {
       rejection = error;
     }
     expect(rejection).toBeInstanceOf(EngineCommandError);
-    expect((rejection as EngineCommandError).code).toBe("ROUND_NOT_PLAYABLE");
+    expect((rejection as EngineCommandError).code).toBe("COMMAND_NOT_ALLOWED_IN_PHASE");
   });
 
   it("completes Current-Month Set from a Hand four-card sweep without revealing Draw", () => {
@@ -623,14 +627,16 @@ describe("Phase 1C yaku state-machine integration", () => {
     const noTriggerState = finalTurnFixture("october-blue-scroll");
     expect(validateAuthoritativeState(noTriggerState)).toEqual([]);
     const completed = playHandCard(noTriggerState, "player-b", "december-phoenix");
-    expect(completed.state.phase).toEqual({
-      kind: "awaitingEndOfPlayResolution",
-      lastActorId: "player-b",
+    expect(completed.state.phase).toMatchObject({
+      kind: "roundComplete",
+      result: { kind: "endOfPlayNoScore", reasonCode: "END_OF_PLAY_NO_SCORE" },
     });
     expect(completed.state.round.drawPile).toHaveLength(8);
-    expect(completed.events.map((event) => event.type).slice(-2)).toEqual([
+    expect(completed.events.map((event) => event.type).slice(-4)).toEqual([
       "turnCompleted",
       "endOfPlayReached",
+      "roundResultCommitted",
+      "roundTransitionPrepared",
     ]);
 
     const triggerState = finalTurnFixture("september-sake-cup");

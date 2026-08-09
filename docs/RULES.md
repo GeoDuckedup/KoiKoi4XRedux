@@ -276,7 +276,10 @@ A final-draw Koi-Koi is legal:
 
 - At 1×, 2×, or 3× it raises the table and immediately scores the new caller at the resulting multiplier.
 - At 4× it leaves the multiplier at 4× but still updates the most recent caller before immediate scoring.
-- The special privilege may offer a 2× Bank or a direct 1×→3× Koi-Koi on the final draw.
+- A special 2× privilege belongs only to the next round's starter. Since turns alternate and the
+  final Draw is taken by turn 16's nonstarter, the privilege cannot apply to a final-Draw Yaku
+  Decision. Final-draw Bank/Koi-Koi options use the ordinary table rule unless another independent
+  restriction applies.
 - A protected final-round leader who creates the round's first trigger at an applicable 1× Bank multiplier is still forced to call Koi-Koi, then End of Play resolves immediately.
 
 ## 9. Round transition and match completion
@@ -372,4 +375,3 @@ The following do not affect Phase 1 engine implementation and remain outside thi
 - rematch starter and notification scope.
 
 They must be resolved before their corresponding product or online phase, without changing the rules above unless an explicit owner-approved amendment is recorded.
-

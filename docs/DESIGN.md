@@ -961,7 +961,9 @@ At minimum, one positive and one negative vector for every fixed yaku, plus:
 - `KOI-012`: final Draw-Phase yaku may call Koi-Koi and immediately score at the raised multiplier.
 - `KOI-013`: final-draw Koi-Koi at 4× changes most recent caller without increasing multiplier.
 - `KOI-014`: End-of-Play scorer can differ from the player who took the final turn.
-- `KOI-015`: final Draw-Phase first yaku with the special privilege may Bank at 2× or call Koi-Koi directly to 3× and immediately resolve End of Play.
+- `KOI-015`: a final Draw-Phase actor assigned the starter-only special privilege is an unreachable
+  state and must fail authoritative validation. The privilege holder starts the round and therefore
+  takes turns 1, 3, …, 15; turn 16's final Draw belongs to the nonstarter.
 - `KOI-016`: final-round protected leader creating the round’s first yaku on the final draw is forced to Koi-Koi and immediately resolves End of Play at the raised multiplier.
 
 ## 9.5 Round-transition vectors

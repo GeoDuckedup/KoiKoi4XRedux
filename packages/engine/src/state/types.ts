@@ -134,6 +134,65 @@ export interface BothLuckyDrawResult {
 
 export type AutomaticOpeningResult = FieldCancellationResult | LuckyWinResult | BothLuckyDrawResult;
 
+export type RoundResultReasonCodeV1 =
+  | "BANKED_SCORE"
+  | "END_OF_PLAY_LAST_KOI_CALLER"
+  | "END_OF_PLAY_NO_SCORE"
+  | AutomaticOpeningResult["reasonCode"];
+
+export type RoundResultKindV1 =
+  "bankedScore" | "endOfPlayLastKoiCaller" | "endOfPlayNoScore" | AutomaticOpeningResult["kind"];
+
+export type RoundResultEvidenceV1 =
+  | {
+      readonly kind: "fieldCancellation";
+      readonly completeFieldMonths: readonly CompleteMonthEvidence[];
+    }
+  | {
+      readonly kind: "luckyHands";
+      readonly hands: readonly LuckyHandEvidence[];
+    }
+  | null;
+
+export type NextRoundStarterReasonV1 =
+  | "LOW_MULTIPLIER_LOSER_STARTS"
+  | "HIGH_MULTIPLIER_WINNER_STARTS"
+  | "JANUARY_ZERO_ALTERNATES"
+  | "LATER_ZERO_PRESERVES_STARTER";
+
+export interface NextRoundPlanV1 {
+  readonly roundNumber: number;
+  readonly scheduledMonth: MonthNumber;
+  readonly starterId: PlayerId;
+  readonly starterReason: NextRoundStarterReasonV1;
+  readonly specialPrivilege: SpecialPrivilegeStateV1 | null;
+}
+
+export interface RoundResultV1 {
+  readonly roundNumber: number;
+  readonly scheduledMonth: MonthNumber;
+  readonly starterId: PlayerId;
+  readonly kind: RoundResultKindV1;
+  readonly reasonCode: RoundResultReasonCodeV1;
+  readonly scorerId: PlayerId | null;
+  readonly pointDeltas: PointDeltas;
+  readonly activeYaku: readonly ActiveYakuV1[];
+  readonly basePoints: number;
+  readonly tableMultiplierAtDecision: TableMultiplier | null;
+  readonly scoringMultiplier: TableMultiplier | null;
+  readonly awardedPoints: number;
+  readonly evidence: RoundResultEvidenceV1;
+  readonly nextRound: NextRoundPlanV1 | null;
+  readonly matchScoresAfter: PointDeltas;
+}
+
+export interface MatchResultV1 {
+  readonly matchLength: MatchLength;
+  readonly roundsPlayed: number;
+  readonly finalScores: PointDeltas;
+  readonly winnerId: PlayerId | null;
+}
+
 export interface PlayerStateV1 {
   readonly id: PlayerId;
   readonly score: number;
@@ -176,18 +235,18 @@ export type EnginePhaseV1 =
       readonly targetFieldCardIds: readonly [CardId, CardId];
     }
   | {
-      readonly kind: "awaitingEndOfPlayResolution";
-      readonly lastActorId: PlayerId;
-    }
-  | {
       readonly kind: "awaitingYakuDecision";
       readonly playerId: PlayerId;
       readonly context: YakuDecisionContextV1;
     }
   | {
       readonly kind: "roundComplete";
-      readonly result: AutomaticOpeningResult;
+      readonly result: RoundResultV1;
       readonly transitionPending: true;
+    }
+  | {
+      readonly kind: "matchComplete";
+      readonly result: MatchResultV1;
     };
 
 export interface AuthoritativeGameStateV1 {
@@ -201,7 +260,7 @@ export interface AuthoritativeGameStateV1 {
   readonly players: PlayerPair<PlayerStateV1>;
   readonly round: RoundStateV1;
   readonly phase: EnginePhaseV1;
-  readonly history: readonly never[];
+  readonly history: readonly RoundResultV1[];
 }
 
 export type EventAudience =
@@ -270,6 +329,7 @@ export type SetupEventV1 =
 
 export interface EngineCheckpointV1 {
   readonly version: 1;
+  readonly matchId: string;
   readonly rng: RngSnapshotV1;
 }
 
@@ -307,7 +367,20 @@ export interface ChooseDrawCaptureCommandV1 extends GameplayCommandBaseV1 {
   readonly targetFieldCardId: CardId;
 }
 
-export type GameplayCommandV1 = PlayHandCardCommandV1 | ChooseDrawCaptureCommandV1;
+export interface ChooseYakuDecisionCommandV1 extends GameplayCommandBaseV1 {
+  readonly type: "chooseYakuDecision";
+  readonly choice: "bank" | "koiKoi";
+}
+
+export type GameplayCommandV1 =
+  PlayHandCardCommandV1 | ChooseDrawCaptureCommandV1 | ChooseYakuDecisionCommandV1;
+
+export interface AdvanceRoundCommandV1 {
+  readonly type: "advanceRound";
+  readonly commandId: string;
+  readonly matchId: string;
+  readonly expectedStateVersion: number;
+}
 
 export type LegalActionV1 =
   | {
@@ -321,6 +394,21 @@ export type LegalActionV1 =
       readonly actorId: PlayerId;
       readonly drawnCardId: CardId;
       readonly targetFieldCardId: CardId;
+    }
+  | {
+      readonly type: "chooseYakuDecision";
+      readonly actorId: PlayerId;
+      readonly choice: "bank";
+      readonly tableMultiplierAtDecision: TableMultiplier;
+      readonly scoringMultiplier: TableMultiplier;
+      readonly awardedPoints: number;
+    }
+  | {
+      readonly type: "chooseYakuDecision";
+      readonly actorId: PlayerId;
+      readonly choice: "koiKoi";
+      readonly currentTableMultiplier: TableMultiplier;
+      readonly resultingTableMultiplier: TableMultiplier;
     };
 
 interface TurnEventBase {
@@ -387,7 +475,46 @@ export type TurnEventV1 =
       readonly unusedDrawPileCount: number;
     });
 
+interface RoundEventBase {
+  readonly audience: { readonly kind: "public" };
+}
+
+export type RoundEventV1 =
+  | (RoundEventBase & {
+      readonly type: "yakuDecisionChosen";
+      readonly actorId: PlayerId;
+      readonly choice: "bank" | "koiKoi";
+      readonly privilegeUsed: boolean;
+    })
+  | (RoundEventBase & {
+      readonly type: "koiKoiCalled";
+      readonly actorId: PlayerId;
+      readonly previousTableMultiplier: TableMultiplier;
+      readonly currentTableMultiplier: TableMultiplier;
+      readonly privilegeUsed: boolean;
+    })
+  | (RoundEventBase & {
+      readonly type: "roundResultCommitted";
+      readonly result: RoundResultV1;
+    })
+  | (RoundEventBase & {
+      readonly type: "roundTransitionPrepared";
+      readonly nextRound: NextRoundPlanV1;
+    })
+  | (RoundEventBase & {
+      readonly type: "matchCompleted";
+      readonly result: MatchResultV1;
+    });
+
+export type GameplayEventV1 = TurnEventV1 | RoundEventV1;
+
 export interface GameplayTransitionV1 {
   readonly state: AuthoritativeGameStateV1;
-  readonly events: readonly TurnEventV1[];
+  readonly events: readonly GameplayEventV1[];
+}
+
+export interface RoundAdvanceTransitionV1 {
+  readonly state: AuthoritativeGameStateV1;
+  readonly events: readonly (SetupEventV1 | RoundEventV1)[];
+  readonly checkpoint: EngineCheckpointV1;
 }

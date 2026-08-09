@@ -4,6 +4,7 @@ import {
   validateCardOwnership,
   validateInitialSetupState,
   type AuthoritativeGameStateV1,
+  type EnginePhaseV1,
   type StartMatchCommandV1,
 } from "../src/index";
 import { describe, expect, it } from "vitest";
@@ -70,7 +71,7 @@ describe("Phase 1A authoritative state invariants", () => {
       ...baseline,
       phase:
         baseline.phase.kind === "awaitingHandPlay"
-          ? {
+          ? ({
               kind: "roundComplete",
               transitionPending: true,
               result: {
@@ -81,7 +82,7 @@ describe("Phase 1A authoritative state invariants", () => {
                 luckyHandsEvaluated: false,
                 yakuDecisionRequired: false,
               },
-            }
+            } as unknown as EnginePhaseV1)
           : { kind: "awaitingHandPlay", playerId: baseline.round.starterId },
     };
     expect(validateInitialSetupState(wrongPhase).map((entry) => entry.code)).toContain(

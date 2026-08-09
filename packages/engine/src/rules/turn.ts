@@ -7,7 +7,9 @@ import {
   type ActiveYakuV1,
   type CapturePhase,
   type ChooseDrawCaptureCommandV1,
+  type ChooseYakuDecisionCommandV1,
   type EnginePhaseV1,
+  type GameplayEventV1,
   type GameplayCommandV1,
   type GameplayTransitionV1,
   type LegalActionV1,
@@ -16,23 +18,33 @@ import {
   type PlayerPair,
   type PlayerStateV1,
   type RoundStateV1,
+  type RoundResultV1,
+  type TableMultiplier,
   type TurnEventV1,
   type YakuDecisionResumeV1,
 } from "../state/types";
 import { assertValidAuthoritativeState } from "../state/validation";
 import { inspectCapture, resolveCapture, type CaptureResolutionV1 } from "./capture";
 import { evaluateYaku } from "./yaku";
+import {
+  createMatchResult,
+  createNoScoreRoundResult,
+  createScoredRoundResult,
+  otherPlayerId,
+} from "./round-results";
 
 function publicAudience() {
   return Object.freeze({ kind: "public" as const });
 }
 
 function otherPlayer(playerId: PlayerId): PlayerId {
-  return playerId === PLAYER_IDS[0] ? PLAYER_IDS[1] : PLAYER_IDS[0];
+  return otherPlayerId(playerId);
 }
 
 function activePlayerId(state: AuthoritativeGameStateV1): PlayerId | null {
-  return state.phase.kind === "awaitingHandPlay" || state.phase.kind === "awaitingDrawCapture"
+  return state.phase.kind === "awaitingHandPlay" ||
+    state.phase.kind === "awaitingDrawCapture" ||
+    state.phase.kind === "awaitingYakuDecision"
     ? state.phase.playerId
     : null;
 }
@@ -245,7 +257,7 @@ function commitTransition(
   field: readonly CardId[],
   drawPile: readonly CardId[],
   phase: EnginePhaseV1,
-  events: readonly TurnEventV1[],
+  events: readonly GameplayEventV1[],
   roundUpdates: Partial<RoundStateV1> = {},
 ): GameplayTransitionV1 {
   const state = deepFreeze<AuthoritativeGameStateV1>({
@@ -260,17 +272,130 @@ function commitTransition(
   return deepFreeze({ state, events });
 }
 
+function stateWithRoundUpdates(
+  state: AuthoritativeGameStateV1,
+  players: PlayerPair<PlayerStateV1>,
+  field: readonly CardId[],
+  drawPile: readonly CardId[],
+  roundUpdates: Partial<RoundStateV1>,
+): AuthoritativeGameStateV1 {
+  return {
+    ...state,
+    players,
+    round: { ...state.round, ...roundUpdates, field, drawPile },
+  };
+}
+
+function commitRoundResult(
+  previous: AuthoritativeGameStateV1,
+  command: GameplayCommandV1,
+  players: PlayerPair<PlayerStateV1>,
+  field: readonly CardId[],
+  drawPile: readonly CardId[],
+  result: RoundResultV1,
+  precedingEvents: readonly GameplayEventV1[],
+  roundUpdates: Partial<RoundStateV1> = {},
+): GameplayTransitionV1 {
+  const scoredPlayers = deepFreeze<PlayerPair<PlayerStateV1>>([
+    deepFreeze({
+      ...players[0],
+      score: players[0].score + result.pointDeltas["player-a"],
+    }),
+    deepFreeze({
+      ...players[1],
+      score: players[1].score + result.pointDeltas["player-b"],
+    }),
+  ]);
+  const history = deepFreeze([...previous.history, result]);
+  const matchResult =
+    result.nextRound === null ? createMatchResult(previous.matchLength, history) : null;
+  const events: GameplayEventV1[] = [
+    ...precedingEvents,
+    { type: "roundResultCommitted", audience: publicAudience(), result },
+  ];
+  if (result.nextRound !== null) {
+    events.push({
+      type: "roundTransitionPrepared",
+      audience: publicAudience(),
+      nextRound: result.nextRound,
+    });
+  } else if (matchResult !== null) {
+    events.push({ type: "matchCompleted", audience: publicAudience(), result: matchResult });
+  }
+  const state = deepFreeze<AuthoritativeGameStateV1>({
+    ...previous,
+    stateVersion: previous.stateVersion + 1,
+    lastAcceptedCommandId: command.commandId,
+    status: matchResult === null ? "inProgress" : "complete",
+    players: scoredPlayers,
+    round: {
+      ...previous.round,
+      ...roundUpdates,
+      field,
+      drawPile,
+      specialPrivilege: null,
+    },
+    phase:
+      matchResult === null
+        ? { kind: "roundComplete", result, transitionPending: true }
+        : { kind: "matchComplete", result: matchResult },
+    history,
+  });
+  assertValidAuthoritativeState(state);
+  return deepFreeze({ state, events });
+}
+
+function resolveEndOfPlay(
+  previous: AuthoritativeGameStateV1,
+  command: GameplayCommandV1,
+  players: PlayerPair<PlayerStateV1>,
+  field: readonly CardId[],
+  drawPile: readonly CardId[],
+  precedingEvents: readonly GameplayEventV1[],
+  roundUpdates: Partial<RoundStateV1> = {},
+): GameplayTransitionV1 {
+  const resultState = stateWithRoundUpdates(previous, players, field, drawPile, roundUpdates);
+  const callerId = resultState.round.mostRecentKoiKoiCallerId;
+  const result =
+    callerId === null
+      ? createNoScoreRoundResult(resultState)
+      : (() => {
+          const caller = players.find((player) => player.id === callerId);
+          if (caller === undefined) throw new Error("PLAYER_INVARIANT: Koi-Koi caller missing.");
+          return createScoredRoundResult(resultState, {
+            kind: "endOfPlayLastKoiCaller",
+            reasonCode: "END_OF_PLAY_LAST_KOI_CALLER",
+            scorerId: callerId,
+            activeYaku: caller.activeYaku,
+            basePoints: caller.currentYakuTotal,
+            tableMultiplierAtDecision: resultState.round.tableMultiplier,
+            scoringMultiplier: resultState.round.tableMultiplier,
+          });
+        })();
+  return commitRoundResult(
+    previous,
+    command,
+    players,
+    field,
+    drawPile,
+    result,
+    precedingEvents,
+    roundUpdates,
+  );
+}
+
 function completeTurn(
   previous: AuthoritativeGameStateV1,
   command: GameplayCommandV1,
   players: PlayerPair<PlayerStateV1>,
   field: readonly CardId[],
   drawPile: readonly CardId[],
-  precedingEvents: readonly TurnEventV1[],
+  precedingEvents: readonly GameplayEventV1[],
+  roundUpdates: Partial<RoundStateV1> = {},
 ): GameplayTransitionV1 {
   const bothHandsEmpty = players.every((player) => player.hand.length === 0);
   const nextPlayerId = bothHandsEmpty ? null : otherPlayer(command.actorId);
-  const events: TurnEventV1[] = [
+  const events: GameplayEventV1[] = [
     ...precedingEvents,
     {
       type: "turnCompleted",
@@ -279,9 +404,6 @@ function completeTurn(
       nextPlayerId,
     },
   ];
-  const phase: EnginePhaseV1 = bothHandsEmpty
-    ? { kind: "awaitingEndOfPlayResolution", lastActorId: command.actorId }
-    : { kind: "awaitingHandPlay", playerId: otherPlayer(command.actorId) };
   if (bothHandsEmpty) {
     events.push({
       type: "endOfPlayReached",
@@ -289,8 +411,115 @@ function completeTurn(
       actorId: command.actorId,
       unusedDrawPileCount: drawPile.length,
     });
+    return resolveEndOfPlay(
+      previous,
+      command,
+      players,
+      field,
+      drawPile,
+      deepFreeze(events),
+      roundUpdates,
+    );
   }
-  return commitTransition(previous, command, players, field, drawPile, phase, deepFreeze(events));
+  return commitTransition(
+    previous,
+    command,
+    players,
+    field,
+    drawPile,
+    { kind: "awaitingHandPlay", playerId: otherPlayer(command.actorId) },
+    deepFreeze(events),
+    roundUpdates,
+  );
+}
+
+function continueDrawPhase(
+  state: AuthoritativeGameStateV1,
+  command: GameplayCommandV1,
+  players: PlayerPair<PlayerStateV1>,
+  field: readonly CardId[],
+  sourceDrawPile: readonly CardId[],
+  precedingEvents: readonly GameplayEventV1[],
+  roundUpdates: Partial<RoundStateV1> = {},
+): GameplayTransitionV1 {
+  const drawnCardId = sourceDrawPile[0];
+  if (drawnCardId === undefined)
+    throw new Error("DRAW_PILE_INVARIANT: validated draw was missing.");
+  const drawPile = sourceDrawPile.slice(1);
+  const events: GameplayEventV1[] = [
+    ...precedingEvents,
+    {
+      type: "drawCardRevealed",
+      audience: publicAudience(),
+      actorId: command.actorId,
+      cardId: drawnCardId,
+      remainingDrawPileCount: drawPile.length,
+    },
+  ];
+  const drawResolution = resolveCapture(field, drawnCardId);
+  if (drawResolution.kind === "choiceRequired") {
+    const targetFieldCardIds = drawResolution.matchingFieldCardIds;
+    events.push({
+      type: "drawCaptureChoiceRequired",
+      audience: publicAudience(),
+      actorId: command.actorId,
+      drawnCardId,
+      targetFieldCardIds,
+    });
+    return commitTransition(
+      state,
+      command,
+      players,
+      field,
+      drawPile,
+      { kind: "awaitingDrawCapture", playerId: command.actorId, drawnCardId, targetFieldCardIds },
+      deepFreeze(events),
+      roundUpdates,
+    );
+  }
+  const actorBeforeDraw = players.find((player) => player.id === command.actorId);
+  if (actorBeforeDraw === undefined)
+    throw new Error("PLAYER_INVARIANT: active player disappeared.");
+  const actorAfterDraw = updatedPlayerAfterResolution(actorBeforeDraw, drawResolution);
+  const playersAfterDraw = replacePlayer(players, command.actorId, actorAfterDraw);
+  events.push(...eventsForResolution(command.actorId, "draw", drawResolution));
+  const bothHandsEmpty = playersAfterDraw.every((player) => player.hand.length === 0);
+  const yakuState = stateWithRoundUpdates(state, players, field, sourceDrawPile, roundUpdates);
+  const drawYaku = performYakuCheck(
+    yakuState,
+    players,
+    playersAfterDraw,
+    command.actorId,
+    "draw",
+    bothHandsEmpty
+      ? { kind: "endOfPlay", lastActorId: command.actorId }
+      : { kind: "completeTurn", lastActorId: command.actorId },
+  );
+  events.push(...drawYaku.events);
+  if (drawYaku.decisionPhase !== null) {
+    return commitTransition(
+      state,
+      command,
+      drawYaku.players,
+      drawResolution.field,
+      drawPile,
+      drawYaku.decisionPhase,
+      deepFreeze(events),
+      {
+        ...roundUpdates,
+        firstYakuTriggerPlayerId: drawYaku.firstYakuTriggerPlayerId,
+      },
+    );
+  }
+  return completeTurn(
+    state,
+    command,
+    drawYaku.players,
+    drawResolution.field,
+    drawPile,
+    deepFreeze(events),
+    roundUpdates,
+  );
 }
 
 function applyPlayHandCard(
@@ -370,80 +599,12 @@ function applyPlayHandCard(
     );
   }
 
-  const drawnCardId = state.round.drawPile[0];
-  if (drawnCardId === undefined)
-    throw new Error("DRAW_PILE_INVARIANT: validated draw was missing.");
-  const drawPile = state.round.drawPile.slice(1);
-  events.push({
-    type: "drawCardRevealed",
-    audience: publicAudience(),
-    actorId: command.actorId,
-    cardId: drawnCardId,
-    remainingDrawPileCount: drawPile.length,
-  });
-
-  const drawResolution = resolveCapture(handResolution.field, drawnCardId);
-  if (drawResolution.kind === "choiceRequired") {
-    const targetFieldCardIds = drawResolution.matchingFieldCardIds;
-    events.push({
-      type: "drawCaptureChoiceRequired",
-      audience: publicAudience(),
-      actorId: command.actorId,
-      drawnCardId,
-      targetFieldCardIds,
-    });
-    return commitTransition(
-      state,
-      command,
-      players,
-      handResolution.field,
-      drawPile,
-      {
-        kind: "awaitingDrawCapture",
-        playerId: command.actorId,
-        drawnCardId,
-        targetFieldCardIds,
-      },
-      deepFreeze(events),
-    );
-  }
-
-  const actorBeforeDraw = players.find((player) => player.id === command.actorId);
-  if (actorBeforeDraw === undefined)
-    throw new Error("PLAYER_INVARIANT: active player disappeared.");
-  const actorAfterDraw = updatedPlayerAfterResolution(actorBeforeDraw, drawResolution);
-  const playersAfterDraw = replacePlayer(players, command.actorId, actorAfterDraw);
-  events.push(...eventsForResolution(command.actorId, "draw", drawResolution));
-  const bothHandsEmpty = playersAfterDraw.every((player) => player.hand.length === 0);
-  const drawYaku = performYakuCheck(
-    state,
-    players,
-    playersAfterDraw,
-    command.actorId,
-    "draw",
-    bothHandsEmpty
-      ? { kind: "endOfPlay", lastActorId: command.actorId }
-      : { kind: "completeTurn", lastActorId: command.actorId },
-  );
-  events.push(...drawYaku.events);
-  if (drawYaku.decisionPhase !== null) {
-    return commitTransition(
-      state,
-      command,
-      drawYaku.players,
-      drawResolution.field,
-      drawPile,
-      drawYaku.decisionPhase,
-      deepFreeze(events),
-      { firstYakuTriggerPlayerId: drawYaku.firstYakuTriggerPlayerId },
-    );
-  }
-  return completeTurn(
+  return continueDrawPhase(
     state,
     command,
-    drawYaku.players,
-    drawResolution.field,
-    drawPile,
+    players,
+    handResolution.field,
+    state.round.drawPile,
     deepFreeze(events),
   );
 }
@@ -510,18 +671,140 @@ function applyChooseDrawCapture(
   );
 }
 
+function decisionUsesPrivilege(state: AuthoritativeGameStateV1): boolean {
+  if (state.phase.kind !== "awaitingYakuDecision") return false;
+  const phase = state.phase;
+  const actor = state.players.find((player) => player.id === phase.playerId);
+  if (actor === undefined) return false;
+  return (
+    state.round.tableMultiplier === 1 &&
+    state.round.specialPrivilege?.playerId === phase.playerId &&
+    actor.seenYakuKeys.length === phase.context.newYaku.length
+  );
+}
+
+function bankScoringMultiplier(state: AuthoritativeGameStateV1): TableMultiplier {
+  return decisionUsesPrivilege(state) ? 2 : state.round.tableMultiplier;
+}
+
+function bankIsForcedUnavailable(state: AuthoritativeGameStateV1): boolean {
+  if (state.phase.kind !== "awaitingYakuDecision") return false;
+  return (
+    state.round.isFinalScheduledRound &&
+    state.round.frozenFinalRoundLeaderId === state.phase.playerId &&
+    state.round.firstYakuTriggerPlayerId === state.phase.playerId &&
+    bankScoringMultiplier(state) === 1
+  );
+}
+
+function applyChooseYakuDecision(
+  state: AuthoritativeGameStateV1,
+  command: ChooseYakuDecisionCommandV1,
+): GameplayTransitionV1 {
+  if (state.phase.kind !== "awaitingYakuDecision") {
+    rejectCommand(
+      "COMMAND_NOT_ALLOWED_IN_PHASE",
+      "chooseYakuDecision requires awaitingYakuDecision.",
+    );
+  }
+  if (command.choice !== "bank" && command.choice !== "koiKoi") {
+    rejectCommand("YAKU_DECISION_INVALID", "Yaku decision must be Bank or Koi-Koi.");
+  }
+  const privilegeUsed = decisionUsesPrivilege(state);
+  const events: GameplayEventV1[] = [
+    {
+      type: "yakuDecisionChosen",
+      audience: publicAudience(),
+      actorId: command.actorId,
+      choice: command.choice,
+      privilegeUsed,
+    },
+  ];
+  if (command.choice === "bank") {
+    if (bankIsForcedUnavailable(state)) {
+      rejectCommand(
+        "BANK_FORCED_KOI_KOI",
+        "The protected final-round leader must call Koi-Koi on the round's first trigger.",
+      );
+    }
+    const actor = state.players.find((player) => player.id === command.actorId);
+    if (actor === undefined) throw new Error("PLAYER_INVARIANT: decision actor missing.");
+    const scoringMultiplier = bankScoringMultiplier(state);
+    const result = createScoredRoundResult(state, {
+      kind: "bankedScore",
+      reasonCode: "BANKED_SCORE",
+      scorerId: command.actorId,
+      activeYaku: state.phase.context.activeYaku,
+      basePoints: state.phase.context.currentYakuTotal,
+      tableMultiplierAtDecision: state.round.tableMultiplier,
+      scoringMultiplier,
+    });
+    return commitRoundResult(
+      state,
+      command,
+      state.players,
+      state.round.field,
+      state.round.drawPile,
+      result,
+      deepFreeze(events),
+    );
+  }
+
+  const previousTableMultiplier = state.round.tableMultiplier;
+  const currentTableMultiplier = (
+    privilegeUsed ? 3 : Math.min(previousTableMultiplier + 1, 4)
+  ) as TableMultiplier;
+  events.push({
+    type: "koiKoiCalled",
+    audience: publicAudience(),
+    actorId: command.actorId,
+    previousTableMultiplier,
+    currentTableMultiplier,
+    privilegeUsed,
+  });
+  const roundUpdates: Partial<RoundStateV1> = {
+    tableMultiplier: currentTableMultiplier,
+    mostRecentKoiKoiCallerId: command.actorId,
+    specialPrivilege: null,
+  };
+  if (state.phase.context.resume.kind === "drawPhase") {
+    return continueDrawPhase(
+      state,
+      command,
+      state.players,
+      state.round.field,
+      state.round.drawPile,
+      deepFreeze(events),
+      roundUpdates,
+    );
+  }
+  return completeTurn(
+    state,
+    command,
+    state.players,
+    state.round.field,
+    state.round.drawPile,
+    deepFreeze(events),
+    roundUpdates,
+  );
+}
+
 export function applyGameplayCommand(
   state: AuthoritativeGameStateV1,
   command: GameplayCommandV1,
 ): GameplayTransitionV1 {
   assertValidAuthoritativeState(state);
-  if (command.type !== "playHandCard" && command.type !== "chooseDrawCapture") {
+  if (
+    command.type !== "playHandCard" &&
+    command.type !== "chooseDrawCapture" &&
+    command.type !== "chooseYakuDecision"
+  ) {
     rejectCommand("COMMAND_TYPE_INVALID", "Unsupported gameplay command type.");
   }
   validateCommandBase(state, command);
-  return command.type === "playHandCard"
-    ? applyPlayHandCard(state, command)
-    : applyChooseDrawCapture(state, command);
+  if (command.type === "playHandCard") return applyPlayHandCard(state, command);
+  if (command.type === "chooseDrawCapture") return applyChooseDrawCapture(state, command);
+  return applyChooseYakuDecision(state, command);
 }
 
 export function getLegalActions(
@@ -557,6 +840,31 @@ export function getLegalActions(
         targetFieldCardId,
       })),
     );
+  }
+  if (state.phase.kind === "awaitingYakuDecision") {
+    const actions: LegalActionV1[] = [];
+    if (!bankIsForcedUnavailable(state)) {
+      const scoringMultiplier = bankScoringMultiplier(state);
+      actions.push({
+        type: "chooseYakuDecision",
+        actorId: requestingPlayerId,
+        choice: "bank",
+        tableMultiplierAtDecision: state.round.tableMultiplier,
+        scoringMultiplier,
+        awardedPoints: state.phase.context.currentYakuTotal * scoringMultiplier,
+      });
+    }
+    const resultingTableMultiplier = (
+      decisionUsesPrivilege(state) ? 3 : Math.min(state.round.tableMultiplier + 1, 4)
+    ) as TableMultiplier;
+    actions.push({
+      type: "chooseYakuDecision",
+      actorId: requestingPlayerId,
+      choice: "koiKoi",
+      currentTableMultiplier: state.round.tableMultiplier,
+      resultingTableMultiplier,
+    });
+    return deepFreeze(actions);
   }
   return Object.freeze([]);
 }

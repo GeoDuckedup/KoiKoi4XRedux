@@ -49,6 +49,26 @@ export function isYakuTriggerKey(value: string): value is YakuTriggerKey {
   return (YAKU_TRIGGER_KEYS as readonly string[]).includes(value);
 }
 
+export function isCanonicalActiveYaku(entry: ActiveYakuV1): boolean {
+  if (!isYakuTriggerKey(entry.key) || entry.name !== YAKU_NAMES[entry.key]) return false;
+  if (!Number.isSafeInteger(entry.points)) return false;
+  if (entry.key === "fiveBrights") return entry.points === 10;
+  if (entry.key === "fourBrights") return entry.points === 8;
+  if (entry.key === "fourBrightsWithRain") return entry.points === 7;
+  if (
+    entry.key === "threeBrights" ||
+    entry.key === "blossomViewing" ||
+    entry.key === "moonViewing" ||
+    entry.key === "animalTrio" ||
+    entry.key === "redTextScrolls" ||
+    entry.key === "blueScrolls" ||
+    entry.key === "currentMonthSet"
+  ) {
+    return entry.points === 5;
+  }
+  return entry.key === "animals" ? entry.points >= 3 : entry.points >= 1;
+}
+
 function yaku(key: YakuTriggerKey, points: number): ActiveYakuV1 {
   return Object.freeze({ key, name: YAKU_NAMES[key], points });
 }

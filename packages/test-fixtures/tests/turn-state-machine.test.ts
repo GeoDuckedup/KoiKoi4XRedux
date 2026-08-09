@@ -183,7 +183,10 @@ describe("Phase 1B legal actions and command state machine", () => {
     );
     expectRejected(
       noMatchState,
-      { ...firstCommand("CAP-000"), targetFieldCardId: "january-pine-plain-a" },
+      {
+        ...firstCommand("CAP-000"),
+        targetFieldCardId: "january-pine-plain-a",
+      } as GameplayCommandV1,
       "CAPTURE_TARGET_NOT_ALLOWED",
     );
     expectRejected(
@@ -286,6 +289,9 @@ describe("Phase 1B legal actions and command state machine", () => {
       const actorId: PlayerId = state.phase.playerId;
       const action = getLegalActions(state, actorId)[0];
       if (action === undefined) throw new Error(`No legal action at state ${state.stateVersion}.`);
+      if (action.type === "chooseYakuDecision") {
+        throw new Error("Decision action appeared in a card-play phase.");
+      }
       commandNumber += 1;
       const command: GameplayCommandV1 =
         action.type === "playHandCard"
@@ -324,7 +330,10 @@ describe("Phase 1B legal actions and command state machine", () => {
       state.players.find((player) => player.id === decisionPhase.playerId)?.seenYakuKeys,
     ).toEqual(expect.arrayContaining(decisionPhase.context.newYaku.map((entry) => entry.key)));
     expect(getLegalActions(state, "player-a")).toEqual([]);
-    expect(getLegalActions(state, "player-b")).toEqual([]);
+    expect(getLegalActions(state, "player-b").map((action) => action.type)).toEqual([
+      "chooseYakuDecision",
+      "chooseYakuDecision",
+    ]);
     expect(commandNumber).toBeGreaterThan(0);
   });
 });

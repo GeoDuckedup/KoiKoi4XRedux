@@ -19,7 +19,7 @@ The legacy repository is historical evidence, not a compatibility target. This d
 | Lucky-hand evidence | Automatic result presentation is not a durable, fully specified public evidence transition. | Reveal the complete qualifying hand only after commit, explain the pattern/arithmetic, and preserve evidence in history. |
 | Opening precedence | Invalid field layouts are removed by redealing before they can be represented as outcomes. | Field cancellation takes precedence over any lucky hand in the same committed deal. |
 | Result history | Compact score/multiplier/no-score rows with free-text reasons. | Durable explicit reason codes, arithmetic, evidence, starter, and privilege consequences. |
-| Final-draw Koi-Koi | Useful behavior exists and is intentionally retained. | Locked with explicit 1×–4×, special-privilege, and forced-final-round fixtures. |
+| Final-draw Koi-Koi | Useful behavior exists and is intentionally retained. | Locked with reachable 1×–4× and forced-final-round fixtures; the former special-privilege final-draw vectors are retained as unreachable-state rejection cases because the privilege holder is necessarily the starter. |
 | Bright tiers | Separate legacy keys largely reflect the intended hierarchy. | Explicit replacement hierarchy plus independent trigger history and stacking requirements. |
 
 ## 2. Architecture
@@ -123,4 +123,3 @@ Reimplement rather than copy:
 - **The package contained a stale README version header and two proposed deck-art filenames.** Repository authority uses design version 1.6 and `docs/DECK_ART.md`.
 - **Online policy decisions remain open.** They do not block Phase 1 but must be closed before the affected Firebase/online phase.
 - **Test vectors are specifications in Phase 0A.** They become CardId-bound in Phase 0C and executable when the Phase 1 test harness exists.
-

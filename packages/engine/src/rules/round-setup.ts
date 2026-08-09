@@ -14,11 +14,14 @@ import {
   type PlayerId,
   type PlayerPair,
   type PlayerStateV1,
+  type RoundResultV1,
+  type RoundStateV1,
   type SetupEventV1,
   type StartMatchCommandV1,
 } from "../state/types";
 import { assertValidInitialSetupState } from "../state/validation";
 import { evaluateOpeningOutcome } from "./opening-outcomes";
+import { createAutomaticRoundResult } from "./round-results";
 
 export const DEAL_LAYOUT_V1 = "slices-8-8-8-24-v1" as const;
 
@@ -173,13 +176,10 @@ function eventSequence(
   return deepFreeze(events);
 }
 
-function phaseForOutcome(
-  starterId: PlayerId,
-  outcome: AutomaticOpeningResult | null,
-): EnginePhaseV1 {
-  return outcome === null
+function phaseForOutcome(starterId: PlayerId, result: RoundResultV1 | null): EnginePhaseV1 {
+  return result === null
     ? deepFreeze({ kind: "awaitingHandPlay", playerId: starterId })
-    : deepFreeze({ kind: "roundComplete", result: outcome, transitionPending: true });
+    : deepFreeze({ kind: "roundComplete", result, transitionPending: true });
 }
 
 function playerState(
@@ -214,6 +214,26 @@ function buildInitialState(
 
   const zones = dealOrderedDeck(orderedDeck);
   const outcome = evaluateOpeningOutcome(zones.field, zones.hands);
+  const round = deepFreeze<RoundStateV1>({
+    roundNumber: 1,
+    scheduledMonth: 1,
+    isFinalScheduledRound: false,
+    starterId,
+    field: zones.field,
+    drawPile: zones.drawPile,
+    tableMultiplier: 1,
+    mostRecentKoiKoiCallerId: null,
+    firstYakuTriggerPlayerId: null,
+    specialPrivilege: null,
+    frozenFinalRoundLeaderId: null,
+  });
+  const result =
+    outcome === null
+      ? null
+      : createAutomaticRoundResult({ matchLength: command.matchLength, round }, outcome, {
+          "player-a": 0,
+          "player-b": 0,
+        });
   const state = deepFreeze<AuthoritativeGameStateV1>({
     formatVersion: 1,
     rulesVersion: RULES_VERSION,
@@ -226,21 +246,9 @@ function buildInitialState(
       playerState("player-a", zones.hands[0], outcome),
       playerState("player-b", zones.hands[1], outcome),
     ],
-    round: {
-      roundNumber: 1,
-      scheduledMonth: 1,
-      isFinalScheduledRound: false,
-      starterId,
-      field: zones.field,
-      drawPile: zones.drawPile,
-      tableMultiplier: 1,
-      mostRecentKoiKoiCallerId: null,
-      firstYakuTriggerPlayerId: null,
-      specialPrivilege: null,
-      frozenFinalRoundLeaderId: null,
-    },
-    phase: phaseForOutcome(starterId, outcome),
-    history: [],
+    round,
+    phase: phaseForOutcome(starterId, result),
+    history: result === null ? [] : [result],
   });
   assertValidInitialSetupState(state);
   return deepFreeze({ state, events: eventSequence(command, starterId, zones, outcome) });
@@ -254,7 +262,11 @@ export function startMatch(command: StartMatchCommandV1, random: RandomSource): 
       ? command.starterPolicy.playerId
       : (PLAYER_IDS[random.nextInt(PLAYER_IDS.length)] ?? PLAYER_IDS[0]);
   const setup = buildInitialState(command, shuffledDeck, starterId);
-  const checkpoint: EngineCheckpointV1 = deepFreeze({ version: 1, rng: random.snapshot() });
+  const checkpoint: EngineCheckpointV1 = deepFreeze({
+    version: 1,
+    matchId: command.matchId,
+    rng: random.snapshot(),
+  });
   return deepFreeze({ ...setup, checkpoint });
 }
 

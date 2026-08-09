@@ -1,6 +1,17 @@
 import { CARD_IDS, getCardDefinition, isCardId, type CardId } from "../cards/catalog";
 import { evaluateOpeningOutcome } from "../rules/opening-outcomes";
-import { evaluateYaku, hasValidYakuSeenHistory, isYakuTriggerKey } from "../rules/yaku";
+import {
+  createAutomaticRoundResult,
+  createMatchResult,
+  deriveNextRoundPlan,
+  frozenLeader,
+} from "../rules/round-results";
+import {
+  evaluateYaku,
+  hasValidYakuSeenHistory,
+  isCanonicalActiveYaku,
+  isYakuTriggerKey,
+} from "../rules/yaku";
 import { MATCH_LENGTHS, PLAYER_IDS, type AuthoritativeGameStateV1 } from "./types";
 
 export interface StateValidationIssue {
@@ -53,6 +64,77 @@ function authoritativeCardZones(state: AuthoritativeGameStateV1): readonly {
         { path: "$.phase.drawnCardId", cards: [state.phase.drawnCardId] as readonly CardId[] },
       ]
     : zones;
+}
+
+function currentRoundResultMatchesLiveState(
+  state: AuthoritativeGameStateV1,
+  scoresBeforeRound: { readonly "player-a": number; readonly "player-b": number },
+): boolean {
+  if (state.phase.kind !== "roundComplete" && state.phase.kind !== "matchComplete") return true;
+  const result = state.history[state.history.length - 1];
+  if (result === undefined) return false;
+  if (
+    result.kind === "fieldCancellation" ||
+    result.kind === "luckyWin" ||
+    result.kind === "bothLuckyDraw"
+  ) {
+    const outcome = evaluateOpeningOutcome(state.round.field, [
+      state.players[0].hand,
+      state.players[1].hand,
+    ]);
+    return (
+      outcome !== null &&
+      JSON.stringify(
+        createAutomaticRoundResult(
+          { matchLength: state.matchLength, round: state.round },
+          outcome,
+          scoresBeforeRound,
+        ),
+      ) === JSON.stringify(result)
+    );
+  }
+  if (result.kind === "endOfPlayNoScore") {
+    return (
+      state.round.mostRecentKoiKoiCallerId === null &&
+      state.players.every((player) => player.hand.length === 0) &&
+      state.round.drawPile.length === 8
+    );
+  }
+  if (result.scorerId === null) return false;
+  const scorer = state.players.find((player) => player.id === result.scorerId);
+  if (
+    scorer === undefined ||
+    JSON.stringify(result.activeYaku) !== JSON.stringify(scorer.activeYaku) ||
+    result.basePoints !== scorer.currentYakuTotal
+  ) {
+    return false;
+  }
+  if (result.kind === "endOfPlayLastKoiCaller") {
+    return (
+      state.round.mostRecentKoiKoiCallerId === result.scorerId &&
+      state.players.every((player) => player.hand.length === 0) &&
+      state.round.drawPile.length === 8 &&
+      result.tableMultiplierAtDecision === state.round.tableMultiplier &&
+      result.scoringMultiplier === state.round.tableMultiplier
+    );
+  }
+  const ordinaryBank =
+    result.tableMultiplierAtDecision === state.round.tableMultiplier &&
+    result.scoringMultiplier === state.round.tableMultiplier;
+  const priorPrivilege =
+    state.history[state.history.length - 2]?.nextRound?.specialPrivilege?.playerId ===
+    result.scorerId;
+  const privilegedBank =
+    result.tableMultiplierAtDecision === 1 &&
+    result.scoringMultiplier === 2 &&
+    state.round.tableMultiplier === 1 &&
+    priorPrivilege;
+  const forbiddenFinalLeaderBank =
+    state.round.isFinalScheduledRound &&
+    state.round.frozenFinalRoundLeaderId === result.scorerId &&
+    state.round.firstYakuTriggerPlayerId === result.scorerId &&
+    result.scoringMultiplier === 1;
+  return (ordinaryBank || privilegedBank) && !forbiddenFinalLeaderBank;
 }
 
 export function validateCardOwnership(
@@ -110,16 +192,12 @@ export function validateAuthoritativeState(
     );
   }
   if (
-    state.status !== "inProgress" ||
+    (state.status !== "inProgress" && state.status !== "complete") ||
     state.matchId.trim().length === 0 ||
     state.lastAcceptedCommandId.trim().length === 0
   ) {
     issues.push(
-      issue(
-        "MATCH_STATE_INVALID",
-        "$",
-        "Active gameplay state must identify an in-progress match.",
-      ),
+      issue("MATCH_STATE_INVALID", "$", "Game state must identify a supported match status."),
     );
   }
   if (!MATCH_LENGTHS.includes(state.matchLength)) {
@@ -228,6 +306,212 @@ export function validateAuthoritativeState(
       ),
     );
   }
+  const historyScores = state.history.reduce(
+    (scores, result) => ({
+      "player-a": scores["player-a"] + result.pointDeltas["player-a"],
+      "player-b": scores["player-b"] + result.pointDeltas["player-b"],
+    }),
+    { "player-a": 0, "player-b": 0 },
+  );
+  if (
+    historyScores["player-a"] !== state.players[0].score ||
+    historyScores["player-b"] !== state.players[1].score
+  ) {
+    issues.push(
+      issue(
+        "HISTORY_SCORE_INVALID",
+        "$.history",
+        "Player scores must equal the sum of durable round point deltas.",
+      ),
+    );
+  }
+  let cumulativeScores = { "player-a": 0, "player-b": 0 };
+  for (const [index, result] of state.history.entries()) {
+    const expectedRound = index + 1;
+    cumulativeScores = {
+      "player-a": cumulativeScores["player-a"] + result.pointDeltas["player-a"],
+      "player-b": cumulativeScores["player-b"] + result.pointDeltas["player-b"],
+    };
+    const reasonMatchesKind =
+      (result.kind === "bankedScore" && result.reasonCode === "BANKED_SCORE") ||
+      (result.kind === "endOfPlayLastKoiCaller" &&
+        result.reasonCode === "END_OF_PLAY_LAST_KOI_CALLER") ||
+      (result.kind === "endOfPlayNoScore" && result.reasonCode === "END_OF_PLAY_NO_SCORE") ||
+      (result.kind === "fieldCancellation" && result.reasonCode === "FIELD_FOUR_MONTH_CANCELLED") ||
+      (result.kind === "luckyWin" &&
+        (result.reasonCode === "LUCKY_FOUR_MONTH" || result.reasonCode === "LUCKY_FOUR_PAIRS")) ||
+      (result.kind === "bothLuckyDraw" && result.reasonCode === "BOTH_LUCKY_DRAW");
+    const expectedNextRound = deriveNextRoundPlan(
+      {
+        matchLength: state.matchLength,
+        round: {
+          ...state.round,
+          roundNumber: result.roundNumber,
+          scheduledMonth: result.scheduledMonth,
+          isFinalScheduledRound: result.roundNumber === state.matchLength,
+          starterId: result.starterId,
+        },
+      },
+      result.scorerId,
+      result.scoringMultiplier,
+    );
+    const activeTotal = result.activeYaku.reduce((total, yaku) => total + yaku.points, 0);
+    const activeYakuValid =
+      result.activeYaku.every(isCanonicalActiveYaku) &&
+      new Set(result.activeYaku.map((entry) => entry.key)).size === result.activeYaku.length;
+    const kindFieldsValid =
+      result.kind === "luckyWin"
+        ? result.scorerId !== null &&
+          result.basePoints === 6 &&
+          result.scoringMultiplier === 1 &&
+          result.activeYaku.length === 0 &&
+          result.evidence?.kind === "luckyHands"
+        : result.kind === "fieldCancellation"
+          ? result.scorerId === null &&
+            result.basePoints === 0 &&
+            result.activeYaku.length === 0 &&
+            result.evidence?.kind === "fieldCancellation"
+          : result.kind === "bothLuckyDraw"
+            ? result.scorerId === null &&
+              result.basePoints === 0 &&
+              result.activeYaku.length === 0 &&
+              result.evidence?.kind === "luckyHands"
+            : result.kind === "bankedScore" || result.kind === "endOfPlayLastKoiCaller"
+              ? result.scorerId !== null &&
+                result.basePoints === activeTotal &&
+                result.activeYaku.length > 0 &&
+                result.evidence === null
+              : result.kind === "endOfPlayNoScore" &&
+                result.basePoints === 0 &&
+                result.activeYaku.length === 0 &&
+                result.evidence === null;
+    const arithmeticValid =
+      result.roundNumber === expectedRound &&
+      result.scheduledMonth === expectedRound &&
+      PLAYER_IDS.includes(result.starterId) &&
+      reasonMatchesKind &&
+      kindFieldsValid &&
+      activeYakuValid &&
+      Number.isSafeInteger(result.pointDeltas["player-a"]) &&
+      result.pointDeltas["player-a"] >= 0 &&
+      Number.isSafeInteger(result.pointDeltas["player-b"]) &&
+      result.pointDeltas["player-b"] >= 0 &&
+      Number.isSafeInteger(result.basePoints) &&
+      result.basePoints >= 0 &&
+      Number.isSafeInteger(result.awardedPoints) &&
+      result.awardedPoints >= 0 &&
+      (result.scorerId === null
+        ? result.awardedPoints === 0 &&
+          result.scoringMultiplier === null &&
+          result.tableMultiplierAtDecision === null &&
+          result.pointDeltas["player-a"] === 0 &&
+          result.pointDeltas["player-b"] === 0
+        : PLAYER_IDS.includes(result.scorerId) &&
+          result.scoringMultiplier !== null &&
+          result.tableMultiplierAtDecision !== null &&
+          [1, 2, 3, 4].includes(result.scoringMultiplier) &&
+          [1, 2, 3, 4].includes(result.tableMultiplierAtDecision) &&
+          result.awardedPoints === result.basePoints * result.scoringMultiplier &&
+          result.pointDeltas[result.scorerId] === result.awardedPoints &&
+          result.pointDeltas[otherPlayerId(result.scorerId)] === 0) &&
+      JSON.stringify(result.nextRound) === JSON.stringify(expectedNextRound) &&
+      JSON.stringify(result.matchScoresAfter) === JSON.stringify(cumulativeScores) &&
+      (index === 0 || state.history[index - 1]?.nextRound?.starterId === result.starterId);
+    if (!arithmeticValid) {
+      issues.push(
+        issue(
+          "ROUND_HISTORY_INVALID",
+          `$.history[${index}]`,
+          "Round history must be contiguous and contain valid score arithmetic.",
+        ),
+      );
+    }
+  }
+  const phaseHasCommittedResult =
+    state.phase.kind === "roundComplete" || state.phase.kind === "matchComplete";
+  const expectedHistoryLength = phaseHasCommittedResult
+    ? state.round.roundNumber
+    : state.round.roundNumber - 1;
+  if (state.history.length !== expectedHistoryLength) {
+    issues.push(
+      issue(
+        "ROUND_HISTORY_LENGTH_INVALID",
+        "$.history",
+        "History must contain exactly the completed scheduled rounds.",
+      ),
+    );
+  }
+  const scoresBeforeRound = state.history.slice(0, Math.max(0, state.round.roundNumber - 1)).reduce(
+    (scores, result) => ({
+      "player-a": scores["player-a"] + result.pointDeltas["player-a"],
+      "player-b": scores["player-b"] + result.pointDeltas["player-b"],
+    }),
+    { "player-a": 0, "player-b": 0 },
+  );
+  const expectedFrozenLeader = state.round.isFinalScheduledRound
+    ? frozenLeader(scoresBeforeRound)
+    : null;
+  if (state.round.frozenFinalRoundLeaderId !== expectedFrozenLeader) {
+    issues.push(
+      issue(
+        "FROZEN_FINAL_LEADER_INVALID",
+        "$.round.frozenFinalRoundLeaderId",
+        "Final-round leader must be frozen from scores before the final round.",
+      ),
+    );
+  }
+  if (!currentRoundResultMatchesLiveState(state, scoresBeforeRound)) {
+    issues.push(
+      issue(
+        "CURRENT_ROUND_RESULT_INVALID",
+        "$.history",
+        "The current committed result must match live round evidence and scoring state.",
+      ),
+    );
+  }
+  const privilege = state.round.specialPrivilege;
+  if (
+    (state.round.mostRecentKoiKoiCallerId !== null &&
+      !PLAYER_IDS.includes(state.round.mostRecentKoiKoiCallerId)) ||
+    (privilege !== null &&
+      (!PLAYER_IDS.includes(privilege.playerId) ||
+        privilege.status !== "available" ||
+        privilege.grantedFromRound !== state.round.roundNumber - 1 ||
+        privilege.playerId !== state.round.starterId ||
+        state.round.tableMultiplier !== 1)) ||
+    ((state.phase.kind === "roundComplete" || state.phase.kind === "matchComplete") &&
+      privilege !== null)
+  ) {
+    issues.push(
+      issue(
+        "ROUND_PRIVILEGE_INVALID",
+        "$.round",
+        "Caller and next-round privilege state must follow their canonical lifecycle.",
+      ),
+    );
+  }
+  if (!phaseHasCommittedResult && state.round.roundNumber > 1) {
+    const priorPlan = state.history[state.history.length - 1]?.nextRound;
+    const plannedPrivilege = priorPlan?.specialPrivilege ?? null;
+    const plannedPrivilegeWasLegallyConsumed =
+      plannedPrivilege !== null && privilege === null && state.round.tableMultiplier > 1;
+    if (
+      priorPlan === null ||
+      priorPlan === undefined ||
+      priorPlan.roundNumber !== state.round.roundNumber ||
+      priorPlan.starterId !== state.round.starterId ||
+      (JSON.stringify(plannedPrivilege) !== JSON.stringify(privilege) &&
+        !plannedPrivilegeWasLegallyConsumed)
+    ) {
+      issues.push(
+        issue(
+          "ROUND_TRANSITION_PLAN_INVALID",
+          "$.round",
+          "Active round setup must consume the preceding history transition plan.",
+        ),
+      );
+    }
+  }
   if (!PLAYER_IDS.includes(state.round.starterId)) {
     issues.push(issue("STARTER_INVALID", "$.round.starterId", "Starter must be a match player."));
   }
@@ -241,9 +525,7 @@ export function validateAuthoritativeState(
   const handCardsPlayed = 16 - totalHandCards;
   const drawCardsRevealed = 24 - state.round.drawPile.length;
   if (
-    (state.phase.kind === "awaitingHandPlay" ||
-      state.phase.kind === "awaitingDrawCapture" ||
-      state.phase.kind === "awaitingEndOfPlayResolution") &&
+    (state.phase.kind === "awaitingHandPlay" || state.phase.kind === "awaitingDrawCapture") &&
     (handCardsPlayed < 0 || handCardsPlayed > 16 || handCardsPlayed !== drawCardsRevealed)
   ) {
     issues.push(
@@ -435,22 +717,41 @@ export function validateAuthoritativeState(
         ),
       );
     }
-  } else if (state.phase.kind === "awaitingEndOfPlayResolution") {
+  } else if (state.phase.kind === "roundComplete") {
+    const savedResult = state.history[state.history.length - 1];
     if (
-      !PLAYER_IDS.includes(state.phase.lastActorId) ||
-      (PLAYER_IDS.includes(state.round.starterId) &&
-        state.phase.lastActorId !== otherPlayerId(state.round.starterId)) ||
-      totalHandCards !== 0 ||
-      state.round.drawPile.length !== 8
+      state.status !== "inProgress" ||
+      savedResult === undefined ||
+      JSON.stringify(state.phase.result) !== JSON.stringify(savedResult) ||
+      state.phase.result.nextRound === null
     ) {
       issues.push(
         issue(
-          "END_OF_PLAY_PHASE_INVALID",
+          "ROUND_COMPLETE_PHASE_INVALID",
           "$.phase",
-          "End-of-Play handoff requires a canonical last actor, empty hands, and eight unused draws.",
+          "Round-complete state must expose its latest result and a next-round plan.",
         ),
       );
     }
+  } else if (state.phase.kind === "matchComplete") {
+    const expectedMatchResult = createMatchResult(state.matchLength, state.history);
+    if (
+      state.status !== "complete" ||
+      state.round.roundNumber !== state.matchLength ||
+      JSON.stringify(state.phase.result) !== JSON.stringify(expectedMatchResult)
+    ) {
+      issues.push(
+        issue(
+          "MATCH_COMPLETE_PHASE_INVALID",
+          "$.phase",
+          "Match-complete state must expose the final history-derived result.",
+        ),
+      );
+    }
+  } else if (state.status !== "inProgress") {
+    issues.push(
+      issue("MATCH_STATE_INVALID", "$.status", "Playable phases require an in-progress match."),
+    );
   }
   return Object.freeze(issues);
 }
@@ -460,6 +761,9 @@ export function validateInitialSetupState(
 ): readonly StateValidationIssue[] {
   const ownershipIssues = validateCardOwnership(state);
   const issues = [...ownershipIssues];
+  const historyMetadataValid = state.history.every(
+    (result) => Number.isSafeInteger(result.roundNumber) && result.roundNumber >= 1,
+  );
   if (state.formatVersion !== 1 || state.rulesVersion !== "1.0") {
     issues.push(issue("STATE_VERSION_INVALID", "$", "Unsupported state or rules version."));
   }
@@ -472,14 +776,10 @@ export function validateInitialSetupState(
     state.status !== "inProgress" ||
     state.matchId.trim().length === 0 ||
     state.lastAcceptedCommandId.trim().length === 0 ||
-    state.history.length !== 0
+    !historyMetadataValid
   ) {
     issues.push(
-      issue(
-        "SETUP_MATCH_STATE_INVALID",
-        "$",
-        "A new match must be in progress, identified, and have empty history.",
-      ),
+      issue("SETUP_MATCH_STATE_INVALID", "$", "A new match must be in progress and identified."),
     );
   }
   if (!MATCH_LENGTHS.includes(state.matchLength)) {
@@ -583,13 +883,32 @@ export function validateInitialSetupState(
   const expectedOutcome = ownershipIssues.some((entry) => entry.code === "CARD_ZONE_UNKNOWN_ID")
     ? null
     : evaluateOpeningOutcome(state.round.field, [state.players[0].hand, state.players[1].hand]);
-  const savedOutcome = state.phase.kind === "roundComplete" ? state.phase.result : null;
-  if (JSON.stringify(savedOutcome) !== JSON.stringify(expectedOutcome)) {
+  const expectedResult =
+    expectedOutcome === null
+      ? null
+      : createAutomaticRoundResult(
+          { matchLength: state.matchLength, round: state.round },
+          expectedOutcome,
+          { "player-a": 0, "player-b": 0 },
+        );
+  const savedResult = state.phase.kind === "roundComplete" ? state.phase.result : null;
+  if (JSON.stringify(savedResult) !== JSON.stringify(expectedResult)) {
     issues.push(
       issue(
         "OPENING_RESULT_EVIDENCE_MISMATCH",
         "$.phase",
         "Opening phase, result, and evidence must match the dealt cards.",
+      ),
+    );
+  }
+
+  const expectedHistory = expectedResult === null ? [] : [expectedResult];
+  if (historyMetadataValid && JSON.stringify(state.history) !== JSON.stringify(expectedHistory)) {
+    issues.push(
+      issue(
+        "OPENING_RESULT_HISTORY_INVALID",
+        "$.history",
+        "An automatic opening result must be recorded once in initial history.",
       ),
     );
   }

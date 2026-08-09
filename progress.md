@@ -188,3 +188,42 @@ Original prompt: read the package and understand it, then let me know when we ar
 - Phase 1C is implemented, independently reviewed, pushed, and deployed; it awaits owner review.
 - Next: Phase 1D Bank/Koi-Koi commands, End-of-Play scoring, table multipliers, special/final-round
   rules, starter selection, history, and round/match advancement after owner approval.
+
+## 2026-08-08 — Phase 1D Option A rule-lock correction
+
+- Owner approved Phase 1D.
+- Completed parallel read-only audits of the Bank/Koi-Koi rules, state/RNG lifecycle seams, and all
+  58 locked Phase 1D-adjacent vectors.
+- Added typed Bank/Koi-Koi commands and legal actions, durable round/match result contracts,
+  next-starter plans, public lifecycle events, and typed history.
+- Integrated ordinary and privileged Bank/Koi-Koi execution, forced final-leader Koi-Koi, Hand-phase
+  Draw resumption, direct natural End-of-Play resolution, score commitment, and match completion.
+- Added the separate external-checkpoint round-advance API plus an ordered-deck fixture entry point;
+  new-round deals reset round-local state while retaining scores/history and privacy audiences.
+- Added literal records for all 47 in-scope IDs and executable production traces for the 45 reachable
+  cases, including a full natural 16-turn round. Strengthened result/history validation rejects
+  fabricated no-score deltas and noncanonical scoring evidence.
+- Fixed independent-review findings for inherited privilege on automatic outcomes, no-score result
+  arithmetic, live result evidence, and cross-match checkpoint ownership.
+- `npm run validate:phase1d` passes 13 files / 158 tests. `npm run check` passes 22 files / 245 tests
+  and the 711-module production build. The five-viewport Playwright suite and bundled web-game
+  runtime/screenshot inspection pass.
+- Independent review proved that `KOI-015A/B` are unreachable under the locked rules: the 1x loser
+  is both the next starter and privilege holder, while strict alternation makes the nonstarter the
+  final-Draw actor. The current policy-only test therefore cannot become a valid production trace.
+- Owner selected Option A: preserve the starter/privilege/turn-order rules and retain `KOI-015A/B`
+  as unreachable defensive-policy IDs.
+- Canonical Rules, Design, decisions, legacy-difference, and vector records now state the exact
+  reachability invariant. Fixture metadata distinguishes 45 reachable traces from two unreachable
+  policy assertions.
+- Replaced the invalid synthetic success test with authoritative `ROUND_PRIVILEGE_INVALID` rejection
+  for both proposed decisions. Production gameplay code remains unchanged because it already
+  validates the state before command execution.
+- Bound the literal Phase 1D fixture expectations directly into their acceptance traces.
+- Repeat validation passed: Phase 1D focused 13 files / 158 tests; full check 22 files / 245 tests,
+  five workspace typechecks, deck validation, and 711-module production build; five-viewport
+  Playwright smoke passed.
+- The bundled browser client reported the expected ready boot state; the 1280x720 screenshot was
+  inspected and every requested asset returned successfully with no browser error output.
+- Three independent final reviews report no blocker, high, or medium issue.
+- Remaining: commit, push, hosted CI/Pages monitoring, and cache-busted live verification.
