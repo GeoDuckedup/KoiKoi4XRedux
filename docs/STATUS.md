@@ -2,8 +2,8 @@
 
 **Updated:** August 8, 2026
 
-**Overall state:** Greenfield rewrite, Phase 1C implemented and independently reviewed; deployment in
-progress
+**Overall state:** Greenfield rewrite, Phase 1C implemented, independently reviewed, pushed, and
+deployed; awaiting owner review
 
 **Runtime state:** Deterministic headless turns with exact active-yaku totals and Hand/Draw trigger
 boundaries; visible site remains the tested PixiJS boot surface
@@ -74,7 +74,11 @@ See [`ARCHITECTURE.md`](./ARCHITECTURE.md) and
   fabricated seen-trigger history, partly derived expected results, and missing multi-action
   Current-Month trace findings were repaired; follow-up reviews report no remaining blocker, high,
   or medium issue.
-- Hosted CI and Pages verification remain to be recorded before Phase 1C is declared deployed.
+- Implementation commit `5474fdb` was pushed to `origin/main`. Hosted CI run `31289584472` passed in
+  1m09s, including the 202-test repository check, five-viewport browser smoke, and artifact upload.
+- Pages run `31289584476` passed build and deploy. A cache-busted live request returned HTTP 200 with
+  repository-prefixed assets; the live web-game client reported `screen: "boot"`, `ready: true`, one
+  canvas, and deterministic 100 ms simulated time, and its screenshot was inspected.
 
 ## Known constraints and risks
 
@@ -95,7 +99,7 @@ See [`ARCHITECTURE.md`](./ARCHITECTURE.md) and
 
 1. No secret, Firebase project, database migration, asset upload, Pages setting, or cache action is
    required.
-2. After pulling the Phase 1C commit, run `npm ci`, `npm run validate:phase1c`, and `npm run check`.
+2. Pull commit `5474fdb`, then run `npm ci`, `npm run validate:phase1c`, and `npm run check`.
 3. The push to `main` automatically runs CI and the existing GitHub Pages workflow.
 4. The public page should remain the same KoiKoi4x boot surface; Phase 1C is headless and adds no
    browser UI or manual test controls.

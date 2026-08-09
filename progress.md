@@ -159,7 +159,7 @@ Original prompt: read the package and understand it, then let me know when we ar
 - Next: Phase 1C yaku evaluation, active totals, trigger keys, and per-phase combined decision
   contexts after owner approval.
 
-## 2026-08-08 — Phase 1C verification passed; deployment in progress
+## 2026-08-08 — Phase 1C implemented and deployed
 
 - Owner approved Phase 1C: yaku evaluation, active totals, trigger keys, and per-phase combined
   decision contexts; Bank/Koi-Koi execution remains Phase 1D.
@@ -179,4 +179,12 @@ Original prompt: read the package and understand it, then let me know when we ar
   surface is intentionally unchanged.
 - Independent scoring, state-machine, and fixture reviews found three medium acceptance gaps; all
   were repaired, and follow-up review found no remaining blocker, high, or medium issue.
-- Remaining work: commit, push, verify hosted CI/Pages, and record deployment evidence.
+- Committed the reviewed Phase 1C implementation as `5474fdb` and pushed `main` to GitHub.
+- Hosted CI run `31289584472` passed in 1m09s, including the 202-test repository check,
+  five-viewport browser smoke, and artifact upload. Pages run `31289584476` passed build/deploy.
+- A cache-busted live request returned HTTP 200 with repository-prefixed assets. The live web-game
+  client and inspected screenshot confirmed `screen: "boot"`, `ready: true`, one canvas, and the
+  intentionally unchanged Phase 0B composition.
+- Phase 1C is implemented, independently reviewed, pushed, and deployed; it awaits owner review.
+- Next: Phase 1D Bank/Koi-Koi commands, End-of-Play scoring, table multipliers, special/final-round
+  rules, starter selection, history, and round/match advancement after owner approval.

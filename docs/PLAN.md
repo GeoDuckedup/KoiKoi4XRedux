@@ -2,7 +2,7 @@
 
 **Plan version:** 1.0  
 **Updated:** August 8, 2026  
-**Current gate:** Phase 1C verification and owner review
+**Current gate:** Phase 1C owner review
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -174,7 +174,7 @@ Result:
 
 ### Phase 1C — Yaku and trigger system
 
-Status: **implemented and independently reviewed; deployment in progress**.
+Status: **implemented, independently reviewed, and deployed; awaiting owner review**.
 
 Deliver all approved fixed, hierarchy, and incremental yaku; deterministic active totals; closed
 trigger keys; player-local seen-trigger state; separate Hand/Draw checks; and one combined decision
