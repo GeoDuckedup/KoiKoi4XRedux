@@ -2,8 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 9, 2026
-**Current gate:** Phase 2E authoring/tooling implemented locally; final artwork and owner visual
-approval remain required before Phase 3
+**Current gate:** Phase 2E authoring/tooling implemented, verified, and deployed; final artwork and
+owner visual approval remain required before Phase 3
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -493,7 +493,7 @@ Current result:
 
 ### Phase 2E — Deck Workshop and final visual approval
 
-Status: **authoring/tooling implementation complete locally; owner art gate pending**.
+Status: **authoring/tooling implementation complete and deployed; owner art gate pending**.
 
 Deliver:
 
@@ -533,6 +533,9 @@ Current result:
   evidence, and an incomplete release;
 - a complete 48-face plus back second technical package is built in tests and decoded through the
   strict runtime manifest contract;
+- implementation commit `31da04f` is on `origin/main`; CI run `31327748444` and Pages run
+  `31327748453` passed the full repository and Phase 2E gates, the cache-busted live page rendered,
+  and the local-only Workshop route returned 404;
 - final visual acceptance is intentionally not claimed because no finished licensed art has been
   supplied and the checked-in pilots are process placeholders only.
 

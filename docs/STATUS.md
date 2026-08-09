@@ -2,8 +2,8 @@
 
 **Updated:** August 9, 2026
 
-**Overall state:** Greenfield rewrite, Phase 2E Deck Workshop/import tooling implemented locally;
-final artwork and explicit owner visual approval remain pending before Phase 3
+**Overall state:** Greenfield rewrite, Phase 2E Deck Workshop/import tooling implemented, verified,
+and deployed; final artwork and explicit owner visual approval remain pending before Phase 3
 
 **Runtime state:** Complete deterministic headless match engine with formal projections, replay,
 hashes, retry-safe command receipts, and protocol records, plus a presentation-only responsive Pixi
@@ -201,6 +201,10 @@ in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
 - Three independent Phase 2E reviews report no blocker, high, or medium finding after selected-build,
   stale-manifest, rotation-preview, inheritance/back, source-containment, package-path, Workshop UX,
   and Pages-gating repairs.
+- Implementation commit `31da04f` is on `origin/main`. Hosted CI run `31327748444` passed the full
+  repository and Phase 2E gates; Pages run `31327748453` passed the same gates and deployed. A
+  cache-busted live browser run rendered the technical table without errors, the public root
+  returned 200, and the intentionally local-only `workshop.html` route returned 404.
 - Phase 2D's focused gate passes 8 files / 76 tests and byte-checks all 100 generated technical
   artifacts. Both seven-viewport root and `/KoiKoi4XRedux/` baseline matrices and each base's complete
   390×844 interaction trace pass with zero browser/network errors.
@@ -267,8 +271,8 @@ in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
 
 ## Owner verification and deployment steps
 
-1. No hosting configuration or secret is required for the Phase 2E tooling commit; the public page
-   intentionally remains the Phase 2D technical harness.
+1. No hosting configuration or secret is required. The Phase 2E tooling commit is deployed, while
+   the public page intentionally remains the Phase 2D technical harness.
 2. On a development machine, pull `main`, run `npm ci`, then `npm run dev:workshop` and open the
    local URL printed by Vite. The Workshop is intentionally unavailable on GitHub Pages.
 3. Supply finished licensed art for the four locked pilot roles and back first. Import/assign them,
