@@ -149,4 +149,12 @@ Original prompt: read the package and understand it, then let me know when we ar
   all were repaired with regression coverage. No blocker, high, or medium issue remains.
 - Clean install, five-viewport browser smoke, and skill-based canvas/text-state inspection pass; the
   inspected browser remains the intended Phase 0B boot surface.
-- Remaining work: commit, push, verify hosted CI/Pages, and record the deployment result.
+- Committed the reviewed Phase 1B implementation as `7daf664` and pushed it to `origin/main`.
+- Hosted CI run `31288042436` passed in 1m01s, including the 151-test repository check,
+  five-viewport browser smoke, and artifact upload. Pages run `31288042439` passed build and deploy.
+- A cache-busted live request returned HTTP 200 with repository-prefixed assets. The live web-game
+  client and inspected screenshot confirmed `screen: "boot"`, `ready: true`, one canvas, and the
+  intentionally unchanged Phase 0B composition.
+- Phase 1B is implemented, independently reviewed, pushed, and deployed; it awaits owner review.
+- Next: Phase 1C yaku evaluation, active totals, trigger keys, and per-phase combined decision
+  contexts after owner approval.

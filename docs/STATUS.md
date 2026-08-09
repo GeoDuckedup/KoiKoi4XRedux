@@ -2,7 +2,7 @@
 
 **Updated:** August 8, 2026
 
-**Overall state:** Greenfield rewrite, Phase 1B implemented
+**Overall state:** Greenfield rewrite, Phase 1B implemented, reviewed, pushed, and deployed
 
 **Runtime state:** Deterministic headless match setup and complete capture turn loop; visible site
 remains the tested PixiJS boot surface
@@ -72,7 +72,12 @@ See [`ARCHITECTURE.md`](./ARCHITECTURE.md) and
   starter-relative active-player validation. Both were repaired with isolated regressions; fixture
   deep-freezing and the progress record were also tightened. No blocker, high, or medium issue
   remains after repair.
-- Hosted CI, Pages deployment, and the unchanged browser smoke are pending this implementation push.
+- Implementation commit `7daf664` was pushed to `origin/main`. Hosted CI run `31288042436` passed
+  in 1m01s, including the clean repository check, five-viewport browser smoke, and artifact upload.
+- Pages run `31288042439` passed its build and deploy jobs. A cache-busted live request returned HTTP
+  200 with repository-prefixed assets, and the live web-game client reported `screen: "boot"`,
+  `ready: true`, one canvas, and deterministic 100 ms simulated time. The inspected composition is
+  intentionally unchanged.
 
 ## Known constraints and risks
 

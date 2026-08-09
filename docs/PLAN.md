@@ -144,7 +144,7 @@ Result:
 
 ### Phase 1B — Turn and capture state machine
 
-Status: **implemented; awaiting owner review**.
+Status: **implemented, independently reviewed, and deployed; awaiting owner review**.
 
 Deliver legal hand play, canonical 0/1/2/3 same-month capture behavior, explicit two-target choices,
 Four-Card Sweeps, ordered draw resolution, player-scoped legal actions, deterministic command
