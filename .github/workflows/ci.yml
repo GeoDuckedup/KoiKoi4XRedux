@@ -22,10 +22,10 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run check
-      - run: npm run test:e2e:smoke
+      - run: npm run validate:phase2a
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-0b-browser-smoke
-          path: output/phase-0b/e2e
+          name: phase-2a-responsive-table
+          path: output/phase-2a/e2e
           if-no-files-found: error

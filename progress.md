@@ -276,5 +276,39 @@ Original prompt: read the package and understand it, then let me know when we ar
   with repository-prefixed assets; the live game client and inspected screenshot confirmed the
   intentionally unchanged ready boot surface without browser errors.
 - Phase 1E is implemented, independently accepted, pushed, deployed, and ready for owner review.
-- Next: Phase 2A responsive Pixi table, persistent card views, layout/input services, and
-  deterministic presentation foundations after owner approval.
+- Next: Phase 2A responsive Pixi scene layers, pure layout service, and mobile/desktop table skeleton
+  after owner approval. Persistent cards, animation, and input remain 2B–2D.
+
+## 2026-08-09 — Phase 2A responsive table in progress
+
+- Owner approved Phase 2A.
+- Re-read the project manifest, AI workflow, complete Phase 2A design authority, current web runtime,
+  browser smoke, and the web-game development skill.
+- Parallel read-only audits independently locked the narrow Phase 2A boundary: scene layers, pure
+  responsive layout, and a mobile/desktop skeleton only. Persistent CardViews/deck packages remain
+  2B, animation remains 2C, and gameplay input remains 2D.
+- Added a pure immutable board-layout service with compact portrait, portrait, short-landscape, and
+  desktop modes; all fourteen logical card zones; three UI zones; 5:8 generic slots; and structural
+  diagnostics.
+- Replaced the Phase 0B boot composition with ten persistent Pixi scene layers and a polished
+  placeholder table containing hand silhouettes, four capture summaries per player, stable 2×4
+  field slots, draw/reveal, round/month, textual multiplier, and a disabled action bar.
+- `render_game_to_text` now reports the actual canvas viewport, layout mode, ordered layer names,
+  public skeleton geometry, placeholder counts, deterministic time, and empty diagnostic violations.
+- Added seven literal layout vectors for 320×568, 360×640, 390×844, 768×1024, 844×390,
+  1366×768, and 1920×1080.
+- Root-base browser smoke passes all seven viewports, fullscreen, deterministic-time/no-geometry
+  drift, live resize, and console/network checks. Repository-prefixed Pages smoke passes the same
+  matrix beneath `/KoiKoi4XRedux/`.
+- The bundled web-game client reported the expected desktop table geometry and its canvas screenshot
+  was inspected. A primary-mobile action-bar overflow found in the first visual pass was repaired and
+  the 390×844 screenshot was re-run and approved.
+- `npm run validate:phase2a` passes 2 focused files / 13 tests plus both seven-viewport root and
+  repository-prefixed browser matrices. `npm run check` passes 26 files / 274 tests, five workspace
+  typechecks, deck validation, and the 713-module production build.
+- Independent review found and closed runtime-mutable layer/zone contracts, an invalid accepted
+  minimum viewport, insufficiently literal layout expectations, missing actual-layer persistence
+  proof, and missing hosted Pages-prefix enforcement. CI now runs the combined Phase 2A gate; Pages
+  installs Chromium and validates the prefixed build before artifact upload.
+- Three independent follow-up reviews report no remaining blocker, high, or medium issue.
+- Remaining: commit/push and verify hosted CI, Pages, and the live responsive presentation.

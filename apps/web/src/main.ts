@@ -1,7 +1,13 @@
 import { Application } from "pixi.js";
 
-import { advanceBootTime, createBootSnapshot, serializeBootSnapshot } from "./app/boot-state";
-import { createBootScene, type BootScene } from "./presentation/pixi/create-boot-scene";
+import {
+  advancePreviewTime,
+  createTablePreviewSnapshot,
+  serializeTablePreviewSnapshot,
+} from "./app/table-preview-state";
+import { computeBoardLayout, inspectBoardLayout } from "./presentation/board/board-layout";
+import type { BoardLayout } from "./presentation/board/types";
+import { createTableScene, type TableScene } from "./presentation/pixi/create-table-scene";
 import "./style.css";
 
 function queryRequired<T extends Element>(selector: string): T {
@@ -13,38 +19,53 @@ function queryRequired<T extends Element>(selector: string): T {
 }
 
 const host = queryRequired<HTMLElement>("[data-game-host]");
-const status = queryRequired<HTMLElement>("[data-boot-status]");
+const status = queryRequired<HTMLElement>("[data-table-status]");
 const fullscreenButton = queryRequired<HTMLButtonElement>("[data-fullscreen-button]");
 
 let application: Application | undefined;
-let bootScene: BootScene | undefined;
+let tableScene: TableScene | undefined;
+let currentLayout: BoardLayout | undefined;
 let ready = false;
 let simulationTimeMs = 0;
 
 function snapshot() {
-  return createBootSnapshot({
+  const boardViewport = {
+    width: Math.max(240, host.clientWidth),
+    height: Math.max(240, host.clientHeight),
+  };
+  const layout = currentLayout ?? computeBoardLayout(boardViewport);
+  const scene = tableScene?.inspect() ?? {
+    root: { label: "TableScene" as const, token: "unavailable" },
+    layers: [],
+  };
+  return createTablePreviewSnapshot({
     ready,
     canvasCount: document.querySelectorAll("canvas").length,
     viewport: {
       width: window.innerWidth,
       height: window.innerHeight,
     },
+    boardViewport,
     fullscreen: document.fullscreenElement !== null,
     simulationTimeMs,
+    layout,
+    scene,
+    diagnostics: inspectBoardLayout(layout),
   });
 }
 
 function redraw(): void {
-  if (!application || !bootScene) {
+  if (!application || !tableScene) {
     return;
   }
 
-  const width = Math.max(1, host.clientWidth);
-  const height = Math.max(1, host.clientHeight);
+  const width = Math.max(240, host.clientWidth);
+  const height = Math.max(240, host.clientHeight);
   application.renderer.resize(width, height);
-  bootScene.redraw({
+  currentLayout = computeBoardLayout({ width, height });
+  tableScene.redraw({
     fullscreen: document.fullscreenElement !== null,
-    simulationTimeMs,
+    layout: currentLayout,
   });
   application.render();
 }
@@ -72,10 +93,10 @@ async function toggleFullscreen(): Promise<void> {
 
 window.__KOIKOI4X_READY__ = false;
 window.__KOIKOI4X_SNAPSHOT__ = snapshot;
-window.render_game_to_text = () => serializeBootSnapshot(snapshot());
+window.render_game_to_text = () => serializeTablePreviewSnapshot(snapshot());
 window.advanceTime = (milliseconds: number) => {
-  simulationTimeMs = advanceBootTime(simulationTimeMs, milliseconds);
-  redraw();
+  simulationTimeMs = advancePreviewTime(simulationTimeMs, milliseconds);
+  application?.render();
 };
 
 fullscreenButton.addEventListener("click", () => {
@@ -114,18 +135,22 @@ async function start(): Promise<void> {
   app.ticker.stop();
   app.canvas.dataset.gameCanvas = "true";
   app.canvas.setAttribute("role", "img");
-  app.canvas.setAttribute("aria-label", "Decorative KoiKoi4x Hanafuda table");
+  app.canvas.setAttribute(
+    "aria-label",
+    "Responsive KoiKoi4x table layout preview with opponent, field, draw, captures, hand, and action zones",
+  );
   host.replaceChildren(app.canvas);
 
   application = app;
-  bootScene = createBootScene(app);
+  tableScene = createTableScene(app);
   const resizeObserver = new ResizeObserver(redraw);
   resizeObserver.observe(host);
 
   ready = true;
   window.__KOIKOI4X_READY__ = true;
   document.documentElement.dataset.appReady = "true";
-  status.textContent = "Rendering surface ready. Gameplay arrives with the headless engine.";
+  status.textContent =
+    "Responsive table ready. Card artwork and gameplay controls arrive in later Phase 2 slices.";
   redraw();
 }
 

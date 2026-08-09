@@ -94,9 +94,10 @@ resulting public hash. Future Firebase transaction storage/publication remains P
 ## Runtime baseline
 
 - The web app is framework-free TypeScript on Vite and PixiJS.
-- The Pixi ticker is stopped on the boot surface; test time advances only through
+- The Pixi ticker is stopped on the Phase 2A table surface; test time advances only through
   `window.advanceTime(ms)`.
-- `window.render_game_to_text()` returns a stable JSON description of the visible runtime state.
+- `window.render_game_to_text()` returns a stable JSON description of the visible responsive layout,
+  prescribed scene layers, logical card zones, reserved UI zones, and geometry diagnostics.
 - The Vite base path is configurable with `VITE_BASE_PATH` for repository-relative GitHub Pages
   deployment.
 - Firebase dependencies and configuration are deliberately deferred to Phase 7 so Phase 0B cannot
@@ -110,6 +111,6 @@ Bank/Koi/transition/final/history vectors plus 11 new Phase 1E projection/invari
 live in `packages/test-fixtures` while production behavior stays in the engine. Phase 1E also runs
 10,002 complete generated legal matches, split evenly across 3/6/12-round formats, with production
 validation after every transition and sampled full replay/privacy hash equality. The project smoke
-script owns browser, responsive,
-fullscreen, semantic DOM, canvas, diagnostic-hook, and browser-error checks. The bundled web-game
+script owns browser, seven-viewport responsive layout, fullscreen, live resize, repository-base asset,
+semantic DOM, canvas, diagnostic-hook, and browser/network-error checks. The bundled web-game
 client provides an additional artifact-compatible canvas/text-state pass during local validation.

@@ -1,10 +1,10 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository is
-currently at **Phase 1C: deterministic yaku and trigger system**. It contains the
-canonical rules authority, all 48 artwork-independent card records, a versioned deck authoring
-contract, strict workspace boundaries, a tested PixiJS boot surface, reproducible match setup, and
-the headless turn loop with exact yaku scoring and Hand/Draw decision boundaries.
+has completed local implementation of **Phase 2A: responsive Pixi table**. It contains the canonical rules
+authority, all 48 artwork-independent card records, the complete deterministic headless match
+engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
+boundaries, and the first mobile/desktop Pixi table skeleton.
 
 ## Prerequisites
 
@@ -27,6 +27,9 @@ npm run check
 npm run validate:phase1a
 npm run validate:phase1b
 npm run validate:phase1c
+npm run validate:phase1d
+npm run validate:phase1e
+npm run validate:phase2a
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -39,9 +42,8 @@ pilot sources and reports the other 44 final-art files as pending; release valid
 until Phase 2 visual approval.
 
 `npm run validate:phase1a` executes the seeded RNG, shuffle/deal, state-invariant, automatic opening
-outcome, event-visibility, and DEAL-001–012 fixture suite. The browser smoke produces responsive
-screenshots and the serialized runtime state under
-`output/phase-0b/e2e/`.
+outcome, event-visibility, and DEAL-001–012 fixture suite. The Phase 2A browser smoke produces
+responsive table screenshots and serialized layout diagnostics under `output/phase-2a/e2e/`.
 
 `npm run validate:phase1b` executes the pure capture primitive, gameplay command state machine,
 legal-action generation, authoritative invariants, and all eight CAP-000 through CAP-DRAW-003
@@ -52,6 +54,11 @@ choices persist as an authoritative pending phase.
 pending-choice, incremental-value, multi-yaku, Player B, and final-draw state-machine integration.
 It verifies that all new yaku from one capture phase share one decision context and that Bank/Koi-Koi
 execution remains unavailable until Phase 1D.
+
+`npm run validate:phase2a` runs the pure responsive layout vectors plus root-base and
+repository-prefixed browser validation at seven phone, tablet, landscape, and desktop viewports.
+It verifies all prescribed Pixi layers and logical zones, deterministic geometry, fullscreen,
+resize behavior, Pages asset routing, and zero browser/network errors.
 
 ## Workspace map
 
@@ -75,5 +82,5 @@ workflow derives the correct Vite base path from the repository name and deploys
 after checks pass.
 
 No Firebase project, credentials, database migration, final artwork upload, or production domain is
-needed in Phase 1C. This subphase is headless, so the deployed page intentionally remains the Phase
-0B boot surface until rendering/gameplay integration begins.
+needed for Phase 2A. The deployed page presents a responsive table-layout preview; real deck
+textures, card identity, animation, and gameplay controls arrive in Phases 2B–2D.

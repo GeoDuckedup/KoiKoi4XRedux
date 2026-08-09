@@ -14,7 +14,7 @@
     <main class="app-shell" aria-labelledby="app-title">
       <header class="app-header">
         <div>
-          <p class="eyebrow">Hanafuda strategy · foundation build</p>
+          <p class="eyebrow">Hanafuda strategy · Phase 2A</p>
           <h1 id="app-title">KoiKoi4x</h1>
         </div>
         <button class="fullscreen-button" type="button" data-fullscreen-button>
@@ -22,17 +22,18 @@
         </button>
       </header>
 
-      <section class="game-frame" aria-label="KoiKoi4x boot screen">
-        <div class="game-host" data-game-host aria-hidden="true"></div>
-        <div class="boot-copy" aria-live="polite">
-          <p class="boot-label">Phase 0B</p>
-          <h2>Preparing the table</h2>
-          <p data-boot-status>Starting the rendering surface…</p>
-        </div>
+      <section
+        class="game-frame"
+        aria-label="Responsive KoiKoi4x table layout preview"
+        aria-describedby="table-status"
+      >
+        <div class="game-host" data-game-host></div>
       </section>
 
       <footer class="app-footer">
-        <span>Deterministic foundation</span>
+        <span id="table-status" data-table-status aria-live="polite"
+          >Building the responsive table…</span
+        >
         <span><kbd>F</kbd> fullscreen · <kbd>Esc</kbd> exit</span>
       </footer>
     </main>

@@ -1,8 +1,8 @@
 # KoiKoi4x Implementation Plan
 
-**Plan version:** 1.0  
-**Updated:** August 8, 2026  
-**Current gate:** Phase 1D owner review
+**Plan version:** 1.1
+**Updated:** August 9, 2026
+**Current gate:** Phase 2A implementation and acceptance
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -204,7 +204,7 @@ Result:
 
 ### Phase 1D — Bank, Koi-Koi, End of Play, and round/match lifecycle
 
-Status: **implemented, independently accepted, pushed, and deployed; awaiting owner review**.
+Status: **completed, deployed, and owner-approved**.
 
 Deliver executable Bank/Koi-Koi decisions, 1×–4× table progression, latest-caller End-of-Play
 scoring, special 2× privilege, final-round leader restriction, next-starter policy, durable typed
@@ -245,7 +245,7 @@ Current result:
 
 ### Phase 1E — Observations, replay, and deterministic verification
 
-Status: **implemented, independently accepted, pushed, and deployed; awaiting owner review**.
+Status: **completed, deployed, and owner-approved**.
 
 Complete the headless engine with formal privacy-safe public/player projections, audience-filtered
 events, canonical serialization and hashes, private command/checkpoint replay, retry-safe accepted
@@ -278,9 +278,61 @@ Current result:
 - implementation commit `b0c4d06` is on `origin/main`; hosted CI run `31294666605` and Pages run
   `31294666580` passed, and the cache-busted live runtime was inspected successfully.
 
+## Phase 2 — Rendering foundation
+
+### Phase 2A — Responsive Pixi table
+
+Status: **implemented and independently accepted; commit and deployment pending**.
+
+Deliver:
+
+- a pure presentation-owned viewport/layout service with deterministic phone, tablet, landscape,
+  and desktop modes;
+- all fourteen logical card zones plus reserved identity, round-status, and action-bar bounds;
+- the ten prescribed persistent Pixi scene layers in explicit z-order;
+- a polished placeholder table skeleton with opponent/player hands, four-category capture summaries,
+  stable 2×4 field slots, draw/reveal, multiplier, and a disabled action bar;
+- versioned `render_game_to_text` geometry diagnostics while retaining one canvas, stopped ticker,
+  deterministic `advanceTime`, fullscreen, and semantic DOM status;
+- literal layout vectors and root/repository-prefixed browser checks across seven viewports.
+
+Gate:
+
+- `LAYOUT-001` through `LAYOUT-007` return deterministic, immutable, finite, in-bounds geometry with
+  the correct responsive mode, fourteen logical card zones, eight 5:8 field slots, and an action bar
+  at least 44 CSS pixels high;
+- mobile portrait follows the opponent → status → field/draw → captures → hand → action hierarchy,
+  short landscape has a dedicated collision-free composition, and desktop uses lateral capture
+  rails around a centered field;
+- scene layer containers persist across redraws and the renderer does not own rule state;
+- seven-viewport screenshots, live resize, fullscreen, console/network checks, and the bundled
+  web-game client are inspected successfully;
+- root-base and `/KoiKoi4XRedux/` builds load every asset without error;
+- no engine, CardView/deck texture, animation queue, gameplay command, or card-input behavior enters
+  this slice.
+
+Phase ownership remains strict: persistent CardViews/deck packages are 2B, AnimationDirector is 2C,
+and selection/target/keyboard input is 2D.
+
+Current result:
+
+- a runtime-immutable layout service returns complete geometry for compact portrait, portrait,
+  landscape, and desktop without importing engine or asset/runtime code;
+- ten stable Pixi layer objects survive deterministic time and live portrait-to-landscape resize;
+- all seven layout vectors bind literal fingerprints of the complete serialized geometry and retain
+  independent containment/hierarchy/aspect/immutability assertions;
+- `validate:phase2a` passes 2 files / 13 tests plus root and repository-prefixed seven-viewport
+  browser matrices; the full check passes 26 files / 274 tests and a 713-module build;
+- the bundled game-client screenshot/state and representative browser screenshots were inspected;
+  a primary-mobile action-bar overflow found during runtime review was repaired;
+- independent architecture, visual/runtime, and test/deployment reviews report no blocker, high, or
+  medium finding after immutable-contract, minimum-viewport, fixture, scene-token, and workflow
+  repairs.
+
 ## Later phases
 
-1. **Phase 2 — Rendering foundation:** responsive Pixi table, persistent cards, deck-package runtime, AnimationDirector, input, and Deck Workshop.
+1. **Phase 2B–2E — Remaining rendering foundation:** persistent cards/deck-package runtime,
+   AnimationDirector, input, and Deck Workshop.
 2. **Phase 3 — One-round vertical slice:** complete playable local round and presentation.
 3. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook.
 4. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, and pass-and-play.
