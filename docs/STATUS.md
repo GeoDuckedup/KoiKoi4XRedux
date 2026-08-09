@@ -2,8 +2,8 @@
 
 **Updated:** August 9, 2026
 
-**Overall state:** Greenfield rewrite, Phase 1E implemented and independently accepted; commit and
-deployment verification in progress
+**Overall state:** Greenfield rewrite, Phase 1E implemented, independently accepted, pushed, and
+deployed; awaiting owner review
 
 **Runtime state:** Complete deterministic headless match engine with formal projections, replay,
 hashes, retry-safe command receipts, and protocol records; visible site remains the tested PixiJS
@@ -109,7 +109,10 @@ Phase 1E privacy, replay, hash, retry, and protocol choices are recorded in
   boot surface is intentionally unchanged.
 - Three independent final reviews found no remaining blocker, high, or medium issue after adversarial
   privacy/schema, fixture-binding, sequence, and canonical-data repairs.
-- Commit/push, hosted CI, Pages, and deployed-page verification remain in progress.
+- Implementation commit `b0c4d06` is on `origin/main`. Hosted CI run `31294666605` passed the full
+  repository/browser/artifact gate in 3m33s; Pages run `31294666580` passed build and deployment.
+- A cache-busted live request returned HTTP 200 with repository-prefixed assets. The live game client
+  reported the expected ready boot state and its screenshot was inspected without browser errors.
 
 ## Known constraints and risks
 

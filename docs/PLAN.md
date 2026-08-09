@@ -245,7 +245,7 @@ Current result:
 
 ### Phase 1E — Observations, replay, and deterministic verification
 
-Status: **implemented and independently accepted; commit/deployment verification in progress**.
+Status: **implemented, independently accepted, pushed, and deployed; awaiting owner review**.
 
 Complete the headless engine with formal privacy-safe public/player projections, audience-filtered
 events, canonical serialization and hashes, private command/checkpoint replay, retry-safe accepted
@@ -275,6 +275,8 @@ Current result:
   passes 25 files / 263 tests plus the 711-module build;
 - the required 10,002-match generated gate passes with 3,334 matches per format, five-viewport smoke
   passes, and three independent final reviews report no blocker, high, or medium issue.
+- implementation commit `b0c4d06` is on `origin/main`; hosted CI run `31294666605` and Pages run
+  `31294666580` passed, and the cache-busted live runtime was inspected successfully.
 
 ## Later phases
 

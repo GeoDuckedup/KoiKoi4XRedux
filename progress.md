@@ -268,3 +268,13 @@ Original prompt: read the package and understand it, then let me know when we ar
   boot surface remains intentionally unchanged.
 - Three independent final reviews report no blocker, high, or medium issue. Remaining: commit, push,
   hosted CI/Pages verification, and cache-busted live inspection.
+- Committed Phase 1E as `b0c4d06` and pushed it to `origin/main`.
+- Hosted CI run `31294666605` passed in 3m33s, including the 263-test full repository check,
+  five-viewport browser smoke, and artifact upload. Its only annotation is the existing nonblocking
+  Node.js action-runtime maintenance notice.
+- Pages run `31294666580` passed build and deployment. A cache-busted live request returned HTTP 200
+  with repository-prefixed assets; the live game client and inspected screenshot confirmed the
+  intentionally unchanged ready boot surface without browser errors.
+- Phase 1E is implemented, independently accepted, pushed, deployed, and ready for owner review.
+- Next: Phase 2A responsive Pixi table, persistent card views, layout/input services, and
+  deterministic presentation foundations after owner approval.
