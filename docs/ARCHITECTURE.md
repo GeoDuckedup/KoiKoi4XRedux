@@ -16,10 +16,13 @@ cannot import either package or any presentation/authoring system. The web app a
 may consume domain/protocol packages; domain packages may not import presentation, browser, or
 backend systems. ESLint restrictions and executable architecture tests enforce these boundaries.
 
-The deck-format core is browser-portable and performs schema validation, inheritance, provenance, and
-transform math without filesystem access. Node-only source inspection, hashing, technical-pilot
-seeding, generated artifacts, and the CLI live below `packages/deck-format/src/node` or the CLI entry
-point. Phase 0D does not install deck packages into the browser runtime.
+The deck-format core is browser-portable and performs schema validation, inheritance, provenance,
+transform math, and complete runtime-manifest validation without filesystem access. Node-only source
+inspection, hashing, technical-pilot seeding, generated artifacts, and the CLI live below
+`packages/deck-format/src/node` or the CLI entry point. Authored source/transform manifests are never
+browser texture manifests. Phase 2B adds a distinct `RuntimeDeckManifestV1` containing only complete
+resolved face/back asset paths and provenance; the web app imports the portable entry point and never
+the Node adapter.
 
 ## Deterministic headless engine
 
@@ -94,10 +97,18 @@ resulting public hash. Future Firebase transaction storage/publication remains P
 ## Runtime baseline
 
 - The web app is framework-free TypeScript on Vite and PixiJS.
-- The Pixi ticker is stopped on the Phase 2A table surface; test time advances only through
+- The Pixi ticker is stopped on the Phase 2B table surface; test time advances only through
   `window.advanceTime(ms)`.
-- `window.render_game_to_text()` returns a stable JSON description of the visible responsive layout,
-  prescribed scene layers, logical card zones, reserved UI zones, and geometry diagnostics.
+- The prescribed ten scene layers persist, with separate chrome and card child containers. Chrome
+  redraws for resize never recreate the scene layers or the 48 canonical CardViews.
+- One persistent CardView exists per canonical CardId. The current Phase 2B allocation is explicitly
+  a technical presentation showcase, not an engine projection.
+- The browser asset manager validates and preloads every candidate face/back before atomically
+  switching local textures. Candidate failure leaves the active deck unchanged.
+- `window.render_game_to_text()` returns stable JSON describing the responsive layout, scene layers,
+  local technical-showcase placements, CardView identity tokens, active technical deck, and geometry
+  diagnostics. These diagnostics are development-only and do not represent a privacy-safe match
+  observation.
 - The Vite base path is configurable with `VITE_BASE_PATH` for repository-relative GitHub Pages
   deployment.
 - Firebase dependencies and configuration are deliberately deferred to Phase 7 so Phase 0B cannot
@@ -114,3 +125,6 @@ validation after every transition and sampled full replay/privacy hash equality.
 script owns browser, seven-viewport responsive layout, fullscreen, live resize, repository-base asset,
 semantic DOM, canvas, diagnostic-hook, and browser/network-error checks. The bundled web-game
 client provides an additional artifact-compatible canvas/text-state pass during local validation.
+Phase 2B additionally validates two complete technical runtime packages, all 48 persistent view
+identities, exact zone coverage, 5:8 placement containment, atomic package failure, root/Pages asset
+resolution, live deck switching, and identity preservation across resize.

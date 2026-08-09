@@ -2,7 +2,7 @@
 
 **Plan version:** 1.1
 **Updated:** August 9, 2026
-**Current gate:** Phase 2A deployed and awaiting owner review; Phase 2B is next
+**Current gate:** Phase 2B independently accepted; commit and deployment verification in progress
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -331,10 +331,43 @@ Current result:
 - implementation commit `5fccfc9` passed hosted CI run `31296702209` and Pages run `31296702171`;
   cache-busted desktop and 390×844 live renders were inspected successfully.
 
+### Phase 2B — Persistent cards and runtime deck packages
+
+Status: **implemented and independently accepted; commit and deployment verification in progress**.
+
+Deliver:
+
+- a portable strict `RuntimeDeckManifestV1` with exactly 48 resolved canonical faces and one back;
+- two complete, reproducibly generated, explicitly non-final technical runtime packages;
+- one persistent Pixi CardView per canonical CardId, assigned immediately to the Phase 2A zones;
+- separate persistent card and redrawable chrome containers within the ten scene layers;
+- a Pages-safe asset manager that validates and preloads a whole candidate before atomic activation;
+- local deck selection between the two installed packages without engine/protocol/replay mutation;
+- deterministic diagnostics and tests for identity, placement, texture binding, failure rollback, and
+  root/repository-prefixed browser delivery.
+
+Gate:
+
+- `DECK2B-001` through `DECK2B-003`, `CARDVIEW-001/002`, `SWITCH-001/002`, and `ASSET-003` execute
+  literal contract, placement, persistence, rollback, and browser-boundary assertions;
+- every installed manifest resolves exactly the 48 CardIds plus one back at ART_SPEC v1 geometry,
+  and generated artifacts reproduce byte-for-byte;
+- all 48 CardView tokens remain stable across resize, zone changes, face/back changes, and a complete
+  deck switch; card objects are never recreated by chrome redraw;
+- package selection changes only local textures/labels, while authoritative engine, protocol,
+  projection, replay, command, and RNG state remain outside the presentation runtime;
+- failed candidate loading leaves the prior active package unchanged and releases candidate assets;
+- seven root-base and seven `/KoiKoi4XRedux/` browser views load all face/back assets without error,
+  switch packages, preserve scene/CardView identity, and remain visually contained;
+- technical packages remain labeled placeholders; no final-art, animation, input, or Workshop claim
+  enters Phase 2B.
+
+Phase ownership remains strict: AnimationDirector is 2C, selection/target/keyboard input is 2D, and
+Deck Workshop plus final visual approval is 2E.
+
 ## Later phases
 
-1. **Phase 2B–2E — Remaining rendering foundation:** persistent cards/deck-package runtime,
-   AnimationDirector, input, and Deck Workshop.
+1. **Phase 2C–2E — Remaining rendering foundation:** AnimationDirector, input, and Deck Workshop.
 2. **Phase 3 — One-round vertical slice:** complete playable local round and presentation.
 3. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook.
 4. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, and pass-and-play.

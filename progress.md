@@ -319,3 +319,48 @@ Original prompt: read the package and understand it, then let me know when we ar
   desktop and 390×844 portrait screenshots were inspected and approved.
 - No owner-side deployment action is required. Phase 2A is awaiting owner review; Phase 2B is the
   next proposed subphase.
+
+## 2026-08-09 — Phase 2B persistent cards and deck runtime started
+
+- Owner approved Phase 2B.
+- Re-read the manifest, AI workflow, Phase 2B design/deck-art/architecture authority, current table
+  runtime, complete CardId catalog, and the web-game development skill.
+- Three parallel read-only audits confirmed that the existing authored deck is a four-face technical
+  pilot rather than a browser-ready runtime deck. Phase 2B therefore introduces a distinct portable
+  runtime-manifest contract and two complete, explicitly non-final generated technical packages.
+- Scope remains presentation-only: persistent CardViews, complete face/back texture resolution,
+  immediate zone layouts, and local atomic deck switching. Animation, gameplay input, and the Deck
+  Workshop remain Phases 2C, 2D, and 2E.
+
+## 2026-08-09 — Phase 2B implementation and local acceptance
+
+- Added browser-portable `RuntimeDeckManifestV1` validation for exact 48-card/back coverage, fixed
+  ART_SPEC v1 geometry, safe local paths, provenance, approval status, strict nested data shapes, and
+  runtime freezing. Browser source is mechanically prevented from importing Node authoring adapters.
+- Added a reproducible generator and byte-current check for 100 artifacts across two complete
+  `technical-placeholder` packages: Technical Sunrise and Technical Moonlight. They are explicit
+  runtime fixtures rather than approved artwork.
+- Added exactly 48 persistent CardViews keyed by canonical CardId. Responsive layout reparents and
+  resizes the same tokens across separate per-layer card containers while chrome redraw remains
+  isolated. The visible allocation covers both hands, all capture categories, field, draw pile, and
+  reveal as a clearly labeled technical showcase.
+- Added complete candidate preload, atomic activation, superseded/failure cleanup, and a local
+  accessible package selector. Deck switching changes only local texture bindings; it does not call
+  an engine command or alter engine/protocol/replay state.
+- `npm run validate:phase2b` passes 6 files / 42 tests, validates all 100 generated artifacts, and
+  passes seven root plus seven repository-prefixed browser viewports with live switching, resize,
+  fullscreen, stable scene/CardView identity, and zero browser/network errors.
+- `npm run check` passes formatting, zero-warning lint, all five workspace typechecks, authored-deck
+  validation, 29 files / 301 tests, and the 750-module production build. The isolated required
+  10,002-match gate also passed in 67.30 seconds; an earlier concurrent-review timeout was rerun
+  uncontended before acceptance.
+- The required web-game client reported `cardRuntime`, 48 unique views, all expected zone counts,
+  Technical Sunrise active, and no diagnostics. Its screenshot and representative 390×844/1366×768
+  Sunrise plus 390×844 Moonlight browser screenshots were visually inspected.
+- Independent review found two related mobile memory issues: prior active and fully loaded stale
+  texture bundles were cached indefinitely. Activation now retargets all views before manager-owned
+  eviction, serializes switch-back against release, and generation-safely unloads stale candidates.
+  Tests cover apply-before-unload, switch-back reload, partial failure, and deferred supersession.
+- Runtime provenance is now constrained to the declared inheritance chain. Three independent
+  follow-up reviews report no remaining blocker, high, or medium issue.
+- Remaining: commit/push, hosted CI/Pages verification, and cache-busted live deck-switch inspection.

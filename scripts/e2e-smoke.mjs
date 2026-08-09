@@ -6,7 +6,7 @@ import { chromium } from "playwright";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-2a/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-2b/e2e");
 const baseUrl = "http://127.0.0.1:4173";
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/g, "")}`.replace(/^\/$/, "/");
@@ -160,19 +160,23 @@ try {
     });
 
     assert(
-      result.before.screen === "boardSkeleton",
-      "render_game_to_text must identify the Phase 2A table skeleton.",
+      result.before.screen === "cardRuntime",
+      "render_game_to_text must identify the Phase 2B card runtime.",
+    );
+    assert(
+      result.before.presentationMode === "technicalShowcase",
+      "The visible 48-card allocation must remain explicitly identified as a technical fixture.",
     );
     assert(result.before.ready === true, "The table state must report ready.");
     assert(result.before.canvasCount === 1, "The table surface must contain exactly one canvas.");
     assert(result.after.simulationTimeMs === 250, "advanceTime must advance exactly 250ms.");
     assert(
       JSON.stringify(result.before.layout) === JSON.stringify(result.after.layout),
-      "Advancing deterministic time must not change Phase 2A geometry.",
+      "Advancing deterministic time must not change Phase 2B geometry.",
     );
     assert(result.heading === "KoiKoi4x", "The semantic page heading is missing.");
     assert(
-      result.status?.includes("Responsive table ready"),
+      result.status?.includes("Technical Sunrise ready"),
       "The accessible ready status is missing.",
     );
     assert(
@@ -191,6 +195,44 @@ try {
     assert(
       JSON.stringify(result.before.scene) === JSON.stringify(result.after.scene),
       "Deterministic time advance replaced a Pixi scene-layer instance.",
+    );
+    assert(
+      result.before.deck.status === "ready" &&
+        result.before.deck.activeDeckId === "technical-sunrise" &&
+        JSON.stringify(result.before.deck.availableDeckIds) ===
+          JSON.stringify(["technical-sunrise", "technical-moonlight"]),
+      "The initial installed runtime deck catalog is incorrect.",
+    );
+    assert(
+      result.before.cards.cardViewCount === 48 &&
+        result.before.cards.uniqueCardIdCount === 48 &&
+        result.before.cards.views.length === 48,
+      "The persistent CardView registry must contain exactly 48 canonical cards.",
+    );
+    assert(
+      new Set(result.before.cards.views.map(({ token }) => token)).size === 48,
+      "Every canonical CardView needs a unique persistent token.",
+    );
+    assert(
+      JSON.stringify(
+        result.before.cards.views.map(({ cardId, token, zone, slotId, faceUp }) => ({
+          cardId,
+          token,
+          zone,
+          slotId,
+          faceUp,
+        })),
+      ) ===
+        JSON.stringify(
+          result.after.cards.views.map(({ cardId, token, zone, slotId, faceUp }) => ({
+            cardId,
+            token,
+            zone,
+            slotId,
+            faceUp,
+          })),
+        ),
+      "Deterministic time advance replaced or moved a CardView.",
     );
     assert(
       result.before.layout.mode === viewport.mode,
@@ -228,6 +270,47 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(pageUrl, { waitUntil: "networkidle" });
   await page.waitForFunction(() => document.documentElement.dataset.appReady === "true");
+  const beforeDeckSwitch = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
+  await page.selectOption("[data-deck-select]", "technical-moonlight");
+  await page.waitForFunction(() => {
+    const state = JSON.parse(window.render_game_to_text());
+    return state.deck.status === "ready" && state.deck.activeDeckId === "technical-moonlight";
+  });
+  const afterDeckSwitch = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
+  assert(
+    JSON.stringify(beforeDeckSwitch.scene) === JSON.stringify(afterDeckSwitch.scene),
+    "Deck switching replaced a persistent Pixi scene layer.",
+  );
+  assert(
+    JSON.stringify(
+      beforeDeckSwitch.cards.views.map(({ cardId, token, zone, slotId, faceUp }) => ({
+        cardId,
+        token,
+        zone,
+        slotId,
+        faceUp,
+      })),
+    ) ===
+      JSON.stringify(
+        afterDeckSwitch.cards.views.map(({ cardId, token, zone, slotId, faceUp }) => ({
+          cardId,
+          token,
+          zone,
+          slotId,
+          faceUp,
+        })),
+      ),
+    "Deck switching changed CardView identity or presentation state.",
+  );
+  assert(
+    JSON.stringify(beforeDeckSwitch.cards.views.map(({ textureBinding }) => textureBinding)) !==
+      JSON.stringify(afterDeckSwitch.cards.views.map(({ textureBinding }) => textureBinding)),
+    "Deck switching did not replace face/back texture bindings.",
+  );
+  await page.screenshot({
+    path: resolve(outputDirectory, "table-technical-moonlight-390x844.png"),
+    fullPage: true,
+  });
   assert(await page.evaluate(() => document.fullscreenEnabled), "Fullscreen API is unavailable.");
 
   await page.getByRole("button", { name: "Enter fullscreen" }).click();
@@ -240,9 +323,7 @@ try {
   await page.keyboard.press("Escape");
   await page.waitForFunction(() => document.fullscreenElement === null);
 
-  const sceneBeforeResize = await page.evaluate(
-    () => JSON.parse(window.render_game_to_text()).scene,
-  );
+  const runtimeBeforeResize = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
   await page.setViewportSize({ width: 844, height: 390 });
   await page.waitForFunction(() => {
     const state = JSON.parse(window.render_game_to_text());
@@ -250,8 +331,14 @@ try {
   });
   const resizedState = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
   assert(
-    JSON.stringify(sceneBeforeResize) === JSON.stringify(resizedState.scene),
+    JSON.stringify(runtimeBeforeResize.scene) === JSON.stringify(resizedState.scene),
     "Portrait-to-landscape resize replaced a persistent Pixi scene-layer instance.",
+  );
+  assert(
+    JSON.stringify(
+      runtimeBeforeResize.cards.views.map(({ cardId, token }) => ({ cardId, token })),
+    ) === JSON.stringify(resizedState.cards.views.map(({ cardId, token }) => ({ cardId, token }))),
+    "Portrait-to-landscape resize replaced a persistent CardView instance.",
   );
   assert(
     resizedState.diagnostics.clippedZones.length === 0 &&
@@ -268,7 +355,7 @@ try {
     "utf8",
   );
   process.stdout.write(
-    `Responsive table smoke passed for ${viewports.length} viewports at ${mountedBasePath}.\n`,
+    `Persistent card/deck runtime smoke passed for ${viewports.length} viewports at ${mountedBasePath}.\n`,
   );
 } finally {
   await browser?.close();

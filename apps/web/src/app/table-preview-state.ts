@@ -4,8 +4,11 @@ import type {
   BoardSceneInspection,
   BoardViewport,
 } from "../presentation/board/types";
+import type { CardRuntimeInspection } from "../presentation/cards/types";
+import type { RuntimeDeckApprovalStatus } from "@koikoi4x/deck-format";
 
-export const TABLE_SCREEN_ID = "boardSkeleton" as const;
+export const TABLE_SCREEN_ID = "cardRuntime" as const;
+export const TABLE_PRESENTATION_MODE = "technicalShowcase" as const;
 export const COORDINATE_SYSTEM = "origin top-left; +x right; +y down" as const;
 
 export interface TablePreviewSnapshot {
@@ -13,6 +16,12 @@ export interface TablePreviewSnapshot {
   canvasCount: number;
   coordinateSystem: typeof COORDINATE_SYSTEM;
   diagnostics: BoardLayoutDiagnostics;
+  deck: {
+    activeDeckId: string | null;
+    approvalStatus: RuntimeDeckApprovalStatus | null;
+    availableDeckIds: readonly string[];
+    status: "error" | "loading" | "ready";
+  };
   fullscreen: boolean;
   layerOrder: BoardLayout["layerOrder"];
   layout: {
@@ -23,11 +32,8 @@ export interface TablePreviewSnapshot {
     uiZones: BoardLayout["uiZones"];
     zones: BoardLayout["cardZones"];
   };
-  placeholderCounts: {
-    fieldSlots: 8;
-    opponentHand: 8;
-    playerHand: 8;
-  };
+  presentationMode: typeof TABLE_PRESENTATION_MODE;
+  cards: CardRuntimeInspection;
   ready: boolean;
   scene: BoardSceneInspection;
   screen: typeof TABLE_SCREEN_ID;
@@ -52,10 +58,11 @@ export function createTablePreviewSnapshot(input: {
   boardViewport: BoardViewport;
   canvasCount: number;
   diagnostics: BoardLayoutDiagnostics;
+  deck: TablePreviewSnapshot["deck"];
   fullscreen: boolean;
   layout: BoardLayout;
   ready: boolean;
-  scene: BoardSceneInspection;
+  scene: BoardSceneInspection & { readonly cards: CardRuntimeInspection };
   simulationTimeMs: number;
   viewport: BoardViewport;
 }): TablePreviewSnapshot {
@@ -68,8 +75,14 @@ export function createTablePreviewSnapshot(input: {
     invalidZones: Object.freeze([...input.diagnostics.invalidZones]),
     overlapViolations: Object.freeze([...input.diagnostics.overlapViolations]),
   });
+  const cards = Object.freeze({
+    ...input.scene.cards,
+    views: Object.freeze(input.scene.cards.views.map((view) => Object.freeze({ ...view }))),
+    zoneCounts: Object.freeze({ ...input.scene.cards.zoneCounts }),
+  });
   return Object.freeze({
     screen: TABLE_SCREEN_ID,
+    presentationMode: TABLE_PRESENTATION_MODE,
     ready: input.ready,
     canvasCount: input.canvasCount,
     viewport: Object.freeze({ ...input.viewport }),
@@ -77,8 +90,13 @@ export function createTablePreviewSnapshot(input: {
     fullscreen: input.fullscreen,
     simulationTimeMs: input.simulationTimeMs,
     coordinateSystem: COORDINATE_SYSTEM,
+    deck: Object.freeze({
+      ...input.deck,
+      availableDeckIds: Object.freeze([...input.deck.availableDeckIds]),
+    }),
     layerOrder: input.layout.layerOrder,
     scene,
+    cards,
     layout: Object.freeze({
       mode: input.layout.mode,
       scale: input.layout.scale,
@@ -86,11 +104,6 @@ export function createTablePreviewSnapshot(input: {
       fieldSlotCount: input.layout.slots.field.length,
       zones: input.layout.cardZones,
       uiZones: input.layout.uiZones,
-    }),
-    placeholderCounts: Object.freeze({
-      opponentHand: 8,
-      fieldSlots: 8,
-      playerHand: 8,
     }),
     diagnostics,
   });

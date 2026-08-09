@@ -1,4 +1,4 @@
-import { Application } from "pixi.js";
+import { Application, type Texture } from "pixi.js";
 
 import {
   advancePreviewTime,
@@ -6,7 +6,13 @@ import {
   serializeTablePreviewSnapshot,
 } from "./app/table-preview-state";
 import { computeBoardLayout, inspectBoardLayout } from "./presentation/board/board-layout";
-import type { BoardLayout } from "./presentation/board/types";
+import { CARD_ZONES, type BoardLayout } from "./presentation/board/types";
+import type { CardRuntimeInspection } from "./presentation/cards/types";
+import {
+  createPixiCardAssetManager,
+  type CardAssetManager,
+} from "./presentation/deck/card-asset-manager";
+import { INSTALLED_DECKS, isInstalledDeckId } from "./presentation/deck/installed-decks";
 import { createTableScene, type TableScene } from "./presentation/pixi/create-table-scene";
 import "./style.css";
 
@@ -21,12 +27,25 @@ function queryRequired<T extends Element>(selector: string): T {
 const host = queryRequired<HTMLElement>("[data-game-host]");
 const status = queryRequired<HTMLElement>("[data-table-status]");
 const fullscreenButton = queryRequired<HTMLButtonElement>("[data-fullscreen-button]");
+const deckSelect = queryRequired<HTMLSelectElement>("[data-deck-select]");
 
 let application: Application | undefined;
 let tableScene: TableScene | undefined;
+let cardAssetManager: CardAssetManager<Texture> | undefined;
 let currentLayout: BoardLayout | undefined;
 let ready = false;
 let simulationTimeMs = 0;
+let deckStatus: "error" | "loading" | "ready" = "loading";
+
+const unavailableCards: CardRuntimeInspection = Object.freeze({
+  activeDeckId: "unavailable",
+  cardViewCount: 0,
+  uniqueCardIdCount: 0,
+  views: Object.freeze([]),
+  zoneCounts: Object.freeze(Object.fromEntries(CARD_ZONES.map((zone) => [zone, 0]))) as Readonly<
+    Record<(typeof CARD_ZONES)[number], number>
+  >,
+});
 
 function snapshot() {
   const boardViewport = {
@@ -37,7 +56,9 @@ function snapshot() {
   const scene = tableScene?.inspect() ?? {
     root: { label: "TableScene" as const, token: "unavailable" },
     layers: [],
+    cards: unavailableCards,
   };
+  const activeManifest = cardAssetManager?.active?.manifest ?? null;
   return createTablePreviewSnapshot({
     ready,
     canvasCount: document.querySelectorAll("canvas").length,
@@ -50,6 +71,12 @@ function snapshot() {
     simulationTimeMs,
     layout,
     scene,
+    deck: {
+      activeDeckId: activeManifest?.packageId ?? null,
+      approvalStatus: activeManifest?.approvalStatus ?? null,
+      availableDeckIds: INSTALLED_DECKS.map(({ id }) => id),
+      status: deckStatus,
+    },
     diagnostics: inspectBoardLayout(layout),
   });
 }
@@ -91,6 +118,32 @@ async function toggleFullscreen(): Promise<void> {
   }
 }
 
+async function switchDeck(deckId: string): Promise<void> {
+  if (!isInstalledDeckId(deckId) || !cardAssetManager || !tableScene || !application) {
+    return;
+  }
+  const scene = tableScene;
+  const previousDeckId = cardAssetManager.active?.manifest.packageId ?? INSTALLED_DECKS[0].id;
+  deckStatus = "loading";
+  deckSelect.disabled = true;
+  status.textContent = `Loading ${INSTALLED_DECKS.find(({ id }) => id === deckId)?.name ?? deckId}…`;
+  try {
+    const activation = await cardAssetManager.activate(deckId, (bundle) => {
+      scene.applyDeck(bundle);
+    });
+    if (activation.status === "stale" || !activation.bundle) return;
+    deckStatus = "ready";
+    redraw();
+    status.textContent = `${activation.bundle.manifest.name} ready. Deck switching changed textures only; all 48 canonical CardViews stayed in place.`;
+  } catch (error: unknown) {
+    deckStatus = "error";
+    deckSelect.value = previousDeckId;
+    status.textContent = `Deck switch failed; ${previousDeckId} remains active. ${error instanceof Error ? error.message : "Unknown error"}`;
+  } finally {
+    deckSelect.disabled = false;
+  }
+}
+
 window.__KOIKOI4X_READY__ = false;
 window.__KOIKOI4X_SNAPSHOT__ = snapshot;
 window.render_game_to_text = () => serializeTablePreviewSnapshot(snapshot());
@@ -101,6 +154,9 @@ window.advanceTime = (milliseconds: number) => {
 
 fullscreenButton.addEventListener("click", () => {
   void toggleFullscreen();
+});
+deckSelect.addEventListener("change", () => {
+  void switchDeck(deckSelect.value);
 });
 
 document.addEventListener("fullscreenchange", updateFullscreenLabel);
@@ -142,20 +198,31 @@ async function start(): Promise<void> {
   host.replaceChildren(app.canvas);
 
   application = app;
-  tableScene = createTableScene(app);
+  cardAssetManager = createPixiCardAssetManager(
+    new URL(import.meta.env.BASE_URL, window.location.origin).href,
+  );
+  const initialActivation = await cardAssetManager.activate(INSTALLED_DECKS[0].id);
+  if (initialActivation.status !== "activated" || !initialActivation.bundle) {
+    throw new Error("The initial runtime deck activation was superseded.");
+  }
+  tableScene = createTableScene(app, initialActivation.bundle);
   const resizeObserver = new ResizeObserver(redraw);
   resizeObserver.observe(host);
 
   ready = true;
+  deckStatus = "ready";
+  deckSelect.value = initialActivation.bundle.manifest.packageId;
+  deckSelect.disabled = false;
   window.__KOIKOI4X_READY__ = true;
   document.documentElement.dataset.appReady = "true";
   status.textContent =
-    "Responsive table ready. Card artwork and gameplay controls arrive in later Phase 2 slices.";
+    "Technical Sunrise ready. Switch decks to verify persistent cards; gameplay controls arrive in Phase 2D.";
   redraw();
 }
 
 void start().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : "Unknown initialization error";
+  deckStatus = "error";
   status.textContent = `The rendering surface could not start: ${message}`;
   document.documentElement.dataset.appReady = "error";
   console.error(error);

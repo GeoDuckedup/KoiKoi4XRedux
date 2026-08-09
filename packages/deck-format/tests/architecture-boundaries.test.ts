@@ -29,4 +29,15 @@ describe("deck-format architecture boundary", () => {
     };
     expect(manifest.dependencies).toEqual({ "@koikoi4x/engine": "0.0.0" });
   });
+
+  it("ASSET-003 keeps Node authoring adapters and platform modules out of the web runtime", () => {
+    const webSourcePaths = portableSourceFiles(resolve("apps/web/src"));
+    const forbiddenImport =
+      /(?:from\s+|import\s*\()\s*["'](?:node:[^"']+|@koikoi4x\/deck-format\/node(?:\/[^"']*)?)["']/u;
+
+    expect(webSourcePaths.length).toBeGreaterThan(0);
+    for (const sourcePath of webSourcePaths) {
+      expect(readFileSync(sourcePath, "utf8"), sourcePath).not.toMatch(forbiddenImport);
+    }
+  });
 });

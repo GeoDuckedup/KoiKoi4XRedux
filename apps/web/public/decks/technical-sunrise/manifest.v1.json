@@ -1,0 +1,359 @@
+{
+  "runtimeFormatVersion": 1,
+  "artSpecVersion": 1,
+  "packageId": "technical-sunrise",
+  "packageVersion": "1.0.0",
+  "name": "Technical Sunrise",
+  "author": "KoiKoi4x Project",
+  "license": "Generated technical placeholders for runtime validation; not approved final artwork",
+  "approvalStatus": "technical-placeholder",
+  "framePolicy": "game",
+  "inheritanceChain": [
+    "technical-sunrise"
+  ],
+  "cardFaces": {
+    "january-crane": {
+      "path": "cards/january-crane.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "january-red-text-scroll": {
+      "path": "cards/january-red-text-scroll.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "january-pine-plain-a": {
+      "path": "cards/january-pine-plain-a.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "january-pine-plain-b": {
+      "path": "cards/january-pine-plain-b.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "february-bush-warbler": {
+      "path": "cards/february-bush-warbler.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "february-red-text-scroll": {
+      "path": "cards/february-red-text-scroll.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "february-plum-plain-a": {
+      "path": "cards/february-plum-plain-a.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "february-plum-plain-b": {
+      "path": "cards/february-plum-plain-b.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "march-curtain": {
+      "path": "cards/march-curtain.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "march-red-text-scroll": {
+      "path": "cards/march-red-text-scroll.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "march-cherry-plain-a": {
+      "path": "cards/march-cherry-plain-a.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "march-cherry-plain-b": {
+      "path": "cards/march-cherry-plain-b.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "april-cuckoo": {
+      "path": "cards/april-cuckoo.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "april-red-scroll": {
+      "path": "cards/april-red-scroll.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "april-wisteria-plain-a": {
+      "path": "cards/april-wisteria-plain-a.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "april-wisteria-plain-b": {
+      "path": "cards/april-wisteria-plain-b.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "may-bridge": {
+      "path": "cards/may-bridge.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "may-red-scroll": {
+      "path": "cards/may-red-scroll.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "may-iris-plain-a": {
+      "path": "cards/may-iris-plain-a.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "may-iris-plain-b": {
+      "path": "cards/may-iris-plain-b.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "june-butterfly": {
+      "path": "cards/june-butterfly.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "june-blue-scroll": {
+      "path": "cards/june-blue-scroll.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "june-peony-plain-a": {
+      "path": "cards/june-peony-plain-a.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "june-peony-plain-b": {
+      "path": "cards/june-peony-plain-b.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "july-boar": {
+      "path": "cards/july-boar.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "july-red-scroll": {
+      "path": "cards/july-red-scroll.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "july-bush-clover-plain-a": {
+      "path": "cards/july-bush-clover-plain-a.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "july-bush-clover-plain-b": {
+      "path": "cards/july-bush-clover-plain-b.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "august-moon": {
+      "path": "cards/august-moon.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "august-geese": {
+      "path": "cards/august-geese.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "august-pampas-plain-a": {
+      "path": "cards/august-pampas-plain-a.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "august-pampas-plain-b": {
+      "path": "cards/august-pampas-plain-b.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "september-sake-cup": {
+      "path": "cards/september-sake-cup.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "september-blue-scroll": {
+      "path": "cards/september-blue-scroll.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "september-chrysanthemum-plain-a": {
+      "path": "cards/september-chrysanthemum-plain-a.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "september-chrysanthemum-plain-b": {
+      "path": "cards/september-chrysanthemum-plain-b.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "october-deer": {
+      "path": "cards/october-deer.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "october-blue-scroll": {
+      "path": "cards/october-blue-scroll.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "october-maple-plain-a": {
+      "path": "cards/october-maple-plain-a.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "october-maple-plain-b": {
+      "path": "cards/october-maple-plain-b.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "november-rain": {
+      "path": "cards/november-rain.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "november-swallow": {
+      "path": "cards/november-swallow.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "november-red-scroll": {
+      "path": "cards/november-red-scroll.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "november-willow-plain": {
+      "path": "cards/november-willow-plain.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "december-phoenix": {
+      "path": "cards/december-phoenix.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "december-paulownia-plain-a": {
+      "path": "cards/december-paulownia-plain-a.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "december-paulownia-plain-b": {
+      "path": "cards/december-paulownia-plain-b.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    },
+    "december-paulownia-plain-c": {
+      "path": "cards/december-paulownia-plain-c.svg",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/svg+xml",
+      "sourcePackageId": "technical-sunrise"
+    }
+  },
+  "cardBack": {
+    "path": "backs/default.svg",
+    "width": 640,
+    "height": 1024,
+    "mediaType": "image/svg+xml",
+    "sourcePackageId": "technical-sunrise"
+  }
+}

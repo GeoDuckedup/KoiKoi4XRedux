@@ -1,10 +1,11 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository
-has completed and deployed **Phase 2A: responsive Pixi table**. It contains the canonical rules
+has implemented **Phase 2B: persistent cards and runtime deck packages**. It contains the canonical rules
 authority, all 48 artwork-independent card records, the complete deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
-boundaries, and the first mobile/desktop Pixi table skeleton.
+boundaries, and a responsive Pixi table with 48 persistent canonical CardViews and local atomic deck
+switching.
 
 ## Prerequisites
 
@@ -30,6 +31,7 @@ npm run validate:phase1c
 npm run validate:phase1d
 npm run validate:phase1e
 npm run validate:phase2a
+npm run validate:phase2b
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -40,6 +42,11 @@ npm run test:e2e:smoke
 from the locked Phase 0D constants. Development deck validation accepts the four checked-in technical
 pilot sources and reports the other 44 final-art files as pending; release validation remains blocked
 until Phase 2 visual approval.
+
+`npm run generate:technical-runtime-decks` regenerates the two complete Phase 2B browser fixtures,
+and `npm run validate:technical-runtime-decks` proves their 100 checked-in manifest/face/back
+artifacts are current. `technical-sunrise` and `technical-moonlight` are intentionally obvious
+technical placeholders; they validate the runtime and are not approved deck art.
 
 `npm run validate:phase1a` executes the seeded RNG, shuffle/deal, state-invariant, automatic opening
 outcome, event-visibility, and DEAL-001–012 fixture suite. The Phase 2A browser smoke produces
@@ -59,6 +66,11 @@ execution remains unavailable until Phase 1D.
 repository-prefixed browser validation at seven phone, tablet, landscape, and desktop viewports.
 It verifies all prescribed Pixi layers and logical zones, deterministic geometry, fullscreen,
 resize behavior, Pages asset routing, and zero browser/network errors.
+
+`npm run validate:phase2b` additionally validates the strict complete runtime-manifest contract,
+two technical packages, all 48 persistent CardView identities and 5:8 placements, atomic switch
+rollback, browser/Node package boundaries, live deck switching, and root plus GitHub Pages asset
+delivery. Browser screenshots and serialized diagnostics are written under `output/phase-2b/e2e/`.
 
 ## Workspace map
 
@@ -82,5 +94,6 @@ workflow derives the correct Vite base path from the repository name and deploys
 after checks pass.
 
 No Firebase project, credentials, database migration, final artwork upload, or production domain is
-needed for Phase 2A. The deployed page presents a responsive table-layout preview; real deck
-textures, card identity, animation, and gameplay controls arrive in Phases 2B–2D.
+needed for Phase 2B. The page presents a responsive technical card showcase and local Sunrise/
+Moonlight selector. It is intentionally noninteractive: animation and gameplay controls arrive in
+Phases 2C–2D, while Workshop/final-art approval remains Phase 2E.

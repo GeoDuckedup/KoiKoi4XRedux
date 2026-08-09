@@ -14,17 +14,26 @@
     <main class="app-shell" aria-labelledby="app-title">
       <header class="app-header">
         <div>
-          <p class="eyebrow">Hanafuda strategy · Phase 2A</p>
+          <p class="eyebrow">Hanafuda strategy · Phase 2B</p>
           <h1 id="app-title">KoiKoi4x</h1>
         </div>
-        <button class="fullscreen-button" type="button" data-fullscreen-button>
-          Enter fullscreen
-        </button>
+        <div class="header-actions">
+          <label class="deck-picker">
+            <span>Deck</span>
+            <select data-deck-select disabled>
+              <option value="technical-sunrise">Technical Sunrise</option>
+              <option value="technical-moonlight">Technical Moonlight</option>
+            </select>
+          </label>
+          <button class="fullscreen-button" type="button" data-fullscreen-button>
+            Enter fullscreen
+          </button>
+        </div>
       </header>
 
       <section
         class="game-frame"
-        aria-label="Responsive KoiKoi4x table layout preview"
+        aria-label="Responsive KoiKoi4x persistent card and deck runtime preview"
         aria-describedby="table-status"
       >
         <div class="game-host" data-game-host></div>
@@ -32,7 +41,7 @@
 
       <footer class="app-footer">
         <span id="table-status" data-table-status aria-live="polite"
-          >Building the responsive table…</span
+          >Loading the technical card runtime…</span
         >
         <span><kbd>F</kbd> fullscreen · <kbd>Esc</kbd> exit</span>
       </footer>

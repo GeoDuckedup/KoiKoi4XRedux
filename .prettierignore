@@ -4,6 +4,7 @@ output/
 coverage/
 package-lock.json
 packages/deck-format/schemas/
+apps/web/public/decks/technical-*/
 *.zip
 AGENTS.md
 progress.md

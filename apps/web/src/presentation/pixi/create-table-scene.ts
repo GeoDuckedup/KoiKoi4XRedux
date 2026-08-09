@@ -1,6 +1,11 @@
 import { Container, Graphics, Text } from "pixi.js";
-import type { Application } from "pixi.js";
+import type { Application, Texture } from "pixi.js";
 
+import { computeCardPlacements } from "../cards/card-layout";
+import { createCardViewRegistry } from "../cards/card-view-registry";
+import { CARD_SHOWCASE_ASSIGNMENTS } from "../cards/showcase";
+import type { CardRuntimeInspection } from "../cards/types";
+import type { ActiveDeckTextures } from "../deck/card-asset-manager";
 import type { BoardLayout, BoardRect, BoardSceneInspection, CardZone } from "../board/types";
 import { BOARD_LAYER_ORDER } from "../board/types";
 
@@ -10,8 +15,9 @@ interface TableSceneFrame {
 }
 
 export interface TableScene {
+  applyDeck: (textures: ActiveDeckTextures<Texture>) => void;
   destroy: () => void;
-  inspect: () => BoardSceneInspection;
+  inspect: () => BoardSceneInspection & { readonly cards: CardRuntimeInspection };
   redraw: (frame: TableSceneFrame) => void;
 }
 
@@ -30,7 +36,6 @@ const COLORS = {
   creamMuted: 0xc7c1a4,
   gold: 0xe9bb5a,
   green: 0x1f5941,
-  greenBright: 0x3f8764,
   ink: 0x0a2118,
   red: 0xc9514b,
   table: 0x123b2c,
@@ -116,89 +121,9 @@ function label(
   return text;
 }
 
-function drawCardBack(bounds: BoardRect, muted = false): Container {
-  const card = new Container();
-  const radius = Math.max(3, bounds.width * 0.1);
-  card.addChild(
-    new Graphics()
-      .roundRect(bounds.x, bounds.y, bounds.width, bounds.height, radius)
-      .fill({ color: muted ? COLORS.tableDeep : COLORS.red })
-      .stroke({
-        color: COLORS.cream,
-        alpha: muted ? 0.35 : 0.76,
-        width: Math.max(1, bounds.width * 0.025),
-      }),
-  );
-  const inset = Math.max(3, bounds.width * 0.1);
-  card.addChild(
-    new Graphics()
-      .roundRect(
-        bounds.x + inset,
-        bounds.y + inset,
-        Math.max(1, bounds.width - inset * 2),
-        Math.max(1, bounds.height - inset * 2),
-        Math.max(2, radius * 0.58),
-      )
-      .stroke({
-        color: COLORS.gold,
-        alpha: muted ? 0.28 : 0.7,
-        width: Math.max(1, bounds.width * 0.02),
-      }),
-  );
-  card.addChild(
-    new Graphics()
-      .circle(
-        bounds.x + bounds.width / 2,
-        bounds.y + bounds.height / 2,
-        Math.max(2, bounds.width * 0.13),
-      )
-      .fill({ color: COLORS.gold, alpha: muted ? 0.24 : 0.9 }),
-  );
-  return card;
-}
-
-function drawCardFacePlaceholder(bounds: BoardRect, index: number): Container {
-  const card = new Container();
-  const radius = Math.max(3, bounds.width * 0.1);
-  card.addChild(
-    new Graphics()
-      .roundRect(bounds.x, bounds.y, bounds.width, bounds.height, radius)
-      .fill({ color: COLORS.cream, alpha: 0.96 })
-      .stroke({ color: COLORS.black, alpha: 0.75, width: Math.max(1, bounds.width * 0.024) }),
-  );
-  const accent = index % 3 === 0 ? COLORS.red : index % 3 === 1 ? COLORS.gold : COLORS.greenBright;
-  card.addChild(
-    new Graphics()
-      .circle(
-        bounds.x + bounds.width * (index % 2 === 0 ? 0.66 : 0.36),
-        bounds.y + bounds.height * 0.3,
-        Math.max(2, bounds.width * 0.115),
-      )
-      .fill({ color: accent, alpha: 0.9 }),
-  );
-  card.addChild(
-    new Graphics()
-      .moveTo(bounds.x + bounds.width * 0.18, bounds.y + bounds.height * 0.83)
-      .bezierCurveTo(
-        bounds.x + bounds.width * 0.38,
-        bounds.y + bounds.height * 0.52,
-        bounds.x + bounds.width * 0.55,
-        bounds.y + bounds.height * 0.92,
-        bounds.x + bounds.width * 0.84,
-        bounds.y + bounds.height * 0.58,
-      )
-      .lineTo(bounds.x + bounds.width * 0.84, bounds.y + bounds.height * 0.9)
-      .lineTo(bounds.x + bounds.width * 0.18, bounds.y + bounds.height * 0.9)
-      .closePath()
-      .fill({ color: COLORS.green, alpha: 0.9 }),
-  );
-  return card;
-}
-
 function renderHand(
   layer: Container,
   bounds: BoardRect,
-  slots: readonly BoardRect[],
   owner: "opponent" | "player",
   scale: number,
 ): void {
@@ -210,17 +135,13 @@ function renderHand(
       letterSpacing: Math.max(0.5, scale),
     }),
   );
-  for (const [index, slot] of slots.entries()) {
-    const card = owner === "opponent" ? drawCardBack(slot) : drawCardFacePlaceholder(slot, index);
-    card.zIndex = index;
-    layer.addChild(card);
-  }
 }
 
 function renderCaptureSummary(
   layer: Container,
   layout: BoardLayout,
   owner: "opponent" | "player",
+  zoneCounts: CardRuntimeInspection["zoneCounts"],
 ): void {
   const entries = CAPTURE_ZONE_GROUPS[owner];
   for (const [zone, title] of entries) {
@@ -247,7 +168,7 @@ function renderCaptureSummary(
         },
       ),
       label(
-        "0",
+        String(zoneCounts[zone]),
         bounds.x + bounds.width - Math.max(5, bounds.width * 0.07),
         bounds.y + bounds.height / 2,
         {
@@ -305,7 +226,6 @@ function renderField(layer: Container, layout: BoardLayout): void {
 
 function renderDrawPile(layer: Container, layout: BoardLayout): void {
   const zone = layout.cardZones.drawPile;
-  const slot = layout.slots.drawPile;
   layer.addChild(
     label("DRAW", zone.x + zone.width / 2, zone.y + 3, {
       anchorX: 0.5,
@@ -315,19 +235,6 @@ function renderDrawPile(layer: Container, layout: BoardLayout): void {
       letterSpacing: 0.8,
     }),
   );
-  const offset = Math.max(1.5, 2 * layout.scale);
-  for (let index = 2; index >= 0; index -= 1) {
-    layer.addChild(
-      drawCardBack(
-        {
-          ...slot,
-          x: slot.x - index * offset,
-          y: slot.y + index * offset,
-        },
-        index !== 0,
-      ),
-    );
-  }
 }
 
 function renderReveal(layer: Container, layout: BoardLayout): void {
@@ -355,10 +262,10 @@ function renderStatus(layer: Container, layout: BoardLayout, fullscreen: boolean
   const compact = layout.mode === "compactPortrait" || layout.mode === "landscape";
   const actionLabel =
     layout.mode === "desktop"
-      ? "TABLE LAYOUT PREVIEW · GAMEPLAY INPUT ARRIVES IN PHASE 2D"
+      ? "PERSISTENT CARD RUNTIME · DECK SWITCHING IS LOCAL-ONLY"
       : compact
-        ? "TABLE PREVIEW · INPUT IN 2D"
-        : "TABLE PREVIEW · GAMEPLAY INPUT IN 2D";
+        ? "CARD RUNTIME · INPUT IN 2D"
+        : "PERSISTENT CARDS · GAMEPLAY INPUT IN 2D";
 
   layer.addChild(
     panel(identity, {
@@ -464,22 +371,36 @@ function renderStatus(layer: Container, layout: BoardLayout, fullscreen: boolean
   );
 }
 
-export function createTableScene(app: Application): TableScene {
+export function createTableScene(
+  app: Application,
+  initialDeck: ActiveDeckTextures<Texture>,
+): TableScene {
   const root = new Container({ label: "TableScene" });
   const rootToken = createSceneObjectToken("root");
   root.sortableChildren = true;
   app.stage.addChild(root);
 
   const layers = new Map<string, Container>();
+  const chromeLayers = new Map<string, Container>();
+  const cardLayers = new Map<string, Container>();
   const layerTokens = new Map<Container, string>();
   for (const [index, name] of BOARD_LAYER_ORDER.entries()) {
     const layer = new Container({ label: name });
     layer.zIndex = index;
     layer.sortableChildren = true;
+    const chrome = new Container({ label: `${name}:Chrome` });
+    const cards = new Container({ label: `${name}:Cards` });
+    chrome.zIndex = 0;
+    cards.zIndex = 1;
+    cards.sortableChildren = true;
+    layer.addChild(chrome, cards);
     root.addChild(layer);
     layers.set(name, layer);
+    chromeLayers.set(name, chrome);
+    cardLayers.set(name, cards);
     layerTokens.set(layer, createSceneObjectToken("layer"));
   }
+  const cardRegistry = createCardViewRegistry(initialDeck);
 
   const requiredLayer = (name: (typeof BOARD_LAYER_ORDER)[number]): Container => {
     const layer = layers.get(name);
@@ -489,12 +410,22 @@ export function createTableScene(app: Application): TableScene {
     return layer;
   };
 
+  const requiredChrome = (name: (typeof BOARD_LAYER_ORDER)[number]): Container => {
+    const layer = chromeLayers.get(name);
+    if (!layer) throw new Error(`Table scene is missing ${name}'s chrome container.`);
+    return layer;
+  };
+
   const redraw = ({ fullscreen, layout }: TableSceneFrame): void => {
-    for (const layer of layers.values()) {
+    for (const layer of chromeLayers.values()) {
       clearLayer(layer);
     }
+    cardRegistry.applyPlacements(
+      computeCardPlacements(layout, CARD_SHOWCASE_ASSIGNMENTS),
+      cardLayers as ReadonlyMap<(typeof BOARD_LAYER_ORDER)[number], Container>,
+    );
 
-    const background = requiredLayer("BackgroundLayer");
+    const background = requiredChrome("BackgroundLayer");
     background.addChild(
       new Graphics()
         .rect(0, 0, layout.viewport.width, layout.viewport.height)
@@ -516,28 +447,40 @@ export function createTableScene(app: Application): TableScene {
     );
 
     renderHand(
-      requiredLayer("OpponentHandLayer"),
+      requiredChrome("OpponentHandLayer"),
       layout.cardZones.opponentHand,
-      layout.slots.opponentHand,
       "opponent",
       layout.scale,
     );
-    renderCaptureSummary(requiredLayer("OpponentCaptureLayer"), layout, "opponent");
-    renderField(requiredLayer("FieldLayer"), layout);
-    renderDrawPile(requiredLayer("DrawPileLayer"), layout);
-    renderReveal(requiredLayer("RevealLayer"), layout);
-    renderCaptureSummary(requiredLayer("PlayerCaptureLayer"), layout, "player");
+    const currentCards = cardRegistry.inspect();
+    renderCaptureSummary(
+      requiredChrome("OpponentCaptureLayer"),
+      layout,
+      "opponent",
+      currentCards.zoneCounts,
+    );
+    renderField(requiredChrome("FieldLayer"), layout);
+    renderDrawPile(requiredChrome("DrawPileLayer"), layout);
+    renderReveal(requiredChrome("RevealLayer"), layout);
+    renderCaptureSummary(
+      requiredChrome("PlayerCaptureLayer"),
+      layout,
+      "player",
+      currentCards.zoneCounts,
+    );
     renderHand(
-      requiredLayer("PlayerHandLayer"),
+      requiredChrome("PlayerHandLayer"),
       layout.cardZones.playerHand,
-      layout.slots.playerHand,
       "player",
       layout.scale,
     );
-    renderStatus(requiredLayer("InteractionOverlayLayer"), layout, fullscreen);
+    renderStatus(requiredChrome("InteractionOverlayLayer"), layout, fullscreen);
   };
 
   return {
+    applyDeck: (textures) => {
+      cardRegistry.applyDeck(textures);
+    },
     redraw,
     inspect: () =>
       Object.freeze({
@@ -552,8 +495,10 @@ export function createTableScene(app: Application): TableScene {
             return Object.freeze({ label: name, token });
           }),
         ),
+        cards: cardRegistry.inspect(),
       }),
     destroy: () => {
+      cardRegistry.destroy();
       root.destroy({ children: true });
     },
   };

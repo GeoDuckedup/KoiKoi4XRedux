@@ -27,11 +27,13 @@ body {
 }
 
 button,
+select,
 kbd {
   font: inherit;
 }
 
-button:focus-visible {
+button:focus-visible,
+select:focus-visible {
   outline: 3px solid #fff3cf;
   outline-offset: 3px;
 }
@@ -58,6 +60,40 @@ button:focus-visible {
 .app-header {
   min-height: 44px;
   padding-inline: clamp(2px, 0.6vw, 8px);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(6px, 1vw, 12px);
+}
+
+.deck-picker {
+  display: grid;
+  grid-template-columns: auto minmax(126px, 166px);
+  align-items: center;
+  gap: 0.45rem;
+  color: rgb(255 243 207 / 72%);
+  font-size: clamp(0.62rem, 1.25vw, 0.76rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.deck-picker select {
+  min-height: 44px;
+  padding: 0.5rem 1.8rem 0.5rem 0.7rem;
+  border: 1px solid rgb(255 243 207 / 38%);
+  border-radius: 999px;
+  color: #fff3cf;
+  background: #173b2c;
+  cursor: pointer;
+}
+
+.deck-picker select:disabled {
+  cursor: wait;
+  opacity: 0.68;
 }
 
 .app-header h1 {
@@ -136,6 +172,26 @@ kbd {
     padding: 6px;
   }
 
+  .app-header {
+    flex-wrap: wrap;
+  }
+
+  .header-actions {
+    flex: 1 1 auto;
+  }
+
+  .deck-picker {
+    grid-template-columns: minmax(120px, 1fr);
+  }
+
+  .deck-picker span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
   .app-header h1 {
     font-size: 1.35rem;
   }
@@ -170,6 +226,14 @@ kbd {
     display: flex;
     align-items: baseline;
     gap: 0.65rem;
+  }
+
+  .app-header > .header-actions {
+    display: flex;
+  }
+
+  .deck-picker {
+    grid-template-columns: minmax(132px, 164px);
   }
 
   .app-header h1 {

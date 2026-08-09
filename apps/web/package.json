@@ -10,6 +10,8 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@koikoi4x/deck-format": "0.0.0",
+    "@koikoi4x/engine": "0.0.0",
     "pixi.js": "8.19.0"
   }
 }

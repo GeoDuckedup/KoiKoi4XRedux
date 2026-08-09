@@ -622,6 +622,21 @@ remain Phase 2 gates.
 
 Implement runtime resolved-package loading and CardView texture resolution.
 
+The browser contract is `RuntimeDeckManifestV1`, not the authored source/transform manifest. It must
+contain all 48 resolved canonical faces plus one back, fixed ART_SPEC v1 runtime geometry, safe
+package-relative URLs, provenance, and an approval status. The browser must not import Node authoring
+adapters or resolve source transforms at runtime.
+
+Phase 2B installs `technical-sunrise` and `technical-moonlight` as complete deterministic technical
+fixtures. They demonstrate the loader, Pages-safe URL resolution, persistent CardViews, and atomic
+switching, but are explicitly not approved visual direction or final art. A candidate package becomes
+active only after every face and its back load successfully; failure preserves the prior active
+package.
+
+The visible 48-card allocation is a presentation-only technical showcase. Runtime switching is local
+and changes no engine state, public event, replay record, or command. Animation, input, and Workshop
+authoring remain Phase 2C, 2D, and 2E.
+
 ## Phase 2E
 
 Implement Deck Workshop/importer UI, dual contact sheets, Art Guide export, and demonstrate at least two packages. Validate the four-card pilot in the 390 × 844 board layout.

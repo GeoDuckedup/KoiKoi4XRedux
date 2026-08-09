@@ -3,6 +3,7 @@ export * from "./art-spec.ts";
 export * from "./json-schemas.ts";
 export * from "./pilot.ts";
 export * from "./resolver.ts";
+export * from "./runtime-manifest.ts";
 export * from "./transform.ts";
 export * from "./types.ts";
 export * from "./validation.ts";
