@@ -8,9 +8,11 @@ import type { CardRuntimeInspection } from "../presentation/cards/types";
 import type { AnimationInspectionV1 } from "../presentation/animation/types";
 import type { TechnicalAnimationScenarioId } from "../presentation/animation/technical-scenarios";
 import type { RuntimeDeckApprovalStatus } from "@koikoi4x/deck-format";
+import type { InputInteractionInspectionV1 } from "../presentation/input/types";
+import type { TechnicalInputFixtureId } from "../presentation/input/technical-input-fixtures";
 
-export const TABLE_SCREEN_ID = "animationRuntime" as const;
-export const TABLE_PRESENTATION_MODE = "technicalAnimationDemo" as const;
+export const TABLE_SCREEN_ID = "inputRuntime" as const;
+export const TABLE_PRESENTATION_MODE = "technicalInputDemo" as const;
 export const COORDINATE_SYSTEM = "origin top-left; +x right; +y down" as const;
 
 export interface TablePreviewSnapshot {
@@ -29,6 +31,11 @@ export interface TablePreviewSnapshot {
     status: "error" | "loading" | "ready";
   };
   fullscreen: boolean;
+  input: InputInteractionInspectionV1 & {
+    readonly fixtureId: TechnicalInputFixtureId;
+    readonly semanticControlCount: number;
+    readonly intentExecution: "notExecuted";
+  };
   layerOrder: BoardLayout["layerOrder"];
   layout: {
     cardZoneCount: number;
@@ -67,6 +74,9 @@ export function createTablePreviewSnapshot(input: {
   diagnostics: BoardLayoutDiagnostics;
   deck: TablePreviewSnapshot["deck"];
   fullscreen: boolean;
+  input: InputInteractionInspectionV1;
+  inputFixtureId: TechnicalInputFixtureId;
+  semanticControlCount: number;
   layout: BoardLayout;
   ready: boolean;
   scene: BoardSceneInspection & { readonly cards: CardRuntimeInspection };
@@ -96,6 +106,15 @@ export function createTablePreviewSnapshot(input: {
     viewport: Object.freeze({ ...input.viewport }),
     boardViewport: Object.freeze({ ...input.boardViewport }),
     fullscreen: input.fullscreen,
+    input: Object.freeze({
+      ...input.input,
+      selectableCardIds: Object.freeze([...input.input.selectableCardIds]),
+      legalTargetCardIds: Object.freeze([...input.input.legalTargetCardIds]),
+      decisionChoices: Object.freeze([...input.input.decisionChoices]),
+      fixtureId: input.inputFixtureId,
+      semanticControlCount: input.semanticControlCount,
+      intentExecution: "notExecuted" as const,
+    }),
     simulationTimeMs: input.simulationTimeMs,
     animation: Object.freeze({
       ...input.animation,

@@ -2,25 +2,44 @@
 
 **Updated:** August 9, 2026
 
-**Overall state:** Greenfield rewrite, Phase 2C semantic AnimationDirector implemented,
-independently accepted, committed, and deployed; owner review pending
+**Overall state:** Greenfield rewrite, Phase 2D selection/input implemented and locally accepted;
+commit/deployment and owner review next
 
 **Runtime state:** Complete deterministic headless match engine with formal projections, replay,
 hashes, retry-safe command receipts, and protocol records, plus a presentation-only responsive Pixi
-table with 48 persistent canonical CardViews, two locally switchable technical packages, and one
-deterministic semantic animation queue
+table with 48 persistent canonical CardViews, two locally switchable technical packages, one
+deterministic semantic animation queue, and an intent-only accessible input harness
 
 ## Current result
 
-Phase 2C translates projected public semantic events into a deterministic presentation plan. One
-FIFO director advances display state toward a trusted recipient-safe target without mutating engine
-state or inferring rules from Pixi coordinates.
+Phase 2D consumes an injected recipient-scoped observation and its legal actions through a pure
+presentation controller. Guided/Fast pointer and keyboard paths emit one immutable diagnostic intent
+without a command ID, engine execution, RNG, or state mutation.
 
 The browser consumes a strict, complete runtime manifest rather than authoring source/transform
 data. Two generated technical packages exercise all 48 faces, a back, repository-base routing, and
 atomic local switching. Five animation scenarios exercise persistent identities and interruption
 behavior. They remain intentionally non-final development fixtures rather than a playable or
-privacy-safe match.
+privacy-safe match. Phase 2D's browser fixture is explicitly technical and does not execute intents.
+
+## Phase 2D input runtime now present
+
+- Pure `InteractionControllerV1` over one `PlayerObservationV1`, legal actions, public confirmation
+  hints, confirmation policy, and external presentation locks.
+- Guided explicit confirmation, Fast immediate single-action emission, and explicit target choice
+  whenever several legal capture actions exist.
+- Draw-capture and Bank/Koi-Koi controls sourced only from current legal actions, with one-intent
+  duplicate suppression until a newer observation identity arrives.
+- Minimal frozen intent values containing match, expected state version, actor, and legal action;
+  no command ID, display scoring metadata, authoritative state, RNG, replay, or engine transition.
+- Persistent Pixi selection/focus/legal-target highlights kept separate from trusted animation
+  projection state and all 48 persistent CardView identities.
+- Semantic DOM card buttons with layout-derived hit areas, roving arrow/Home/End focus, Enter/Space,
+  Escape, visible focus, selection state, and name/month/category/action labels.
+- Animation, deck-loading, opponent-turn, replay/disconnect, and round-transition locks clear stale
+  selection and suppress the semantic input surface.
+- Four frozen technical input phases cover Hand, Draw capture, Yaku decision, and opponent turn. The
+  current page displays emitted intents locally and never executes them.
 
 ## Phase 2C presentation runtime now present
 
@@ -138,9 +157,21 @@ The authored/runtime deck boundary, persistent-card identity, and atomic local-s
 recorded in [`ADR 0008`](./adr/0008-phase-2b-persistent-card-runtime.md).
 Phase 2C semantic planning, queue, motion, and interruption choices are recorded in
 [`ADR 0009`](./adr/0009-phase-2c-animation-director.md).
+Phase 2D observation, intent, confirmation, semantic-overlay, and execution boundaries are recorded
+in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
 
 ## Validation
 
+- Phase 2D's focused gate passes 8 files / 76 tests and byte-checks all 100 generated technical
+  artifacts. Both seven-viewport root and `/KoiKoi4XRedux/` baseline matrices and each base's complete
+  390×844 interaction trace pass with zero browser/network errors.
+- `npm run check` passes formatting, zero-warning lint, all five workspace typechecks, authored-deck
+  validation, 31 files / 335 tests including 10,002 generated matches, and a 761-module build.
+- The bundled game client reported `inputRuntime`, one selected Hand card, the exact two legal public
+  targets, ten semantic controls, 48 stable CardViews, and `intentExecution:notExecuted`; its
+  screenshot and the Guided/Yaku/desktop browser screenshots were inspected.
+- Three independent Phase 2D reviews report no blocker, high, or medium finding after source-phase,
+  exact Draw target, monotonic observation, duplicate suppression, and DOM focus hardening.
 - Phase 2C's focused unit gate passes 7 files / 60 tests and byte-checks all 100 generated technical
   artifacts. Both seven-viewport root and `/KoiKoi4XRedux/` browser matrices pass.
 - `npm run validate:phase1e` passes 16 test files / 176 tests, including all prior Phase 1A–1D
@@ -179,10 +210,10 @@ Phase 2C semantic planning, queue, motion, and interruption choices are recorded
   the only privilege holder, the starter takes turns 1/3/.../15, and the nonstarter necessarily owns
   turn 16's final Draw. The owner selected Option A: their stable IDs now assert authoritative
   `ROUND_PRIVILEGE_INVALID` rejection rather than impossible scoring outcomes.
-- The Phase 2C table is a technical animation harness, not a playable match. Its visible CardIds
+- The Phase 2D table is a technical animation/input harness, not a playable match. Its visible CardIds
   include local opponent/draw fixture allocations and must not be mistaken for a public engine
   observation. A real recipient adapter must represent hidden identities as opaque backs/counts.
-  Gameplay input remains Phase 2D.
+  Real observation-to-board presentation and local execution remain Phase 3.
 - Both installed packages are generated technical placeholders. The real four-card pilot decision,
   complete art production, Workshop/importer, and final visual approval remain Phase 2E.
 - Hosted CI currently emits a nonblocking maintenance annotation that v4 checkout/setup/artifact
@@ -192,12 +223,13 @@ Phase 2C semantic planning, queue, motion, and interruption choices are recorded
 
 ## Owner verification and deployment steps
 
-1. No owner-side configuration is required for Phase 2C.
-2. After deployment, refresh the live page. Choose a Scenario and Motion mode, press Play, then try
-   Faster, Finish, and Cancel + snap. The animation should always settle cleanly; the controls remain
-   a technical demo and do not play a game.
-3. Optionally switch Technical Sunrise/Moonlight during a scenario; only the palette should change.
-4. Pull `main`, run `npm ci`, and run `npm run validate:phase2c` only if optional local verification
+1. No owner-side configuration is required for Phase 2D.
+2. After deployment, refresh the live page. In Hand choices, select a card in Guided mode, inspect
+   its legal highlight, then confirm or cancel. Try Fast, Draw targets, Yaku decision, and Opponent
+   locked. The status must say the intent was not executed.
+3. Use Tab/arrow keys, Enter/Space, and Escape to verify visible keyboard focus and cancellation.
+   Scenario/Motion/Faster/Finish/Cancel + snap and Sunrise/Moonlight switching remain available.
+4. Pull `main`, run `npm ci`, and run `npm run validate:phase2d` only if optional local verification
    is desired.
 
 The deployed baseline is
@@ -205,6 +237,5 @@ The deployed baseline is
 
 ## Next subphase
 
-**Phase 2D — Selection and input:** add card hit areas, legal-target highlighting, tap/click and
-keyboard/focus navigation, disabled/opponent-turn behavior, and accessible command intents that
-remain separate from authoritative engine execution.
+**Phase 2E — Deck Workshop and final visual approval:** add the importer/editor workflow, complete
+package management, finish all 48 production faces and back, and obtain explicit visual approval.

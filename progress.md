@@ -439,3 +439,50 @@ Original prompt: read the package and understand it, then let me know when we ar
   browser error; the deployed desktop render was visually inspected.
 - Phase 2C is implemented, independently accepted, pushed, and deployed; it now awaits owner review.
   Next after approval: Phase 2D selection and input.
+
+## 2026-08-09 — Phase 2D selection and input started
+
+- Owner approved Phase 2D.
+- Re-read the project manifest, AI workflow, Phase 2D design/accessibility authority, current
+  observation/legal-action contracts, Pixi/CardView/animation seams, and the web-game skill.
+- Independent read-only audits agreed on a presentation-owned boundary: consume only an injected
+  player observation and legal actions, emit a minimal immutable intent, and do not create a command
+  ID, call the engine, advance RNG, or mutate authoritative state.
+- Locked Guided explicit single-action confirmation, Fast immediate single-action emission,
+  explicit target choice in both modes, optional drag deferral, and a technical non-executing
+  browser fixture until Phase 3 supplies real observation presentation.
+
+## 2026-08-09 — Phase 2D implementation and local validation in progress
+
+- Added the pure interaction controller, four frozen technical input phases, minimal intent shape,
+  duplicate/new-observation boundary, layout-derived semantic hit areas, and 14 stable `INPUT-*`
+  acceptance assertions.
+- Added transient Pixi selected/focus/legal-target highlights plus an absolute semantic DOM card
+  overlay with pointer, roving arrows/Home/End, Enter/Space, Escape, accessible labels, and visible
+  focus. Trusted Phase 2C projection state and all 48 CardView identities remain separate.
+- Integrated Guided/Fast, Hand/Draw/Yaku/opponent states, animation/deck locks, diagnostic status,
+  and versioned `render_game_to_text` input inspection. Emitted intents remain local and unexecuted.
+- Focused web typecheck and 18 controller/snapshot tests pass. The first root seven-viewport browser
+  matrix passes pointer, keyboard, resize, deck switching, motion regressions, fullscreen, stable
+  CardViews, and zero console/network errors. Guided-target, Yaku, and desktop screenshots were
+  inspected.
+- The required bundled web-game client produced `inputRuntime` state with one selected card, exactly
+  two legal targets, 10 semantic controls, 48 unique CardViews, and `intentExecution:notExecuted`;
+  its screenshot was inspected and no client error was reported.
+- Remaining: Pages-base/full repository gates, independent post-integration review, final docs,
+  commit/push, hosted CI/Pages verification, and cache-busted live inspection.
+
+## 2026-08-09 — Phase 2D local acceptance complete
+
+- Closed independent-review findings for durable pending intent state across presentation locks,
+  strictly newer same-match observations, phase/action and exact Draw-card/target binding, public
+  field scope, and DOM blur/render re-entrancy. Hostile-source and downgrade regressions pass.
+- `npm run validate:phase2d` passes all 100 generated technical assets, 8 files / 76 tests, seven
+  root-base viewports, seven repository-prefixed viewports, and the complete 390×844 interaction
+  trace on each base with zero browser/network errors.
+- `npm run check` passes formatting, zero-warning lint, all five workspace typechecks, authored-deck
+  validation, 31 files / 335 tests including the 10,002-match gate, and the 761-module build. Two
+  earlier generated-gate attempts timed out under transient contention; an isolated full rerun passed
+  in 66 seconds and the final combined check passed in 74 seconds.
+- Three independent final reviews report no blocker, high, or medium issue. Remaining: commit/push,
+  hosted CI/Pages verification, and cache-busted live inspection.

@@ -1,11 +1,12 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository
-has completed and deployed **Phase 2C: semantic AnimationDirector**. It contains the canonical rules
+has completed and deployed Phase 2C and has locally accepted **Phase 2D: selection and input**. It contains the canonical rules
 authority, all 48 artwork-independent card records, the complete deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
 boundaries, and a responsive Pixi table with 48 persistent canonical CardViews, local atomic deck
-switching, and one deterministic presentation-only animation queue.
+switching, one deterministic presentation-only animation queue, and a keyboard-accessible
+intent-only technical input harness.
 
 ## Prerequisites
 
@@ -33,6 +34,7 @@ npm run validate:phase1e
 npm run validate:phase2a
 npm run validate:phase2b
 npm run validate:phase2c
+npm run validate:phase2d
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -78,6 +80,11 @@ matrices for Normal, Fast, Instant, and Reduced Motion, exact final-state equali
 accelerate/finish/cancel, mid-flight resize and deck switching, persistent CardViews, fullscreen,
 and zero browser/network errors. Artifacts are written under `output/phase-2c/e2e/`.
 
+`npm run validate:phase2d` adds `INPUT-001` through `INPUT-014`, Guided/Fast confirmation,
+legal Hand/Draw/Yaku targets, duplicate suppression, semantic card labels, pointer and roving-keyboard
+input, presentation locks, and both seven-viewport browser bases. Intents are displayed but never
+executed. Artifacts are written under `output/phase-2d/e2e/`.
+
 ## Workspace map
 
 - `apps/web` — Vite/Pixi browser presentation.
@@ -100,6 +107,7 @@ workflow derives the correct Vite base path from the repository name and deploys
 after checks pass.
 
 No Firebase project, credentials, database migration, final artwork upload, or production domain is
-needed for Phase 2C. The page presents a responsive technical animation harness and local Sunrise/
-Moonlight selector. Its scenario/motion controls are presentation-only and issue no game commands;
-selection and gameplay input arrive in Phase 2D, while Workshop/final-art approval remains Phase 2E.
+needed for Phase 2D. The page presents a responsive technical animation/input harness and local
+Sunrise/Moonlight selector. Its card, decision, and motion controls are presentation-only: they emit
+diagnostic intents but execute no engine command or game state. A real playable observation adapter
+arrives in Phase 3; Workshop/final-art approval remains Phase 2E.

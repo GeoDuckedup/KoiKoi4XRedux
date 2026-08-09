@@ -32,6 +32,7 @@
     "validate:phase2a": "vitest run --config vitest.config.ts apps/web/tests && npm run test:e2e:smoke && npm run test:e2e:pages",
     "validate:phase2b": "npm run validate:technical-runtime-decks && vitest run --config vitest.config.ts apps/web/tests packages/deck-format/tests/runtime-manifest.test.ts packages/deck-format/tests/architecture-boundaries.test.ts && npm run test:e2e:smoke && npm run test:e2e:pages",
     "validate:phase2c": "npm run validate:technical-runtime-decks && vitest run --config vitest.config.ts apps/web/tests packages/deck-format/tests/runtime-manifest.test.ts packages/deck-format/tests/architecture-boundaries.test.ts && npm run test:e2e:smoke && npm run test:e2e:pages",
+    "validate:phase2d": "npm run validate:technical-runtime-decks && vitest run --config vitest.config.ts apps/web/tests packages/deck-format/tests/runtime-manifest.test.ts packages/deck-format/tests/architecture-boundaries.test.ts && npm run test:e2e:smoke && npm run test:e2e:pages",
     "generate:deck-artifacts": "vite-node packages/deck-format/src/cli.ts generate decks/new-primary-deck",
     "generate:technical-runtime-decks": "vite-node scripts/technical-runtime-decks.ts",
     "validate:technical-runtime-decks": "vite-node scripts/technical-runtime-decks.ts --check",

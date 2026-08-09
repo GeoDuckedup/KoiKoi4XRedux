@@ -6,7 +6,7 @@ import { chromium } from "playwright";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-2c/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-2d/e2e");
 const baseUrl = "http://127.0.0.1:4173";
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/g, "")}`.replace(/^\/$/, "/");
@@ -178,12 +178,12 @@ try {
     });
 
     assert(
-      result.before.screen === "animationRuntime",
-      "render_game_to_text must identify the Phase 2C animation runtime.",
+      result.before.screen === "inputRuntime",
+      "render_game_to_text must identify the Phase 2D input runtime.",
     );
     assert(
-      result.before.presentationMode === "technicalAnimationDemo",
-      "The visible animation harness must remain explicitly identified as a technical fixture.",
+      result.before.presentationMode === "technicalInputDemo",
+      "The visible input harness must remain explicitly identified as a technical fixture.",
     );
     assert(result.before.ready === true, "The table state must report ready.");
     assert(result.before.canvasCount === 1, "The table surface must contain exactly one canvas.");
@@ -194,7 +194,7 @@ try {
     );
     assert(result.heading === "KoiKoi4x", "The semantic page heading is missing.");
     assert(
-      result.status?.includes("Technical Sunrise ready"),
+      result.status?.includes("Phase 2D technical input ready"),
       "The accessible ready status is missing.",
     );
     assert(
@@ -226,6 +226,14 @@ try {
         result.before.cards.uniqueCardIdCount === 48 &&
         result.before.cards.views.length === 48,
       "The persistent CardView registry must contain exactly 48 canonical cards.",
+    );
+    assert(
+      result.before.input.status === "idle" &&
+        result.before.input.confirmationMode === "guided" &&
+        result.before.input.fixtureId === "handPlay" &&
+        result.before.input.semanticControlCount === 8 &&
+        result.before.input.intentExecution === "notExecuted",
+      "The Phase 2D hand fixture did not expose eight semantic Guided controls.",
     );
     assert(
       new Set(result.before.cards.views.map(({ token }) => token)).size === 48,
@@ -295,10 +303,166 @@ try {
     token,
   }));
 
+  const aprilCuckoo = page.locator('[data-card-id="april-cuckoo"]');
+  await aprilCuckoo.click();
+  let inputState = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
+  assert(
+    inputState.input.status === "targeting" &&
+      inputState.input.selectedCardId === "april-cuckoo" &&
+      JSON.stringify(inputState.input.legalTargetCardIds) ===
+        JSON.stringify(["april-red-scroll", "april-wisteria-plain-a"]) &&
+      inputState.input.semanticControlCount === 10,
+    "Guided pointer selection did not expose the exact legal target set.",
+  );
+  const semanticButtonMinimums = await page.locator(".card-input-control").evaluateAll((buttons) =>
+    buttons.map((button) => {
+      const rect = button.getBoundingClientRect();
+      return { height: rect.height, width: rect.width };
+    }),
+  );
+  assert(
+    semanticButtonMinimums.every(({ height, width }) => height >= 44 && width >= 44),
+    "A semantic card control fell below the 44 CSS-pixel input target.",
+  );
+  await page.screenshot({
+    path: resolve(outputDirectory, "input-guided-targets-390x844.png"),
+    fullPage: true,
+  });
+
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).layout.mode === "landscape",
+  );
+  inputState = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
+  assert(
+    inputState.input.selectedCardId === "april-cuckoo" &&
+      inputState.input.legalTargetCardIds.length === 2,
+    "Live resize cleared the active input selection or legal targets.",
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).layout.mode === "portrait",
+  );
+  await page.selectOption("[data-deck-select]", "technical-moonlight");
+  await page.waitForFunction(() => {
+    const state = JSON.parse(window.render_game_to_text());
+    return state.deck.status === "ready" && state.deck.activeDeckId === "technical-moonlight";
+  });
+  inputState = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
+  assert(
+    inputState.input.status === "idle" && inputState.input.selectedCardId === null,
+    "Deck loading did not clear the stale selection before restoring input.",
+  );
+  assert(
+    JSON.stringify(inputState.cards.views.map(({ cardId, token }) => ({ cardId, token }))) ===
+      JSON.stringify(baselineTokens),
+    "Deck switching while selected replaced a persistent CardView.",
+  );
+  await page.selectOption("[data-deck-select]", "technical-sunrise");
+  await page.waitForFunction(() => {
+    const state = JSON.parse(window.render_game_to_text());
+    return state.deck.status === "ready" && state.deck.activeDeckId === "technical-sunrise";
+  });
+  await page.locator('[data-card-id="april-cuckoo"]').click();
+  await page.locator('[data-card-id="april-wisteria-plain-a"]').click();
+  inputState = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
+  assert(
+    inputState.input.status === "intentPending" &&
+      inputState.input.emittedIntentCount === 1 &&
+      inputState.input.semanticControlCount === 0 &&
+      inputState.input.intentExecution === "notExecuted",
+    "A legal target did not create exactly one non-executed intent and lock duplicate input.",
+  );
+  await page.getByRole("button", { name: "Reset demo" }).click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).input.status === "idle",
+  );
+
+  await page.locator('[data-card-id="march-curtain"]').click();
+  assert(
+    !(await page.getByRole("button", { name: "Confirm play" }).isDisabled()),
+    "Guided single-action selection did not require explicit confirmation.",
+  );
+  await page.getByRole("button", { name: "Confirm play" }).click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).input.status === "intentPending",
+  );
+  await page.getByRole("button", { name: "Reset demo" }).click();
+  await page.selectOption("[data-input-mode]", "fast");
+  await page.locator('[data-card-id="may-bridge"]').click();
+  inputState = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
+  assert(
+    inputState.input.status === "intentPending" && inputState.input.emittedIntentCount === 3,
+    "Fast mode did not immediately emit the single legal hand action.",
+  );
+  await page.getByRole("button", { name: "Reset demo" }).click();
+  await page.selectOption("[data-input-mode]", "guided");
+
+  const keyboardStart = page.locator('[data-card-id="march-curtain"]');
+  await keyboardStart.focus();
+  await page.keyboard.press("ArrowRight");
+  const focusedCardId = await page.evaluate(
+    () => document.activeElement?.getAttribute("data-card-id") ?? null,
+  );
+  assert(
+    focusedCardId !== null && focusedCardId !== "march-curtain",
+    "Roving arrow-key focus did not move to the next legal card control.",
+  );
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(() => {
+    const state = JSON.parse(window.render_game_to_text());
+    return state.input.status === "confirming" || state.input.status === "targeting";
+  });
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).input.status === "idle",
+  );
+
+  await page.selectOption("[data-input-fixture]", "drawCapture");
+  await page.waitForFunction(() => {
+    const state = JSON.parse(window.render_game_to_text());
+    return state.input.fixtureId === "drawCapture" && state.input.status === "targeting";
+  });
+  inputState = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
+  assert(
+    inputState.input.semanticControlCount === 2 && inputState.input.cancelAvailable === false,
+    "Draw capture did not expose only the two public legal targets.",
+  );
+  await page.locator('[data-card-id="august-geese"]').click();
+  await page.getByRole("button", { name: "Reset demo" }).click();
+  await page.selectOption("[data-input-fixture]", "yakuDecision");
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).input.status === "decision",
+  );
+  assert(
+    (await page.getByRole("button", { name: "Bank" }).isVisible()) &&
+      (await page.getByRole("button", { name: "Koi-Koi" }).isVisible()),
+    "Yaku decision buttons did not expose the legal Bank/Koi-Koi choices.",
+  );
+  await page.screenshot({
+    path: resolve(outputDirectory, "input-yaku-decision-390x844.png"),
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "Koi-Koi" }).click();
+  await page.getByRole("button", { name: "Reset demo" }).click();
+  await page.selectOption("[data-input-fixture]", "opponentTurn");
+  await page.waitForFunction(() => {
+    const state = JSON.parse(window.render_game_to_text());
+    return state.input.status === "locked" && state.input.lockReason === "opponentTurn";
+  });
+  assert(
+    (await page.locator(".card-input-control").count()) === 0,
+    "Opponent-turn projection exposed an interactive private card control.",
+  );
+  await page.selectOption("[data-input-fixture]", "handPlay");
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).input.status === "idle",
+  );
+
   for (const mode of ["normal", "fast", "instant", "reducedMotion"]) {
     await page.selectOption("[data-animation-scenario]", "pairCapture");
     await page.selectOption("[data-animation-mode]", mode);
-    await page.getByRole("button", { name: "Play" }).click();
+    await page.getByRole("button", { name: "Play", exact: true }).click();
     await page.waitForFunction(() => {
       const state = JSON.parse(window.render_game_to_text());
       return state.animation.status === "playing" || state.animation.status === "completed";
@@ -321,13 +485,32 @@ try {
         JSON.stringify(baselineTokens),
       `${mode} replaced a persistent CardView.`,
     );
+    assert(
+      settled.input.status === "locked" && settled.input.lockReason === "awaitingObservation",
+      `${mode} did not keep input locked until a fresh observation fixture was loaded.`,
+    );
+    await page.getByRole("button", { name: "Reset demo" }).click();
+    await page.waitForFunction(
+      () => JSON.parse(window.render_game_to_text()).input.status === "idle",
+    );
   }
 
   await page.selectOption("[data-animation-scenario]", "drawReveal");
   await page.selectOption("[data-animation-mode]", "normal");
-  await page.getByRole("button", { name: "Play" }).click();
+  await page.getByRole("button", { name: "Play", exact: true }).click();
   await page.waitForFunction(
     () => JSON.parse(window.render_game_to_text()).animation.status === "playing",
+  );
+  assert(
+    await page.evaluate(() => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
+        state.input.status === "locked" &&
+        state.input.lockReason === "animation" &&
+        state.input.semanticControlCount === 0
+      );
+    }),
+    "Animation playback did not disable and clear the semantic input surface.",
   );
   await page.evaluate(() => window.advanceTime(130));
   const midDraw = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
@@ -431,13 +614,14 @@ try {
       finishedAfterInterruptions.animation.transitCardCount === 0,
     "Finish after resize/deck interruption did not settle exactly.",
   );
+  await page.getByRole("button", { name: "Reset demo" }).click();
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForFunction(
     () => JSON.parse(window.render_game_to_text()).layout.mode === "portrait",
   );
   await page.selectOption("[data-animation-scenario]", "pairCapture");
-  await page.getByRole("button", { name: "Play" }).click();
+  await page.getByRole("button", { name: "Play", exact: true }).click();
   await page.waitForFunction(
     () => JSON.parse(window.render_game_to_text()).animation.status === "playing",
   );
@@ -453,9 +637,10 @@ try {
       cancelled.animation.displayFingerprint === cancelled.animation.targetFingerprint,
     "Cancel-and-snap left stale work or transit cards.",
   );
+  await page.getByRole("button", { name: "Reset demo" }).click();
 
   await page.selectOption("[data-animation-scenario]", "fourCardSweep");
-  await page.getByRole("button", { name: "Play" }).click();
+  await page.getByRole("button", { name: "Play", exact: true }).click();
   await page.waitForFunction(
     () => JSON.parse(window.render_game_to_text()).animation.status === "playing",
   );

@@ -226,7 +226,41 @@ Phase 1E binding:
   format, validates every production transition, and samples full replay/projection/hash equality
   across all formats using reproducible seeds.
 
-## 10. Approved-decision coverage matrix
+## 10. Phase 2D presentation input vectors
+
+These are presentation-only assertions. They consume injected recipient-scoped legal actions and
+may emit an immutable intent, but they never execute an engine command or advance authoritative
+state.
+
+| ID | Required expectation |
+|---|---|
+| `INPUT-001` | Guided Hand selection records the selected own-hand CardId and exposes only its trusted public confirmation target. |
+| `INPUT-002` | Escape/cancel clears selection and targets without emitting an intent. |
+| `INPUT-003` | Activating a legal Guided outcome emits one frozen minimal intent and enters pending state. |
+| `INPUT-004` | An exact-two capture exposes only the two legal field targets and rejects every other card. |
+| `INPUT-005` | Guided mode requires explicit confirmation for a single legal Hand action. |
+| `INPUT-006` | Fast mode immediately emits a single legal Hand action while preserving target choice when alternatives exist. |
+| `INPUT-007` | Opponent turn and presentation locks expose no active card controls; clearing a temporary lock restores only current-source input. |
+| `INPUT-008` | Pending Draw capture exposes only public legal targets and cannot be cancelled into an invalid phase. |
+| `INPUT-009` | Yaku decision controls contain only current legal Bank/Koi-Koi choices and emit the chosen intent once. |
+| `INPUT-010` | Double activation emits once; the pending controller requires a newer observation identity before unlocking. |
+| `INPUT-011` | A source whose actions escape observing-player/own-hand scope is rejected before interaction. |
+| `INPUT-012` | Every technical phase fixture owns one frozen complete 48-card presentation projection and is explicitly non-authoritative. |
+| `INPUT-013` | Layout-derived semantic hit areas remain contained, ordered, and at least 44 CSS pixels across supported layout families. |
+| `INPUT-014` | Card controls expose name, month, category, selected/focused state, legal-target state, and intended action semantics. |
+
+Phase 2D binding:
+
+- reducer and hit-area assertions carry the exact stable ID in the test name;
+- root and repository-prefixed browser matrices prove baseline layout/control containment at seven
+  viewports, then exercise Guided/Fast pointer paths, roving keyboard focus, Enter/Escape, Draw and
+  Yaku decisions, opponent/animation/deck locks, resize, persistent CardView identity, and zero
+  browser/network errors in a complete 390×844 trace on each base;
+- emitted intents omit `commandId`, scoring display metadata, authoritative state, RNG, and any
+  engine transition, and the technical browser harness never executes them;
+- optional drag input is deferred because pointer activation and keyboard input are complete.
+
+## 11. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|
@@ -245,7 +279,7 @@ Phase 1E binding:
 | R-013 | All `FINAL-MONTH-*` fixtures |
 | R-014 | Scroll fixed, incremental, seven-Scroll, and no-combined-bonus fixtures |
 
-## 11. Binding gates
+## 12. Binding gates
 
 Phase 0C completed:
 

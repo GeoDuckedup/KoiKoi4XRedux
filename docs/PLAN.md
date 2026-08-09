@@ -2,7 +2,7 @@
 
 **Plan version:** 1.1
 **Updated:** August 9, 2026
-**Current gate:** Phase 2C implemented and locally accepted; commit/deployment and owner review next
+**Current gate:** Phase 2D implemented and locally accepted; commit/deployment and owner review next
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -433,9 +433,64 @@ Current result:
   cache-busted live run completed Hand-to-Field with equal display/target fingerprints, 48 unique
   CardViews, no transit/queue residue, and no browser error.
 
+### Phase 2D — Selection and input
+
+Status: **implemented and locally accepted; commit/deployment and owner review next**.
+
+Deliver:
+
+- a pure controller over one injected `PlayerObservationV1` and current legal actions;
+- Guided single-action confirmation and Fast single-action emission, with explicit multi-target
+  selection in both modes;
+- immutable minimal input intents that contain no command ID and execute no engine transition;
+- separate Pixi selected/focus/legal-target highlights without changing trusted animation
+  projections or recreating CardViews;
+- semantic DOM card controls for pointer, roving keyboard focus, Enter/Space, Escape, accessible
+  card identity/category/action labels, and visible focus;
+- Draw and Bank/Koi-Koi input states, opponent/presentation locks, duplicate suppression, and
+  newer-observation unlock behavior;
+- explicitly non-authoritative technical input fixtures until Phase 3 supplies a real observation
+  adapter and Phase 7 supplies command transport.
+
+Gate:
+
+- `INPUT-001` through `INPUT-014` execute literal reducer, intent, source-boundary, fixture,
+  hit-area, and semantic-label assertions;
+- only own-hand legal actions and public legal targets become controls; opponent turns and hidden
+  fixture identities never become semantic actions;
+- a legal activation emits exactly one frozen intent, locks until a newer observation, and cannot
+  mutate engine state, RNG, projection, replay, or idempotency state;
+- Guided and Fast behavior matches DESIGN, while exact-two Hand and Draw captures always require an
+  explicit legal target;
+- animation and deck loading clear stale selection and temporarily remove controls; settled
+  animation stays locked until a fresh technical observation is loaded;
+- resize and deck switching preserve all 48 CardView tokens; selection/highlight state remains
+  transient and outside the Phase 2C trusted projection;
+- seven root and seven `/KoiKoi4XRedux/` browser viewports prove baseline layout/control containment;
+  a complete 390×844 trace on each base exercises pointer, keyboard, Draw/Yaku, opponent and
+  animation locks, motion regressions, fullscreen, and zero browser/network errors;
+- optional drag, real match execution, authenticated command submission, final art, and Workshop
+  behavior remain outside Phase 2D.
+
+Architecture is locked in
+[`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
+
+Current result:
+
+- 14 stable input vectors pass within the 8-file / 76-test focused gate, with all 100 generated
+  technical deck artifacts current;
+- root and repository-prefixed browser gates pass seven baseline viewports plus the complete
+  390×844 pointer/keyboard/Draw/Yaku/lock trace with zero browser/network errors;
+- `npm run check` passes 31 files / 335 tests, including all 10,002 generated matches, all workspace
+  checks, authored-deck validation, and the 761-module production build;
+- the required game client produced the selected/two-target `inputRuntime` diagnostic and screenshot;
+- three independent final reviews report no blocker, high, or medium finding after pending-intent,
+  observation-order, phase/action, exact Draw target, and DOM focus re-entrancy hardening.
+
 ## Later phases
 
-1. **Phase 2D–2E — Remaining rendering foundation:** input and Deck Workshop.
+1. **Phase 2E — Deck Workshop and final visual approval:** importer/editor, package workflow, and
+   approved production art.
 2. **Phase 3 — One-round vertical slice:** complete playable local round and presentation.
 3. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook.
 4. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, and pass-and-play.

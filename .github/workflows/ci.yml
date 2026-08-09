@@ -22,10 +22,10 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run check
-      - run: npm run validate:phase2c
+      - run: npm run validate:phase2d
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-2c-animation-runtime
-          path: output/phase-2c/e2e
+          name: phase-2d-input-runtime
+          path: output/phase-2d/e2e
           if-no-files-found: error

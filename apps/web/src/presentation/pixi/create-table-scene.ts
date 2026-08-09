@@ -13,6 +13,7 @@ import type {
   PresentationBoardProjection,
 } from "../animation/types";
 import type { ActiveDeckTextures } from "../deck/card-asset-manager";
+import type { InteractionVisualStateV1 } from "../input/types";
 import type { BoardLayout, BoardRect, BoardSceneInspection, CardZone } from "../board/types";
 import { BOARD_LAYER_ORDER } from "../board/types";
 
@@ -27,6 +28,7 @@ export interface TableScene {
   inspect: () => BoardSceneInspection & { readonly cards: CardRuntimeInspection };
   renderClip: (clip: AnimationClipV1, progress: number, mode: AnimationMode) => void;
   redraw: (frame: TableSceneFrame) => void;
+  setInteractionState: (state: InteractionVisualStateV1) => void;
   snapTo: (projection: PresentationBoardProjection) => void;
 }
 
@@ -380,6 +382,82 @@ function renderStatus(layer: Container, layout: BoardLayout, fullscreen: boolean
   );
 }
 
+function renderInteractionHighlights(
+  layer: Container,
+  layout: BoardLayout,
+  projection: PresentationBoardProjection,
+  state: InteractionVisualStateV1,
+): void {
+  if (state.locked) return;
+  const byCardId = new Map(
+    computeCardPlacements(layout, projection).map((placement) => [placement.cardId, placement]),
+  );
+  const selectable = new Set(state.selectableCardIds);
+  const legalTargets = new Set(state.legalTargetCardIds);
+  const highlighted = new Set([...state.selectableCardIds, ...state.legalTargetCardIds]);
+  for (const cardId of highlighted) {
+    const placement = byCardId.get(cardId);
+    if (!placement) continue;
+    const selected = state.selectedCardId === cardId;
+    const focused = state.focusedCardId === cardId;
+    const target = legalTargets.has(cardId);
+    const lift = selected ? Math.max(4, 7 * layout.scale) : 0;
+    const padding = focused ? Math.max(4, 5 * layout.scale) : Math.max(2, 3 * layout.scale);
+    const bounds = {
+      x: placement.bounds.x - padding,
+      y: placement.bounds.y - lift - padding,
+      width: placement.bounds.width + padding * 2,
+      height: placement.bounds.height + padding * 2,
+    };
+    const color = target ? COLORS.gold : selected ? COLORS.cream : COLORS.creamMuted;
+    const alpha = target || selected ? 0.95 : selectable.has(cardId) ? 0.3 : 0;
+    layer.addChild(
+      new Graphics()
+        .roundRect(bounds.x, bounds.y, bounds.width, bounds.height, Math.max(4, 8 * layout.scale))
+        .stroke({
+          color: focused ? COLORS.white : color,
+          alpha,
+          width: focused || selected || target ? Math.max(2, 2.5 * layout.scale) : 1,
+        }),
+    );
+    if (target) {
+      layer.addChild(
+        label("LEGAL", bounds.x + bounds.width / 2, Math.max(layout.safeBounds.y, bounds.y - 2), {
+          anchorX: 0.5,
+          anchorY: 1,
+          color: COLORS.gold,
+          fontSize: Math.max(7, 8.5 * layout.scale),
+          fontWeight: "700",
+          letterSpacing: 0.7,
+        }),
+      );
+    }
+  }
+}
+
+function applyInteractionPlacement(
+  placements: readonly ReturnType<typeof computeCardPlacements>[number][],
+  state: InteractionVisualStateV1,
+) {
+  if (state.locked || state.selectedCardId === null) return placements;
+  return Object.freeze(
+    placements.map((placement) =>
+      placement.cardId === state.selectedCardId
+        ? Object.freeze({
+            ...placement,
+            bounds: Object.freeze({
+              ...placement.bounds,
+              y: placement.bounds.y - Math.max(4, placement.bounds.height * 0.045),
+            }),
+            scaleX: 1.04,
+            scaleY: 1.04,
+            zIndex: placement.zIndex + 1000,
+          })
+        : placement,
+    ),
+  );
+}
+
 export function createTableScene(
   app: Application,
   initialDeck: ActiveDeckTextures<Texture>,
@@ -413,6 +491,13 @@ export function createTableScene(
   let currentLayout: BoardLayout | null = null;
   let currentFullscreen = false;
   let displayProjection = createPresentationProjection(CARD_SHOWCASE_ASSIGNMENTS);
+  let interactionState: InteractionVisualStateV1 = Object.freeze({
+    selectedCardId: null,
+    selectableCardIds: Object.freeze([]),
+    legalTargetCardIds: Object.freeze([]),
+    focusedCardId: null,
+    locked: true,
+  });
   let currentAnimationFrame: {
     readonly clip: AnimationClipV1;
     readonly mode: AnimationMode;
@@ -439,15 +524,19 @@ export function createTableScene(
     for (const layer of chromeLayers.values()) {
       clearLayer(layer);
     }
+    const cardPlacements = currentAnimationFrame
+      ? computeAnimatedCardPlacements(
+          layout,
+          currentAnimationFrame.clip,
+          currentAnimationFrame.progress,
+          currentAnimationFrame.mode,
+        )
+      : applyInteractionPlacement(
+          computeCardPlacements(layout, displayProjection),
+          interactionState,
+        );
     cardRegistry.applyPlacements(
-      currentAnimationFrame
-        ? computeAnimatedCardPlacements(
-            layout,
-            currentAnimationFrame.clip,
-            currentAnimationFrame.progress,
-            currentAnimationFrame.mode,
-          )
-        : computeCardPlacements(layout, displayProjection),
+      cardPlacements,
       cardLayers as ReadonlyMap<(typeof BOARD_LAYER_ORDER)[number], Container>,
     );
 
@@ -501,6 +590,12 @@ export function createTableScene(
       layout.scale,
     );
     renderStatus(requiredChrome("InteractionOverlayLayer"), layout, fullscreen);
+    renderInteractionHighlights(
+      requiredChrome("InteractionOverlayLayer"),
+      layout,
+      displayProjection,
+      interactionState,
+    );
   };
 
   return {
@@ -508,6 +603,14 @@ export function createTableScene(
       cardRegistry.applyDeck(textures);
     },
     redraw,
+    setInteractionState: (state) => {
+      interactionState = Object.freeze({
+        ...state,
+        selectableCardIds: Object.freeze([...state.selectableCardIds]),
+        legalTargetCardIds: Object.freeze([...state.legalTargetCardIds]),
+      });
+      if (currentLayout) redraw({ fullscreen: currentFullscreen, layout: currentLayout });
+    },
     snapTo: (projection) => {
       displayProjection = createPresentationProjection(projection);
       currentAnimationFrame = null;

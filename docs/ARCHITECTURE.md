@@ -141,3 +141,10 @@ resolution, live deck switching, and identity preservation across resize.
 Phase 2C adds literal semantic-plan/director tests, all-mode exact settlement, FIFO/rejection,
 accelerate/finish/cancel/destroy, draw-back/flip ordering, reduced-motion/no-transit behavior, and
 root/Pages browser matrices covering mid-flight deck switching and resize rebasing.
+Phase 2D keeps input presentation-owned: a pure controller consumes only an injected
+`PlayerObservationV1`, current legal actions, public confirmation hints, and presentation locks. It
+emits a minimal immutable intent without a command ID and cannot import engine execution, RNG, or
+transport. Pixi owns transient highlights; a semantic DOM overlay owns pointer/keyboard focus and
+labels. A newer observation is required after intent emission. The current technical fixture is not
+a real recipient projection or command sink. See
+[`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
