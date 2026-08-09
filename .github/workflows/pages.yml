@@ -25,11 +25,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npm run validate:technical-runtime-decks
       - run: npm run check
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
-      - run: npm run test:e2e:pages
+      - run: npm run validate:phase2e
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

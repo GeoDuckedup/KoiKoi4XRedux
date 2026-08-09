@@ -1,4 +1,11 @@
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { deflateSync } from "node:zlib";
@@ -179,6 +186,30 @@ describe("primary-deck pilot readiness", () => {
     expect(
       validateLocalPackageSources(temporaryRoot, floorPackage).issues.map((entry) => entry.code),
     ).toContain("SOURCE_BELOW_RECOMMENDED_FLOOR");
+
+    const missingBackPackage: DeckPackageV1 = {
+      ...floorPackage,
+      backs: { default: "source/missing-back.png" },
+    };
+    expect(
+      validateLocalPackageSources(temporaryRoot, missingBackPackage, {
+        includeBack: false,
+      }).issues.map((entry) => entry.code),
+    ).not.toContain("MISSING_CARD_BACK_SOURCE");
+    expect(
+      validateLocalPackageSources(temporaryRoot, missingBackPackage).issues.map(
+        (entry) => entry.code,
+      ),
+    ).toContain("MISSING_CARD_BACK_SOURCE");
+
+    symlinkSync(join(deckDirectory, "source/card-back.png"), join(sourceDirectory, "linked.png"));
+    const symlinkPackage: DeckPackageV1 = {
+      ...floorPackage,
+      cards: { "january-pine-plain-a": { file: "source/linked.png" } },
+    };
+    expect(
+      validateLocalPackageSources(temporaryRoot, symlinkPackage).issues.map((entry) => entry.code),
+    ).toContain("UNREADABLE_SOURCE");
   });
 
   it("rejects structurally corrupt PNG, JPEG, and WebP sources", () => {

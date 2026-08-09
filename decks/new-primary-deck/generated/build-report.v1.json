@@ -1,0 +1,363 @@
+{
+  "approvalReady": false,
+  "artSpecVersion": 1,
+  "cards": [
+    {
+      "cardId": "january-pine-plain-a",
+      "source": {
+        "format": "png",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/january-pine-plain-a.png",
+        "sha256": "27dbfaf9d05a930a8c3a18196cdc27adac14fd919b917008a2a2c0468c7106c5"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/january-pine-plain-a.png",
+        "sha256": "7180e2d6de695c9edacd9dd800d2ec5edbe0608caf3426e5d3d7b13d6f61f3ea"
+      },
+      "thumbnail": {
+        "path": "thumbnails/january-pine-plain-a.png",
+        "sha256": "2825b53848ee782bc9e5bd706086f97c965c6b91f740eeb3289be34922dedd5a"
+      }
+    },
+    {
+      "cardId": "september-sake-cup",
+      "source": {
+        "format": "png",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/september-sake-cup.png",
+        "sha256": "6d139c16529171b56c1b2cfd7042f87d85235cab743b6ce6d4a2065bf59292ed"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/september-sake-cup.png",
+        "sha256": "a9eac949543c659b8aa36b6c47572fa86bd8feb7c0ddb5073142987761de25ec"
+      },
+      "thumbnail": {
+        "path": "thumbnails/september-sake-cup.png",
+        "sha256": "dab467f91a7e6d2f904d4f1a6fe90e70c31c2244341046a6e1e8a5b951db71cb"
+      }
+    },
+    {
+      "cardId": "november-rain",
+      "source": {
+        "format": "png",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/november-rain.png",
+        "sha256": "a39655e715eb1cb3454c4c440df9ef866b572cb3727d4a17b59c5dcc1f2028df"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/november-rain.png",
+        "sha256": "94188504a0bdbcc30ec5afa40adc832ec06f3a6722d32089308f0ecb20b4b5ee"
+      },
+      "thumbnail": {
+        "path": "thumbnails/november-rain.png",
+        "sha256": "84ee3462d8241bf0b9ed63ac78bd20c2f9c4cd744f4655beac491bca23b60a1c"
+      }
+    },
+    {
+      "cardId": "december-phoenix",
+      "source": {
+        "format": "png",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/december-phoenix.png",
+        "sha256": "e2d0e9f95d3449bba06e0855ae9c18599f7dbd7452fdf6bbe11dcb28a424914e"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/december-phoenix.png",
+        "sha256": "019d26bd6101ebffea66247d98b189e54fc38514dc4ea400c9b1876f72d7d804"
+      },
+      "thumbnail": {
+        "path": "thumbnails/december-phoenix.png",
+        "sha256": "48009ec2d3a3ab384e250d6c8b0f5a715600ee0cfe5e9d5506623b7b8e5a1a18"
+      }
+    }
+  ],
+  "completeRuntimeManifest": false,
+  "contactSheets": {
+    "artReview": {
+      "path": "contact-sheets/art-review.png",
+      "sha256": "f6eb14ed37645bf66460b5730b740a6afafd748ccf95050820833cdd1023cb2b"
+    },
+    "gameplay": {
+      "path": "contact-sheets/gameplay-390x844.png",
+      "sha256": "d897e644eb3df003b2d04089cd3ce8a36b6e9789b8e7a1dbfe689042f4cb0d1d"
+    }
+  },
+  "formatVersion": 1,
+  "issues": [
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:january-crane",
+      "message": "Missing source/january-crane.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:january-red-text-scroll",
+      "message": "Missing source/january-red-text-scroll.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:january-pine-plain-b",
+      "message": "Missing source/january-pine-plain-b.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:february-bush-warbler",
+      "message": "Missing source/february-bush-warbler.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:february-red-text-scroll",
+      "message": "Missing source/february-red-text-scroll.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:february-plum-plain-a",
+      "message": "Missing source/february-plum-plain-a.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:february-plum-plain-b",
+      "message": "Missing source/february-plum-plain-b.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:march-curtain",
+      "message": "Missing source/march-curtain.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:march-red-text-scroll",
+      "message": "Missing source/march-red-text-scroll.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:march-cherry-plain-a",
+      "message": "Missing source/march-cherry-plain-a.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:march-cherry-plain-b",
+      "message": "Missing source/march-cherry-plain-b.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:april-cuckoo",
+      "message": "Missing source/april-cuckoo.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:april-red-scroll",
+      "message": "Missing source/april-red-scroll.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:april-wisteria-plain-a",
+      "message": "Missing source/april-wisteria-plain-a.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:april-wisteria-plain-b",
+      "message": "Missing source/april-wisteria-plain-b.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:may-bridge",
+      "message": "Missing source/may-bridge.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:may-red-scroll",
+      "message": "Missing source/may-red-scroll.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:may-iris-plain-a",
+      "message": "Missing source/may-iris-plain-a.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:may-iris-plain-b",
+      "message": "Missing source/may-iris-plain-b.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:june-butterfly",
+      "message": "Missing source/june-butterfly.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:june-blue-scroll",
+      "message": "Missing source/june-blue-scroll.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:june-peony-plain-a",
+      "message": "Missing source/june-peony-plain-a.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:june-peony-plain-b",
+      "message": "Missing source/june-peony-plain-b.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:july-boar",
+      "message": "Missing source/july-boar.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:july-red-scroll",
+      "message": "Missing source/july-red-scroll.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:july-bush-clover-plain-a",
+      "message": "Missing source/july-bush-clover-plain-a.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:july-bush-clover-plain-b",
+      "message": "Missing source/july-bush-clover-plain-b.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:august-moon",
+      "message": "Missing source/august-moon.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:august-geese",
+      "message": "Missing source/august-geese.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:august-pampas-plain-a",
+      "message": "Missing source/august-pampas-plain-a.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:august-pampas-plain-b",
+      "message": "Missing source/august-pampas-plain-b.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:september-blue-scroll",
+      "message": "Missing source/september-blue-scroll.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:september-chrysanthemum-plain-a",
+      "message": "Missing source/september-chrysanthemum-plain-a.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:september-chrysanthemum-plain-b",
+      "message": "Missing source/september-chrysanthemum-plain-b.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:october-deer",
+      "message": "Missing source/october-deer.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:october-blue-scroll",
+      "message": "Missing source/october-blue-scroll.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:october-maple-plain-a",
+      "message": "Missing source/october-maple-plain-a.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:october-maple-plain-b",
+      "message": "Missing source/october-maple-plain-b.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:november-swallow",
+      "message": "Missing source/november-swallow.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:november-red-scroll",
+      "message": "Missing source/november-red-scroll.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:november-willow-plain",
+      "message": "Missing source/november-willow-plain.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:december-paulownia-plain-a",
+      "message": "Missing source/december-paulownia-plain-a.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:december-paulownia-plain-b",
+      "message": "Missing source/december-paulownia-plain-b.png."
+    },
+    {
+      "severity": "error",
+      "code": "MISSING_SOURCE",
+      "path": "new-primary-deck:december-paulownia-plain-c",
+      "message": "Missing source/december-paulownia-plain-c.png."
+    }
+  ],
+  "packageId": "new-primary-deck",
+  "packageVersion": "0.1.0",
+  "runtimeManifestPath": null
+}

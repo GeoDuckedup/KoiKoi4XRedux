@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, realpathSync } from "node:fs";
 import { extname, resolve, sep } from "node:path";
 import { inflateSync } from "node:zlib";
 
@@ -331,6 +331,18 @@ function resolvedAssetPath(packageDirectory: string, relativePath: string): stri
   return assetPath;
 }
 
+function assertContainedRegularSource(packageDirectory: string, path: string): void {
+  const stats = lstatSync(path);
+  if (stats.isSymbolicLink() || !stats.isFile()) {
+    throw new Error(`Source must be a regular non-symlink file: ${path}`);
+  }
+  const root = realpathSync(resolve(packageDirectory));
+  const realPath = realpathSync(path);
+  if (realPath !== root && !realPath.startsWith(`${root}${sep}`)) {
+    throw new Error(`Source resolves outside package root: ${path}`);
+  }
+}
+
 function validateDimensions(
   metadata: SourceImageMetadata,
   cardId: CardId,
@@ -371,8 +383,46 @@ function validateDimensions(
   }
 }
 
+function validateBackDimensions(
+  metadata: SourceImageMetadata,
+  issues: DeckValidationIssue[],
+): void {
+  const minimum = ART_SPEC_V1.source.releaseMinimum;
+  const floor = ART_SPEC_V1.source.recommendedFloor;
+  if (metadata.width < minimum.width || metadata.height < minimum.height) {
+    issues.push(
+      issue(
+        "error",
+        "CARD_BACK_BELOW_RELEASE_MINIMUM",
+        "backs.default",
+        `${metadata.width}×${metadata.height} is below ${minimum.width}×${minimum.height}.`,
+      ),
+    );
+  } else if (metadata.width < floor.width || metadata.height < floor.height) {
+    issues.push(
+      issue(
+        "warning",
+        "CARD_BACK_BELOW_RECOMMENDED_FLOOR",
+        "backs.default",
+        `${metadata.width}×${metadata.height} is below ${floor.width}×${floor.height}.`,
+      ),
+    );
+  }
+  if (!hasCardAspectRatio(metadata, 0.001)) {
+    issues.push(
+      issue(
+        "warning",
+        "CARD_BACK_ASPECT",
+        "backs.default",
+        `${metadata.width}×${metadata.height} is not the preferred 5:8 full-bleed ratio.`,
+      ),
+    );
+  }
+}
+
 export interface ValidateLocalSourcesOptions {
   readonly cardIds?: ReadonlySet<CardId>;
+  readonly includeBack?: boolean;
 }
 
 export function validateLocalPackageSources(
@@ -395,6 +445,7 @@ export function validateLocalPackageSources(
       continue;
     }
     try {
+      assertContainedRegularSource(packageDirectory, path);
       const metadata = readSourceImageMetadata(path);
       metadataByCardId[cardId] = metadata;
       validateDimensions(metadata, cardId, packageDefinition, issues);
@@ -411,7 +462,7 @@ export function validateLocalPackageSources(
   }
 
   const cardBack = packageDefinition.backs?.default;
-  if (cardBack !== undefined) {
+  if (cardBack !== undefined && options.includeBack !== false) {
     const path = resolvedAssetPath(packageDirectory, cardBack);
     if (!existsSync(path)) {
       issues.push(
@@ -419,7 +470,8 @@ export function validateLocalPackageSources(
       );
     } else {
       try {
-        readSourceImageMetadata(path);
+        assertContainedRegularSource(packageDirectory, path);
+        validateBackDimensions(readSourceImageMetadata(path), issues);
       } catch (error) {
         issues.push(
           issue(

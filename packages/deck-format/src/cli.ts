@@ -14,6 +14,7 @@ import {
   validateDeckTransformsDefinition,
 } from "./validation.ts";
 import { generateLockedDeckArtifacts, pilotCardIdSet } from "./node/artifacts.ts";
+import { buildDeckPackageV1 } from "./node/package-builder.ts";
 import { seedTechnicalPilotSources } from "./node/pilot-placeholders.ts";
 import { validateLocalPackageSources } from "./node/source-validation.ts";
 
@@ -233,7 +234,7 @@ function requireLockedInputs(packageDirectory: string) {
   return valid;
 }
 
-function main(): number {
+async function main(): Promise<number> {
   const [command = "validate", ...args] = process.argv.slice(2);
   if (command === "validate") return validateCommand(args);
 
@@ -256,14 +257,36 @@ function main(): number {
     for (const path of Object.values(paths)) process.stdout.write(`generated ${path}\n`);
     return 0;
   }
+  if (command === "build") {
+    const loaded = loadPackageDirectory(packageDirectory);
+    if (loaded.packageDefinition === null) {
+      throw new Error(`Cannot build invalid package at ${packageDirectory}.`);
+    }
+    const report = await buildDeckPackageV1({
+      decksRoot: resolve(packageDirectory, ".."),
+      packageId: loaded.packageDefinition.id,
+      release: args.includes("--release"),
+    });
+    process.stdout.write(
+      `${report.packageId}: built ${report.cards.length}/48 faces; runtime manifest ${report.completeRuntimeManifest ? "complete" : "withheld"}; approval ${report.approvalReady ? "ready" : "pending"}.\n`,
+    );
+    for (const entry of report.issues) {
+      process.stdout.write(
+        `${entry.severity === "error" ? "ERROR" : "WARN"} ${entry.code} ${entry.path}: ${entry.message}\n`,
+      );
+    }
+    return args.includes("--release") && report.issues.some((entry) => entry.severity === "error")
+      ? 1
+      : 0;
+  }
   process.stderr.write(
-    "Usage: cli.ts validate [decks] [--release] [--json] | generate [deck] | seed-pilot [deck]\n",
+    "Usage: cli.ts validate [decks] [--release] [--json] | generate [deck] | build [deck] [--release] | seed-pilot [deck]\n",
   );
   return 2;
 }
 
 try {
-  process.exitCode = main();
+  process.exitCode = await main();
 } catch (error) {
   process.stderr.write(
     `${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`,

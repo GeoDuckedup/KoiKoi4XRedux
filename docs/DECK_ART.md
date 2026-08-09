@@ -639,7 +639,40 @@ authoring remain Phase 2C, 2D, and 2E.
 
 ## Phase 2E
 
-Implement Deck Workshop/importer UI, dual contact sheets, Art Guide export, and demonstrate at least two packages. Validate the four-card pilot in the 390 × 844 board layout.
+The local authoring implementation now lives at:
+
+- portable Workshop, contact-sheet, transform, and approval contracts:
+  `packages/deck-format/src/`;
+- Sharp-based source decode, deterministic raster build, immutable import, and workspace service:
+  `packages/deck-format/src/node/`;
+- local-only Workshop entry and token-protected Vite bridge: `apps/web/workshop.html`,
+  `apps/web/src/workshop/`, and `apps/web/vite.workshop.config.ts`;
+- generated table/thumbnail derivatives, review sheets, and build report:
+  `decks/new-primary-deck/generated/`.
+
+Authoring commands:
+
+```sh
+npm run dev:workshop
+npm run build:deck
+npm run validate:phase2e
+npm run validate:phase2e:release
+```
+
+`build:deck` is a truthful development build: it may render the sources that exist and generate two
+48-slot sheets, but it withholds the runtime manifest when any face/back is unresolved. The sheets
+are visibly marked incomplete. `validate:phase2e:release` is intentionally owner-gated and must fail
+until the package has 48 finished faces plus a back, the four pilot roles are approved, and
+`approval.json` binds an explicit reviewer/date/note to the exact current sheet digests and 390×844
+pilot set.
+
+The Workshop is not a production route. Normal Vite and Pages builds exclude `workshop.html`, its
+filesystem bridge, authored source files, transforms, and the Sharp/Node adapter. The game continues
+to consume only a complete browser-portable `RuntimeDeckManifestV1`.
+
+The current checked-in pilot sources remain technical placeholders: 4 of 48 faces plus the back.
+They validate the import pipeline and required board/contact-sheet review mechanics, but they do not
+constitute the required finished-art visual decision. Final visual approval remains an owner action.
 
 This deliberately places art tooling before the one-round vertical slice is treated as visually mature, so production of the new deck can proceed alongside rendering work rather than becoming a late manual conversion task.
 

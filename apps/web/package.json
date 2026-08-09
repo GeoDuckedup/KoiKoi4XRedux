@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:workshop": "vite --mode workshop --config vite.workshop.config.ts --configLoader runner",
     "preview": "vite preview",
     "build": "vite build",
     "typecheck": "tsc --project tsconfig.json --noEmit"

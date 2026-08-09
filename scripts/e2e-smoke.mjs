@@ -122,6 +122,12 @@ async function waitForApplicationReady(page, browserErrors, networkErrors) {
 await mkdir(outputDirectory, { recursive: true });
 const staticServer = await startStaticServer();
 process.stdout.write(`Static smoke server ready at ${pageUrl}.\n`);
+const workshopProductionResponse = await fetch(`${pageUrl}workshop.html`);
+assert(
+  workshopProductionResponse.status === 404,
+  "The development-only Deck Workshop must not be present in the production/Pages build.",
+);
+process.stdout.write("ART2E-012 verified the Workshop is absent from the production build.\n");
 
 let browser;
 try {

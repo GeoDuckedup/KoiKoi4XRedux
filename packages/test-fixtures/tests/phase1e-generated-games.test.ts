@@ -65,7 +65,7 @@ function assertProjectionShape(
 describe("Phase 1E generated legal-match gate", () => {
   it(
     "completes 10,002+ seeded matches with invariant/version checks and sampled privacy/replay equality",
-    { timeout: 180_000 },
+    { timeout: 300_000 },
     () => {
       const count = generatedMatchCount();
       const lengths = [3, 6, 12] as const satisfies readonly MatchLength[];

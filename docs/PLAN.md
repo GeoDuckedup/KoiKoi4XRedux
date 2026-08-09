@@ -2,7 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 9, 2026
-**Current gate:** Phase 2D implemented, independently accepted, and deployed; owner review next
+**Current gate:** Phase 2E authoring/tooling implemented locally; final artwork and owner visual
+approval remain required before Phase 3
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -490,16 +491,63 @@ Current result:
   CI run `31322149519` and Pages run `31322149502` passed, and a cache-busted live interaction
   selected April Cuckoo with the exact two legal targets and no executed intent.
 
+### Phase 2E — Deck Workshop and final visual approval
+
+Status: **authoring/tooling implementation complete locally; owner art gate pending**.
+
+Deliver:
+
+- deterministic Sharp-based import of immutable PNG/JPEG/WebP sources into 640×1024 table and
+  160×256 thumbnail derivatives using the shared ART_SPEC transform math;
+- a local-development-only 48-slot Workshop with truthful Auto/Manual/inherited/warning/missing/
+  invalid status, source assignment, normalized transform editing, preview, and package rebuilds;
+- canonical 968×4516 art-review and 390×1624 gameplay-size contact sheets, each containing all 48
+  slots in month order and visibly marked when incomplete;
+- a strict complete runtime manifest only when all 48 faces plus the back build successfully;
+- a digest-bound owner approval record requiring both sheets, the four pilot roles on the real
+  390×844 board, an approver, and a date;
+- separate technical and owner-gated release validation, with Workshop filesystem access excluded
+  from normal production and GitHub Pages output.
+
+Gate:
+
+- `ART2E-001` through `ART2E-012` bind canonical assignment, truthful grid state, immutable
+  transforms/sources, deterministic raster outputs, both contact sheets, complete second-package
+  proof, atomic saves, digest-named import, local Workshop behavior, exact approval evidence, and
+  production exclusion/release rejection;
+- `npm run validate:phase2e` passes the technical unit/browser/production gates without pretending
+  missing finished artwork is approved;
+- `npm run validate:phase2e:release` must fail while any source is missing, the four-card pilot is
+  not owner-approved, an exact approval record is absent/stale, or the runtime package is incomplete;
+- the four finished pilot cards and back must first be reviewed in both sheets and the 390×844 board;
+  only then may the remaining 44 faces be imported and the final approval record created;
+- normal `npm run build` and Pages output must return 404 for `workshop.html` and include no authored
+  sources, local filesystem bridge, approval record, or Sharp/Node adapter.
+
+Current result:
+
+- the deterministic importer, package builder, dual sheets, local Workshop, token-protected local
+  bridge, strict approval validator, and technical/release scripts are implemented;
+- the current primary package truthfully builds 4 of 48 technical pilot faces plus the back, omits
+  a runtime manifest, and reports 44 missing sources, pending pilot approval, missing approval
+  evidence, and an incomplete release;
+- a complete 48-face plus back second technical package is built in tests and decoded through the
+  strict runtime manifest contract;
+- final visual acceptance is intentionally not claimed because no finished licensed art has been
+  supplied and the checked-in pilots are process placeholders only.
+
+Architecture is locked in
+[`ADR 0011`](./adr/0011-phase-2e-workshop-import-approval-boundary.md).
+
 ## Later phases
 
-1. **Phase 2E — Deck Workshop and final visual approval:** importer/editor, package workflow, and
-   approved production art.
-2. **Phase 3 — One-round vertical slice:** complete playable local round and presentation.
-3. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook.
-4. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, and pass-and-play.
-5. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
-6. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
-7. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
-8. **Phase 9 — Production polish:** content, accessibility, performance, telemetry/reliability, and release.
+1. **Phase 3 — One-round vertical slice:** complete playable local round and presentation, only
+   after Phase 2E visual approval.
+2. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook.
+3. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, and pass-and-play.
+4. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
+5. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
+6. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
+7. **Phase 9 — Production polish:** content, accessibility, performance, telemetry/reliability, and release.
 
 No later phase may bypass the acceptance gate of the preceding phase.

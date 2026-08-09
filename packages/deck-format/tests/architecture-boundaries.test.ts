@@ -23,14 +23,20 @@ describe("deck-format architecture boundary", () => {
     }
   });
 
-  it("depends only on the canonical engine package", () => {
+  it("keeps Sharp confined to the Node authoring adapter dependency boundary", () => {
     const manifest = JSON.parse(readFileSync(join(packageRoot, "package.json"), "utf8")) as {
       dependencies?: Record<string, string>;
     };
-    expect(manifest.dependencies).toEqual({ "@koikoi4x/engine": "0.0.0" });
+    expect(manifest.dependencies).toEqual({
+      "@koikoi4x/engine": "0.0.0",
+      sharp: "^0.35.3",
+    });
+    for (const path of portableSourceFiles(sourceRoot)) {
+      expect(readFileSync(path, "utf8"), path).not.toMatch(/from\s+["']sharp["']/u);
+    }
   });
 
-  it("ASSET-003 keeps Node authoring adapters and platform modules out of the web runtime", () => {
+  it("ASSET-003 / ART2E-012 keeps Node authoring adapters out of production web source", () => {
     const webSourcePaths = portableSourceFiles(resolve("apps/web/src"));
     const forbiddenImport =
       /(?:from\s+|import\s*\()\s*["'](?:node:[^"']+|@koikoi4x\/deck-format\/node(?:\/[^"']*)?)["']/u;

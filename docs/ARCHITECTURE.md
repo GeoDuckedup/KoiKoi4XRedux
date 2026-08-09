@@ -148,3 +148,12 @@ transport. Pixi owns transient highlights; a semantic DOM overlay owns pointer/k
 labels. A newer observation is required after intent emission. The current technical fixture is not
 a real recipient projection or command sink. See
 [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
+
+Phase 2E keeps deck authoring outside the production client. Portable package, transform,
+contact-sheet, and approval contracts live in `packages/deck-format/src`; Sharp, filesystem access,
+atomic writes, source decoding, and deterministic raster generation live only under
+`packages/deck-format/src/node`. The Workshop uses a separate local-development Vite entry with a
+session-token bridge. Normal Vite/Pages builds exclude that entry and bridge and consume only strict
+complete runtime manifests. Source files are immutable inputs, assigned imports are digest-named,
+and automated builds may verify but never manufacture owner visual approval. See
+[`ADR 0011`](./adr/0011-phase-2e-workshop-import-approval-boundary.md).

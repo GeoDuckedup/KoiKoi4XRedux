@@ -499,3 +499,45 @@ Original prompt: read the package and understand it, then let me know when we ar
   `intentExecution:notExecuted`; the live screenshot was inspected.
 - Phase 2D is implemented, independently accepted, pushed, deployed, and ready for owner review.
   Next after approval: Phase 2E Deck Workshop and final visual approval.
+
+## 2026-08-09 — Phase 2E Deck Workshop and art pipeline started
+
+- Owner approved Phase 2E. Re-read the project manifest, AI workflow, deck-art authority, current
+  package/runtime seams, and the web-game testing workflow.
+- Independent read-only audits agreed that the importer, deterministic derivatives, review sheets,
+  local Workshop, and release validator are implementable now, while finished licensed art and
+  visual approval are owner-supplied acceptance inputs that automation must not invent.
+- Locked a separate technical gate and owner-gated release command. Normal Pages output must remain
+  Workshop-free; authoring uses an explicit local-only Vite entry and Node adapter.
+
+## 2026-08-09 — Phase 2E tooling implementation and local validation
+
+- Added portable 48-slot Workshop/status, canonical auto-assignment, normalized transform editing,
+  dual contact-sheet, and strict digest-bound approval contracts.
+- Added the Node-only Sharp raster adapter, deterministic 640×1024 and 160×256 derivatives,
+  complete-manifest withholding, immutable digest-named source assignment, atomic transform saves,
+  and strict release evidence.
+- Added a local-only token-protected Deck Workshop with the January–December grid, Auto/Manual
+  editing, source/frame/phone/back previews, package actions, a 390×844 four-pilot board, and
+  development diagnostics that explicitly expose no engine execution.
+- Generated the primary technical pilot derivatives and both complete 48-slot review sheets. The
+  result truthfully contains 4 of 48 technical faces, 44 missing placeholders, no runtime manifest,
+  and no approval-ready claim.
+- `ART2E-001` through `ART2E-012` bind assignment, status, transforms, deterministic raster output,
+  partial/complete package behavior, atomic writes, immutable import, Workshop browser behavior,
+  explicit approval evidence, release rejection, and production exclusion.
+- The technical Phase 2E gate passes 16 files / 112 tests, local Workshop desktop/mobile browser
+  validation, and both root and Pages seven-viewport production matrices. The separate release gate
+  correctly fails with 44 missing sources, missing owner approval, pending pilot approval, and an
+  incomplete package.
+- Independent reviews found and closed selected-only/stale manifest publication, browser/Sharp
+  rotation mismatch, inherited-back validation, symlink containment, package-directory assumptions,
+  missing authoring previews/drag/diagnostics/back import, and the independent Pages-gate gap.
+- `npm run validate:phase2e` passes 16 files / 112 tests, the desktop/mobile Workshop trace, and both
+  seven-viewport production bases with the Workshop absent. `npm run check` passes 33 files / 346
+  tests, the isolated 10,002-match generated gate in 72 seconds, all workspace checks, and the
+  764-module build. The generated stress test is now sequenced separately from Sharp tests to avoid
+  CI CPU starvation.
+- Three independent final reviews report no blocker, high, or medium finding. Remaining before
+  tooling deployment: commit/push, hosted CI/Pages verification, and live production-absence check.
+  Remaining before Phase 3: owner-supplied finished art and explicit Phase 2E visual approval.

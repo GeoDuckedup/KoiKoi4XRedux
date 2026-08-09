@@ -260,7 +260,40 @@ Phase 2D binding:
   engine transition, and the technical browser harness never executes them;
 - optional drag input is deferred because pointer activation and keyboard input are complete.
 
-## 11. Approved-decision coverage matrix
+## 11. Phase 2E deck-authoring and approval vectors
+
+These assertions govern local authoring and review. They do not make technical placeholder art a
+release deck and do not permit an automated tool to impersonate owner visual approval.
+
+| ID | Required expectation |
+|---|---|
+| `ART2E-001` | Canonical filenames auto-assign to exact CardIds; ambiguous/duplicate stems are reported rather than guessed. |
+| `ART2E-002` | The Workshop groups exactly 48 canonical slots by month and truthfully distinguishes Auto, Manual, inherited, warning, missing, and invalid status. |
+| `ART2E-003` | Auto/Manual transform editing is immutable, normalized, deterministic, and resolution-independent. |
+| `ART2E-004` | Art-review and gameplay sheet plans have literal dimensions, canonical card order, 48 slots, and locked card geometry. |
+| `ART2E-005` | Identical source and transform produce byte-identical table/thumbnail derivatives without changing the source digest. |
+| `ART2E-006` | The four-source technical pilot builds both complete 48-slot review sheets, remains visibly incomplete, and withholds a runtime manifest and approval. |
+| `ART2E-007` | A complete second technical package builds 48 faces plus a back and decodes through the strict runtime manifest contract. |
+| `ART2E-008` | Transform saves are atomic and leave every immutable source digest unchanged. |
+| `ART2E-009` | Source assignment writes a digest-named immutable copy and never overwrites the original or another card's source. |
+| `ART2E-010` | The local-only Workshop passes desktop/mobile browser checks for its 48-card grid, editor modes, source metadata, protected bridge, 390×844 pilot board, and no engine execution. |
+| `ART2E-011` | Approval requires an explicit owner/date and exact current art-sheet, gameplay-sheet, four-pilot, note, and 390×844 evidence; stale or hostile records reject. |
+| `ART2E-012` | Release rejects missing/unapproved/incomplete art, while normal root and Pages builds exclude the Workshop and authoring bridge. |
+
+Phase 2E binding:
+
+- `ART2E-001` through `ART2E-009` and `ART2E-011` carry their exact IDs in focused deterministic
+  tests; `ART2E-010` is the dedicated local Workshop browser trace and `ART2E-012` is bound to
+  release-rejection plus root/repository-prefixed production-absence assertions;
+- technical acceptance may pass with missing art only because its report and sheets remain explicitly
+  incomplete; the separate release command must fail until all 48 faces, the back, pilot approval,
+  and digest-current owner evidence are present;
+- Workshop previews and builds use the same portable transform contract and Node raster adapter;
+  no alternate canvas-only crop policy is accepted;
+- the normal production app contains no Workshop entry, local write API, authored source, approval
+  record, Sharp import, or runtime transform resolver.
+
+## 12. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|
@@ -279,7 +312,7 @@ Phase 2D binding:
 | R-013 | All `FINAL-MONTH-*` fixtures |
 | R-014 | Scroll fixed, incremental, seven-Scroll, and no-combined-bonus fixtures |
 
-## 12. Binding gates
+## 13. Binding gates
 
 Phase 0C completed:
 
@@ -299,3 +332,12 @@ Phase 1 must:
 - run invariant checks after every accepted command;
 - make canonical serialization/hash versions explicit in replay/protocol artifacts and reject
   unsupported versions or tampered replay boundaries.
+
+Phase 2 presentation/art gates must:
+
+- keep technical fixtures explicitly non-authoritative and non-final;
+- run browser validation against both root and repository-prefixed production bases;
+- make each stable `INPUT-*` and `ART2E-*` expectation executable or bind it to a named browser/
+  release assertion with actionable failure output;
+- keep the local Workshop and authored source pipeline absent from production builds;
+- reject Phase 2E release until complete assets and exact current owner evidence exist.

@@ -11,6 +11,7 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@koikoi4x/engine": "0.0.0"
+    "@koikoi4x/engine": "0.0.0",
+    "sharp": "^0.35.3"
   }
 }

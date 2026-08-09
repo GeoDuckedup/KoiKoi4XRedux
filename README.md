@@ -1,7 +1,8 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository
-has completed and deployed **Phase 2D: selection and input**. It contains the canonical rules
+has completed and deployed **Phase 2D: selection and input** and now includes the local Phase 2E
+deck-authoring toolchain. It contains the canonical rules
 authority, all 48 artwork-independent card records, the complete deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
 boundaries, and a responsive Pixi table with 48 persistent canonical CardViews, local atomic deck
@@ -35,6 +36,7 @@ npm run validate:phase2a
 npm run validate:phase2b
 npm run validate:phase2c
 npm run validate:phase2d
+npm run validate:phase2e
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -85,11 +87,18 @@ legal Hand/Draw/Yaku targets, duplicate suppression, semantic card labels, point
 input, presentation locks, and both seven-viewport browser bases. Intents are displayed but never
 executed. Artifacts are written under `output/phase-2d/e2e/`.
 
+`npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
+available sources into deterministic table/thumbnail derivatives plus the two required 48-slot
+contact sheets. `npm run validate:phase2e` runs the technical Workshop/importer/production-exclusion
+gate. `npm run validate:phase2e:release` is stricter and is expected to fail until all 48 finished
+faces plus the back are present and an explicit owner approval record matches the current review
+sheets and 390×844 pilot review. The Workshop and its write bridge are absent from production/Pages.
+
 ## Workspace map
 
 - `apps/web` — Vite/Pixi browser presentation.
 - `packages/engine` — pure deterministic card, RNG, setup, turn, capture, and state domain.
-- `packages/deck-format` — portable deck schemas, resolution, transforms, Art Spec, and Node authoring CLI.
+- `packages/deck-format` — portable deck/Workshop/approval contracts plus the explicit Node raster-authoring CLI.
 - `packages/protocol` — versioned shared contracts.
 - `packages/test-fixtures` — deterministic fixture ownership.
 - `functions` — reserved for the Phase 7 authoritative Firebase service.
@@ -106,8 +115,9 @@ Pages workflow. Set **Settings → Pages → Build and deployment → Source** t
 workflow derives the correct Vite base path from the repository name and deploys `apps/web/dist` only
 after checks pass.
 
-No Firebase project, credentials, database migration, final artwork upload, or production domain is
-needed for Phase 2D. The page presents a responsive technical animation/input harness and local
+No Firebase project, credentials, database migration, or production domain is needed for the Phase
+2E tooling deployment. The live page remains the responsive technical animation/input harness and local
 Sunrise/Moonlight selector. Its card, decision, and motion controls are presentation-only: they emit
 diagnostic intents but execute no engine command or game state. A real playable observation adapter
-arrives in Phase 3; Workshop/final-art approval remains Phase 2E.
+arrives in Phase 3. The Deck Workshop is run locally, and finished art upload plus explicit visual
+approval remain the required Phase 2E owner steps before Phase 3 begins.

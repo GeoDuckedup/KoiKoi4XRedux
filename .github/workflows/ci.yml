@@ -22,10 +22,12 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run check
-      - run: npm run validate:phase2d
+      - run: npm run validate:phase2e
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-2d-input-runtime
-          path: output/phase-2d/e2e
+          name: phase-2e-deck-workshop
+          path: |
+            output/phase-2e/e2e
+            decks/new-primary-deck/generated/contact-sheets
           if-no-files-found: error

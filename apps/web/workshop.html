@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>KoiKoi4x Deck Workshop</title>
+  </head>
+  <body class="workshop-page">
+    <header class="workshop-header">
+      <div>
+        <p class="workshop-eyebrow">Development tool · Phase 2E</p>
+        <h1>KoiKoi4x Deck Workshop</h1>
+        <p>Immutable sources · normalized transforms · game-owned frame</p>
+      </div>
+      <div class="workshop-actions" aria-label="Package actions">
+        <button type="button" data-auto-assign>Auto-assign names</button>
+        <button type="button" data-build-selected>Rebuild selected</button>
+        <button type="button" data-build-all>Rebuild package</button>
+        <button type="button" data-art-guide>Export Art Guide</button>
+      </div>
+    </header>
+
+    <div class="workshop-banner" role="note">
+      This is a local authoring surface. Technical pilot art is not production-approved.
+    </div>
+
+    <main class="workshop-layout">
+      <section class="workshop-catalog" aria-labelledby="catalog-title">
+        <div class="workshop-section-heading">
+          <div>
+            <p class="workshop-eyebrow">Package</p>
+            <h2 id="catalog-title" data-package-title>New Primary Deck</h2>
+            <label class="package-picker">
+              <span>Authoring package</span>
+              <select data-package-select aria-label="Authoring package"></select>
+            </label>
+          </div>
+          <p data-summary aria-live="polite">Loading 48 canonical slots…</p>
+        </div>
+        <div class="workshop-grid" data-card-grid></div>
+      </section>
+
+      <aside class="workshop-inspector" aria-labelledby="inspector-title">
+        <div class="workshop-section-heading">
+          <div>
+            <p class="workshop-eyebrow">Selected card</p>
+            <h2 id="inspector-title" data-selected-title>Loading…</h2>
+          </div>
+          <span class="slot-status" data-selected-status>—</span>
+        </div>
+
+        <div class="workshop-previews">
+          <figure>
+            <canvas width="250" height="400" data-source-preview></canvas>
+            <figcaption>Original source · uncropped</figcaption>
+          </figure>
+          <figure>
+            <canvas width="250" height="400" data-frame-preview></canvas>
+            <figcaption>Game-frame preview</figcaption>
+          </figure>
+          <figure>
+            <canvas width="400" height="640" data-inspection-preview></canvas>
+            <figcaption>Large inspection preview</figcaption>
+          </figure>
+          <figure class="phone-size-preview">
+            <canvas width="66" height="106" data-phone-preview></canvas>
+            <figcaption>390 × 844 gameplay size</figcaption>
+          </figure>
+          <figure>
+            <canvas width="160" height="256" data-back-preview></canvas>
+            <figcaption>Package back</figcaption>
+          </figure>
+        </div>
+
+        <div class="workshop-source-row">
+          <p data-source-detail>No source selected.</p>
+          <label class="file-control">
+            <span>Choose replacement source</span>
+            <input type="file" accept="image/png,image/jpeg,image/webp" data-source-file />
+          </label>
+          <button type="button" data-assign-source disabled>
+            Assign without overwriting original
+          </button>
+          <label class="file-control">
+            <span>Choose replacement card back</span>
+            <input type="file" accept="image/png,image/jpeg,image/webp" data-back-source-file />
+          </label>
+          <button type="button" data-assign-back disabled>
+            Assign back without overwriting original
+          </button>
+        </div>
+
+        <form class="transform-editor" data-transform-form>
+          <label>
+            Mode
+            <select data-transform-mode>
+              <option value="auto">Auto</option>
+              <option value="manual">Manual</option>
+            </select>
+          </label>
+          <label>
+            Fit
+            <select data-fit>
+              <option value="cover">Cover</option>
+              <option value="contain">Contain</option>
+            </select>
+          </label>
+          <label>
+            Focus X
+            <input type="range" min="0" max="1" step="0.01" data-focus-x />
+          </label>
+          <label>
+            Focus Y
+            <input type="range" min="0" max="1" step="0.01" data-focus-y />
+          </label>
+          <label>
+            Zoom
+            <input type="range" min="1" max="4" step="0.01" data-zoom />
+          </label>
+          <label>
+            Rotation
+            <input type="range" min="-15" max="15" step="0.25" data-rotation />
+          </label>
+          <fieldset class="nudge-controls">
+            <legend>Manual crop position</legend>
+            <button type="button" data-nudge="up" aria-label="Move crop up">↑</button>
+            <button type="button" data-nudge="left" aria-label="Move crop left">←</button>
+            <button type="button" data-nudge="down" aria-label="Move crop down">↓</button>
+            <button type="button" data-nudge="right" aria-label="Move crop right">→</button>
+          </fieldset>
+          <div class="editor-actions">
+            <button type="submit">Save transform</button>
+            <button type="button" data-reset-transform>Reset to package default</button>
+          </div>
+        </form>
+
+        <section class="package-diagnostics" aria-labelledby="diagnostics-title">
+          <div class="workshop-section-heading">
+            <div>
+              <p class="workshop-eyebrow">Validation</p>
+              <h3 id="diagnostics-title">Affected-card diagnostics</h3>
+            </div>
+          </div>
+          <ul data-issue-list></ul>
+        </section>
+
+        <section class="pilot-board" aria-labelledby="pilot-title">
+          <div class="workshop-section-heading">
+            <div>
+              <p class="workshop-eyebrow">Required pilot gate</p>
+              <h3 id="pilot-title">390 × 844 board review</h3>
+            </div>
+            <span>Dense · Simple · Bright · Plain</span>
+          </div>
+          <canvas width="390" height="844" data-board-preview></canvas>
+        </section>
+
+        <div class="review-actions" aria-label="Review artifacts">
+          <button type="button" data-download-art>Download art-review sheet</button>
+          <button type="button" data-download-gameplay>Download gameplay-size sheet</button>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="workshop-footer">
+      <p data-workshop-status aria-live="polite">Loading local deck workspace…</p>
+      <p>
+        Release stays blocked until 48 faces, the back, both sheet reviews, and owner approval
+        agree.
+      </p>
+    </footer>
+
+    <script type="module" src="/src/workshop/main.ts"></script>
+  </body>
+</html>

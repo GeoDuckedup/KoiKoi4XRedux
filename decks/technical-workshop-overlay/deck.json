@@ -1,0 +1,26 @@
+{
+  "formatVersion": 1,
+  "id": "technical-workshop-overlay",
+  "version": "0.1.0",
+  "name": "Technical Workshop Overlay",
+  "author": "KoiKoi4x Project",
+  "license": "Technical inheritance proof only; not approved artwork",
+  "extends": "new-primary-deck",
+  "framePolicy": "game",
+  "sourceDefaults": {
+    "mode": "auto",
+    "fit": "cover",
+    "focusX": 0.5,
+    "focusY": 0.5
+  },
+  "cards": {},
+  "backs": {},
+  "preview": {
+    "featuredCardIds": [
+      "november-rain",
+      "september-sake-cup",
+      "december-phoenix",
+      "january-pine-plain-a"
+    ]
+  }
+}

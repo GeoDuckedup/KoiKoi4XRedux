@@ -2,15 +2,21 @@
 
 **Updated:** August 9, 2026
 
-**Overall state:** Greenfield rewrite, Phase 2D selection/input implemented, independently accepted,
-committed, and deployed; owner review next
+**Overall state:** Greenfield rewrite, Phase 2E Deck Workshop/import tooling implemented locally;
+final artwork and explicit owner visual approval remain pending before Phase 3
 
 **Runtime state:** Complete deterministic headless match engine with formal projections, replay,
 hashes, retry-safe command receipts, and protocol records, plus a presentation-only responsive Pixi
 table with 48 persistent canonical CardViews, two locally switchable technical packages, one
-deterministic semantic animation queue, and an intent-only accessible input harness
+deterministic semantic animation queue, an intent-only accessible input harness, and a local-only
+deterministic deck Workshop/raster review pipeline
 
 ## Current result
+
+Phase 2E adds a separate local authoring surface and deterministic raster pipeline without changing
+the deployed game runtime. The current primary package truthfully contains four technical pilot
+faces plus a back; 44 finished faces and owner approval are absent, so its runtime manifest is
+withheld and the release gate fails by design.
 
 Phase 2D consumes an injected recipient-scoped observation and its legal actions through a pure
 presentation controller. Guided/Fast pointer and keyboard paths emit one immutable diagnostic intent
@@ -21,6 +27,25 @@ data. Two generated technical packages exercise all 48 faces, a back, repository
 atomic local switching. Five animation scenarios exercise persistent identities and interruption
 behavior. They remain intentionally non-final development fixtures rather than a playable or
 privacy-safe match. Phase 2D's browser fixture is explicitly technical and does not execute intents.
+
+## Phase 2E authoring runtime now present
+
+- Portable 48-slot Workshop/status, normalized transform-editing, contact-sheet geometry, and strict
+  owner-approval contracts under `@koikoi4x/deck-format`.
+- Explicit Node-only Sharp adapter for orientation-aware PNG/JPEG/WebP decode, deterministic
+  640×1024 table and 160×256 thumbnail derivatives, SHA-256 provenance, and atomic output.
+- Immutable digest-named source assignment and atomic transform saves; imports never overwrite
+  existing source art.
+- Local-only Workshop with January–December grid, Auto/Manual editing, source/frame/phone/back
+  previews, package actions, exact errors/warnings, and a four-pilot 390×844 board review.
+- Token-protected exact package/card filesystem bridge enabled only by the Workshop Vite config.
+  Normal root/Pages builds return 404 for `workshop.html` and contain no authoring bridge.
+- Canonical 968×4516 art-review and 390×1624 gameplay-size sheets with all 48 slots and explicit
+  incomplete watermarking when sources are absent.
+- Complete runtime manifest generation only for 48 faces plus one back. A second complete technical
+  package is constructed and decoded in tests without labeling it final art.
+- Strict release evidence: approved pilot metadata plus an explicit owner/date/note bound to the
+  exact current sheet digests, four pilot CardIds, and 390×844 viewport.
 
 ## Phase 2D input runtime now present
 
@@ -162,6 +187,20 @@ in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
 
 ## Validation
 
+- Phase 2E's technical gate passes 16 focused files / 112 tests, builds the four-source pilot and
+  both 48-slot sheets, exercises the local Workshop at desktop and 390×844, and passes both root and
+  repository-prefixed seven-viewport production matrices with the Workshop absent.
+- The owner-gated release command truthfully reports 44 `MISSING_SOURCE` errors plus
+  `APPROVAL_RECORD_REQUIRED`, `PILOT_NOT_APPROVED`, and `RELEASE_PACKAGE_INCOMPLETE`; it does not
+  emit a primary runtime manifest or approval-ready report.
+- The normal production build still contains only the Phase 2D technical table. The local Workshop
+  reports 48 slots, 3 Auto pilots, 1 Manual pilot, 44 missing, and `engineExecution:notAvailable`.
+- `npm run check` passes 33 files / 346 tests, the isolated 10,002-match generated gate in 72 seconds,
+  all workspace checks, authored-package validation, and the 764-module production build. Isolating
+  the CPU-heavy generated gate prevents Sharp raster tests from starving its deterministic timeout.
+- Three independent Phase 2E reviews report no blocker, high, or medium finding after selected-build,
+  stale-manifest, rotation-preview, inheritance/back, source-containment, package-path, Workshop UX,
+  and Pages-gating repairs.
 - Phase 2D's focused gate passes 8 files / 76 tests and byte-checks all 100 generated technical
   artifacts. Both seven-viewport root and `/KoiKoi4XRedux/` baseline matrices and each base's complete
   390×844 interaction trace pass with zero browser/network errors.
@@ -218,8 +257,9 @@ in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
   include local opponent/draw fixture allocations and must not be mistaken for a public engine
   observation. A real recipient adapter must represent hidden identities as opaque backs/counts.
   Real observation-to-board presentation and local execution remain Phase 3.
-- Both installed packages are generated technical placeholders. The real four-card pilot decision,
-  complete art production, Workshop/importer, and final visual approval remain Phase 2E.
+- Both installed runtime packages and the four primary-deck source pilots are generated technical
+  placeholders. The Workshop/importer is implemented, but finished licensed art for 48 faces plus
+  the back and explicit owner visual approval remain the Phase 2E acceptance blocker.
 - Hosted CI currently emits a nonblocking maintenance annotation that v4 checkout/setup/artifact
   actions target deprecated Node.js 20 and are being forced onto Node.js 24. The run remains green;
   workflow-action upgrades can be handled as isolated infrastructure maintenance.
@@ -227,19 +267,22 @@ in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
 
 ## Owner verification and deployment steps
 
-1. No owner-side configuration is required for Phase 2D.
-2. After deployment, refresh the live page. In Hand choices, select a card in Guided mode, inspect
-   its legal highlight, then confirm or cancel. Try Fast, Draw targets, Yaku decision, and Opponent
-   locked. The status must say the intent was not executed.
-3. Use Tab/arrow keys, Enter/Space, and Escape to verify visible keyboard focus and cancellation.
-   Scenario/Motion/Faster/Finish/Cancel + snap and Sunrise/Moonlight switching remain available.
-4. Pull `main`, run `npm ci`, and run `npm run validate:phase2d` only if optional local verification
-   is desired.
+1. No hosting configuration or secret is required for the Phase 2E tooling commit; the public page
+   intentionally remains the Phase 2D technical harness.
+2. On a development machine, pull `main`, run `npm ci`, then `npm run dev:workshop` and open the
+   local URL printed by Vite. The Workshop is intentionally unavailable on GitHub Pages.
+3. Supply finished licensed art for the four locked pilot roles and back first. Import/assign them,
+   review both generated sheets and the 390×844 board, and explicitly approve or request revisions.
+4. After pilot approval, import the remaining 44 faces, resolve every warning/error, review both full
+   sheets again, create the exact digest-bound `approval.json`, and run
+   `npm run validate:phase2e:release`. Do not create the approval record before visually reviewing
+   the current artifacts.
 
 The deployed baseline is
 [`https://geoduckedup.github.io/KoiKoi4XRedux/`](https://geoduckedup.github.io/KoiKoi4XRedux/).
 
 ## Next subphase
 
-**Phase 2E — Deck Workshop and final visual approval:** add the importer/editor workflow, complete
-package management, finish all 48 production faces and back, and obtain explicit visual approval.
+**Phase 2E Art Production and Visual Approval:** use the completed Workshop to replace the four
+technical pilots and back with finished art, obtain the pilot decision, finish the remaining 44
+faces, and pass the explicit owner-gated release check. Phase 3 starts only after this gate.
