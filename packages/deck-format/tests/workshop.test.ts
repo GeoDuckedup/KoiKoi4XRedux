@@ -5,6 +5,7 @@ import {
   ART_SPEC_V1,
   autoAssignCanonicalFilenames,
   createContactSheetPlanV1,
+  createContactSheetReviewSha256V1,
   createManualTransformFromAuto,
   createPostRotationCoverPlanV1,
   createWorkshopGridV1,
@@ -13,6 +14,7 @@ import {
   updateManualTransform,
   withTransformOverride,
   type ResolvedDeckPackageDraft,
+  type ContactSheetReviewCardV1,
   type WorkshopSourceSummaryV1,
 } from "../src/index.ts";
 
@@ -130,5 +132,44 @@ describe("Phase 2E portable Workshop contracts", () => {
       card: { width: 66, height: 106 },
     });
     expect(gameplay.slots.map((slot) => slot.cardId)).toEqual(CARD_IDS);
+  });
+
+  it("binds approval to platform-independent source, transform, back, and plan semantics", () => {
+    const cards = Object.fromEntries(
+      CARD_IDS.map((cardId) => [
+        cardId,
+        {
+          sourceSha256: cardId === "january-crane" ? "a".repeat(64) : "b".repeat(64),
+          transform: ART_SPEC_V1.defaultTransform,
+        },
+      ]),
+    ) as Partial<Record<(typeof CARD_IDS)[number], ContactSheetReviewCardV1>>;
+    const input = {
+      backSourceSha256: "c".repeat(64),
+      cards,
+      kind: "art-review" as const,
+      packageId: "review-digest-proof",
+    };
+    const digest = createContactSheetReviewSha256V1(input);
+    expect(createContactSheetReviewSha256V1(input)).toBe(digest);
+    expect(digest).toMatch(/^[a-f0-9]{64}$/u);
+    expect(createContactSheetReviewSha256V1({ ...input, kind: "gameplay-390x844" })).not.toBe(
+      digest,
+    );
+    expect(
+      createContactSheetReviewSha256V1({ ...input, backSourceSha256: "d".repeat(64) }),
+    ).not.toBe(digest);
+    expect(
+      createContactSheetReviewSha256V1({
+        ...input,
+        cards: {
+          ...cards,
+          "january-crane": {
+            sourceSha256: "a".repeat(64),
+            transform: { mode: "auto", fit: "cover", focusX: 0.25, focusY: 0.5 },
+          },
+        },
+      }),
+    ).not.toBe(digest);
   });
 });

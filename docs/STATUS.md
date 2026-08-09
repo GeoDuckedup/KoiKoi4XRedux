@@ -47,7 +47,8 @@ privacy-safe match. Phase 2D's browser fixture is explicitly technical and does 
 - Complete runtime manifest generation only for 48 faces plus one back. A second complete technical
   package is constructed and decoded in tests without labeling it final art.
 - Strict release evidence: approved pilot metadata plus an explicit owner/date/note bound to the
-  exact current sheet digests, four pilot CardIds, and 390×844 viewport.
+  platform-independent source/transform/back/sheet-plan review digests, four pilot CardIds, and
+  390×844 viewport. Raw encoded PNG hashes remain separate build diagnostics.
 
 ## Phase 2D input runtime now present
 
@@ -192,14 +193,14 @@ in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
 - The primary candidate uses 49 immutable 1600×2560 WebP masters with no source-quality warning.
   All 48 face derivatives, the back, both complete review sheets, and the approved four-card 390×844
   pilot board were visually inspected.
-- Phase 2E's technical gate passes 16 focused files / 113 tests, builds the complete primary
+- Phase 2E's technical gate passes 16 focused files / 114 tests, builds the complete primary
   candidate, exercises the local Workshop at desktop and 390×844, and passes both root and
   repository-prefixed seven-viewport production matrices with the Workshop absent.
 - The owner-gated release command passes with zero issues. The v1.0.0 runtime manifest is labeled
-  `approved` and matches the exact reviewed sheet digests.
+  `approved` and matches the exact semantic review identities on both macOS and Linux.
 - The normal production build still contains only the Phase 2D technical table. The local Workshop
   reports 48 slots, 47 Auto faces, 1 Manual face, 0 missing, and `engineExecution:notAvailable`.
-- `npm run check` passes 33 files / 347 tests and the isolated 10,002-match generated gate,
+- `npm run check` passes 33 files / 348 tests and the isolated 10,002-match generated gate,
   all workspace checks, authored-package validation, and the 764-module production build. Isolating
   the CPU-heavy generated gate prevents Sharp raster tests from starving its deterministic timeout.
 - Three independent Phase 2E reviews report no blocker, high, or medium finding after selected-build,
@@ -279,7 +280,7 @@ in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
 2. On a development machine, pull `main`, run `npm ci`, then `npm run dev:workshop` and open the
    local URL printed by Vite. The Workshop is intentionally unavailable on GitHub Pages.
 3. No further Phase 2E owner action is required. `npm run validate:phase2e:release` can be rerun at
-   any time to prove the approved assets and sheet digests remain current.
+   any time to prove the approved assets and semantic review identities remain current.
 4. Additional decks may be added as complete packages or as inherited packages that override only
    selected faces/back; each deck receives its own review and approval evidence.
 

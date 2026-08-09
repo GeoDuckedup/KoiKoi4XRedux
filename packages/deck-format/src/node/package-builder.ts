@@ -7,7 +7,11 @@ import { CARD_IDS, type CardId } from "@koikoi4x/engine";
 
 import { ART_SPEC_V1 } from "../art-spec.ts";
 import { validateDeckApprovalV1 } from "../approval.ts";
-import { createContactSheetPlanV1 } from "../contact-sheet.ts";
+import {
+  createContactSheetPlanV1,
+  createContactSheetReviewSha256V1,
+  type ContactSheetReviewCardV1,
+} from "../contact-sheet.ts";
 import { resolveDeckPackageDraft } from "../resolver.ts";
 import { decodeRuntimeDeckManifestV1, type RuntimeDeckManifestV1 } from "../runtime-manifest.ts";
 import { canonicalAutoTransform } from "../transform.ts";
@@ -41,8 +45,8 @@ export interface DeckBuildReportV1 {
   readonly cards: readonly BuiltDeckCardV1[];
   readonly completeRuntimeManifest: boolean;
   readonly contactSheets: Readonly<{
-    artReview: { path: string; sha256: string };
-    gameplay: { path: string; sha256: string };
+    artReview: { artifactSha256: string; path: string; sha256: string };
+    gameplay: { artifactSha256: string; path: string; sha256: string };
   }>;
   readonly formatVersion: typeof DECK_BUILD_REPORT_VERSION;
   readonly issues: readonly DeckValidationIssue[];
@@ -253,6 +257,7 @@ export async function buildDeckPackageV1(
   }
 
   let backBuffer: Buffer | null = null;
+  let backSourceSha256: string | null = null;
   if (resolved.cardBack === null) {
     issues.push(issue("error", "MISSING_CARD_BACK", "backs.default", "Missing card back."));
   } else {
@@ -268,6 +273,7 @@ export async function buildDeckPackageV1(
           issue("error", "MISSING_CARD_BACK_SOURCE", "backs.default", resolved.cardBack.file),
         );
       } else {
+        backSourceSha256 = sourceFileDigest(sourcePath);
         const derivative = await renderRasterDerivativeV1(
           sourcePath,
           ART_SPEC_V1.derivatives.table,
@@ -299,8 +305,28 @@ export async function buildDeckPackageV1(
   await writeBuffer(artReviewPath, artReviewBuffer);
   await writeBuffer(gameplayPath, gameplayBuffer);
 
-  const artReviewSha256 = digest(artReviewBuffer);
-  const gameplayReviewSha256 = digest(gameplayBuffer);
+  const reviewCards = Object.fromEntries(
+    cards.map((card) => {
+      const transform = resolved.cardFaces[card.cardId]?.transform;
+      if (transform === undefined)
+        throw new Error(`Missing resolved transform for ${card.cardId}.`);
+      return [card.cardId, Object.freeze({ sourceSha256: card.source.sha256, transform })];
+    }),
+  ) as Partial<Record<CardId, ContactSheetReviewCardV1>>;
+  const artReviewSha256 = createContactSheetReviewSha256V1({
+    backSourceSha256,
+    cards: reviewCards,
+    kind: "art-review",
+    packageId: resolved.id,
+  });
+  const gameplayReviewSha256 = createContactSheetReviewSha256V1({
+    backSourceSha256,
+    cards: reviewCards,
+    kind: "gameplay-390x844",
+    packageId: resolved.id,
+  });
+  const artReviewArtifactSha256 = digest(artReviewBuffer);
+  const gameplayArtifactSha256 = digest(gameplayBuffer);
   let approvalValid = false;
   const approvalPath = join(target.directory, "approval.json");
   if (existsSync(approvalPath)) {
@@ -330,7 +356,7 @@ export async function buildDeckPackageV1(
         "error",
         "APPROVAL_RECORD_REQUIRED",
         "approval.json",
-        "Release requires an owner approval record bound to both generated sheets.",
+        "Release requires an owner approval record bound to both review-content digests.",
       ),
     );
   }
@@ -399,10 +425,12 @@ export async function buildDeckPackageV1(
     completeRuntimeManifest: contentComplete,
     contactSheets: Object.freeze({
       artReview: Object.freeze({
+        artifactSha256: artReviewArtifactSha256,
         path: portablePath(outputRoot, artReviewPath),
         sha256: artReviewSha256,
       }),
       gameplay: Object.freeze({
+        artifactSha256: gameplayArtifactSha256,
         path: portablePath(outputRoot, gameplayPath),
         sha256: gameplayReviewSha256,
       }),

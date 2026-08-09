@@ -918,12 +918,14 @@
   "completeRuntimeManifest": true,
   "contactSheets": {
     "artReview": {
+      "artifactSha256": "712557adb6a8a64b1e374a654ba01436b7a1586c6c619c41963fd2d9167d9da9",
       "path": "contact-sheets/art-review.png",
-      "sha256": "712557adb6a8a64b1e374a654ba01436b7a1586c6c619c41963fd2d9167d9da9"
+      "sha256": "30598797fffe34707f0ddc1a75188e5a9dfb6ea3bd69bfff1f7169e4f170bf05"
     },
     "gameplay": {
+      "artifactSha256": "2973e030dd0d145a5bc67942dc82494079807ee60fcd6ccba0fb136bb5b0d442",
       "path": "contact-sheets/gameplay-390x844.png",
-      "sha256": "2973e030dd0d145a5bc67942dc82494079807ee60fcd6ccba0fb136bb5b0d442"
+      "sha256": "d10978d156354dd6278e4f8f43acc9ee48eddde36bc5b7937f26d82e758ad3a0"
     }
   },
   "formatVersion": 1,

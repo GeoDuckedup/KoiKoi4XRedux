@@ -29,7 +29,7 @@ function approval() {
 }
 
 describe("Phase 2E visual approval record", () => {
-  it("ART2E-011 accepts only an explicit owner record bound to exact sheet digests and pilot IDs", () => {
+  it("ART2E-011 accepts only an explicit owner record bound to review digests and pilot IDs", () => {
     expect(
       validateDeckApprovalV1(approval(), {
         packageId: "new-primary-deck",

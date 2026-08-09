@@ -605,3 +605,13 @@ Original prompt: read the package and understand it, then let me know when we ar
   manifest, reports `approvalReady:true`, and passes with zero issues.
 - Phase 2E is complete. Additional complete or inherited deck packages remain supported without
   changing canonical CardIds or engine rules. Next: Phase 3A complete local turn loop.
+- The first hosted release run exposed platform-dependent PNG byte hashes: equivalent regenerated
+  contact sheets differed between macOS and Linux solely at the encoder-byte level. Replaced that
+  approval boundary with canonical semantic review digests covering ordered source hashes,
+  transforms, the back, art-spec version, and sheet plan; raw PNG hashes remain separate build
+  diagnostics. This preserves strict stale-art detection while making approval portable.
+- The repaired strict release reports 48/48 faces, a complete approved runtime manifest,
+  `approvalReady:true`, and zero issues. The Phase 2E gate passes 16 files / 114 tests plus the local
+  Workshop and both seven-viewport browser matrices; the full repository gate passes 33 files / 348
+  tests, all 10,002 generated matches, all workspace checks, deck validation, and the 764-module
+  production build.

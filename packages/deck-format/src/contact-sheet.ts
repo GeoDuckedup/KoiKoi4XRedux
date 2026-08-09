@@ -1,7 +1,22 @@
-import { CARD_CATALOG, type CardId } from "@koikoi4x/engine";
+import { CARD_CATALOG, CARD_IDS, hashCanonicalV1, type CardId } from "@koikoi4x/engine";
+
+import type { CardTransform } from "./types.ts";
 
 export const CONTACT_SHEET_PLAN_VERSION = 1 as const;
+export const CONTACT_SHEET_REVIEW_DIGEST_VERSION = 1 as const;
 export type ContactSheetKind = "art-review" | "gameplay-390x844";
+
+export interface ContactSheetReviewCardV1 {
+  readonly sourceSha256: string;
+  readonly transform: CardTransform;
+}
+
+export interface ContactSheetReviewDigestInputV1 {
+  readonly backSourceSha256: string | null;
+  readonly cards: Readonly<Partial<Record<CardId, ContactSheetReviewCardV1>>>;
+  readonly kind: ContactSheetKind;
+  readonly packageId: string;
+}
 
 export interface ContactSheetSlotV1 {
   readonly cardId: CardId;
@@ -75,4 +90,61 @@ export function createContactSheetPlanV1(kind: ContactSheetKind): ContactSheetPl
     version: CONTACT_SHEET_PLAN_VERSION,
     width,
   });
+}
+
+function digestTransform(transform: CardTransform): readonly string[] {
+  return transform.mode === "auto"
+    ? Object.freeze(["auto", transform.fit, String(transform.focusX), String(transform.focusY)])
+    : Object.freeze([
+        "manual",
+        String(transform.crop.x),
+        String(transform.crop.y),
+        String(transform.crop.width),
+        String(transform.crop.height),
+        String(transform.zoom),
+        String(transform.rotationDeg),
+      ]);
+}
+
+function assertSourceDigest(value: string, path: string): void {
+  if (!/^[a-f0-9]{64}$/u.test(value)) {
+    throw new Error(`${path} must be a lowercase SHA-256 digest.`);
+  }
+}
+
+/**
+ * Produces the platform-independent identity reviewed by an owner.
+ *
+ * PNG bytes remain useful artifact diagnostics, but encoder metadata and compression can differ
+ * between Sharp/libpng builds. Approval therefore binds the ordered immutable source content,
+ * transforms, art specification, back, and exact sheet plan instead of encoded PNG bytes.
+ */
+export function createContactSheetReviewSha256V1(input: ContactSheetReviewDigestInputV1): string {
+  const plan = createContactSheetPlanV1(input.kind);
+  const cards = CARD_IDS.map((cardId) => {
+    const card = input.cards[cardId];
+    if (card === undefined) return Object.freeze({ cardId, state: "missing" });
+    assertSourceDigest(card.sourceSha256, `cards.${cardId}.sourceSha256`);
+    return Object.freeze({
+      cardId,
+      sourceSha256: card.sourceSha256,
+      state: "present",
+      transform: digestTransform(card.transform),
+    });
+  });
+  if (input.backSourceSha256 !== null) {
+    assertSourceDigest(input.backSourceSha256, "backSourceSha256");
+  }
+  const canonicalHash = hashCanonicalV1({
+    artSpecVersion: 1,
+    back:
+      input.backSourceSha256 === null
+        ? Object.freeze({ state: "missing" })
+        : Object.freeze({ sourceSha256: input.backSourceSha256, state: "present" }),
+    cards,
+    packageId: input.packageId,
+    plan,
+    reviewDigestVersion: CONTACT_SHEET_REVIEW_DIGEST_VERSION,
+  });
+  return canonicalHash.slice("sha256:".length);
 }

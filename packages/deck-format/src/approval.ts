@@ -155,11 +155,17 @@ export function validateDeckApprovalV1(
       issues.push(issue("APPROVAL_PACKAGE_MISMATCH", "$.packageId", expected.packageId));
     }
     if (value.artReviewSha256 !== expected.artReviewSha256) {
-      issues.push(issue("APPROVAL_ART_SHEET_STALE", "$.artReviewSha256", "Digest is stale."));
+      issues.push(
+        issue("APPROVAL_ART_SHEET_STALE", "$.artReviewSha256", "Review-content digest is stale."),
+      );
     }
     if (value.gameplayReviewSha256 !== expected.gameplayReviewSha256) {
       issues.push(
-        issue("APPROVAL_GAMEPLAY_SHEET_STALE", "$.gameplayReviewSha256", "Digest is stale."),
+        issue(
+          "APPROVAL_GAMEPLAY_SHEET_STALE",
+          "$.gameplayReviewSha256",
+          "Review-content digest is stale.",
+        ),
       );
     }
     if (isPlainRecord(value.boardReview) && Array.isArray(value.boardReview.cardIds)) {

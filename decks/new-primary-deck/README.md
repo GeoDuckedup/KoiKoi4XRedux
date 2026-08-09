@@ -11,4 +11,5 @@ existing source. Authoring tools write derivatives only to `generated/`.
 
 The owner approved the complete 48-card art-review sheet, gameplay-size sheet, corrected July Bush
 Clover Plain B, and representative board layouts on August 9, 2026. `approval.json` binds that
-decision to the exact current sheet digests; strict release validation passes.
+decision to platform-independent semantic digests of the exact sources, transforms, back, art
+specification, and review-sheet plans; strict release validation passes on macOS and Linux.

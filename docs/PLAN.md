@@ -504,8 +504,8 @@ Deliver:
 - canonical 968×4516 art-review and 390×1624 gameplay-size contact sheets, each containing all 48
   slots in month order and visibly marked when incomplete;
 - a strict complete runtime manifest only when all 48 faces plus the back build successfully;
-- a digest-bound owner approval record requiring both sheets, the four pilot roles on the real
-  390×844 board, an approver, and a date;
+- a platform-independent semantic-digest-bound owner approval record requiring both sheets, the four
+  pilot roles on the real 390×844 board, an approver, and a date;
 - separate technical and owner-gated release validation, with Workshop filesystem access excluded
   from normal production and GitHub Pages output.
 
@@ -534,8 +534,8 @@ Current result:
 - its complete runtime manifest, all 48 table/thumbnail derivatives, and both complete contact
   sheets build deterministically;
 - the owner approved the complete deck after the July Bush Clover Plain B correction; package
-  v1.0.0 now has a current digest-bound `approval.json`, an `approved` runtime manifest, and a clean
-  `npm run validate:phase2e:release` result;
+  v1.0.0 now has a current semantic-digest-bound `approval.json`, an `approved` runtime manifest,
+  and a clean `npm run validate:phase2e:release` result;
 - a complete 48-face plus back second technical package is built in tests and decoded through the
   strict runtime manifest contract;
 - implementation commit `31da04f` is on `origin/main`; CI run `31327748444` and Pages run

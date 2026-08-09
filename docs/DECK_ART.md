@@ -662,8 +662,11 @@ npm run validate:phase2e:release
 48-slot sheets, but it withholds the runtime manifest when any face/back is unresolved. The sheets
 are visibly marked incomplete. `validate:phase2e:release` is intentionally owner-gated and must fail
 until the package has 48 finished faces plus a back, the four pilot roles are approved, and
-`approval.json` binds an explicit reviewer/date/note to the exact current sheet digests and 390×844
-pilot set.
+`approval.json` binds an explicit reviewer/date/note to platform-independent semantic review
+digests and the 390×844 pilot set. Each semantic digest covers the ordered immutable source hashes,
+per-card transforms, card back, art-spec version, and exact sheet plan. The build report separately
+records each encoded PNG's `artifactSha256`, because equivalent PNG encoder output is not guaranteed
+to be byte-identical across operating systems.
 
 The Workshop is not a production route. Normal Vite and Pages builds exclude `workshop.html`, its
 filesystem bridge, authored source files, transforms, and the Sharp/Node adapter. The game continues
@@ -673,7 +676,7 @@ The current checked-in primary sources are the complete original Bulk Candidate 
 faces plus a matching back, normalized to immutable digest-named 1600×2560 WebP masters. The four
 locked pilot roles and complete set are owner-approved. Package v1.0.0 builds both current review
 sheets and an approved runtime manifest; `approval.json` binds the owner/date/note to their exact
-digests and the 390×844 pilot set.
+semantic review identities and the 390×844 pilot set.
 
 This deliberately places art tooling before the one-round vertical slice is treated as visually mature, so production of the new deck can proceed alongside rendering work rather than becoming a late manual conversion task.
 

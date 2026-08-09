@@ -122,6 +122,12 @@ describe("Phase 2E raster and package builder", () => {
       width: 968,
       height: 4516,
     });
+    expect(
+      createHash("sha256")
+        .update(readFileSync(join(output, report.contactSheets.artReview.path)))
+        .digest("hex"),
+    ).toBe(report.contactSheets.artReview.artifactSha256);
+    expect(report.contactSheets.artReview.sha256).toMatch(/^[a-f0-9]{64}$/u);
     expect(readSourceImageMetadata(join(output, report.contactSheets.gameplay.path))).toEqual({
       format: "png",
       width: 390,
