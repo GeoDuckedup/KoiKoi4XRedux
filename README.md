@@ -1,9 +1,10 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository is
-currently at **Phase 0D: deck package and art specification foundation**: it contains the canonical
-rules authority, all 48 artwork-independent card records, a versioned deck authoring contract, strict
-workspace boundaries, and a tested PixiJS boot surface. Gameplay intentionally begins in Phase 1.
+currently at **Phase 1A: deterministic headless state, RNG, and deal foundation**. It contains the
+canonical rules authority, all 48 artwork-independent card records, a versioned deck authoring
+contract, strict workspace boundaries, a tested PixiJS boot surface, and the first deterministic
+gameplay-domain transition. Player-controlled turns intentionally begin in Phase 1B.
 
 ## Prerequisites
 
@@ -23,6 +24,7 @@ Open the URL printed by Vite. Press `F` to enter or leave fullscreen; `Esc` exit
 
 ```sh
 npm run check
+npm run validate:phase1a
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -34,13 +36,15 @@ from the locked Phase 0D constants. Development deck validation accepts the four
 pilot sources and reports the other 44 final-art files as pending; release validation remains blocked
 until Phase 2 visual approval.
 
-The browser smoke produces responsive screenshots and the serialized runtime state under
+`npm run validate:phase1a` executes the seeded RNG, shuffle/deal, state-invariant, automatic opening
+outcome, event-visibility, and DEAL-001–012 fixture suite. The browser smoke produces responsive
+screenshots and the serialized runtime state under
 `output/phase-0b/e2e/`.
 
 ## Workspace map
 
 - `apps/web` — Vite/Pixi browser presentation.
-- `packages/engine` — pure card domain now; deterministic gameplay domain follows in Phase 1.
+- `packages/engine` — pure deterministic card, RNG, setup-state, deal, and opening-outcome domain.
 - `packages/deck-format` — portable deck schemas, resolution, transforms, Art Spec, and Node authoring CLI.
 - `packages/protocol` — versioned shared contracts.
 - `packages/test-fixtures` — deterministic fixture ownership.
@@ -50,7 +54,7 @@ The browser smoke produces responsive screenshots and the serialized runtime sta
 Read `AGENTS.md` and `docs/PROJECT_MANIFEST.md` before implementation work. Architecture ownership is
 summarized in `docs/ARCHITECTURE.md`.
 
-## Deploy the boot surface
+## Deploy
 
 The repository is hosted at
 [`GeoDuckedup/KoiKoi4XRedux`](https://github.com/GeoDuckedup/KoiKoi4XRedux) and includes a GitHub
@@ -58,6 +62,6 @@ Pages workflow. Set **Settings → Pages → Build and deployment → Source** t
 workflow derives the correct Vite base path from the repository name and deploys `apps/web/dist` only
 after checks pass.
 
-No Firebase project, credentials, database, final artwork upload, or production domain is needed in
-Phase 0D. This phase is headless authoring infrastructure, so the deployed page intentionally remains
-the Phase 0B boot surface.
+No Firebase project, credentials, database migration, final artwork upload, or production domain is
+needed in Phase 1A. This subphase is a headless engine foundation, so the deployed page intentionally
+remains the Phase 0B boot surface until rendering/gameplay integration begins.

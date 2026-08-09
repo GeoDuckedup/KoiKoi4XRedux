@@ -2,113 +2,103 @@
 
 **Updated:** August 8, 2026
 
-**Overall state:** Greenfield rewrite, Phase 0D implemented
+**Overall state:** Greenfield rewrite, Phase 1A implemented
 
-**Runtime state:** Tested responsive PixiJS boot surface; no gameplay runtime yet
+**Runtime state:** Deterministic headless match setup; visible site remains the tested PixiJS boot
+surface
 
 ## Current result
 
-Phase 0D establishes the deck-authoring contract without coupling artwork to canonical game identity.
-The repository now contains a portable, versioned deck-format package; deterministic package
-inheritance and normalized transforms; locked `ART_SPEC v1` constants; a complete logical 48-card
-primary-deck skeleton; a generated SVG Art Guide; and four immutable technical pilot images.
+Phase 1A establishes the first gameplay-domain transition without adding presentation behavior. The
+engine can validate a start command, shuffle the canonical 48-card catalog from a reproducible seeded
+source, select or accept the starter, deal immutable 8/8/8/24 zones, evaluate automatic opening
+outcomes in canonical precedence, commit an authoritative versioned state, emit audience-tagged
+semantic events, and preserve a restorable RNG checkpoint.
 
-The checked-in pilot images demonstrate source readability and processing only. They are not finished
-art, visual direction, or an approved release deck. Phase 0D changes no browser presentation code, so
-the live site correctly continues to show the Phase 0B boot surface.
+All twelve named DEAL vectors now run against concrete full-deck fixtures. The live browser remains
+unchanged by design: turns, capture, yaku during play, and rendering integration belong to later
+subphases.
 
-## Phase 0D foundation now present
+## Phase 1A foundation now present
 
-- `@koikoi4x/deck-format` with versioned deck, transform, and pilot types plus strict unknown-field
-  runtime validation.
-- Deterministic root-to-child inheritance with missing-parent/cycle rejection and per-card source and
-  transform provenance.
-- Canonical auto defaults (`cover`, focus `0.5 / 0.5`) and normalized Manual crop, zoom, and rotation
-  projected consistently at multiple resolutions.
-- Locked 5:8 art geometry, 1600×2560 preferred master, 1200×1920 warning threshold, 800×1280 release
-  floor, 84%×88% safe area, sRGB/PNG preference, game-owned frame, and initial derivatives of
-  640×1024 and 160×256.
-- JSON Schemas generated under `packages/deck-format/schemas/` from the same contract constants.
-- SVG Art Guide generated at `docs/generated/koikoi4x-art-guide-v1.svg` from the locked geometry.
-- `decks/new-primary-deck/deck.json` maps all 48 exact canonical CardIds to unique intended source
-  paths and supplies a required default card back.
-- Four 1600×2560 technical pilot sources: dense `november-rain`, simple `september-sake-cup`, Bright
-  `december-phoenix`, and Plain `january-pine-plain-a`.
-- Digest-bearing pilot import plan with source dimensions and deterministic table/thumbnail transform
-  plans; source files are never overwritten.
-- CLI commands for development/release validation and deterministic artifact regeneration.
-- Architecture guards prevent the engine from importing deck-format and prevent the portable
-  deck-format core from importing Node, browser, PixiJS, or Firebase systems.
+- Versioned `xoshiro128**` source with exact 128-bit hexadecimal seeds, serializable four-word state,
+  draw count, restoration, and unbiased bounded integers.
+- Immutable Fisher–Yates shuffle with the locked production consumption order: shuffle first, then
+  starter selection when a starter was not provided.
+- Versioned `8 / 8 / 8 / 24` slice deal: player A, player B, field, ordered draw pile.
+- JSON-safe, recursively frozen match/player/round/phase/result/event/checkpoint contracts.
+- Atomic state version 1 containing match length, scheduled round/month, starter, scores, all card
+  zones, reset round-local fields, transition state, and reserved history boundary.
+- Strict opening order: field complete-month cancellation, lucky hands, then normal play.
+- Exact lucky behavior for one/two complete hand months, exact `[2,2,2,2]`, simultaneous lucky hands,
+  one 6-point result at 1×, and no ordinary-yaku or decision flow.
+- Complete evidence for one or two cancelled field months and qualifying lucky hands in canonical
+  month/card order.
+- Public, per-player private, and server-only event audiences. Lucky evidence becomes public only
+  after the automatic result commits; field cancellation performs no lucky evaluation/reveal.
+- Stable ownership/setup validation for unknown, duplicate, missing, total/zone-count-invalid cards,
+  reset fields, scores, result/evidence consistency, versions, and new-match metadata.
+- Concrete, exact 48-card DEAL-001 through DEAL-012 fixtures plus architecture guards against ambient
+  randomness, clocks/timers, rendering, browser, backend, and deck-format dependencies.
 
 ## Architecture decisions
 
-- Canonical `CardId` remains owned by `packages/engine`; deck-format depends inward on it and the
-  engine cannot depend on deck-format.
-- Portable validation/resolution/transform code is separated from Node-only filesystem inspection,
-  hashing, artifact generation, and the CLI.
-- Inheritance merges root to child. Replacing a source retains the inherited transform unless the
-  child explicitly supplies a replacement transform; explicit Auto mode is the reset operation.
-- Development validation requires complete logical 48-card resolution but reads only the four pilot
-  sources. Release validation requires all 48 sources and explicit Phase 2 pilot approval.
-- Generated artifacts are reproducible outputs; immutable masters remain in each deck's `source/`
-  directory.
+- Randomness is injected and checkpointed; engine behavior never reads platform randomness or time.
+- The seed, random algorithm, shuffle algorithm, deal layout, state, and checkpoint are explicit
+  versioned contracts.
+- Production starts consume a random source. Ordered-deck starts exist for authored fixture/practice
+  behavior and must still pass the same production state/outcome validation.
+- Automatic opening score is committed in Phase 1A, but next starter, special privilege,
+  round/match advancement, recap/history completion, and final-match completion remain Phase 1D.
+- Event audiences preserve privacy intent now; formal public/player projections, redaction, command
+  replay, and deterministic state hashes remain Phase 1E.
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`DECK_ART.md`](./DECK_ART.md), and
-[`ADR 0002`](./adr/0002-phase-0d-deck-format.md).
+See [`ARCHITECTURE.md`](./ARCHITECTURE.md) and
+[`ADR 0003`](./adr/0003-phase-1a-deterministic-setup.md).
 
 ## Validation
 
-- `npm run validate:decks` passed: one package, exactly 48 resolved cards, 47 Auto / 1 Manual, zero
-  inherited mappings. It emitted the expected development warning that 44 non-pilot source files
-  remain unchecked.
-- Phase 0D focused tests passed: 6 files / 26 tests covering Art Spec geometry, schema validation,
-  strict unknown fields, missing/duplicate/cyclic package failures, inheritance/provenance, source
-  inspection, deterministic Auto transforms, multi-resolution Manual transforms, and architecture
-  boundaries, structural corrupt-image rejection, cross-file identity, and release approval gates.
-- `npm run lint` passed with zero warnings.
-- All five workspace TypeScript checks passed.
+- `npm run validate:phase1a` passed 7 test files / 87 tests covering RNG golden output and restore,
+  immutable shuffle, exact deal slices, setup reset, ownership invariants, outcome classifiers,
+  automatic scores, all twelve DEAL fixtures, event ordering/audiences, and privacy evidence timing.
 - Clean `npm ci` passed from the authoritative lockfile: 156 packages installed.
-- `npm run check` passed after review repairs: formatting, zero-warning lint, all five typechecks,
-  deck validation, 10 test files / 41 tests, and the 711-module production build.
-- The generated SVG Art Guide and all four technical pilot PNGs were rendered and visually inspected
-  for valid geometry and explicit placeholder labeling.
-- Release validation is expected to fail until the other 44 finished sources and Phase 2 visual
-  approval exist; this is a planned gate, not a Phase 0D defect.
-- Independent read-only review found no remaining blocker, high, or medium issue after repairs to
-  corrupt-image checks, schema/runtime path alignment, cross-file identity, release approval,
-  generation preflight, and safe-area typing.
-- Commit `15ba6b7` was pushed to `origin/main`. Hosted CI run `31284468169` passed in 1m04s,
-  including the clean install, repository check, five-viewport browser smoke, and artifact upload.
-- Pages run `31284468195` passed its build and deploy jobs. A cache-busted live request returned HTTP
-  200 with the expected `/KoiKoi4XRedux/assets/` Vite paths and the unchanged KoiKoi4x boot document.
+- `npm run check` passed: formatting, zero-warning lint, all five workspace typechecks, deck
+  validation, 15 test files / 119 tests, and the 711-module production build.
+- The unchanged boot surface passed browser smoke at 360×640, 390×844, 768×1024, 1366×768, and
+  1920×1080 with no browser/runtime error.
+- Independent read-only review verified the reference RNG algorithm, command/random-consumption
+  boundaries, deal and outcome rules, evidence/privacy ordering, fixtures, and phase ownership after
+  repairs; no blocker, high, or medium issue remains.
+- GitHub CI, Pages deployment, and cache-busted live-site verification remain before final handoff.
 
 ## Known constraints and risks
 
-- There is no playable game yet; the visible runtime remains the boot surface.
-- The pilot images are technical placeholders and must not be used as final visual approval.
-- Raster derivative generation, both 48-card contact sheets, runtime deck loading/switching,
-  CardView, and Deck Workshop are Phase 2 deliverables.
-- The required real-board pilot check at 390×844 cannot occur until the Phase 2 board exists.
-- Firebase, persistence, multiplayer, CPU play, and finished deck art remain intentionally absent.
+- There is no player-controlled turn yet; Phase 1B owns hand play, capture choices, draw resolution,
+  legal actions, and the turn phase state machine.
+- Automatic completed-round transitions intentionally remain pending until Phase 1D defines starter,
+  privilege, round/month, match completion, and durable recap/history behavior.
+- Event audiences are semantic guarantees at this stage, not formal serialized client projections;
+  Phase 1E must enforce projection/redaction and replay end to end.
+- The visible runtime remains the Phase 0B boot surface. This subphase has no gameplay UI to test.
+- Final artwork, Firebase, persistence, multiplayer, CPU play, and finished rendering remain deferred.
 
 ## Owner verification and deployment steps
 
-1. No manual asset upload, secret, Firebase setup, database migration, or Pages setting change is
+1. No secret, Firebase project, database migration, asset upload, Pages setting, or cache action is
    required.
-2. After pulling the Phase 0D commit, run `npm ci`, `npm run validate:decks`, and `npm run check`.
-3. Open `docs/generated/koikoi4x-art-guide-v1.svg` to inspect the locked authoring guides. The four
-   PNGs in `decks/new-primary-deck/source/` are process placeholders only.
-4. The push to `main` automatically runs CI and the existing GitHub Pages workflow. The public page
-   should remain the same boot surface because Phase 0D adds no runtime UI.
-5. Approve Phase 0D only as a technical authoring foundation; finished artwork and real phone-board
-   visual approval are deferred by design.
+2. After pulling the Phase 1A commit, run `npm ci`, `npm run validate:phase1a`, and `npm run check`.
+3. The push to `main` automatically runs CI and the existing GitHub Pages workflow.
+4. The public page should remain the same KoiKoi4x boot surface; Phase 1A is headless and adds no
+   browser UI or test controls.
+5. Review Phase 1A as the deterministic setup/rules foundation. Its visible behavior will first be
+   exercised by the later rendering integration.
 
-The deployed Phase 0D baseline is live at
+The deployed baseline is
 [`https://geoduckedup.github.io/KoiKoi4XRedux/`](https://geoduckedup.github.io/KoiKoi4XRedux/).
 
 ## Next subphase
 
-**Phase 1A — Deterministic headless state, seeded RNG, and deal foundation:** define the versioned
-headless match/round state, deterministic seeded random source, 48-card shuffle/deal setup, invariant
-validation, and repeatable fixtures with no rendering dependency. This is the first gameplay-domain
-subphase and remains entirely test-driven/headless.
+**Phase 1B — Turn and capture state machine:** implement legal hand play, 0/1/2/3 same-month match
+behavior, explicit two-target choices, four-card sweeps, ordered draw resolution, legal-action
+generation, and the hand-play → hand-capture → draw → draw-capture phase sequence. It remains
+headless/test-driven and will execute CAP-000 through CAP-DRAW-003.

@@ -2,7 +2,7 @@
 
 **Plan version:** 1.0  
 **Updated:** August 8, 2026  
-**Current gate:** Phase 0D owner review
+**Current gate:** Phase 1A verification and owner review
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -88,7 +88,7 @@ Result:
 
 ### Phase 0D — Deck package and art specification foundation
 
-Status: **implemented; awaiting owner review**.
+Status: **completed and owner-approved**.
 
 Deliver versioned package/transform schemas, inheritance, validation, `ART_SPEC v1` constants, immutable-source workflow, primary-deck skeleton, generated Art Guide, and dense/simple/Bright/Plain pilot inputs.
 
@@ -110,9 +110,42 @@ Result:
 - final art, derivative raster generation, dual contact sheets, runtime switching, Deck Workshop UI,
   and the 390×844 visual pilot decision remain intentionally assigned to Phase 2.
 
+## Phase 1 — Headless engine
+
+### Phase 1A — Deterministic state, RNG, and deal
+
+Status: **implemented; awaiting owner review**.
+
+Deliver versioned authoritative match/round state, seeded deterministic randomness and checkpoints,
+immutable shuffle/deal, opening cancellation and lucky-hand outcomes, ownership/setup invariants,
+semantic setup-event audiences, and executable DEAL-001 through DEAL-012 fixtures.
+
+Gate: equal seed plus command reproduces byte-identical output; initial ownership is exactly
+8/8/8/24 across all 48 unique cards; outcome precedence and automatic scoring match the canonical
+rules; hidden hands and draw order do not enter public precommit events; and the engine imports no
+rendering, browser, backend, deck-format, clock, timer, or ambient randomness dependency.
+
+Result:
+
+- a versioned `xoshiro128**` random source supports exact seed validation, unbiased bounded integers,
+  snapshots/restoration, and immutable Fisher–Yates shuffle;
+- match setup shuffles before starter selection, uses the locked 8/8/8/24 slice layout, commits state
+  version 1, and returns a serializable RNG checkpoint;
+- strict field-cancellation → lucky-hand → normal-play precedence handles one/two field months,
+  complete-month hands, exact four pairs, both-lucky draws, one 6-point award at 1×, and zero ordinary
+  yaku points;
+- authoritative validation detects unknown, duplicate, missing, misplaced/count-invalid cards plus
+  mismatched opening evidence, scores, phases, versions, match metadata, and reset state;
+- events carry public, owner-private, or server-only audiences, and qualifying hands become public
+  evidence only after automatic result commit;
+- all twelve authored DEAL fixtures execute against complete canonical deck permutations, while
+  Phase 1D retains automatic-round transition/history ownership and Phase 1E retains projections and
+  replay.
+
 ## Later phases
 
-1. **Phase 1 — Headless engine:** deterministic state/RNG/deal, capture phases, yaku triggers, round/match rules, projections, visibility, and replay.
+1. **Phase 1B–1E — Complete the headless engine:** capture phases, yaku triggers, round/match rules,
+   projections, visibility, and replay.
 2. **Phase 2 — Rendering foundation:** responsive Pixi table, persistent cards, deck-package runtime, AnimationDirector, input, and Deck Workshop.
 3. **Phase 3 — One-round vertical slice:** complete playable local round and presentation.
 4. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook.

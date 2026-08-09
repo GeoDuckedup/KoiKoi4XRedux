@@ -28,6 +28,14 @@ describe("headless engine architecture boundary", () => {
     }
   });
 
+  it("does not use ambient randomness, clocks, or timers", () => {
+    const forbiddenNondeterminism =
+      /\b(?:Math\.random|Date\.now|performance\.now|crypto\.(?:getRandomValues|randomUUID)|new\s+Date|setTimeout|setInterval|setImmediate|requestAnimationFrame)\s*\(/u;
+    for (const sourcePath of collectTypeScriptFiles(engineSourceRoot)) {
+      expect(readFileSync(sourcePath, "utf8"), sourcePath).not.toMatch(forbiddenNondeterminism);
+    }
+  });
+
   it("does not add DOM libraries or forbidden runtime dependencies", () => {
     const tsconfig = readFileSync(join(engineRoot, "tsconfig.json"), "utf8");
     const packageManifest = JSON.parse(readFileSync(join(engineRoot, "package.json"), "utf8")) as {

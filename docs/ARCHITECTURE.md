@@ -22,6 +22,29 @@ transform math without filesystem access. Node-only source inspection, hashing, 
 seeding, generated artifacts, and the CLI live below `packages/deck-format/src/node` or the CLI entry
 point. Phase 0D does not install deck packages into the browser runtime.
 
+## Deterministic headless engine
+
+Phase 1A introduces the first gameplay transition wholly inside `packages/engine`:
+
+- `random/` owns the versioned `xoshiro128**` source, snapshots, unbiased bounded integers, and
+  immutable Fisher–Yates shuffle;
+- `state/` owns JSON-safe authoritative state/event/checkpoint contracts, recursive freezing, and
+  ownership/setup validation;
+- `rules/round-setup.ts` owns the start command, locked shuffle-then-starter consumption order,
+  8/8/8/24 deal layout, atomic state-version-1 commit, and semantic setup events;
+- `rules/opening-outcomes.ts` owns complete-month and exact-four-pairs classification plus strict
+  field-cancellation-before-lucky precedence.
+
+The RNG checkpoint is returned alongside, not embedded in, authoritative gameplay state. Production
+setup uses the random source; authored ordered decks are available only as a deterministic
+fixture/practice input. Generated states and transitions are recursively frozen.
+
+Every setup event declares an audience: public, private to one player, or server-only. Phase 1A
+preserves those semantics but does not yet construct formal client projections. Full projection,
+redaction, command replay, and hashes remain Phase 1E responsibilities. Likewise, Phase 1A records an
+automatic result and leaves its transition pending; Phase 1D owns future starter, privilege,
+round/month advancement, and match recap/history behavior.
+
 ## Runtime baseline
 
 - The web app is framework-free TypeScript on Vite and PixiJS.
@@ -35,6 +58,8 @@ point. Phase 0D does not install deck packages into the browser runtime.
 
 ## Testing layers
 
-Vitest owns pure unit and boundary checks. The project smoke script owns browser, responsive,
+Vitest owns pure unit, fixture, invariant, determinism, privacy-semantics, and boundary checks. The
+DEAL-001 through DEAL-012 suite lives in `packages/test-fixtures` while production behavior stays in
+the engine. The project smoke script owns browser, responsive,
 fullscreen, semantic DOM, canvas, diagnostic-hook, and browser-error checks. The bundled web-game
 client provides an additional artifact-compatible canvas/text-state pass during local validation.
