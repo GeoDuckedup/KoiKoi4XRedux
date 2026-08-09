@@ -1,28 +1,27 @@
 # KoiKoi4x Project Status
 
-**Updated:** August 8, 2026
+**Updated:** August 9, 2026
 
-**Overall state:** Greenfield rewrite, Phase 1D implemented, independently accepted, pushed, and
-deployed; awaiting owner review
+**Overall state:** Greenfield rewrite, Phase 1E implemented and independently accepted; commit and
+deployment verification in progress
 
-**Runtime state:** Deterministic headless round/match lifecycle through Bank, Koi-Koi, End of Play,
-history, and next-round deals; visible site remains the tested PixiJS boot surface
+**Runtime state:** Complete deterministic headless match engine with formal projections, replay,
+hashes, retry-safe command receipts, and protocol records; visible site remains the tested PixiJS
+boot surface
 
 ## Current result
 
-Phase 1D implements the headless round lifecycle without adding presentation behavior. The engine now
-offers actor-only Bank/Koi-Koi actions at Phase 1C decision windows, applies ordinary and special
-multipliers, resumes the saved Hand/Draw continuation, resolves natural/final-Draw End of Play,
-commits one durable typed result per month, and prepares the exact next starter/privilege or final
-match result.
+Phase 1E completes the headless-engine boundary without adding presentation behavior. The engine now
+projects exact public and named-player observations, filters events by audience, canonicalizes and
+hashes deterministic data, records/replays the production command seams, and returns exact accepted
+retries without applying or advancing them twice.
 
-Round advancement is a separate deterministic command. It validates the completed state before
-restoring the external RNG checkpoint, deals the next scheduled month with the existing privacy
-audiences, retains cumulative score/history, resets every round-local value, and commits automatic
-opening outcomes without a second score award. The browser remains unchanged because rendering
-integration belongs to later phases.
+The protocol package now constructs and runtime-validates versioned public turn records. Private
+hands, future draw order, RNG/checkpoints, seen-trigger history, command IDs, and server-only events
+cannot enter a valid public record. The browser remains unchanged because rendering integration
+belongs to Phase 2.
 
-## Phase 1D foundation now present
+## Phase 1 headless foundation now present
 
 - Closed typed keys, stable display names, and canonical Rules-table ordering for Five/Four/Four
   with Rain/Three Brights, Blossom Viewing, Moon Viewing, Animal Trio, Red Text Scrolls, Blue
@@ -59,6 +58,20 @@ integration belongs to later phases.
   production traces for the 45 reachable cases, and a complete 16-turn natural round with eight
   unused draws. `KOI-015A/B` are explicit unreachable-policy rejection cases because their former
   premise conflicts with the next-starter/privilege and alternating-turn rules.
+- `PublicGameStateV1` exposes public captures/yaku/scores, zone counts, round facts, phase, and
+  history while omitting both exact hands, future draw order, seen keys, command IDs, and RNG state.
+- `PlayerObservationV1` adds only the named player's exact hand and legal actions; the other player
+  receives counts only, and nonactive players receive no executable actions.
+- Public/player event projection enforces audience policy. Lucky qualification remains hidden before
+  automatic-result commit and the committed evidence reveals exactly the approved qualifying hand.
+- Canonical JSON v1, portable SHA-256, private authoritative replay logs, public/private hash
+  separation, and boundary-tamper detection are engine-owned and browser/Firebase independent.
+- Immutable accepted-command receipts make exact Start/Gameplay/Advance retries safe after later
+  state changes; conflicting key reuse rejects and failed commands do not enter the log/cache.
+- `PublicTurnRecordV1` has protocol/canonical/hash versions plus a unique record sequence and strict
+  runtime decoding that rejects private fields, unknown public fields, and hidden event types.
+- Typed literal fixtures cover all 11 new Phase 1E IDs; the three retained history/evidence IDs stay
+  bound to executable Phase 1D lifecycle traces.
 
 ## Architecture decisions
 
@@ -74,36 +87,36 @@ integration belongs to later phases.
   Phase 1D consumes them through one decision command without an intermediate state version.
 - Result commitment and next-deal advancement are separate authoritative transitions. This preserves
   an explicit result/presentation seam and keeps RNG checkpoints outside state and events.
-- Phase 1E retains formal client projection/redaction, replay, hashes, and durable idempotency.
+- Canonical/hash/replay/idempotency contracts are pure immutable engine values. A future service is
+  responsible only for authentication and atomic persistence of those returned values.
 
 See [`ARCHITECTURE.md`](./ARCHITECTURE.md) and
 [`ADR 0005`](./adr/0005-phase-1c-yaku-trigger-boundaries.md).
 The Phase 1D lifecycle split is recorded in
 [`ADR 0006`](./adr/0006-phase-1d-round-lifecycle.md).
+Phase 1E privacy, replay, hash, retry, and protocol choices are recorded in
+[`ADR 0007`](./adr/0007-phase-1e-projection-replay-integrity.md).
 
 ## Validation
 
-- `npm run validate:phase1d` passes 13 test files / 158 tests, including the complete Phase
-  1C regression plus Bank/Koi, final Draw, transition, final leader, round advance/checkpoint, final
-  automatic result, and full natural-round traces.
+- `npm run validate:phase1e` passes 16 test files / 176 tests, including all prior Phase 1A–1D
+  regressions, canonical/hash/projection/protocol/replay fixtures, and the generated gate.
+- The generated gate passes 10,002 complete matches, exactly 3,334 per 3/6/12-round format, with
+  production validation after every transition and sampled full replay/privacy/hash equality.
 - `npm run check` passes formatting, zero-warning lint, all five workspace TypeScript checks, deck
-  validation, 22 test files / 245 tests, and the 711-module production build.
-- The five-viewport Playwright smoke suite passes. The bundled web-game client reported the expected
-  ready boot state and its screenshot was inspected with no browser error output.
-- Three independent final reviews found no blocker, high, or medium issue after the owner-selected
-  Option A rule correction and direct literal-fixture binding.
-- Implementation commit `3ab3c44` was pushed to `origin/main`. Hosted CI run `31292265288` passed in
-  58 seconds, including the full repository check, five-viewport browser smoke, and artifact upload.
-- Pages run `31292265276` passed build and deployment. A cache-busted live request returned HTTP 200
-  with repository-prefixed assets; the live bundled client reported `screen: "boot"`, `ready: true`,
-  one canvas, and deterministic 100 ms simulated time, and its screenshot was inspected.
+  validation, 25 test files / 263 tests, and the 711-module production build.
+- Five-viewport Playwright smoke and the game-client canvas/text-state inspection pass; the visible
+  boot surface is intentionally unchanged.
+- Three independent final reviews found no remaining blocker, high, or medium issue after adversarial
+  privacy/schema, fixture-binding, sequence, and canonical-data repairs.
+- Commit/push, hosted CI, Pages, and deployed-page verification remain in progress.
 
 ## Known constraints and risks
 
-- Event audiences are semantic guarantees, not formal serialized client projections; Phase 1E must
-  enforce projection/redaction and replay end to end.
-- Only immediate duplicate command-ID reuse is rejected; durable idempotency storage belongs to the
-  future authoritative service/protocol work.
+- Firebase persistence, authentication, membership checks, and transactional storage of the private
+  replay/cache remain Phase 7 responsibilities; Phase 1E supplies their pure deterministic core.
+- Turn-record construction/decoding is locked, while server-side grouping/publication of multi-command
+  turns remains Phase 7 transaction ownership.
 - The specialized CAP/YAKU fixture records predate full alignment with the generic
   `RuleFixtureSpec` description/rule-reference shape; their stable IDs, literal inputs/expectations,
   and executable production traces are locked, while metadata-shape unification remains test-infra
@@ -112,7 +125,7 @@ The Phase 1D lifecycle split is recorded in
   the only privilege holder, the starter takes turns 1/3/.../15, and the nonstarter necessarily owns
   turn 16's final Draw. The owner selected Option A: their stable IDs now assert authoritative
   `ROUND_PRIVILEGE_INVALID` rejection rather than impossible scoring outcomes.
-- The visible runtime remains the Phase 0B boot surface. Phase 1D has no gameplay UI.
+- The visible runtime remains the Phase 0B boot surface. Phase 1E has no gameplay UI.
 - Hosted CI currently emits a nonblocking maintenance annotation that v4 checkout/setup/artifact
   actions target deprecated Node.js 20 and are being forced onto Node.js 24. The run remains green;
   workflow-action upgrades can be handled as isolated infrastructure maintenance.
@@ -121,18 +134,18 @@ The Phase 1D lifecycle split is recorded in
 ## Owner verification and deployment steps
 
 1. No owner-side configuration is required for this headless phase.
-2. Pull `main` if you want a local copy, then run `npm ci` and `npm run validate:phase1d` for an
+2. Pull `main` if you want a local copy, then run `npm ci` and `npm run validate:phase1e` for an
    optional local verification.
 3. Open the deployed page and confirm the intentionally unchanged KoiKoi4x boot surface loads.
-4. Review Phase 1D through its automated lifecycle fixtures; visible Bank/Koi-Koi controls will
-   arrive when a later renderer consumes the headless transition contracts.
+4. Review Phase 1E through its automated projection/replay fixtures; visible gameplay controls will
+   arrive when Phase 2 consumes the headless transition contracts.
 
 The deployed baseline is
 [`https://geoduckedup.github.io/KoiKoi4XRedux/`](https://geoduckedup.github.io/KoiKoi4XRedux/).
 
 ## Next subphase
 
-**Phase 1E — Observations, replay, and deterministic verification:** after Phase 1D's final gate and
-deployment, add formal player/spectator projections and redaction, versioned command/event
-serialization, deterministic replay and hashes, durable idempotency semantics, and the deferred
-projection/invariant vectors.
+**Phase 2A — Responsive Pixi table:** after Phase 1E's final gate and deployment, build the first
+real gameplay presentation layer: responsive scene/layers, persistent card views, layout services,
+input plumbing, and deterministic animation/director foundations that consume public/player
+projections without reimplementing rules.

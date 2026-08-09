@@ -234,3 +234,37 @@ Original prompt: read the package and understand it, then let me know when we ar
   assets, and the live bundled browser client confirmed the ready boot state, deterministic time,
   and inspected unchanged composition without browser errors.
 - Remaining: record and push this deployment-verification note, then owner review before Phase 1E.
+
+## 2026-08-08 — Phase 1E implementation in progress
+
+- Owner approved Phase 1E.
+- Completed parallel read-only audits of the privacy/projection boundary, canonical serialization and
+  replay/idempotency architecture, and all 14 locked Phase 1E-adjacent vectors.
+- Locked the engine-owned Phase 1E contracts: public/player projections, audience-filtered events,
+  canonical JSON v1 with portable SHA-256, private authoritative replay logs, exact accepted-command
+  retry receipts, and versioned public turn records in the protocol package.
+- Added typed literal fixtures for the 11 new Phase 1E vectors; the three history/evidence vectors
+  remain bound to their Phase 1D lifecycle traces.
+- Focused projection, replay, retry, protocol, and canonical-hash tests pass. The required 10,002
+  complete-match gate passes with exactly 3,334 generated matches per 3/6/12-round format; the full
+  repository/build/browser gates also pass, and independent-review repairs are in progress.
+
+## 2026-08-09 — Phase 1E acceptance
+
+- Independent review found and closed adversarial privacy-boundary gaps: public event projection now
+  uses an explicit event-type whitelist, and private initial-hand delivery requires payload owner,
+  audience owner, and requesting player to agree.
+- Replaced the shallow wire check with recursive allowlist validation for every public state, phase,
+  Yaku context, result/evidence, privilege, and event variant, including canonical CardIds and scalar
+  domains. Added a monotonic record-sequence chain decoder.
+- Hardened canonical data against sparse arrays, extra/symbol/non-enumerable fields, accessors, and
+  inherited/non-plain objects without invoking hostile getters.
+- Added nested leak, mislabeled audience, cross-owner hand, hostile object/array, sequence-gap,
+  rejected-advance, and genuine phase/result/event regressions. Bound the before/after lucky fixtures
+  separately to observed projections.
+- Final `npm run validate:phase1e` passes 16 files / 176 tests. Final `npm run check` passes 25 files /
+  263 tests, all five workspace typechecks, deck validation, and the 711-module production build.
+- Five-viewport Playwright smoke and the skill-based canvas/text-state inspection pass; the visible
+  boot surface remains intentionally unchanged.
+- Three independent final reviews report no blocker, high, or medium issue. Remaining: commit, push,
+  hosted CI/Pages verification, and cache-busted live inspection.

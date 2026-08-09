@@ -215,6 +215,17 @@ Each negative fixture supplies the closest nonqualifying capture set and asserts
 | `INV-STATE-VERSION-ONCE` | Accepted command increments state version exactly once; rejected command does not. |
 | `INV-DETERMINISTIC-REPLAY` | Same initial state, RNG snapshot, and command sequence produce identical state/events/hash. |
 
+Phase 1E binding:
+
+- the three `HIST-*` IDs remain literal-bound executable Phase 1D lifecycle regressions;
+- the 11 `PROJ-*`/`INV-*` IDs are typed literal Phase 1E fixtures and executable assertions;
+- “before commit” means the public projection of the ordered setup-event prefix strictly before
+  `automaticRoundResultCommitted`; the setup transition itself remains atomic;
+- canonical hash artifacts declare canonicalization version 1 and SHA-256;
+- the generated gate executes 10,002 complete legal matches, exactly 3,334 for each 3/6/12-round
+  format, validates every production transition, and samples full replay/projection/hash equality
+  across all formats using reproducible seeds.
+
 ## 10. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
@@ -251,4 +262,6 @@ Phase 1 must:
   assertions without evaluating gameplay policy on invalid state;
 - include vector IDs in test names and failure output;
 - report the RNG seed and state/command trace on failure;
-- run invariant checks after every accepted command.
+- run invariant checks after every accepted command;
+- make canonical serialization/hash versions explicit in replay/protocol artifacts and reject
+  unsupported versions or tampered replay boundaries.

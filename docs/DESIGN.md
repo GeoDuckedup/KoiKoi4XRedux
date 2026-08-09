@@ -1872,19 +1872,17 @@ Contains:
 
 ```ts
 interface PlayerObservation {
+  formatVersion: 1;
   playerId: PlayerId;
+  publicState: PublicGameState;
   ownHand: readonly CardId[];
-  ownCaptured: readonly CardId[];
-  opponentCaptured: readonly CardId[];
-  opponentHandCount: number;
-  field: readonly CardId[];
-  drawPileCount: number;
-  publicRound: PublicRoundState;
   legalActions: readonly LegalAction[];
 }
 ```
 
-This is the only game view available to CPU decision code.
+`publicState` carries captures, counts, field, score, phase, and history without either exact hand or
+the unrevealed draw order. `ownHand` is the only private card zone added by the observation. This is
+the only game view available to CPU decision code.
 
 ## 19.3 Phase state machine
 
@@ -2026,6 +2024,22 @@ Requirements:
 - seed included in test failures and local replay diagnostics;
 - shuffle algorithm covered by tests;
 - server multiplayer does not expose its RNG seed or deck order to clients.
+
+## 19.9 Canonical serialization, replay, and integrity
+
+Canonical JSON version 1 sorts plain-record keys, preserves semantic array order, accepts only
+JSON-safe primitive values and safe integers, and rejects cycles or non-plain objects. Deterministic
+integrity hashes use portable SHA-256 and the `sha256:<lowercase-hex>` encoding.
+
+Public-state hashes exclude both exact hands, the unrevealed draw order, RNG/checkpoints,
+server-only events, seen-trigger history, and accepted command IDs. Private authoritative replay
+hashes include state plus the external checkpoint and are never exposed as a client projection.
+Hashes detect deterministic drift; they are not signatures or authorization proofs.
+
+Private replay logs contain the initial RNG snapshot and each accepted semantic command with exact
+before/after state, event, checkpoint, and public-state hashes. Replaying a log calls the production
+Start, Gameplay, and Advance seams and verifies every boundary. Ordered-deck fixture entry points are
+not production replay commands.
 
 ---
 
@@ -2388,6 +2402,9 @@ For the first multiplayer release:
 ```ts
 interface PublicTurnRecordV1 {
   protocolVersion: 1;
+  canonicalizationVersion: 1;
+  hashAlgorithm: "sha256";
+  recordSequence: number;
   matchId: string;
   roundNumber: number;
   turnNumber: number;
@@ -2406,6 +2423,10 @@ interface PublicTurnRecordV1 {
 ```
 
 `beforePublicState` allows a new device to replay the latest opponent turn without relying on a prior local cache. System records use `actorId: null` for cancellations, lucky-hand results, automatic transitions, and other outcomes without a normal acting player.
+
+`recordSequence` uniquely orders player and system records; `turnNumber` remains the round-local
+gameplay number. `committedAt` is transport metadata and is excluded from canonical state/event
+hashes. Runtime decoding rejects unknown versions, forbidden private fields, and non-public events.
 
 ## 23.7 Recipient replay sequence
 
@@ -2556,7 +2577,11 @@ Every submitted command includes:
 - actor identity;
 - match ID.
 
-The server stores recently accepted command IDs. Retrying the same command returns the original result without applying it twice.
+The server stores accepted command receipts. After authentication and membership validation, an
+exact retry is looked up before active-player and expected-version checks. The same principal and
+canonical command returns its original result without applying it twice, even after later commands
+have advanced the match. Reusing the same accepted ID with a different payload or principal is an
+idempotency conflict; rejected commands are not cached.
 
 ## 24.6 Transaction behavior
 
@@ -2565,15 +2590,16 @@ The server stores recently accepted command IDs. Retrying the same command retur
 1. authenticate caller;
 2. verify App Check when enforced;
 3. verify match membership;
-4. verify caller is the active player;
-5. verify expected state version;
-6. check duplicate command ID;
-7. parse runtime schema;
+4. parse the versioned command schema;
+5. return an exact accepted-command retry or reject a conflicting reuse;
+6. verify caller is the active player when the command requires one;
+7. verify expected state version;
 8. apply shared engine;
-9. update private state and both projections atomically;
-10. publish a completed turn when a turn boundary is reached;
-11. update match index summaries;
-12. return the caller’s permitted result.
+9. persist the accepted receipt with private state/checkpoint/log atomically;
+10. update both player projections atomically;
+11. publish a completed turn when a turn boundary is reached;
+12. update match index summaries;
+13. return the caller’s permitted result.
 
 ## 24.7 Privacy rules
 
@@ -3426,19 +3452,21 @@ Acceptance:
 
 ### Phase 1E — Projections and replay
 
-- public state;
-- player observation;
-- event visibility;
-- command log;
-- deterministic replay;
-- hidden-information tests.
+- typed public state and own-player observation;
+- exhaustive audience-based event visibility;
+- canonical JSON v1 and portable SHA-256 state/event hashes;
+- private command/checkpoint log and deterministic production-seam replay;
+- immutable accepted-command retry receipts and conflict detection;
+- versioned public turn-record protocol with runtime redaction validation;
+- literal projection/invariant/replay fixtures and hidden-information tests.
 
 Phase 1 acceptance:
 
 - full rules suite passes;
 - engine has no browser/Firebase dependencies;
-- 10,000+ generated legal games complete without invariant failure;
-- same seed and commands reproduce exact hash.
+- 10,002 generated legal matches complete across 3/6/12-round formats without invariant failure;
+- same seed and commands reproduce exact state, events, checkpoint, and hash;
+- all public/player/event/record serializations exclude forbidden private or server-only data.
 
 ## Phase 2 — Rendering foundation
 

@@ -243,17 +243,48 @@ Current result:
 - implementation commit `3ab3c44` is on `origin/main`; hosted CI run `31292265288` and Pages run
   `31292265276` passed, and the cache-busted live runtime was inspected successfully.
 
+### Phase 1E — Observations, replay, and deterministic verification
+
+Status: **implemented and independently accepted; commit/deployment verification in progress**.
+
+Complete the headless engine with formal privacy-safe public/player projections, audience-filtered
+events, canonical serialization and hashes, private command/checkpoint replay, retry-safe accepted
+command receipts, and versioned public turn records.
+
+Gate: the three retained history/evidence vectors and 11 new Phase 1E vectors remain literal and
+executable; public/player/event/turn-record serializations contain no forbidden hand, future draw,
+RNG, checkpoint, seen-trigger, or command-ID data; replay calls the production Start/Gameplay/Advance
+seams and detects sequence/payload/state/event/checkpoint drift; exact accepted retries never mutate
+or roll back current runtime and conflicting key reuse rejects; all 10,002 seeded complete matches
+finish across 3/6/12-round formats with authoritative validation after each accepted transition and
+sampled full privacy/replay/hash equality.
+
+Current result:
+
+- `PublicGameStateV1`, `PlayerObservationV1`, and typed projected event unions implement the exact
+  public/owner/server visibility matrix, including pending Draw/Yaku phases and lucky evidence;
+- canonical JSON v1 sorts record keys while preserving semantic arrays, and a portable engine-owned
+  SHA-256 implementation produces versioned public/private integrity hashes;
+- private replay logs record semantic commands plus before/after state, event, checkpoint, and public
+  hashes; replay verifies every boundary and gameplay preserves the checkpoint;
+- immutable accepted receipts return the original exact Start/Gameplay/Advance transition on retry,
+  while changed-payload reuse conflicts and rejected commands are not cached;
+- `PublicTurnRecordV1` adds canonical/hash versions and a unique `recordSequence`; strict runtime
+  decoding rejects unsupported versions, private content, unknown public fields, and hidden events;
+- all 11 new literal fixtures pass; `validate:phase1e` passes 16 files / 176 tests and the full check
+  passes 25 files / 263 tests plus the 711-module build;
+- the required 10,002-match generated gate passes with 3,334 matches per format, five-viewport smoke
+  passes, and three independent final reviews report no blocker, high, or medium issue.
+
 ## Later phases
 
-1. **Phase 1E — Complete the headless engine:** projections, visibility, replay, hashes, and
-   idempotent command-log verification.
-2. **Phase 2 — Rendering foundation:** responsive Pixi table, persistent cards, deck-package runtime, AnimationDirector, input, and Deck Workshop.
-3. **Phase 3 — One-round vertical slice:** complete playable local round and presentation.
-4. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook.
-5. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, and pass-and-play.
-6. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
-7. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
-8. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
-9. **Phase 9 — Production polish:** content, accessibility, performance, telemetry/reliability, and release.
+1. **Phase 2 — Rendering foundation:** responsive Pixi table, persistent cards, deck-package runtime, AnimationDirector, input, and Deck Workshop.
+2. **Phase 3 — One-round vertical slice:** complete playable local round and presentation.
+3. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook.
+4. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, and pass-and-play.
+5. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
+6. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
+7. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
+8. **Phase 9 — Production polish:** content, accessibility, performance, telemetry/reliability, and release.
 
 No later phase may bypass the acceptance gate of the preceding phase.

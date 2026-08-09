@@ -170,7 +170,10 @@ These items do not block the headless engine. They should be decided before thei
 
 ## O-003 — System timeline records
 
-**Recommended architecture:** Use `recordKind: "system"` and `actorId: null` for cancellations, lucky hands, automatic transitions, and other records without a normal acting player.
+**Architecture accepted in Phase 1E:** Use `recordKind: "system"` and `actorId: null` for
+cancellations, lucky hands, automatic transitions, and other records without a normal acting
+player. `recordSequence` uniquely orders player and system records; exact Firebase persistence and
+publication remain Phase 7 work.
 
 ## O-004 — Resignation
 

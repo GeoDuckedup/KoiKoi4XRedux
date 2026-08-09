@@ -5,6 +5,7 @@ export * from "./rules/card-bindings";
 export * from "./rules/capture-fixtures";
 export * from "./rules/yaku-fixtures";
 export * from "./rules/phase1d-fixtures";
+export * from "./rules/phase1e-fixtures";
 export * from "./rules/deal-fixture-builder";
 export * from "./rules/deal-fixtures";
 export * from "./rules/fixture-types";
