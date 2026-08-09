@@ -155,6 +155,28 @@ Original prompt: read the package and understand it, then let me know when we ar
 - A cache-busted live request returned HTTP 200 with repository-prefixed assets. The live web-game
   client and inspected screenshot confirmed `screen: "boot"`, `ready: true`, one canvas, and the
   intentionally unchanged Phase 0B composition.
-- Phase 1B is implemented, independently reviewed, pushed, and deployed; it awaits owner review.
+- Phase 1B is implemented, independently reviewed, pushed, deployed, and owner-approved.
 - Next: Phase 1C yaku evaluation, active totals, trigger keys, and per-phase combined decision
   contexts after owner approval.
+
+## 2026-08-08 — Phase 1C verification passed; deployment in progress
+
+- Owner approved Phase 1C: yaku evaluation, active totals, trigger keys, and per-phase combined
+  decision contexts; Bank/Koi-Koi execution remains Phase 1D.
+- Completed three parallel read-only audits covering canonical scoring, Phase 1B state-machine seams,
+  and all locked Phase 1C fixture IDs.
+- Added the closed 13-key yaku contract, immutable active-yaku/decision types, and a pure evaluator
+  with one active Bright tier, independent stacking, incremental points, Current-Month Set, and
+  capture-evidenced seen-trigger history.
+- Integrated separate Hand and Draw checks. Hand decisions commit before draw reveal; Draw decisions
+  commit before turn/End-of-Play completion; pending draw choices evaluate only after selection.
+- Added explicit literal totals/new-key lists for all 39 locked `YAKU-*` vectors plus production
+  traces for multi-yaku, Current-Month sweep/accumulation, value-only increments, pending draws,
+  Player B, and final Draw.
+- `npm run validate:phase1c` passes 12 files / 115 tests. `npm run check` passes 21 files / 202 tests,
+  all five typechecks, format/lint/deck gates, and the 711-module build.
+- Five-viewport browser smoke and the skill-based canvas/text-state inspection pass; the visible boot
+  surface is intentionally unchanged.
+- Independent scoring, state-machine, and fixture reviews found three medium acceptance gaps; all
+  were repaired, and follow-up review found no remaining blocker, high, or medium issue.
+- Remaining work: commit, push, verify hosted CI/Pages, and record deployment evidence.

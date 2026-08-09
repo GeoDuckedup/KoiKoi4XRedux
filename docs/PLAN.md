@@ -2,7 +2,7 @@
 
 **Plan version:** 1.0  
 **Updated:** August 8, 2026  
-**Current gate:** Phase 1B verification and owner review
+**Current gate:** Phase 1C verification and owner review
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -144,7 +144,7 @@ Result:
 
 ### Phase 1B — Turn and capture state machine
 
-Status: **implemented, independently reviewed, and deployed; awaiting owner review**.
+Status: **completed, deployed, and owner-approved**.
 
 Deliver legal hand play, canonical 0/1/2/3 same-month capture behavior, explicit two-target choices,
 Four-Card Sweeps, ordered draw resolution, player-scoped legal actions, deterministic command
@@ -172,9 +172,39 @@ Result:
   production transition API, with Phase 1C retaining yaku/trigger ownership and Phase 1E retaining
   formal projection/replay ownership.
 
+### Phase 1C — Yaku and trigger system
+
+Status: **implemented and independently reviewed; deployment in progress**.
+
+Deliver all approved fixed, hierarchy, and incremental yaku; deterministic active totals; closed
+trigger keys; player-local seen-trigger state; separate Hand/Draw checks; and one combined decision
+context for all newly completed yaku in a phase.
+
+Gate: all 39 locked YAKU vectors execute with literal expected keys/points/order; Bright tiers replace
+rather than stack; fixed and generic yaku stack independently; Current-Month Set uses the scheduled
+month; increments after a seen threshold change value without retriggering; Hand decisions occur
+before draw reveal; Draw decisions occur before turn completion; and final-draw decisions preserve
+the Phase 1D End-of-Play resume path without exposing hidden cards.
+
+Result:
+
+- a pure immutable evaluator returns all active yaku, exact total, category counts, and unseen active
+  keys in canonical Rules-table order;
+- the 13-key contract covers the four exclusive Bright tiers, five named sets, Current-Month Set,
+  and the three incremental category yaku;
+- player state stores typed seen keys, the complete active snapshot, and current total; authoritative
+  validation recomputes them and proves that decision keys are the exact atomic suffix added for the
+  triggering capture phase;
+- Hand, direct Draw, pending-choice Draw, and final Draw transitions stop at an immutable
+  `awaitingYakuDecision` context with the correct resume marker and no Bank/Koi-Koi command;
+- public yaku completion/value/decision events contain only capture-derived information, while both
+  players receive no executable legal action during the Phase 1D-owned decision window;
+- all 39 locked evaluator vectors and targeted production-transition fixtures pass, including
+  simultaneous viewing yaku, scheduled-month sweep, seen-value increment, Player B, and final Draw.
+
 ## Later phases
 
-1. **Phase 1C–1E — Complete the headless engine:** yaku triggers, round/match rules, projections,
+1. **Phase 1D–1E — Complete the headless engine:** round/match rules, projections,
    visibility, and replay.
 2. **Phase 2 — Rendering foundation:** responsive Pixi table, persistent cards, deck-package runtime, AnimationDirector, input, and Deck Workshop.
 3. **Phase 3 — One-round vertical slice:** complete playable local round and presentation.

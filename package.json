@@ -25,6 +25,7 @@
     "validate:decks": "vite-node packages/deck-format/src/cli.ts validate decks",
     "validate:phase1a": "vitest run --config vitest.config.ts packages/engine/tests packages/test-fixtures/tests/deal-fixtures.test.ts",
     "validate:phase1b": "vitest run --config vitest.config.ts packages/engine/tests packages/test-fixtures/tests/capture-fixtures.test.ts packages/test-fixtures/tests/turn-state-machine.test.ts",
+    "validate:phase1c": "vitest run --config vitest.config.ts packages/engine/tests packages/test-fixtures/tests/capture-fixtures.test.ts packages/test-fixtures/tests/turn-state-machine.test.ts packages/test-fixtures/tests/yaku-fixtures.test.ts packages/test-fixtures/tests/yaku-state-machine.test.ts",
     "generate:deck-artifacts": "vite-node packages/deck-format/src/cli.ts generate decks/new-primary-deck",
     "test:watch": "vitest --config vitest.config.ts",
     "test:e2e:smoke": "npm run build && node scripts/e2e-smoke.mjs",

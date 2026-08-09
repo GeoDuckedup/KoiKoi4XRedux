@@ -11,6 +11,7 @@ export * from "./random/xoshiro128ss";
 export * from "./rules/opening-outcomes";
 export * from "./rules/round-setup";
 export * from "./rules/capture";
+export * from "./rules/yaku";
 export * from "./rules/turn";
 export * from "./state/errors";
 export * from "./state/types";

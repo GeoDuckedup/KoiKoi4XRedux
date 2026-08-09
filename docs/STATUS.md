@@ -2,112 +2,111 @@
 
 **Updated:** August 8, 2026
 
-**Overall state:** Greenfield rewrite, Phase 1B implemented, reviewed, pushed, and deployed
+**Overall state:** Greenfield rewrite, Phase 1C implemented and independently reviewed; deployment in
+progress
 
-**Runtime state:** Deterministic headless match setup and complete capture turn loop; visible site
-remains the tested PixiJS boot surface
+**Runtime state:** Deterministic headless turns with exact active-yaku totals and Hand/Draw trigger
+boundaries; visible site remains the tested PixiJS boot surface
 
 ## Current result
 
-Phase 1B adds player-controlled turns to the headless engine without adding presentation behavior.
-The engine now validates versioned gameplay commands, enumerates legal actions for the active player,
-resolves 0/1/2/3 same-month hand and draw matches, preserves a revealed card while a two-target draw
-choice is pending, completes turns deterministically, and hands End of Play to the future Phase 1D
-round resolver.
+Phase 1C completes the scoring and trigger layer of the headless engine without adding presentation
+behavior. The engine evaluates all 13 approved yaku keys from captured cards, maintains the complete
+active-yaku total, marks newly active trigger keys per player, and pauses at exactly one combined
+decision context for each triggering Hand or Draw phase.
 
-All eight named CAP vectors execute from concrete 48-card 8/8/8/24 deals through the production
-transition API. The Hand-Phase and Draw-Phase yaku checks remain explicit Phase 1C insertion seams.
-The live browser remains unchanged by design because rendering integration belongs to Phase 2/3.
+A Hand trigger commits before any draw card is revealed. A direct or chosen Draw trigger commits
+before turn completion, including the final Draw where the context records the Phase 1D End-of-Play
+resume path. Phase 1C intentionally provides no Bank/Koi-Koi command or legal action; Phase 1D owns
+decision availability, multipliers, scoring, round completion, and match consequences. The browser
+remains unchanged because rendering integration belongs to later phases.
 
-## Phase 1B foundation now present
+## Phase 1C foundation now present
 
-- Immutable 0/1/2/3 capture inspection and resolution with field-order preservation, source-first
-  capture order, selected pairs, zero-match placement, and Four-Card Sweeps.
-- Versioned `playHandCard` and `chooseDrawCapture` commands carrying match, actor, expected-state, and
-  command identity metadata.
-- Atomic exact-two hand selection and authoritative `awaitingDrawCapture` persistence for exact-two
-  draw selection.
-- Ordered top-card draw reveal immediately after the Hand Phase; draw acknowledgement remains a UI
-  concern and is not an engine command.
-- Player-scoped legal actions in stable hand/field order, including both legal two-match targets.
-- Typed command rejections for invalid metadata, actor, phase, card ownership, or target; rejected
-  commands do not mutate or advance state.
-- Exactly one state-version increment per accepted command and byte-identical immutable results for
-  equal state/command inputs.
-- Public semantic events for hand play, draw reveal, placement, capture, capture choice, turn
-  completion, and End of Play without still-hidden card identifiers.
-- Expanded 48-card ownership and progress invariants, including a pending drawn-card zone and exact
-  pending-target validation.
-- An explicit `awaitingEndOfPlayResolution` handoff after both hands empty, with eight unused draw
-  cards, while Phase 1D retains score/round/match consequences.
-- Complete CAP-000, CAP-001, CAP-002A, CAP-002B, CAP-003, CAP-DRAW-001, CAP-DRAW-002, and
-  CAP-DRAW-003 fixture allocations and checkpoints.
+- Closed typed keys, stable display names, and canonical Rules-table ordering for Five/Four/Four
+  with Rain/Three Brights, Blossom Viewing, Moon Viewing, Animal Trio, Red Text Scrolls, Blue
+  Scrolls, Current-Month Set, Animals, Scrolls, and Plain Cards.
+- Pure immutable evaluation from one player's unique captured CardIds and scheduled month, returning
+  active yaku, exact total, category counts, and all active keys not yet seen by that player.
+- Exclusive Bright replacement hierarchy, independent fixed/generic stacking, exact Sake Cup
+  category behavior, and incremental points above 5 Animals, 5 Scrolls, and 10 Plain Cards.
+- Typed player-local `seenYakuKeys`, `activeYaku`, and `currentYakuTotal`, reset during match setup and
+  recomputed by authoritative-state validation.
+- Atomic `awaitingYakuDecision` contexts containing every new yaku, the complete active-yaku list and
+  total, capture phase, and a deterministic draw/turn/End-of-Play resume marker.
+- Public `yakuCompleted`, `yakuValueChanged`, and `yakuDecisionRequired` events ordered after the
+  public capture that caused them and containing no opponent hand or unrevealed draw identifiers.
+- First-trigger-player tracking populated only by the round's first actual unseen active key and
+  preserved across later Player A/Player B triggers for Phase 1D's final-leader rule.
+- Exact decision timing for Hand capture, direct Draw capture, pending two-target Draw selection, and
+  final Draw; seen incremental value changes do not open another decision.
+- All 39 locked Phase 1C evaluator fixtures plus targeted production state-machine fixtures for
+  multi-yaku, Current-Month sweep, increments, pending choice, Player B, and final Draw.
 
 ## Architecture decisions
 
-- Capture movement is source first followed by selected field card(s) in current field order;
-  untouched cards keep their order and placements append.
-- A hand two-match choice is part of `playHandCard`; a draw two-match choice persists between
-  commands because the draw card has already become public.
-- Normal turn processing consumes no randomness. The Phase 1A checkpoint remains an external
-  server-owned value for later rounds.
-- Hand and draw resolution remain separate yaku-check boundaries so Phase 1C can support two yaku
-  decisions in one turn without rewriting capture behavior.
-- Phase 1D owns End-of-Play scoring and round/match advancement. Phase 1E owns formal projections,
-  redaction, replay, hashes, and durable command idempotency.
+- `rules/yaku.ts` is the sole pure scoring authority. It does not mutate state, emit events, execute
+  Bank/Koi-Koi, apply multipliers, or depend on rendering/networking.
+- Active yaku use canonical Rules-table order. Only one Bright tier is active at a time; an upgraded
+  lower tier remains in seen-trigger history but no longer contributes to the active total.
+- Every successful capture/placement resolution recomputes the actor's active snapshot. One capture
+  phase can append several unseen keys but creates only one decision context.
+- Trigger keys are marked seen when the decision window is committed, allowing authoritative
+  validation to prove that the context is the exact newly appended suffix rather than a subset.
+- Hand and Draw resume markers describe the unresolved continuation but are not player commands.
+  Phase 1D will add executable Bank/Koi-Koi commands and legal actions.
+- Phase 1E retains formal client projection/redaction, replay, hashes, and durable idempotency.
 
 See [`ARCHITECTURE.md`](./ARCHITECTURE.md) and
-[`ADR 0004`](./adr/0004-phase-1b-turn-capture-state-machine.md).
+[`ADR 0005`](./adr/0005-phase-1c-yaku-trigger-boundaries.md).
 
 ## Validation
 
-- `npm run validate:phase1a` passed 8 test files / 93 tests, preserving seeded setup, deal,
-  ownership, outcome, and event regressions alongside the new engine primitive.
-- `npm run validate:phase1b` passed 9 test files / 64 tests covering pure capture behavior, every
-  CAP fixture/checkpoint, both two-match targets, legal-action privacy, command rejections,
-  determinism/freezing, pending-card invariants, player-B turns, and the full End-of-Play path.
-- `npm run check` passed formatting, zero-warning lint, all five workspace typechecks, deck
-  validation, 18 test files / 151 tests, and the 711-module production build.
-- Independent read-only review found two medium issues: Phase 1A validation-code compatibility and
-  starter-relative active-player validation. Both were repaired with isolated regressions; fixture
-  deep-freezing and the progress record were also tightened. No blocker, high, or medium issue
-  remains after repair.
-- Implementation commit `7daf664` was pushed to `origin/main`. Hosted CI run `31288042436` passed
-  in 1m01s, including the clean repository check, five-viewport browser smoke, and artifact upload.
-- Pages run `31288042439` passed its build and deploy jobs. A cache-busted live request returned HTTP
-  200 with repository-prefixed assets, and the live web-game client reported `screen: "boot"`,
-  `ready: true`, one canvas, and deterministic 100 ms simulated time. The inspected composition is
-  intentionally unchanged.
+- `npm run validate:phase1c` passes 12 test files / 115 tests, covering the full engine regression
+  surface, eight CAP fixtures, 39 literal YAKU vectors, all targeted trigger boundaries, immutable
+  results, public-event privacy, exact state versions, and authoritative validation.
+- `npm run check` passes formatting, zero-warning lint, all five workspace TypeScript checks,
+  development deck validation, 21 test files / 202 tests, and the 711-module production build.
+- Five-viewport Playwright smoke passes. The bundled web-game runtime inspection reports
+  `screen: "boot"`, `ready: true`, one canvas, and deterministic simulated time; its screenshot was
+  inspected and remains the intended Phase 0B composition.
+- Independent scoring, state-machine, and fixture reviews found no blocker/high issue. Their
+  fabricated seen-trigger history, partly derived expected results, and missing multi-action
+  Current-Month trace findings were repaired; follow-up reviews report no remaining blocker, high,
+  or medium issue.
+- Hosted CI and Pages verification remain to be recorded before Phase 1C is declared deployed.
 
 ## Known constraints and risks
 
-- Yaku evaluation and trigger state are not yet implemented; Phase 1C owns both phase checks, all
-  approved yaku, incremental totals, and combined trigger decisions.
-- Bank/Koi-Koi commands and End-of-Play scoring intentionally remain pending until Phase 1D.
+- Bank/Koi-Koi commands, option availability, forced-Koi/special-privilege logic, multipliers,
+  End-of-Play scoring, starter selection, and round/match advancement intentionally remain Phase 1D.
 - Event audiences are semantic guarantees, not formal serialized client projections; Phase 1E must
   enforce projection/redaction and replay end to end.
 - Immediate duplicate command-ID reuse is rejected, but durable idempotency storage belongs to the
   future authoritative service/protocol work.
-- The visible runtime remains the Phase 0B boot surface. This subphase has no gameplay UI.
+- The specialized CAP/YAKU fixture records predate full alignment with the generic
+  `RuleFixtureSpec` description/rule-reference shape; their stable IDs, literal inputs/expectations,
+  and executable production traces are locked, while metadata-shape unification remains test-infra
+  cleanup.
+- The visible runtime remains the Phase 0B boot surface. Phase 1C has no gameplay UI.
 - Final artwork, Firebase, persistence, multiplayer, CPU play, and finished rendering remain deferred.
 
 ## Owner verification and deployment steps
 
 1. No secret, Firebase project, database migration, asset upload, Pages setting, or cache action is
    required.
-2. After pulling the Phase 1B commit, run `npm ci`, `npm run validate:phase1b`, and `npm run check`.
+2. After pulling the Phase 1C commit, run `npm ci`, `npm run validate:phase1c`, and `npm run check`.
 3. The push to `main` automatically runs CI and the existing GitHub Pages workflow.
-4. The public page should remain the same KoiKoi4x boot surface; Phase 1B is headless and adds no
+4. The public page should remain the same KoiKoi4x boot surface; Phase 1C is headless and adds no
    browser UI or manual test controls.
-5. Review Phase 1B through its automated CAP fixtures and state-machine tests. Visible turn behavior
-   will first arrive when the renderer consumes these transitions.
+5. Review Phase 1C through the automated YAKU fixtures and state-machine tests. Visible scoring
+   decisions will first arrive when a later renderer consumes these transition contracts.
 
 The deployed baseline is
 [`https://geoduckedup.github.io/KoiKoi4XRedux/`](https://geoduckedup.github.io/KoiKoi4XRedux/).
 
 ## Next subphase
 
-**Phase 1C — Yaku and trigger system:** implement every approved fixed and incremental yaku, Bright
-replacement hierarchy, Current-Month Set, active-yaku totals, seen trigger keys, Hand/Draw yaku
-checks, and one combined decision context for all newly completed yaku in a phase. Phase 1D will own
-the actual Bank/Koi-Koi actions and their round/match consequences.
+**Phase 1D — Bank, Koi-Koi, End-of-Play, and round/match rules:** add executable decision commands,
+1×–4× table progression, most-recent-caller exhaustion scoring, special 2× privilege, final-round
+forced-Koi handling, starter rules, score/history records, and deterministic round/match advancement.

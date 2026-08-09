@@ -279,14 +279,10 @@ describe("Phase 1B legal actions and command state machine", () => {
     );
   });
 
-  it("deterministically reaches the Phase 1D End-of-Play seam with eight draws unused", () => {
+  it("advances deterministically until the Phase 1C decision boundary", () => {
     let state = setup("CAP-000");
     let commandNumber = 0;
-    let finalEventTypes: readonly string[] = [];
-    while (state.phase.kind !== "awaitingEndOfPlayResolution") {
-      if (state.phase.kind !== "awaitingHandPlay" && state.phase.kind !== "awaitingDrawCapture") {
-        throw new Error(`Unexpected phase ${state.phase.kind}.`);
-      }
+    while (state.phase.kind === "awaitingHandPlay" || state.phase.kind === "awaitingDrawCapture") {
       const actorId: PlayerId = state.phase.playerId;
       const action = getLegalActions(state, actorId)[0];
       if (action === undefined) throw new Error(`No legal action at state ${state.stateVersion}.`);
@@ -318,23 +314,17 @@ describe("Phase 1B legal actions and command state machine", () => {
       expect(transition.state.stateVersion).toBe(state.stateVersion + 1);
       expect(validateAuthoritativeState(transition.state)).toEqual([]);
       state = transition.state;
-      finalEventTypes = transition.events.map((event) => event.type);
     }
 
-    expect(state.players.map((player) => player.hand)).toEqual([[], []]);
-    expect(state.round.drawPile).toHaveLength(8);
-    expect(state.phase.lastActorId).toBe("player-b");
+    expect(state.phase.kind).toBe("awaitingYakuDecision");
+    if (state.phase.kind !== "awaitingYakuDecision") throw new Error("Decision phase missing.");
+    const decisionPhase = state.phase;
+    expect(decisionPhase.context.newYaku.length).toBeGreaterThan(0);
+    expect(
+      state.players.find((player) => player.id === decisionPhase.playerId)?.seenYakuKeys,
+    ).toEqual(expect.arrayContaining(decisionPhase.context.newYaku.map((entry) => entry.key)));
     expect(getLegalActions(state, "player-a")).toEqual([]);
     expect(getLegalActions(state, "player-b")).toEqual([]);
-    expect(finalEventTypes.slice(-2)).toEqual(["turnCompleted", "endOfPlayReached"]);
-    expect(commandNumber).toBeGreaterThanOrEqual(16);
-
-    const impossibleLastActor: AuthoritativeGameStateV1 = {
-      ...state,
-      phase: { ...state.phase, lastActorId: "player-a" },
-    };
-    expect(validateAuthoritativeState(impossibleLastActor).map((entry) => entry.code)).toContain(
-      "END_OF_PLAY_PHASE_INVALID",
-    );
+    expect(commandNumber).toBeGreaterThan(0);
   });
 });

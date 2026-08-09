@@ -13,6 +13,58 @@ export type TableMultiplier = 1 | 2 | 3 | 4;
 export type PlayerPair<T> = readonly [T, T];
 export type CapturePhase = "hand" | "draw";
 
+export const YAKU_TRIGGER_KEYS = [
+  "fiveBrights",
+  "fourBrights",
+  "fourBrightsWithRain",
+  "threeBrights",
+  "blossomViewing",
+  "moonViewing",
+  "animalTrio",
+  "redTextScrolls",
+  "blueScrolls",
+  "currentMonthSet",
+  "animals",
+  "scrolls",
+  "plainCards",
+] as const;
+
+export type YakuTriggerKey = (typeof YAKU_TRIGGER_KEYS)[number];
+
+export type YakuDisplayName =
+  | "Five Brights"
+  | "Four Brights"
+  | "Four Brights with Rain"
+  | "Three Brights"
+  | "Blossom Viewing"
+  | "Moon Viewing"
+  | "Animal Trio"
+  | "Red Text Scrolls"
+  | "Blue Scrolls"
+  | "Current-Month Set"
+  | "Animals"
+  | "Scrolls"
+  | "Plain Cards";
+
+export interface ActiveYakuV1 {
+  readonly key: YakuTriggerKey;
+  readonly name: YakuDisplayName;
+  readonly points: number;
+}
+
+export type YakuDecisionResumeV1 =
+  | { readonly kind: "drawPhase" }
+  | { readonly kind: "completeTurn"; readonly lastActorId: PlayerId }
+  | { readonly kind: "endOfPlay"; readonly lastActorId: PlayerId };
+
+export interface YakuDecisionContextV1 {
+  readonly phase: CapturePhase;
+  readonly newYaku: readonly ActiveYakuV1[];
+  readonly activeYaku: readonly ActiveYakuV1[];
+  readonly currentYakuTotal: number;
+  readonly resume: YakuDecisionResumeV1;
+}
+
 export interface CompleteMonthEvidence {
   readonly month: MonthNumber;
   readonly cardIds: readonly CardId[];
@@ -87,7 +139,9 @@ export interface PlayerStateV1 {
   readonly score: number;
   readonly hand: readonly CardId[];
   readonly captured: readonly CardId[];
-  readonly seenYakuKeys: readonly string[];
+  readonly seenYakuKeys: readonly YakuTriggerKey[];
+  readonly activeYaku: readonly ActiveYakuV1[];
+  readonly currentYakuTotal: number;
 }
 
 export interface SpecialPrivilegeStateV1 {
@@ -124,6 +178,11 @@ export type EnginePhaseV1 =
   | {
       readonly kind: "awaitingEndOfPlayResolution";
       readonly lastActorId: PlayerId;
+    }
+  | {
+      readonly kind: "awaitingYakuDecision";
+      readonly playerId: PlayerId;
+      readonly context: YakuDecisionContextV1;
     }
   | {
       readonly kind: "roundComplete";
@@ -301,6 +360,23 @@ export type TurnEventV1 =
       readonly type: "drawCaptureChoiceRequired";
       readonly drawnCardId: CardId;
       readonly targetFieldCardIds: readonly [CardId, CardId];
+    })
+  | (TurnEventBase & {
+      readonly type: "yakuCompleted";
+      readonly phase: CapturePhase;
+      readonly yaku: ActiveYakuV1;
+    })
+  | (TurnEventBase & {
+      readonly type: "yakuValueChanged";
+      readonly phase: CapturePhase;
+      readonly yakuKey: YakuTriggerKey;
+      readonly name: YakuDisplayName;
+      readonly previousPoints: number;
+      readonly currentPoints: number;
+    })
+  | (TurnEventBase & {
+      readonly type: "yakuDecisionRequired";
+      readonly context: YakuDecisionContextV1;
     })
   | (TurnEventBase & {
       readonly type: "turnCompleted";

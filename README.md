@@ -1,10 +1,10 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository is
-currently at **Phase 1B: deterministic turn and capture state machine**. It contains the
+currently at **Phase 1C: deterministic yaku and trigger system**. It contains the
 canonical rules authority, all 48 artwork-independent card records, a versioned deck authoring
 contract, strict workspace boundaries, a tested PixiJS boot surface, reproducible match setup, and
-the complete headless hand-play/capture/draw turn loop through its End-of-Play handoff.
+the headless turn loop with exact yaku scoring and Hand/Draw decision boundaries.
 
 ## Prerequisites
 
@@ -26,6 +26,7 @@ Open the URL printed by Vite. Press `F` to enter or leave fullscreen; `Esc` exit
 npm run check
 npm run validate:phase1a
 npm run validate:phase1b
+npm run validate:phase1c
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -46,6 +47,11 @@ screenshots and the serialized runtime state under
 legal-action generation, authoritative invariants, and all eight CAP-000 through CAP-DRAW-003
 fixtures. Exact two-match hand choices travel atomically with the hand command; exact two-match draw
 choices persist as an authoritative pending phase.
+
+`npm run validate:phase1c` executes all 39 locked `YAKU-*` evaluator vectors plus Hand, Draw,
+pending-choice, incremental-value, multi-yaku, Player B, and final-draw state-machine integration.
+It verifies that all new yaku from one capture phase share one decision context and that Bank/Koi-Koi
+execution remains unavailable until Phase 1D.
 
 ## Workspace map
 
@@ -69,5 +75,5 @@ workflow derives the correct Vite base path from the repository name and deploys
 after checks pass.
 
 No Firebase project, credentials, database migration, final artwork upload, or production domain is
-needed in Phase 1B. This subphase is headless, so the deployed page intentionally remains the Phase
+needed in Phase 1C. This subphase is headless, so the deployed page intentionally remains the Phase
 0B boot surface until rendering/gameplay integration begins.

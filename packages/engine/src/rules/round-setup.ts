@@ -194,6 +194,8 @@ function playerState(
     hand: [...hand],
     captured: [],
     seenYakuKeys: [],
+    activeYaku: [],
+    currentYakuTotal: 0,
   });
 }
 

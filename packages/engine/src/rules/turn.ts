@@ -4,6 +4,7 @@ import { deepFreeze } from "../state/freeze";
 import {
   PLAYER_IDS,
   type AuthoritativeGameStateV1,
+  type ActiveYakuV1,
   type CapturePhase,
   type ChooseDrawCaptureCommandV1,
   type EnginePhaseV1,
@@ -14,10 +15,13 @@ import {
   type PlayerId,
   type PlayerPair,
   type PlayerStateV1,
+  type RoundStateV1,
   type TurnEventV1,
+  type YakuDecisionResumeV1,
 } from "../state/types";
 import { assertValidAuthoritativeState } from "../state/validation";
 import { inspectCapture, resolveCapture, type CaptureResolutionV1 } from "./capture";
+import { evaluateYaku } from "./yaku";
 
 function publicAudience() {
   return Object.freeze({ kind: "public" as const });
@@ -121,6 +125,119 @@ function updatedPlayerAfterResolution(
   });
 }
 
+interface YakuCheckResult {
+  readonly players: PlayerPair<PlayerStateV1>;
+  readonly events: readonly TurnEventV1[];
+  readonly decisionPhase: Extract<EnginePhaseV1, { readonly kind: "awaitingYakuDecision" }> | null;
+  readonly firstYakuTriggerPlayerId: PlayerId | null;
+}
+
+function yakuValueChangeEvents(
+  actorId: PlayerId,
+  phase: CapturePhase,
+  previousActiveYaku: readonly ActiveYakuV1[],
+  currentActiveYaku: readonly ActiveYakuV1[],
+  newYaku: readonly ActiveYakuV1[],
+): readonly TurnEventV1[] {
+  const newKeys = new Set(newYaku.map((entry) => entry.key));
+  return deepFreeze(
+    currentActiveYaku.flatMap((current): readonly TurnEventV1[] => {
+      const previous = previousActiveYaku.find((entry) => entry.key === current.key);
+      return previous !== undefined &&
+        previous.points !== current.points &&
+        !newKeys.has(current.key)
+        ? [
+            {
+              type: "yakuValueChanged",
+              audience: publicAudience(),
+              actorId,
+              phase,
+              yakuKey: current.key,
+              name: current.name,
+              previousPoints: previous.points,
+              currentPoints: current.points,
+            },
+          ]
+        : [];
+    }),
+  );
+}
+
+function performYakuCheck(
+  state: AuthoritativeGameStateV1,
+  playersBeforeResolution: PlayerPair<PlayerStateV1>,
+  playersAfterResolution: PlayerPair<PlayerStateV1>,
+  actorId: PlayerId,
+  phase: CapturePhase,
+  resume: YakuDecisionResumeV1,
+): YakuCheckResult {
+  const actorBefore = playersBeforeResolution.find((player) => player.id === actorId);
+  const actorAfter = playersAfterResolution.find((player) => player.id === actorId);
+  if (actorBefore === undefined || actorAfter === undefined)
+    throw new Error("PLAYER_INVARIANT: active player disappeared during yaku evaluation.");
+  const evaluation = evaluateYaku(
+    actorAfter.captured,
+    state.round.scheduledMonth,
+    actorAfter.seenYakuKeys,
+  );
+  const completedEvents: TurnEventV1[] = evaluation.newYaku.map((yaku) => ({
+    type: "yakuCompleted",
+    audience: publicAudience(),
+    actorId,
+    phase,
+    yaku,
+  }));
+  const valueChangeEvents = yakuValueChangeEvents(
+    actorId,
+    phase,
+    actorBefore.activeYaku,
+    evaluation.activeYaku,
+    evaluation.newYaku,
+  );
+  const seenYakuKeys =
+    evaluation.newYaku.length === 0
+      ? actorAfter.seenYakuKeys
+      : [...actorAfter.seenYakuKeys, ...evaluation.newYaku.map((entry) => entry.key)];
+  const updatedActor = deepFreeze<PlayerStateV1>({
+    ...actorAfter,
+    seenYakuKeys,
+    activeYaku: evaluation.activeYaku,
+    currentYakuTotal: evaluation.currentYakuTotal,
+  });
+  const players = replacePlayer(playersAfterResolution, actorId, updatedActor);
+  if (evaluation.newYaku.length === 0) {
+    return deepFreeze({
+      players,
+      events: valueChangeEvents,
+      decisionPhase: null,
+      firstYakuTriggerPlayerId: state.round.firstYakuTriggerPlayerId,
+    });
+  }
+  const context = deepFreeze({
+    phase,
+    newYaku: evaluation.newYaku,
+    activeYaku: evaluation.activeYaku,
+    currentYakuTotal: evaluation.currentYakuTotal,
+    resume,
+  });
+  const events: TurnEventV1[] = [
+    ...completedEvents,
+    ...valueChangeEvents,
+    {
+      type: "yakuDecisionRequired",
+      audience: publicAudience(),
+      actorId,
+      context,
+    },
+  ];
+  return deepFreeze({
+    players,
+    events,
+    decisionPhase: { kind: "awaitingYakuDecision", playerId: actorId, context },
+    firstYakuTriggerPlayerId: state.round.firstYakuTriggerPlayerId ?? actorId,
+  });
+}
+
 function commitTransition(
   previous: AuthoritativeGameStateV1,
   command: GameplayCommandV1,
@@ -129,13 +246,14 @@ function commitTransition(
   drawPile: readonly CardId[],
   phase: EnginePhaseV1,
   events: readonly TurnEventV1[],
+  roundUpdates: Partial<RoundStateV1> = {},
 ): GameplayTransitionV1 {
   const state = deepFreeze<AuthoritativeGameStateV1>({
     ...previous,
     stateVersion: previous.stateVersion + 1,
     lastAcceptedCommandId: command.commandId,
     players,
-    round: { ...previous.round, field, drawPile },
+    round: { ...previous.round, ...roundUpdates, field, drawPile },
     phase,
   });
   assertValidAuthoritativeState(state);
@@ -234,7 +352,24 @@ function applyPlayHandCard(
     ...eventsForResolution(command.actorId, "hand", handResolution),
   ];
 
-  // Phase 1C inserts the Hand-Phase Yaku Check at this boundary before drawing.
+  const handYaku = performYakuCheck(state, state.players, players, command.actorId, "hand", {
+    kind: "drawPhase",
+  });
+  players = handYaku.players;
+  events.push(...handYaku.events);
+  if (handYaku.decisionPhase !== null) {
+    return commitTransition(
+      state,
+      command,
+      players,
+      handResolution.field,
+      state.round.drawPile,
+      handYaku.decisionPhase,
+      deepFreeze(events),
+      { firstYakuTriggerPlayerId: handYaku.firstYakuTriggerPlayerId },
+    );
+  }
+
   const drawnCardId = state.round.drawPile[0];
   if (drawnCardId === undefined)
     throw new Error("DRAW_PILE_INVARIANT: validated draw was missing.");
@@ -277,10 +412,40 @@ function applyPlayHandCard(
   if (actorBeforeDraw === undefined)
     throw new Error("PLAYER_INVARIANT: active player disappeared.");
   const actorAfterDraw = updatedPlayerAfterResolution(actorBeforeDraw, drawResolution);
-  players = replacePlayer(players, command.actorId, actorAfterDraw);
+  const playersAfterDraw = replacePlayer(players, command.actorId, actorAfterDraw);
   events.push(...eventsForResolution(command.actorId, "draw", drawResolution));
-  // Phase 1C inserts the Draw-Phase Yaku Check at this boundary before turn completion.
-  return completeTurn(state, command, players, drawResolution.field, drawPile, deepFreeze(events));
+  const bothHandsEmpty = playersAfterDraw.every((player) => player.hand.length === 0);
+  const drawYaku = performYakuCheck(
+    state,
+    players,
+    playersAfterDraw,
+    command.actorId,
+    "draw",
+    bothHandsEmpty
+      ? { kind: "endOfPlay", lastActorId: command.actorId }
+      : { kind: "completeTurn", lastActorId: command.actorId },
+  );
+  events.push(...drawYaku.events);
+  if (drawYaku.decisionPhase !== null) {
+    return commitTransition(
+      state,
+      command,
+      drawYaku.players,
+      drawResolution.field,
+      drawPile,
+      drawYaku.decisionPhase,
+      deepFreeze(events),
+      { firstYakuTriggerPlayerId: drawYaku.firstYakuTriggerPlayerId },
+    );
+  }
+  return completeTurn(
+    state,
+    command,
+    drawYaku.players,
+    drawResolution.field,
+    drawPile,
+    deepFreeze(events),
+  );
 }
 
 function applyChooseDrawCapture(
@@ -310,15 +475,38 @@ function applyChooseDrawCapture(
   const actor = state.players.find((player) => player.id === command.actorId);
   if (actor === undefined) throw new Error("PLAYER_INVARIANT: active player disappeared.");
   const updatedActor = updatedPlayerAfterResolution(actor, resolution);
-  const players = replacePlayer(state.players, command.actorId, updatedActor);
-  // Phase 1C inserts the Draw-Phase Yaku Check at this boundary before turn completion.
+  const playersAfterDraw = replacePlayer(state.players, command.actorId, updatedActor);
+  const bothHandsEmpty = playersAfterDraw.every((player) => player.hand.length === 0);
+  const drawYaku = performYakuCheck(
+    state,
+    state.players,
+    playersAfterDraw,
+    command.actorId,
+    "draw",
+    bothHandsEmpty
+      ? { kind: "endOfPlay", lastActorId: command.actorId }
+      : { kind: "completeTurn", lastActorId: command.actorId },
+  );
+  const events = [...eventsForResolution(command.actorId, "draw", resolution), ...drawYaku.events];
+  if (drawYaku.decisionPhase !== null) {
+    return commitTransition(
+      state,
+      command,
+      drawYaku.players,
+      resolution.field,
+      state.round.drawPile,
+      drawYaku.decisionPhase,
+      deepFreeze(events),
+      { firstYakuTriggerPlayerId: drawYaku.firstYakuTriggerPlayerId },
+    );
+  }
   return completeTurn(
     state,
     command,
-    players,
+    drawYaku.players,
     resolution.field,
     state.round.drawPile,
-    eventsForResolution(command.actorId, "draw", resolution),
+    deepFreeze(events),
   );
 }
 

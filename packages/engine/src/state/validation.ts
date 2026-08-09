@@ -1,5 +1,6 @@
 import { CARD_IDS, getCardDefinition, isCardId, type CardId } from "../cards/catalog";
 import { evaluateOpeningOutcome } from "../rules/opening-outcomes";
+import { evaluateYaku, hasValidYakuSeenHistory, isYakuTriggerKey } from "../rules/yaku";
 import { MATCH_LENGTHS, PLAYER_IDS, type AuthoritativeGameStateV1 } from "./types";
 
 export interface StateValidationIssue {
@@ -148,6 +149,61 @@ export function validateAuthoritativeState(
         ),
       );
     }
+    const seenYakuKeysValid =
+      player.seenYakuKeys.every(isYakuTriggerKey) &&
+      new Set(player.seenYakuKeys).size === player.seenYakuKeys.length;
+    if (!seenYakuKeysValid) {
+      issues.push(
+        issue(
+          "PLAYER_YAKU_SEEN_INVALID",
+          `$.players[${index}].seenYakuKeys`,
+          "Seen yaku trigger keys must be canonical and unique.",
+        ),
+      );
+    }
+    const scheduledMonthValid =
+      Number.isSafeInteger(state.round.scheduledMonth) &&
+      state.round.scheduledMonth >= 1 &&
+      state.round.scheduledMonth <= 12;
+    if (player.captured.every(isCardId) && seenYakuKeysValid && scheduledMonthValid) {
+      const expectedYaku = evaluateYaku(
+        player.captured,
+        state.round.scheduledMonth,
+        player.seenYakuKeys,
+      );
+      if (
+        !hasValidYakuSeenHistory(player.captured, state.round.scheduledMonth, player.seenYakuKeys)
+      ) {
+        issues.push(
+          issue(
+            "PLAYER_YAKU_SEEN_EVIDENCE_INVALID",
+            `$.players[${index}].seenYakuKeys`,
+            "Seen yaku keys must be supported by current or historically possible captures.",
+          ),
+        );
+      }
+      if (
+        JSON.stringify(player.activeYaku) !== JSON.stringify(expectedYaku.activeYaku) ||
+        player.currentYakuTotal !== expectedYaku.currentYakuTotal
+      ) {
+        issues.push(
+          issue(
+            "PLAYER_YAKU_STATE_INVALID",
+            `$.players[${index}]`,
+            "Active yaku and current total must match captured cards and scheduled month.",
+          ),
+        );
+      }
+      if (expectedYaku.newYaku.length > 0) {
+        issues.push(
+          issue(
+            "PLAYER_YAKU_TRIGGER_UNSEEN",
+            `$.players[${index}].seenYakuKeys`,
+            "Every active trigger key must be recorded before authoritative state is committed.",
+          ),
+        );
+      }
+    }
   }
   if (
     !Number.isSafeInteger(state.round.roundNumber) ||
@@ -195,6 +251,40 @@ export function validateAuthoritativeState(
         "TURN_CARD_PROGRESS_INVALID",
         "$.round",
         "Normal-turn hand plays and draw reveals must advance together.",
+      ),
+    );
+  }
+  if (
+    state.phase.kind === "awaitingYakuDecision" &&
+    (handCardsPlayed < 0 ||
+      handCardsPlayed > 16 ||
+      (state.phase.context.phase === "hand"
+        ? handCardsPlayed !== drawCardsRevealed + 1
+        : handCardsPlayed !== drawCardsRevealed))
+  ) {
+    issues.push(
+      issue(
+        "YAKU_DECISION_PROGRESS_INVALID",
+        "$.phase",
+        "Yaku decision progress must align with its Hand or Draw resolution window.",
+      ),
+    );
+  }
+
+  const playersWithSeenYaku = state.players.filter((player) => player.seenYakuKeys.length > 0);
+  if (
+    (playersWithSeenYaku.length === 0 && state.round.firstYakuTriggerPlayerId !== null) ||
+    (playersWithSeenYaku.length > 0 &&
+      (state.round.firstYakuTriggerPlayerId === null ||
+        !PLAYER_IDS.includes(state.round.firstYakuTriggerPlayerId) ||
+        !state.players.find((player) => player.id === state.round.firstYakuTriggerPlayerId)
+          ?.seenYakuKeys.length))
+  ) {
+    issues.push(
+      issue(
+        "FIRST_YAKU_TRIGGER_INVALID",
+        "$.round.firstYakuTriggerPlayerId",
+        "First yaku trigger player must identify a player with seen trigger keys.",
       ),
     );
   }
@@ -268,6 +358,80 @@ export function validateAuthoritativeState(
           "DRAW_CAPTURE_PHASE_INVALID",
           "$.phase",
           "Pending draw choice cannot reference a malformed field.",
+        ),
+      );
+    }
+  } else if (state.phase.kind === "awaitingYakuDecision") {
+    const decisionPlayerId = state.phase.playerId;
+    const actor = state.players.find((player) => player.id === decisionPlayerId);
+    const context = state.phase.context;
+    if (
+      !PLAYER_IDS.includes(decisionPlayerId) ||
+      decisionPlayerId !== expectedActivePlayer(state, "awaitingDrawCapture") ||
+      actor === undefined
+    ) {
+      issues.push(
+        issue(
+          "YAKU_DECISION_ACTOR_INVALID",
+          "$.phase.playerId",
+          "Yaku decision actor must be the player whose phase just resolved.",
+        ),
+      );
+    } else {
+      const newKeys = context.newYaku.map((entry) => entry.key);
+      const newKeysKnown = newKeys.every(isYakuTriggerKey);
+      const previousSeenYakuKeys = actor.seenYakuKeys.slice(
+        0,
+        actor.seenYakuKeys.length - newKeys.length,
+      );
+      const keysValid =
+        context.newYaku.length > 0 &&
+        newKeys.length <= actor.seenYakuKeys.length &&
+        newKeysKnown &&
+        new Set(newKeys).size === newKeys.length &&
+        JSON.stringify(actor.seenYakuKeys) ===
+          JSON.stringify([...previousSeenYakuKeys, ...newKeys]);
+      const decisionEvidenceValid =
+        keysValid &&
+        actor.captured.every(isCardId) &&
+        previousSeenYakuKeys.every(isYakuTriggerKey) &&
+        new Set(previousSeenYakuKeys).size === previousSeenYakuKeys.length &&
+        Number.isSafeInteger(state.round.scheduledMonth) &&
+        state.round.scheduledMonth >= 1 &&
+        state.round.scheduledMonth <= 12;
+      const expectedDecisionYaku = decisionEvidenceValid
+        ? evaluateYaku(actor.captured, state.round.scheduledMonth, previousSeenYakuKeys)
+        : null;
+      if (
+        expectedDecisionYaku === null ||
+        JSON.stringify(context.newYaku) !== JSON.stringify(expectedDecisionYaku.newYaku) ||
+        JSON.stringify(context.activeYaku) !== JSON.stringify(actor.activeYaku) ||
+        context.currentYakuTotal !== actor.currentYakuTotal
+      ) {
+        issues.push(
+          issue(
+            "YAKU_DECISION_CONTEXT_INVALID",
+            "$.phase.context",
+            "Decision context must contain all new active yaku and the exact current total.",
+          ),
+        );
+      }
+    }
+    const bothHandsEmpty = state.players.every((player) => player.hand.length === 0);
+    const resumeValid =
+      context.phase === "hand"
+        ? context.resume.kind === "drawPhase"
+        : context.phase === "draw" && bothHandsEmpty
+          ? context.resume.kind === "endOfPlay" && context.resume.lastActorId === decisionPlayerId
+          : context.phase === "draw" &&
+            context.resume.kind === "completeTurn" &&
+            context.resume.lastActorId === decisionPlayerId;
+    if (!resumeValid) {
+      issues.push(
+        issue(
+          "YAKU_DECISION_RESUME_INVALID",
+          "$.phase.context.resume",
+          "Decision resume must match the completed Hand/Draw phase and End-of-Play status.",
         ),
       );
     }
@@ -350,7 +514,11 @@ export function validateInitialSetupState(
         ),
       );
     }
-    if (player.seenYakuKeys.length !== 0) {
+    if (
+      player.seenYakuKeys.length !== 0 ||
+      player.activeYaku.length !== 0 ||
+      player.currentYakuTotal !== 0
+    ) {
       issues.push(
         issue(
           "SETUP_YAKU_NOT_RESET",
