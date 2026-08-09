@@ -1,0 +1,357 @@
+{
+  "runtimeFormatVersion": 1,
+  "artSpecVersion": 1,
+  "packageId": "new-primary-deck",
+  "packageVersion": "0.3.0",
+  "name": "New Primary Deck",
+  "author": "KoiKoi4x Project",
+  "license": "Original AI-generated artwork; final owner visual approval pending",
+  "approvalStatus": "technical-placeholder",
+  "framePolicy": "game",
+  "inheritanceChain": ["new-primary-deck"],
+  "cardFaces": {
+    "january-crane": {
+      "path": "cards/january-crane.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "january-red-text-scroll": {
+      "path": "cards/january-red-text-scroll.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "january-pine-plain-a": {
+      "path": "cards/january-pine-plain-a.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "january-pine-plain-b": {
+      "path": "cards/january-pine-plain-b.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "february-bush-warbler": {
+      "path": "cards/february-bush-warbler.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "february-red-text-scroll": {
+      "path": "cards/february-red-text-scroll.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "february-plum-plain-a": {
+      "path": "cards/february-plum-plain-a.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "february-plum-plain-b": {
+      "path": "cards/february-plum-plain-b.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "march-curtain": {
+      "path": "cards/march-curtain.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "march-red-text-scroll": {
+      "path": "cards/march-red-text-scroll.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "march-cherry-plain-a": {
+      "path": "cards/march-cherry-plain-a.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "march-cherry-plain-b": {
+      "path": "cards/march-cherry-plain-b.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "april-cuckoo": {
+      "path": "cards/april-cuckoo.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "april-red-scroll": {
+      "path": "cards/april-red-scroll.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "april-wisteria-plain-a": {
+      "path": "cards/april-wisteria-plain-a.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "april-wisteria-plain-b": {
+      "path": "cards/april-wisteria-plain-b.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "may-bridge": {
+      "path": "cards/may-bridge.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "may-red-scroll": {
+      "path": "cards/may-red-scroll.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "may-iris-plain-a": {
+      "path": "cards/may-iris-plain-a.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "may-iris-plain-b": {
+      "path": "cards/may-iris-plain-b.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "june-butterfly": {
+      "path": "cards/june-butterfly.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "june-blue-scroll": {
+      "path": "cards/june-blue-scroll.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "june-peony-plain-a": {
+      "path": "cards/june-peony-plain-a.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "june-peony-plain-b": {
+      "path": "cards/june-peony-plain-b.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "july-boar": {
+      "path": "cards/july-boar.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "july-red-scroll": {
+      "path": "cards/july-red-scroll.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "july-bush-clover-plain-a": {
+      "path": "cards/july-bush-clover-plain-a.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "july-bush-clover-plain-b": {
+      "path": "cards/july-bush-clover-plain-b.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "august-moon": {
+      "path": "cards/august-moon.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "august-geese": {
+      "path": "cards/august-geese.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "august-pampas-plain-a": {
+      "path": "cards/august-pampas-plain-a.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "august-pampas-plain-b": {
+      "path": "cards/august-pampas-plain-b.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "september-sake-cup": {
+      "path": "cards/september-sake-cup.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "september-blue-scroll": {
+      "path": "cards/september-blue-scroll.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "september-chrysanthemum-plain-a": {
+      "path": "cards/september-chrysanthemum-plain-a.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "september-chrysanthemum-plain-b": {
+      "path": "cards/september-chrysanthemum-plain-b.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "october-deer": {
+      "path": "cards/october-deer.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "october-blue-scroll": {
+      "path": "cards/october-blue-scroll.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "october-maple-plain-a": {
+      "path": "cards/october-maple-plain-a.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "october-maple-plain-b": {
+      "path": "cards/october-maple-plain-b.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "november-rain": {
+      "path": "cards/november-rain.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "november-swallow": {
+      "path": "cards/november-swallow.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "november-red-scroll": {
+      "path": "cards/november-red-scroll.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "november-willow-plain": {
+      "path": "cards/november-willow-plain.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "december-phoenix": {
+      "path": "cards/december-phoenix.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "december-paulownia-plain-a": {
+      "path": "cards/december-paulownia-plain-a.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "december-paulownia-plain-b": {
+      "path": "cards/december-paulownia-plain-b.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    },
+    "december-paulownia-plain-c": {
+      "path": "cards/december-paulownia-plain-c.png",
+      "width": 640,
+      "height": 1024,
+      "mediaType": "image/png",
+      "sourcePackageId": "new-primary-deck"
+    }
+  },
+  "cardBack": {
+    "path": "backs/default.png",
+    "width": 640,
+    "height": 1024,
+    "mediaType": "image/png",
+    "sourcePackageId": "new-primary-deck"
+  }
+}

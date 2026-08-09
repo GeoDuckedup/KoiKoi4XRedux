@@ -3,6 +3,44 @@
   "artSpecVersion": 1,
   "cards": [
     {
+      "cardId": "january-crane",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/january-crane-b8a22e0b9890.webp",
+        "sha256": "b8a22e0b98909217e2621b9ce9182f23848bb6e43c5a91375b892039d0965a56"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/january-crane.png",
+        "sha256": "430c3a1bedbfcbc18abafeedfa535bf5008aeeab05f7dc423f31e76dce2445b8"
+      },
+      "thumbnail": {
+        "path": "thumbnails/january-crane.png",
+        "sha256": "8be104e677e386a6a42b07cb60e53be0442ad3cd2f784d818296ef3ced5e9c1a"
+      }
+    },
+    {
+      "cardId": "january-red-text-scroll",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/january-red-text-scroll-af2a1e3b230b.webp",
+        "sha256": "af2a1e3b230b8e78b31ec88c09d00a4fbbc0edcb826a4156883f27eef1f205f9"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/january-red-text-scroll.png",
+        "sha256": "e15f236151668991f64c68352e6e0189f9d5cb264fa9e7841a082057647805bf"
+      },
+      "thumbnail": {
+        "path": "thumbnails/january-red-text-scroll.png",
+        "sha256": "62dc24138930c59c63be327727da58f425fda2c5227e861db30f5b7128f41491"
+      }
+    },
+    {
       "cardId": "january-pine-plain-a",
       "source": {
         "format": "webp",
@@ -19,6 +57,557 @@
       "thumbnail": {
         "path": "thumbnails/january-pine-plain-a.png",
         "sha256": "7096411804de2dd4633fbe0a28012251b20c8f5c6336b1c08b4bb0c40c019339"
+      }
+    },
+    {
+      "cardId": "january-pine-plain-b",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/january-pine-plain-b-07a2d2edd9ac.webp",
+        "sha256": "07a2d2edd9ac1cc851a8a957753bcbf9e8dc85ad76972244d2a6f887b6b07267"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/january-pine-plain-b.png",
+        "sha256": "9d70d7655fe77e5b0ebbe0c4a0c406db20070c9270cd5270008dab7f208fa038"
+      },
+      "thumbnail": {
+        "path": "thumbnails/january-pine-plain-b.png",
+        "sha256": "892217575ed07a3bc2c68d5a85029d425435a1229623c98bbf0d8700208ea811"
+      }
+    },
+    {
+      "cardId": "february-bush-warbler",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/february-bush-warbler-5de0a957ceb8.webp",
+        "sha256": "5de0a957ceb80b30981b8c671ce055662f4ff5346b94f5b83472850707163212"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/february-bush-warbler.png",
+        "sha256": "1433e5a13d69ee43978ab2e89e966dd436502cf7f5f152f24e25b8ec33fe1a03"
+      },
+      "thumbnail": {
+        "path": "thumbnails/february-bush-warbler.png",
+        "sha256": "dc8bb3a40b93295e71af1c07748dc3b1d4028308e425fdd6551cae9927a58e47"
+      }
+    },
+    {
+      "cardId": "february-red-text-scroll",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/february-red-text-scroll-cafa0526fce5.webp",
+        "sha256": "cafa0526fce5af275189ab7ee57891a25ffe263906fdeca32e1b100ccb2af120"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/february-red-text-scroll.png",
+        "sha256": "daca57ebda55883561053fd3b404417374bc29a6abd81267aebdcaddfecfdce7"
+      },
+      "thumbnail": {
+        "path": "thumbnails/february-red-text-scroll.png",
+        "sha256": "1013ace94f917afef2a4a05ce61b4886b4ab5b362b5fa56effda69c39e7410f3"
+      }
+    },
+    {
+      "cardId": "february-plum-plain-a",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/february-plum-plain-a-39b7ea6e51b5.webp",
+        "sha256": "39b7ea6e51b5636c972cfb4365e606f89073c45b6098c9a615a4336e5e079866"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/february-plum-plain-a.png",
+        "sha256": "cddfcd79a510532797ee11e8f3280134ee72f5b952fa4afc5f72c0be6c02d97c"
+      },
+      "thumbnail": {
+        "path": "thumbnails/february-plum-plain-a.png",
+        "sha256": "3bda193bf92b6342d6c431ce6e6304acc5ca74470fb5c94c50093ecaa747732c"
+      }
+    },
+    {
+      "cardId": "february-plum-plain-b",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/february-plum-plain-b-450036aa0be2.webp",
+        "sha256": "450036aa0be25d04bc6182bcbc542685dd237ea030e67bb42dfe1b6f61c7c750"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/february-plum-plain-b.png",
+        "sha256": "ea0081e1abdfcdf15c3dbe9cba9bbd21422206d802d6453d03b70f431703e555"
+      },
+      "thumbnail": {
+        "path": "thumbnails/february-plum-plain-b.png",
+        "sha256": "62554a21e4d4a7eb783a46ff8645c04427ad663d907a507c0b93aef46229e75d"
+      }
+    },
+    {
+      "cardId": "march-curtain",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/march-curtain-985eb6e77c72.webp",
+        "sha256": "985eb6e77c724991bf75e0e8d4c3440a79965f2ccba40f76dbb1a6f5e35386cf"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/march-curtain.png",
+        "sha256": "67daec35265c3903dc90076a847f331859f425751ebeb097c079b6bee9c184a9"
+      },
+      "thumbnail": {
+        "path": "thumbnails/march-curtain.png",
+        "sha256": "14849c4a91a7c2bd1bc750184b441a00a6516b77a018f667b8b7a481313d3357"
+      }
+    },
+    {
+      "cardId": "march-red-text-scroll",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/march-red-text-scroll-19f16f17dd3c.webp",
+        "sha256": "19f16f17dd3cca841373cb131b048c266f206e18698a45557e110e3a10f34c63"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/march-red-text-scroll.png",
+        "sha256": "9686fd1ded54fd0b6939af730364f7bd917299d392dd0ce297c4c31bdbc1090d"
+      },
+      "thumbnail": {
+        "path": "thumbnails/march-red-text-scroll.png",
+        "sha256": "d9907ba814245025aec2c28b2a9d73b5c5c5501a98d1b847284189168ffe979d"
+      }
+    },
+    {
+      "cardId": "march-cherry-plain-a",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/march-cherry-plain-a-494856c3782c.webp",
+        "sha256": "494856c3782c4ef91151ec1fa4c89bcf62ad91f5cafbcf5d6deae5fad83f6895"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/march-cherry-plain-a.png",
+        "sha256": "397b6bbf62c891ca90db2e8b806bb78b928920ebe3510dd1f734838952d91c0a"
+      },
+      "thumbnail": {
+        "path": "thumbnails/march-cherry-plain-a.png",
+        "sha256": "330477b50df24274d5cb318b82506387d61b16ac9c06e4df89d0db9ffe7c37b3"
+      }
+    },
+    {
+      "cardId": "march-cherry-plain-b",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/march-cherry-plain-b-9c25f099ccee.webp",
+        "sha256": "9c25f099cceed3a9b06d864dc8b7a34c74190dcb8fd9cafc988d08ab4cfde81f"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/march-cherry-plain-b.png",
+        "sha256": "21a8dfa4539dc622edc591a2cf6837b08909d203dfd5bb6b840e81a7063287df"
+      },
+      "thumbnail": {
+        "path": "thumbnails/march-cherry-plain-b.png",
+        "sha256": "d53f2a5c0be1e2bfe2d216c86dbc7bbf307aa6c454421c2ac537ef879140d1d8"
+      }
+    },
+    {
+      "cardId": "april-cuckoo",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/april-cuckoo-6bceed08520c.webp",
+        "sha256": "6bceed08520c9790971ca6306fccc2d781d3235c8aaec404c17cac1e348d97f8"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/april-cuckoo.png",
+        "sha256": "f1a8bb3662fb224c0e3a214e11a4543e3ee3412edb1610cb4277603b937a9177"
+      },
+      "thumbnail": {
+        "path": "thumbnails/april-cuckoo.png",
+        "sha256": "1eceb6c06c95d74d356b0bc5af8068833afb7c8b74f10da52fd7cd1be8eb5a6c"
+      }
+    },
+    {
+      "cardId": "april-red-scroll",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/april-red-scroll-71ebe7fe0e18.webp",
+        "sha256": "71ebe7fe0e1808290e9419c9f9b4c5825bc56ea9b976ca994f53be731142c2ee"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/april-red-scroll.png",
+        "sha256": "8101a8874fb32febc1b8e8eb791fe5b4716cfb4e74803282c7d9c9402ce485b4"
+      },
+      "thumbnail": {
+        "path": "thumbnails/april-red-scroll.png",
+        "sha256": "7253735bdd358ff7d3967b440ed45b5b067004e9cf302b1a8f4f91689055f3fc"
+      }
+    },
+    {
+      "cardId": "april-wisteria-plain-a",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/april-wisteria-plain-a-4c99defbfc40.webp",
+        "sha256": "4c99defbfc407d3130608628928ac4484d542beef890a389da941dd27f25db90"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/april-wisteria-plain-a.png",
+        "sha256": "1d057d154d7669c2ac791855d02134467b216aa7d7304b002fadb4bb3991d7e8"
+      },
+      "thumbnail": {
+        "path": "thumbnails/april-wisteria-plain-a.png",
+        "sha256": "8c4f1d545a9af94bcd3c5f0d190db2aeeca6980bffdfab710dcf94cfb8acdea4"
+      }
+    },
+    {
+      "cardId": "april-wisteria-plain-b",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/april-wisteria-plain-b-ec8d9fefb543.webp",
+        "sha256": "ec8d9fefb54388c5ef7d5ebd4aac8159aaf5c44326dc69f18e8190afe67f96c3"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/april-wisteria-plain-b.png",
+        "sha256": "67b25e1575073f041a87dc5f63ba42820a6f658fdcff53115857ec2e27760212"
+      },
+      "thumbnail": {
+        "path": "thumbnails/april-wisteria-plain-b.png",
+        "sha256": "d1d29cf1cdc8b72fb995010d7838fdd7a2f03907f19f50169bb6060559564942"
+      }
+    },
+    {
+      "cardId": "may-bridge",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/may-bridge-5cb3a8d3bce1.webp",
+        "sha256": "5cb3a8d3bce15b060ee635b22748e7b1b7f98d48f96bf47c262659ba5eb05fa8"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/may-bridge.png",
+        "sha256": "86f9a49e5d6c37253b680e6c07ac7a1c9120f93b903283548da20c12e341550e"
+      },
+      "thumbnail": {
+        "path": "thumbnails/may-bridge.png",
+        "sha256": "232c7ded3b605b7a17fa0e62351381ee853c665c26fc02613b788f4550cc1560"
+      }
+    },
+    {
+      "cardId": "may-red-scroll",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/may-red-scroll-94744c90a315.webp",
+        "sha256": "94744c90a315e69db905848272df6cae73101ff93bfd99388ff9b8d1389a9a47"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/may-red-scroll.png",
+        "sha256": "09503c7b001b9b1374da4e5e8a0c75154405621a9eae67c01c56ec9d56c7d304"
+      },
+      "thumbnail": {
+        "path": "thumbnails/may-red-scroll.png",
+        "sha256": "2d13a4568e8b534b92608b3e5bbce740bd3f04db57893ecae6f7728165fcd457"
+      }
+    },
+    {
+      "cardId": "may-iris-plain-a",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/may-iris-plain-a-7cd092691222.webp",
+        "sha256": "7cd0926912223a78c9d2d581b3ddd0e44b4f7ef3b2d6d45373f9a16239f79839"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/may-iris-plain-a.png",
+        "sha256": "04f269406242f3d8852d03626376187c7f055b474098a8343bbb3c64bb7c89f4"
+      },
+      "thumbnail": {
+        "path": "thumbnails/may-iris-plain-a.png",
+        "sha256": "ae5fea77dac535f490511115a6e512a8b4f8acdd2b951f60c4cac98123b990b3"
+      }
+    },
+    {
+      "cardId": "may-iris-plain-b",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/may-iris-plain-b-a3157b69e40a.webp",
+        "sha256": "a3157b69e40a74e6944a05066ce242070b4d29d35f882f223c7618eaf3ef683d"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/may-iris-plain-b.png",
+        "sha256": "54a9baea9b39c3945534da8fe16524131e80bc1580a79de0a67ce7b838c914ec"
+      },
+      "thumbnail": {
+        "path": "thumbnails/may-iris-plain-b.png",
+        "sha256": "28d0a4b8797ba22dc410bf06032003cffde19d764b51554314dfc22581d5ab80"
+      }
+    },
+    {
+      "cardId": "june-butterfly",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/june-butterfly-872a8981ad96.webp",
+        "sha256": "872a8981ad966613ee43fbf025a054d2fb170404c6629a8eb28eb019885a551d"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/june-butterfly.png",
+        "sha256": "d3c6c0ac64b706ee7f422c08ec8358e3527088f7975489e0b3f87787d9c94778"
+      },
+      "thumbnail": {
+        "path": "thumbnails/june-butterfly.png",
+        "sha256": "ca71ce7c908c56c45e4be646a1ef8edb7dfc58ae77986816f426a7235adcef61"
+      }
+    },
+    {
+      "cardId": "june-blue-scroll",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/june-blue-scroll-befdbcff0c96.webp",
+        "sha256": "befdbcff0c9697ab652b09332bdab71cba7d86e947a250813a85bf697493a55e"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/june-blue-scroll.png",
+        "sha256": "9374b125937ab99424374f5315350c95656457acb477f6d9b73f41a933e0e582"
+      },
+      "thumbnail": {
+        "path": "thumbnails/june-blue-scroll.png",
+        "sha256": "b8ccb08d195025275f9399d065a4c46857b5cfe3245ef0a4ee9e2856e2e107fc"
+      }
+    },
+    {
+      "cardId": "june-peony-plain-a",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/june-peony-plain-a-aad1e8bea26b.webp",
+        "sha256": "aad1e8bea26b76bba2cba45bf759e3888eb38d4e3db40c92eef199f87a608cc8"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/june-peony-plain-a.png",
+        "sha256": "0946a55a0f879efb787f523971fb45d8806669b1d1182b526a275c947cb28c64"
+      },
+      "thumbnail": {
+        "path": "thumbnails/june-peony-plain-a.png",
+        "sha256": "1467df0ad5c16cc1276399c0f26232166774d1826b2cb6e92484ae8e77d57946"
+      }
+    },
+    {
+      "cardId": "june-peony-plain-b",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/june-peony-plain-b-dd60edeb2452.webp",
+        "sha256": "dd60edeb24521cddcde2451183d74488cde0d2517f0eacb8737dda58f89aad3c"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/june-peony-plain-b.png",
+        "sha256": "88555bed7f9bc3eee4974729ee0c7a367cb9bd72d2189949fa1fc5657bab696a"
+      },
+      "thumbnail": {
+        "path": "thumbnails/june-peony-plain-b.png",
+        "sha256": "09396ddf91458ce5d68feaa787f2331b118bd0e8b59dcf2c67eeff30c3c698b0"
+      }
+    },
+    {
+      "cardId": "july-boar",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/july-boar-ff6868f70616.webp",
+        "sha256": "ff6868f70616bb47d1de6a8648fde8091c231bf1d28e33e7d5b028a73d447654"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/july-boar.png",
+        "sha256": "4e15c4db379bf743433f8eb07395d5ad4c10d922750f069a16c4b8232dfc9255"
+      },
+      "thumbnail": {
+        "path": "thumbnails/july-boar.png",
+        "sha256": "7f4ff8ee179c8e2c862c0e5aec45eef4754d278ac756eb8700fa5ea1a5470855"
+      }
+    },
+    {
+      "cardId": "july-red-scroll",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/july-red-scroll-25e038111f32.webp",
+        "sha256": "25e038111f3217d8f148e901ff9b41b09aaa76a30d0c979eae1e5cc7d343ecee"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/july-red-scroll.png",
+        "sha256": "0851e72895a348acb55b7c37715034de411c7f6088ff8365e3b959a80de161b8"
+      },
+      "thumbnail": {
+        "path": "thumbnails/july-red-scroll.png",
+        "sha256": "05a04e45907d0462dc5506a3880fc4a6d23dcfac353b02fdb87195b952f6e5e3"
+      }
+    },
+    {
+      "cardId": "july-bush-clover-plain-a",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/july-bush-clover-plain-a-62fc247fe4a3.webp",
+        "sha256": "62fc247fe4a31ddb8fae4b016ec23ea08abdc823c75f126a8d7885daa743af01"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/july-bush-clover-plain-a.png",
+        "sha256": "e4a37445d562315645949ddbb3188379e76cef0397741216dba1d1698e3b6aac"
+      },
+      "thumbnail": {
+        "path": "thumbnails/july-bush-clover-plain-a.png",
+        "sha256": "c7f793553883fd6339f58153169912a5d4b0568404cd6f1ac859bf1d32abd284"
+      }
+    },
+    {
+      "cardId": "july-bush-clover-plain-b",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/july-bush-clover-plain-b-259f2eabb181.webp",
+        "sha256": "259f2eabb1810a6ed614970f025afad6c5b39d4b4983088704c39fafe3069322"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/july-bush-clover-plain-b.png",
+        "sha256": "600c52130d620d78be600085af9906e9e55903c0a17526eadc11be43d7060df9"
+      },
+      "thumbnail": {
+        "path": "thumbnails/july-bush-clover-plain-b.png",
+        "sha256": "43a01f2c72ba49fe156169d594492ca8c10998a55d2e251ed865ad4b03f10069"
+      }
+    },
+    {
+      "cardId": "august-moon",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/august-moon-334e32c2374f.webp",
+        "sha256": "334e32c2374f4c77d648b1ed2f798d9f5e58847ac375efa951334ae559636c7d"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/august-moon.png",
+        "sha256": "11eb3563e0a6454bd04c3db5d6ecd85707b18d3140a2c64f2b91273543589512"
+      },
+      "thumbnail": {
+        "path": "thumbnails/august-moon.png",
+        "sha256": "75f38e39ecde58aa37e477b1b52a58c3757a55c0de86453683a38552932edeb2"
+      }
+    },
+    {
+      "cardId": "august-geese",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/august-geese-baa7c9b3e7e5.webp",
+        "sha256": "baa7c9b3e7e5ccea3e44355ed31582efd14cd4b30ccae976e6ba0205263a820b"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/august-geese.png",
+        "sha256": "0d9e2c5fc8ae597f844309e13bb0cc095d54e716d290193f5fc58592559e0929"
+      },
+      "thumbnail": {
+        "path": "thumbnails/august-geese.png",
+        "sha256": "e444139b45ff445fc02b820e4bce15d8e10464ca5f9c2433255d619da01ec67a"
+      }
+    },
+    {
+      "cardId": "august-pampas-plain-a",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/august-pampas-plain-a-c31748c76d46.webp",
+        "sha256": "c31748c76d4645ee35dd514a767cf709202d74ae7c1607dcfbc5cb1a47803491"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/august-pampas-plain-a.png",
+        "sha256": "7114302b34a388dc5b6ec258c70731d5c0a8a36d387c0b0dfb535c92abe885e1"
+      },
+      "thumbnail": {
+        "path": "thumbnails/august-pampas-plain-a.png",
+        "sha256": "eac4e8f7b857edbc482da91ae57dc16a8e8bc1195dd31b4e3d0c42b780eb2544"
+      }
+    },
+    {
+      "cardId": "august-pampas-plain-b",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/august-pampas-plain-b-ec685985cee7.webp",
+        "sha256": "ec685985cee765a2aaec86d1b936e9bd7e096de9390937af5f0d839a6d532ddf"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/august-pampas-plain-b.png",
+        "sha256": "bd75760b7673bf3a8b7809e09bf32e44df227deb55ce5796a38724d6be64fd11"
+      },
+      "thumbnail": {
+        "path": "thumbnails/august-pampas-plain-b.png",
+        "sha256": "d3a157e10c1113e67310012edbb1ea894873a1379ff65b1c706b47e61219afc4"
       }
     },
     {
@@ -41,6 +630,139 @@
       }
     },
     {
+      "cardId": "september-blue-scroll",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/september-blue-scroll-d5acbaf44049.webp",
+        "sha256": "d5acbaf44049e026faf361735bb6f68968b71457df4e7f25c8069432438eb75f"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/september-blue-scroll.png",
+        "sha256": "3dbdb5133caa12d3a86aa24e20216c484b00348ce716bb7ccb4f84f9bf5f4092"
+      },
+      "thumbnail": {
+        "path": "thumbnails/september-blue-scroll.png",
+        "sha256": "7b08c043cc7fffe2e7aa38436da78ffd590ae0258668896a74e68366f0fdd55a"
+      }
+    },
+    {
+      "cardId": "september-chrysanthemum-plain-a",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/september-chrysanthemum-plain-a-f00833193447.webp",
+        "sha256": "f00833193447ff6723daee5434feff7ad97739da7117542ca4a71e9430ee1a7d"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/september-chrysanthemum-plain-a.png",
+        "sha256": "4a464401837c028bd4da737495875c8d8b0abfff0aa364e8791824e95000e544"
+      },
+      "thumbnail": {
+        "path": "thumbnails/september-chrysanthemum-plain-a.png",
+        "sha256": "53079158a37d5941994d95cb97a199d85ccc753f487f04d1b0424ba4a3ed0258"
+      }
+    },
+    {
+      "cardId": "september-chrysanthemum-plain-b",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/september-chrysanthemum-plain-b-8f32c4249835.webp",
+        "sha256": "8f32c42498354dd4407f98a7fb85dd1f3d72fc1f0b636de14450f171c65f8475"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/september-chrysanthemum-plain-b.png",
+        "sha256": "87b3f3536d002ce9d12d65156c26faf06226bb8694030206a8b2f2c1e364b32f"
+      },
+      "thumbnail": {
+        "path": "thumbnails/september-chrysanthemum-plain-b.png",
+        "sha256": "54a0a8e71258ab01e6e860c9c3aa578cf79c73686d9043325218415a78be96ee"
+      }
+    },
+    {
+      "cardId": "october-deer",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/october-deer-733d3331a0ae.webp",
+        "sha256": "733d3331a0aeffc83adcbf53455bdf44c2f1000145c18e3ccebcafd7f2266c94"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/october-deer.png",
+        "sha256": "c13d461023150f662b3cc155cedbeb30a38c424a2838d1b81839707b1a7db31d"
+      },
+      "thumbnail": {
+        "path": "thumbnails/october-deer.png",
+        "sha256": "a16c08e3a112c0c6b0279289203149a95d3e20e685e725a064484e99c1f578f7"
+      }
+    },
+    {
+      "cardId": "october-blue-scroll",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/october-blue-scroll-97667128b57f.webp",
+        "sha256": "97667128b57f0d2bb46cfc41c41a22a1df626648ff1772058ea74a13e725528e"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/october-blue-scroll.png",
+        "sha256": "ec013fac99081372c93025e05eadf08019329460caa7304e5da0f7560a9df260"
+      },
+      "thumbnail": {
+        "path": "thumbnails/october-blue-scroll.png",
+        "sha256": "c645b5e6e2dfbb35cc321fb7c7099a2190bdc394996a2a42a6d2059d310cef82"
+      }
+    },
+    {
+      "cardId": "october-maple-plain-a",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/october-maple-plain-a-c491a3ad151d.webp",
+        "sha256": "c491a3ad151d13ba80b781da866f3eff6d2b18942f8f0adf7c908d40e4a45713"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/october-maple-plain-a.png",
+        "sha256": "e535d92c4d3a83184479cff34ff7aa1b8738ae7e3255f5559432ffe491cc2795"
+      },
+      "thumbnail": {
+        "path": "thumbnails/october-maple-plain-a.png",
+        "sha256": "54df156d7db43d94ff926dbaac5da4101d4692e6cfe041351753b9d144899b55"
+      }
+    },
+    {
+      "cardId": "october-maple-plain-b",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/october-maple-plain-b-de257ee4f78b.webp",
+        "sha256": "de257ee4f78b16ae4a3be5da8f125685f51abe706c5bcb687497f40135c50a03"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/october-maple-plain-b.png",
+        "sha256": "2321932fe42a0af037843947c7beb6c3ee1494276d1746d482fe449afbe1841a"
+      },
+      "thumbnail": {
+        "path": "thumbnails/october-maple-plain-b.png",
+        "sha256": "09d3bc99abce1d47de855824e96103c8631a62b1c3fc0cf90f51cbeb88dae8aa"
+      }
+    },
+    {
       "cardId": "november-rain",
       "source": {
         "format": "webp",
@@ -57,6 +779,63 @@
       "thumbnail": {
         "path": "thumbnails/november-rain.png",
         "sha256": "9cc5e0ebfa848f4094f79376d82eaf85229ca100056beb686aa6651138c107fe"
+      }
+    },
+    {
+      "cardId": "november-swallow",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/november-swallow-d986fed7d0ce.webp",
+        "sha256": "d986fed7d0cea585d6307d0d091c5a81b1e39c55f0c2aab1e051c4213d7fe9fd"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/november-swallow.png",
+        "sha256": "477897d815ffb1607e5d00e935f5fd7d0b6beba496dccec8d51b9355500ad224"
+      },
+      "thumbnail": {
+        "path": "thumbnails/november-swallow.png",
+        "sha256": "6689197056d3b4cff5901da1e88d3b25edf0ea8c82e98f800dcba140cc7744cc"
+      }
+    },
+    {
+      "cardId": "november-red-scroll",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/november-red-scroll-c0c65b3a7a11.webp",
+        "sha256": "c0c65b3a7a116a5d1a664228b69a7bb38b14c5a094d610cb735f34a2e7299375"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/november-red-scroll.png",
+        "sha256": "90c74280328d53a43e8af580e092af7f61c1a7551f905e787be057fe1d6cceaf"
+      },
+      "thumbnail": {
+        "path": "thumbnails/november-red-scroll.png",
+        "sha256": "211a069351ecb5cbb6f0766cd7ebf23b3dce7732fb42c82b1cf953db5c1a3789"
+      }
+    },
+    {
+      "cardId": "november-willow-plain",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/november-willow-plain-91121aaccbf5.webp",
+        "sha256": "91121aaccbf51e71f385e9cecf8a8b3ab1a36fe08178ea4ec685388b09584f87"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/november-willow-plain.png",
+        "sha256": "112459e25b2f5da679818e3fc8ad844aefcae8d428d441f8ebc9b4308ec5705f"
+      },
+      "thumbnail": {
+        "path": "thumbnails/november-willow-plain.png",
+        "sha256": "674c08f557b1e20ea4a2eb427ef5d0d715f79bf093f0c1d8434996e4bf800b2b"
       }
     },
     {
@@ -77,287 +856,79 @@
         "path": "thumbnails/december-phoenix.png",
         "sha256": "1cda959cbea77033ca5972072b8e6bd4c1d6bddd795976e2a042b998a6c453cc"
       }
+    },
+    {
+      "cardId": "december-paulownia-plain-a",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/december-paulownia-plain-a-7890d99d54ff.webp",
+        "sha256": "7890d99d54ff47b73a42ef99c61390495a84fdd846bcacd29ff461e4cce96ebc"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/december-paulownia-plain-a.png",
+        "sha256": "ca680eef315608cfad9e7be47005b7a7c6b9bd6ebe97a822787cfc8d5bd22ac4"
+      },
+      "thumbnail": {
+        "path": "thumbnails/december-paulownia-plain-a.png",
+        "sha256": "2bde1dda68c3ec3b83134be88ca9e2ec386cc92969d1614fb0dfe6e39528f066"
+      }
+    },
+    {
+      "cardId": "december-paulownia-plain-b",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/december-paulownia-plain-b-c3306745662e.webp",
+        "sha256": "c3306745662e7fb37ba39c0702fabfaa810aa874be9fcf8a9a9b1e7d54ddb562"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/december-paulownia-plain-b.png",
+        "sha256": "7f9fd52bc14749b7b119afd9d9e970eb7441aa40efc0101e816eec7b59514ed0"
+      },
+      "thumbnail": {
+        "path": "thumbnails/december-paulownia-plain-b.png",
+        "sha256": "caf96dd22456ac9adeb71a1dc889f423ecb00615d0529aad1508f48fa3588641"
+      }
+    },
+    {
+      "cardId": "december-paulownia-plain-c",
+      "source": {
+        "format": "webp",
+        "width": 1600,
+        "height": 2560,
+        "file": "source/december-paulownia-plain-c-199f049a8915.webp",
+        "sha256": "199f049a89159d438a50e0f5a0a5bd386dd9f4c0a0c4d13b92e0d15128c112e2"
+      },
+      "sourcePackageId": "new-primary-deck",
+      "table": {
+        "path": "runtime/cards/december-paulownia-plain-c.png",
+        "sha256": "f2542402bcb90065f54a92d3550a7a25de91d94e1f76c0db146b05393d808e6c"
+      },
+      "thumbnail": {
+        "path": "thumbnails/december-paulownia-plain-c.png",
+        "sha256": "68091541cb71f5e5cd7c1dd7730b94580e8cfc08d78d1b479452191e604dd9a1"
+      }
     }
   ],
-  "completeRuntimeManifest": false,
+  "completeRuntimeManifest": true,
   "contactSheets": {
     "artReview": {
       "path": "contact-sheets/art-review.png",
-      "sha256": "89229b0d493acda866fb19ac34c0ceb1a2a8a230d975e8bab610e3acc9e8f038"
+      "sha256": "712557adb6a8a64b1e374a654ba01436b7a1586c6c619c41963fd2d9167d9da9"
     },
     "gameplay": {
       "path": "contact-sheets/gameplay-390x844.png",
-      "sha256": "90c2fc3b03ec8dc41bbc9580f712dd8e8f94314e43c8b63fc3ed8b7ab9593b82"
+      "sha256": "2973e030dd0d145a5bc67942dc82494079807ee60fcd6ccba0fb136bb5b0d442"
     }
   },
   "formatVersion": 1,
-  "issues": [
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:january-crane",
-      "message": "Missing source/january-crane.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:january-red-text-scroll",
-      "message": "Missing source/january-red-text-scroll.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:january-pine-plain-b",
-      "message": "Missing source/january-pine-plain-b.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:february-bush-warbler",
-      "message": "Missing source/february-bush-warbler.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:february-red-text-scroll",
-      "message": "Missing source/february-red-text-scroll.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:february-plum-plain-a",
-      "message": "Missing source/february-plum-plain-a.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:february-plum-plain-b",
-      "message": "Missing source/february-plum-plain-b.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:march-curtain",
-      "message": "Missing source/march-curtain.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:march-red-text-scroll",
-      "message": "Missing source/march-red-text-scroll.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:march-cherry-plain-a",
-      "message": "Missing source/march-cherry-plain-a.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:march-cherry-plain-b",
-      "message": "Missing source/march-cherry-plain-b.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:april-cuckoo",
-      "message": "Missing source/april-cuckoo.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:april-red-scroll",
-      "message": "Missing source/april-red-scroll.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:april-wisteria-plain-a",
-      "message": "Missing source/april-wisteria-plain-a.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:april-wisteria-plain-b",
-      "message": "Missing source/april-wisteria-plain-b.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:may-bridge",
-      "message": "Missing source/may-bridge.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:may-red-scroll",
-      "message": "Missing source/may-red-scroll.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:may-iris-plain-a",
-      "message": "Missing source/may-iris-plain-a.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:may-iris-plain-b",
-      "message": "Missing source/may-iris-plain-b.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:june-butterfly",
-      "message": "Missing source/june-butterfly.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:june-blue-scroll",
-      "message": "Missing source/june-blue-scroll.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:june-peony-plain-a",
-      "message": "Missing source/june-peony-plain-a.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:june-peony-plain-b",
-      "message": "Missing source/june-peony-plain-b.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:july-boar",
-      "message": "Missing source/july-boar.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:july-red-scroll",
-      "message": "Missing source/july-red-scroll.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:july-bush-clover-plain-a",
-      "message": "Missing source/july-bush-clover-plain-a.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:july-bush-clover-plain-b",
-      "message": "Missing source/july-bush-clover-plain-b.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:august-moon",
-      "message": "Missing source/august-moon.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:august-geese",
-      "message": "Missing source/august-geese.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:august-pampas-plain-a",
-      "message": "Missing source/august-pampas-plain-a.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:august-pampas-plain-b",
-      "message": "Missing source/august-pampas-plain-b.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:september-blue-scroll",
-      "message": "Missing source/september-blue-scroll.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:september-chrysanthemum-plain-a",
-      "message": "Missing source/september-chrysanthemum-plain-a.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:september-chrysanthemum-plain-b",
-      "message": "Missing source/september-chrysanthemum-plain-b.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:october-deer",
-      "message": "Missing source/october-deer.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:october-blue-scroll",
-      "message": "Missing source/october-blue-scroll.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:october-maple-plain-a",
-      "message": "Missing source/october-maple-plain-a.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:october-maple-plain-b",
-      "message": "Missing source/october-maple-plain-b.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:november-swallow",
-      "message": "Missing source/november-swallow.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:november-red-scroll",
-      "message": "Missing source/november-red-scroll.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:november-willow-plain",
-      "message": "Missing source/november-willow-plain.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:december-paulownia-plain-a",
-      "message": "Missing source/december-paulownia-plain-a.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:december-paulownia-plain-b",
-      "message": "Missing source/december-paulownia-plain-b.png."
-    },
-    {
-      "severity": "error",
-      "code": "MISSING_SOURCE",
-      "path": "new-primary-deck:december-paulownia-plain-c",
-      "message": "Missing source/december-paulownia-plain-c.png."
-    }
-  ],
+  "issues": [],
   "packageId": "new-primary-deck",
-  "packageVersion": "0.2.0",
-  "runtimeManifestPath": null
+  "packageVersion": "0.3.0",
+  "runtimeManifestPath": "runtime/manifest.v1.json"
 }

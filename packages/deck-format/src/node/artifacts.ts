@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-import type { CardId } from "@koikoi4x/engine";
+import { CARD_IDS, type CardId } from "@koikoi4x/engine";
 
 import { renderArtGuideSvg } from "../art-guide.ts";
 import { ART_SPEC_V1 } from "../art-spec.ts";
@@ -12,7 +12,11 @@ import {
 } from "../json-schemas.ts";
 import { createDerivativePlan, resolveCardTransform } from "../transform.ts";
 import type { DeckPackageV1, DeckPilotV1, DeckTransformsV1 } from "../types.ts";
-import { readSourceImageMetadata, sourceFileDigest } from "./source-validation.ts";
+import {
+  readSourceImageMetadata,
+  sourceFileDigest,
+  validateLocalPackageSources,
+} from "./source-validation.ts";
 
 export const DECK_ARTIFACT_BUILDER_VERSION = 1 as const;
 
@@ -29,6 +33,10 @@ export function buildPilotImportPlan(
   transforms: DeckTransformsV1,
   pilot: DeckPilotV1,
 ): Readonly<Record<string, unknown>> {
+  const sourceValidation = validateLocalPackageSources(packageDirectory, packageDefinition);
+  const completeRuntimeManifest =
+    CARD_IDS.every((cardId) => sourceValidation.metadataByCardId[cardId] !== undefined) &&
+    !sourceValidation.issues.some((entry) => entry.severity === "error");
   const cards = pilot.cards.map((assignment) => {
     const mapping = packageDefinition.cards[assignment.cardId];
     if (mapping === undefined) {
@@ -65,8 +73,8 @@ export function buildPilotImportPlan(
     packageId: packageDefinition.id,
     packageVersion: packageDefinition.version,
     pilotApprovalStatus: pilot.approvalStatus,
-    completeRuntimeManifest: false,
-    note: "Deterministic pilot source/transform plan; owner visual approval remains a separate gate.",
+    completeRuntimeManifest,
+    note: "Deterministic pilot source/transform plan; full-deck visual approval remains a separate gate.",
     cards: Object.freeze(cards),
   });
 }

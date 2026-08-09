@@ -566,3 +566,30 @@ Original prompt: read the package and understand it, then let me know when we ar
 - `npm run check` passes formatting, lint, all workspace typechecks, 33 files / 346 tests, the
   isolated 10,002-match deterministic gate in 102 seconds, authored-deck validation, and the
   764-module production build.
+
+## 2026-08-09 — Phase 2E Bulk Candidate V1 generated
+
+- Owner approved Pilot Candidate V1 by choosing to proceed. Locked the four pilot roles and generated
+  the remaining 44 distinct faces with the built-in image generator in the approved contemporary
+  woodblock/screen-print direction.
+- Preserved the native 992×1586 outputs in the generation archive, normalized every new face to an
+  exact 1600×2560 WebP master, and imported each through the immutable digest-named Workshop path.
+  No Plain pair reuses one raster.
+- The authoritative prompt/provenance ledger is `decks/new-primary-deck/BULK_CANDIDATE_V1.md`.
+- Rebuilt all 48 table derivatives and thumbnails, the matching back, complete 968×4516 art-review
+  sheet, complete 390×1624 gameplay sheet, build report, and technical runtime manifest. Both sheets
+  were visually inspected for ordering, clipping, mobile readability, category distinction, and
+  cross-set consistency.
+- Pilot approval and package completeness are now represented truthfully. The complete deck remains
+  intentionally labeled `technical-placeholder` until the owner reviews the full current sheets and
+  supplies the separate final visual decision; no `approval.json` was manufactured.
+- Focused validation passes 16 files / 113 tests, the local Workshop browser trace, and both root and
+  repository-prefixed seven-viewport production matrices. The complete owner-gated release command
+  fails only with `APPROVAL_RECORD_REQUIRED`, as intended.
+- `npm run check` passes formatting, zero-warning lint, all workspace typechecks, full authored-deck
+  source validation, 33 files / 347 tests including 10,002 generated matches, and the 764-module
+  production build.
+- Owner identified the wrong flower on July Bush Clover Plain B. Replaced the red-clover-like output
+  with a new hagi/Lespedeza illustration using slender arching sprays, small purple pea-shaped
+  flowers, and oval trifoliate leaflets; imported it as a new immutable digest-named master while
+  retaining the rejected source only as unmapped provenance.

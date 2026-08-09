@@ -3,10 +3,10 @@
   "builderVersion": 1,
   "artSpecVersion": 1,
   "packageId": "new-primary-deck",
-  "packageVersion": "0.2.0",
-  "pilotApprovalStatus": "awaiting-finished-art",
-  "completeRuntimeManifest": false,
-  "note": "Deterministic pilot source/transform plan; owner visual approval remains a separate gate.",
+  "packageVersion": "0.3.0",
+  "pilotApprovalStatus": "approved",
+  "completeRuntimeManifest": true,
+  "note": "Deterministic pilot source/transform plan; full-deck visual approval remains a separate gate.",
   "cards": [
     {
       "role": "dense",

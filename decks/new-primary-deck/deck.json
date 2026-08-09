@@ -1,10 +1,10 @@
 {
   "formatVersion": 1,
   "id": "new-primary-deck",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "name": "New Primary Deck",
   "author": "KoiKoi4x Project",
-  "license": "Original AI-generated pilot candidate artwork; owner visual approval pending",
+  "license": "Original AI-generated artwork; final owner visual approval pending",
   "extends": null,
   "framePolicy": "game",
   "sourceDefaults": {
@@ -15,148 +15,148 @@
   },
   "cards": {
     "january-crane": {
-      "file": "source/january-crane.png"
+      "file": "source/january-crane-b8a22e0b9890.webp"
     },
     "january-red-text-scroll": {
-      "file": "source/january-red-text-scroll.png"
+      "file": "source/january-red-text-scroll-af2a1e3b230b.webp"
     },
     "january-pine-plain-a": {
       "file": "source/january-pine-plain-a-89dd9700428f.webp"
     },
     "january-pine-plain-b": {
-      "file": "source/january-pine-plain-b.png"
+      "file": "source/january-pine-plain-b-07a2d2edd9ac.webp"
     },
     "february-bush-warbler": {
-      "file": "source/february-bush-warbler.png"
+      "file": "source/february-bush-warbler-5de0a957ceb8.webp"
     },
     "february-red-text-scroll": {
-      "file": "source/february-red-text-scroll.png"
+      "file": "source/february-red-text-scroll-cafa0526fce5.webp"
     },
     "february-plum-plain-a": {
-      "file": "source/february-plum-plain-a.png"
+      "file": "source/february-plum-plain-a-39b7ea6e51b5.webp"
     },
     "february-plum-plain-b": {
-      "file": "source/february-plum-plain-b.png"
+      "file": "source/february-plum-plain-b-450036aa0be2.webp"
     },
     "march-curtain": {
-      "file": "source/march-curtain.png"
+      "file": "source/march-curtain-985eb6e77c72.webp"
     },
     "march-red-text-scroll": {
-      "file": "source/march-red-text-scroll.png"
+      "file": "source/march-red-text-scroll-19f16f17dd3c.webp"
     },
     "march-cherry-plain-a": {
-      "file": "source/march-cherry-plain-a.png"
+      "file": "source/march-cherry-plain-a-494856c3782c.webp"
     },
     "march-cherry-plain-b": {
-      "file": "source/march-cherry-plain-b.png"
+      "file": "source/march-cherry-plain-b-9c25f099ccee.webp"
     },
     "april-cuckoo": {
-      "file": "source/april-cuckoo.png"
+      "file": "source/april-cuckoo-6bceed08520c.webp"
     },
     "april-red-scroll": {
-      "file": "source/april-red-scroll.png"
+      "file": "source/april-red-scroll-71ebe7fe0e18.webp"
     },
     "april-wisteria-plain-a": {
-      "file": "source/april-wisteria-plain-a.png"
+      "file": "source/april-wisteria-plain-a-4c99defbfc40.webp"
     },
     "april-wisteria-plain-b": {
-      "file": "source/april-wisteria-plain-b.png"
+      "file": "source/april-wisteria-plain-b-ec8d9fefb543.webp"
     },
     "may-bridge": {
-      "file": "source/may-bridge.png"
+      "file": "source/may-bridge-5cb3a8d3bce1.webp"
     },
     "may-red-scroll": {
-      "file": "source/may-red-scroll.png"
+      "file": "source/may-red-scroll-94744c90a315.webp"
     },
     "may-iris-plain-a": {
-      "file": "source/may-iris-plain-a.png"
+      "file": "source/may-iris-plain-a-7cd092691222.webp"
     },
     "may-iris-plain-b": {
-      "file": "source/may-iris-plain-b.png"
+      "file": "source/may-iris-plain-b-a3157b69e40a.webp"
     },
     "june-butterfly": {
-      "file": "source/june-butterfly.png"
+      "file": "source/june-butterfly-872a8981ad96.webp"
     },
     "june-blue-scroll": {
-      "file": "source/june-blue-scroll.png"
+      "file": "source/june-blue-scroll-befdbcff0c96.webp"
     },
     "june-peony-plain-a": {
-      "file": "source/june-peony-plain-a.png"
+      "file": "source/june-peony-plain-a-aad1e8bea26b.webp"
     },
     "june-peony-plain-b": {
-      "file": "source/june-peony-plain-b.png"
+      "file": "source/june-peony-plain-b-dd60edeb2452.webp"
     },
     "july-boar": {
-      "file": "source/july-boar.png"
+      "file": "source/july-boar-ff6868f70616.webp"
     },
     "july-red-scroll": {
-      "file": "source/july-red-scroll.png"
+      "file": "source/july-red-scroll-25e038111f32.webp"
     },
     "july-bush-clover-plain-a": {
-      "file": "source/july-bush-clover-plain-a.png"
+      "file": "source/july-bush-clover-plain-a-62fc247fe4a3.webp"
     },
     "july-bush-clover-plain-b": {
-      "file": "source/july-bush-clover-plain-b.png"
+      "file": "source/july-bush-clover-plain-b-259f2eabb181.webp"
     },
     "august-moon": {
-      "file": "source/august-moon.png"
+      "file": "source/august-moon-334e32c2374f.webp"
     },
     "august-geese": {
-      "file": "source/august-geese.png"
+      "file": "source/august-geese-baa7c9b3e7e5.webp"
     },
     "august-pampas-plain-a": {
-      "file": "source/august-pampas-plain-a.png"
+      "file": "source/august-pampas-plain-a-c31748c76d46.webp"
     },
     "august-pampas-plain-b": {
-      "file": "source/august-pampas-plain-b.png"
+      "file": "source/august-pampas-plain-b-ec685985cee7.webp"
     },
     "september-sake-cup": {
       "file": "source/september-sake-cup-461782769f44.webp"
     },
     "september-blue-scroll": {
-      "file": "source/september-blue-scroll.png"
+      "file": "source/september-blue-scroll-d5acbaf44049.webp"
     },
     "september-chrysanthemum-plain-a": {
-      "file": "source/september-chrysanthemum-plain-a.png"
+      "file": "source/september-chrysanthemum-plain-a-f00833193447.webp"
     },
     "september-chrysanthemum-plain-b": {
-      "file": "source/september-chrysanthemum-plain-b.png"
+      "file": "source/september-chrysanthemum-plain-b-8f32c4249835.webp"
     },
     "october-deer": {
-      "file": "source/october-deer.png"
+      "file": "source/october-deer-733d3331a0ae.webp"
     },
     "october-blue-scroll": {
-      "file": "source/october-blue-scroll.png"
+      "file": "source/october-blue-scroll-97667128b57f.webp"
     },
     "october-maple-plain-a": {
-      "file": "source/october-maple-plain-a.png"
+      "file": "source/october-maple-plain-a-c491a3ad151d.webp"
     },
     "october-maple-plain-b": {
-      "file": "source/october-maple-plain-b.png"
+      "file": "source/october-maple-plain-b-de257ee4f78b.webp"
     },
     "november-rain": {
       "file": "source/november-rain-767b8c42a52b.webp"
     },
     "november-swallow": {
-      "file": "source/november-swallow.png"
+      "file": "source/november-swallow-d986fed7d0ce.webp"
     },
     "november-red-scroll": {
-      "file": "source/november-red-scroll.png"
+      "file": "source/november-red-scroll-c0c65b3a7a11.webp"
     },
     "november-willow-plain": {
-      "file": "source/november-willow-plain.png"
+      "file": "source/november-willow-plain-91121aaccbf5.webp"
     },
     "december-phoenix": {
       "file": "source/december-phoenix-f8ddb9bf96d2.webp"
     },
     "december-paulownia-plain-a": {
-      "file": "source/december-paulownia-plain-a.png"
+      "file": "source/december-paulownia-plain-a-7890d99d54ff.webp"
     },
     "december-paulownia-plain-b": {
-      "file": "source/december-paulownia-plain-b.png"
+      "file": "source/december-paulownia-plain-b-c3306745662e.webp"
     },
     "december-paulownia-plain-c": {
-      "file": "source/december-paulownia-plain-c.png"
+      "file": "source/december-paulownia-plain-c-199f049a8915.webp"
     }
   },
   "backs": {

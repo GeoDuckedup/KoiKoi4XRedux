@@ -105,6 +105,23 @@ async function writeBufferAtomic(path: string, buffer: Buffer): Promise<void> {
   await rename(temporary, path);
 }
 
+function renderRuntimeManifest(manifest: RuntimeDeckManifestV1): Buffer {
+  const expandedInheritance = JSON.stringify(manifest.inheritanceChain, null, 2)
+    .split("\n")
+    .map((line, index) => (index === 0 ? line : `  ${line}`))
+    .join("\n");
+  const compactInheritance = JSON.stringify(manifest.inheritanceChain);
+  const json = JSON.stringify(manifest, null, 2);
+  const rendered =
+    `  "inheritanceChain": ${compactInheritance},`.length <= 100
+      ? json.replace(
+          `"inheritanceChain": ${expandedInheritance}`,
+          `"inheritanceChain": ${compactInheritance}`,
+        )
+      : json;
+  return Buffer.from(`${rendered}\n`);
+}
+
 export async function buildDeckPackageV1(
   options: BuildDeckPackageOptionsV1,
 ): Promise<DeckBuildReportV1> {
@@ -352,10 +369,7 @@ export async function buildDeckPackageV1(
         sourcePackageId: resolved.cardBack.sourcePackageId,
       },
     } satisfies RuntimeDeckManifestV1);
-    await writeBufferAtomic(
-      runtimeManifestFile,
-      Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`),
-    );
+    await writeBufferAtomic(runtimeManifestFile, renderRuntimeManifest(manifest));
     runtimeManifestPath = portablePath(outputRoot, runtimeManifestFile);
   } else {
     await rm(runtimeManifestFile, { force: true });

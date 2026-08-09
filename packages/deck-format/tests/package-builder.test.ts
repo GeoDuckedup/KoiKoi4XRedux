@@ -92,9 +92,11 @@ describe("Phase 2E raster and package builder", () => {
   });
 
   it("ART2E-006 builds the partial pilot, both 48-slot sheets, and withholds approval/runtime", async () => {
+    const root = await temporaryDirectory("phase2e-partial-root");
+    await copyPrimaryFixture(join(root, "new-primary-deck"));
     const output = await temporaryDirectory("phase2e-pilot");
     const report = await buildDeckPackageV1({
-      decksRoot: join(repositoryRoot, "decks"),
+      decksRoot: root,
       packageId: "new-primary-deck",
       outputDirectory: output,
       release: true,
@@ -111,7 +113,6 @@ describe("Phase 2E raster and package builder", () => {
     expect(report.issues.map((entry) => entry.code)).toEqual(
       expect.arrayContaining([
         "MISSING_SOURCE",
-        "PILOT_NOT_APPROVED",
         "APPROVAL_RECORD_REQUIRED",
         "RELEASE_PACKAGE_INCOMPLETE",
       ]),
@@ -127,6 +128,28 @@ describe("Phase 2E raster and package builder", () => {
       height: 1624,
     });
   });
+
+  it("builds the complete primary candidate while withholding only final visual approval", async () => {
+    const output = await temporaryDirectory("phase2e-primary-candidate");
+    const report = await buildDeckPackageV1({
+      decksRoot: join(repositoryRoot, "decks"),
+      packageId: "new-primary-deck",
+      outputDirectory: output,
+      release: true,
+    });
+    expect(report.cards.map((card) => card.cardId)).toEqual(CARD_IDS);
+    expect(report.completeRuntimeManifest).toBe(true);
+    expect(report.approvalReady).toBe(false);
+    expect(report.runtimeManifestPath).toBe("runtime/manifest.v1.json");
+    expect(report.issues.map((entry) => entry.code)).toEqual(["APPROVAL_RECORD_REQUIRED"]);
+    const manifest = decodeRuntimeDeckManifestV1(
+      JSON.parse(await readFile(join(output, "runtime/manifest.v1.json"), "utf8")),
+    );
+    expect(manifest.approvalStatus).toBe("technical-placeholder");
+    expect(await readFile(join(output, "runtime/manifest.v1.json"), "utf8")).toContain(
+      '"inheritanceChain": ["new-primary-deck"]',
+    );
+  }, 60_000);
 
   it("ART2E-007 builds a complete second technical package and strict runtime manifest", async () => {
     const root = await temporaryDirectory("phase2e-complete");

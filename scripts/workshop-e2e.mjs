@@ -50,11 +50,11 @@ try {
   assert(
     JSON.stringify(initial.statusCounts) ===
       JSON.stringify({
-        "complete-auto": 3,
+        "complete-auto": 47,
         "complete-manual": 1,
         inherited: 0,
         warning: 0,
-        missing: 44,
+        missing: 0,
         invalid: 0,
       }),
     `Workshop status counts are not truthful: ${JSON.stringify(initial.statusCounts)}`,
@@ -74,8 +74,8 @@ try {
     "Workshop package selector does not expose both authored packages.",
   );
   assert(
-    (await page.locator("[data-issue-list]").textContent())?.includes("MISSING_SOURCE"),
-    "Affected-card diagnostics do not expose actionable issue codes.",
+    !(await page.locator("[data-issue-list]").textContent())?.includes("MISSING_SOURCE"),
+    "Complete primary candidate still reports missing sources.",
   );
 
   await page.screenshot({
@@ -86,8 +86,8 @@ try {
   await page.locator('[data-card-id="january-crane"]').click();
   let state = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
   assert(
-    state.selectedCardId === "january-crane" && state.selectedStatus === "missing",
-    "Missing-source selection did not remain explicit.",
+    state.selectedCardId === "january-crane" && state.selectedStatus === "complete-auto",
+    "Bulk source selection is not complete.",
   );
   await page.locator('[data-card-id="september-sake-cup"]').click();
   state = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
@@ -138,7 +138,7 @@ try {
   );
   const inherited = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
   assert(
-    inherited.statusCounts.inherited === 4 && inherited.statusCounts.missing === 44,
+    inherited.statusCounts.inherited === 48 && inherited.statusCounts.missing === 0,
     `Inherited package status is not truthful: ${JSON.stringify(inherited.statusCounts)}`,
   );
   await page.selectOption("[data-package-select]", "new-primary-deck");

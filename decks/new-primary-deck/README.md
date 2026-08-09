@@ -1,15 +1,14 @@
-# New Primary Deck — Phase 0D skeleton
+# New Primary Deck — Phase 2E full-deck candidate
 
-`deck.json` reserves one immutable source path for every canonical CardId. The current mapping uses
-four original AI-generated pilot candidates plus a matching card back. They are normalized to the
-preferred 1600 × 2560 master geometry, but they are not owner-approved artwork.
+`deck.json` maps every canonical CardId to one immutable digest-named source. The current mapping
+uses 48 original AI-generated faces plus a matching card back, all normalized to the preferred
+1600 × 2560 master geometry.
 
-The four pilot roles are locked in `pilot.json`. Review the current immutable digest-named sources
-through both contact sheets and the real `390 × 844` board. If revisions are requested, import new
-siblings rather than overwriting existing sources. Authoring tools write derivatives only to
-`generated/`.
+The owner approved Pilot Candidate V1 on August 9, 2026, unlocking bulk production. The four pilot
+roles remain locked in `pilot.json`; the complete bulk provenance and prompt ledger is recorded in
+`BULK_CANDIDATE_V1.md`. If revisions are requested, import new siblings rather than overwriting an
+existing source. Authoring tools write derivatives only to `generated/`.
 
-The other 44 paths intentionally remain unpopulated until the four-card pilot is reviewed through the
-Phase 2 Workshop and `390 × 844` board. Development validation checks the four pilot sources; release
-validation checks all 48 and must fail until the finished package is complete and explicitly
-approved. See `PILOT_CANDIDATE_V1.md` for the art direction, provenance, and prompt set.
+The complete 48-card art-review sheet, gameplay-size sheet, and representative real-board layouts
+must still receive explicit owner review. Release validation must remain blocked until a current
+digest-bound `approval.json` records that separate final decision.

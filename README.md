@@ -44,9 +44,9 @@ npm run test:e2e:smoke
 ```
 
 `npm run generate:deck-artifacts` regenerates the JSON Schemas, SVG Art Guide, and pilot import plan
-from the locked Phase 0D constants. Development deck validation accepts the four checked-in technical
-pilot sources and reports the other 44 final-art files as pending; release validation remains blocked
-until Phase 2 visual approval.
+from the locked Phase 0D constants. Development deck validation now accepts the complete 48-face
+primary candidate plus its back. Release validation remains blocked until an explicit owner approval
+record is bound to the current full-deck review sheets.
 
 `npm run generate:technical-runtime-decks` regenerates the two complete Phase 2B browser fixtures,
 and `npm run validate:technical-runtime-decks` proves their 100 checked-in manifest/face/back
@@ -92,7 +92,8 @@ available sources into deterministic table/thumbnail derivatives plus the two re
 contact sheets. `npm run validate:phase2e` runs the technical Workshop/importer/production-exclusion
 gate. `npm run validate:phase2e:release` is stricter and is expected to fail until all 48 finished
 faces plus the back are present and an explicit owner approval record matches the current review
-sheets and 390×844 pilot review. The Workshop and its write bridge are absent from production/Pages.
+sheets and approved 390×844 pilot review. The assets are complete; only that final owner decision is
+currently outstanding. The Workshop and its write bridge are absent from production/Pages.
 
 ## Workspace map
 
@@ -119,5 +120,5 @@ No Firebase project, credentials, database migration, or production domain is ne
 2E tooling deployment. The live page remains the responsive technical animation/input harness and local
 Sunrise/Moonlight selector. Its card, decision, and motion controls are presentation-only: they emit
 diagnostic intents but execute no engine command or game state. A real playable observation adapter
-arrives in Phase 3. The Deck Workshop is run locally, and finished art upload plus explicit visual
-approval remain the required Phase 2E owner steps before Phase 3 begins.
+arrives in Phase 3. The Deck Workshop is run locally; the finished candidate is checked in, and
+explicit full-deck visual approval remains the required Phase 2E owner step before Phase 3 begins.

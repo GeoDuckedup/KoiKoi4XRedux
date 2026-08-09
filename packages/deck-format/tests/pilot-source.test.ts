@@ -87,13 +87,13 @@ function solidPng(width: number, height: number): Buffer {
 }
 
 describe("primary-deck pilot readiness", () => {
-  it("locks four distinct candidate roles without claiming visual approval", () => {
+  it("locks the four owner-approved pilot roles separately from full-deck approval", () => {
     expect(validateDeckPackageDefinition(packageDefinition)).toEqual([]);
     expect(validateDeckTransformsDefinition(transforms)).toEqual([]);
     expect(validateDeckPilotDefinition(pilot)).toEqual([]);
     expect(validatePilotReadiness(pilot, packageDefinition)).toEqual([]);
     expect(pilot).toMatchObject({
-      approvalStatus: "awaiting-finished-art",
+      approvalStatus: "approved",
       cards: [
         { role: "dense", cardId: "november-rain" },
         { role: "simple", cardId: "september-sake-cup" },
@@ -103,7 +103,7 @@ describe("primary-deck pilot readiness", () => {
     });
   });
 
-  it("validates preferred-size pilot PNGs without mutating immutable sources", () => {
+  it("validates preferred-size pilot masters without mutating immutable sources", () => {
     const pilotIds = pilotCardIdSet(pilot);
     const sourcePaths = pilot.cards.map((entry) => {
       const mapping = packageDefinition.cards[entry.cardId];
@@ -131,8 +131,8 @@ describe("primary-deck pilot readiness", () => {
     expect(loadJson(join(deckDirectory, "generated/pilot-import-plan.v1.json"))).toEqual(plan);
     expect(plan).toMatchObject({
       artSpecVersion: 1,
-      completeRuntimeManifest: false,
-      pilotApprovalStatus: "awaiting-finished-art",
+      completeRuntimeManifest: true,
+      pilotApprovalStatus: "approved",
     });
     const cards = plan.cards as readonly Record<string, unknown>[];
     expect(cards).toHaveLength(4);

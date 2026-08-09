@@ -2,8 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 9, 2026
-**Current gate:** Phase 2E Pilot Candidate V1 generated and verified; owner pilot approval or
-revision direction is required before producing the remaining 44 faces
+**Current gate:** Phase 2E full 48-face candidate generated and verified; owner full-deck approval or
+revision direction is required before creating release evidence and starting Phase 3
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -493,7 +493,7 @@ Current result:
 
 ### Phase 2E — Deck Workshop and final visual approval
 
-Status: **tooling deployed; four-face plus back Pilot Candidate V1 awaits owner visual decision**.
+Status: **tooling deployed; pilot approved and complete 48-face candidate awaits final owner review**.
 
 Deliver:
 
@@ -516,11 +516,12 @@ Gate:
   proof, atomic saves, digest-named import, local Workshop behavior, exact approval evidence, and
   production exclusion/release rejection;
 - `npm run validate:phase2e` passes the technical unit/browser/production gates without pretending
-  missing finished artwork is approved;
+  a complete but unapproved candidate is release-ready;
 - `npm run validate:phase2e:release` must fail while any source is missing, the four-card pilot is
   not owner-approved, an exact approval record is absent/stale, or the runtime package is incomplete;
 - the four finished pilot cards and back must first be reviewed in both sheets and the 390×844 board;
-  only then may the remaining 44 faces be imported and the final approval record created;
+  after pilot approval, the remaining faces may be imported, but the final approval record may only
+  be created after the owner reviews the current complete 48-card sheets;
 - normal `npm run build` and Pages output must return 404 for `workshop.html` and include no authored
   sources, local filesystem bridge, approval record, or Sharp/Node adapter.
 
@@ -528,16 +529,18 @@ Current result:
 
 - the deterministic importer, package builder, dual sheets, local Workshop, token-protected local
   bridge, strict approval validator, and technical/release scripts are implemented;
-- the current primary package truthfully builds 4 of 48 original Pilot Candidate V1 faces plus a
-  matching back from immutable 1600×2560 WebP masters, omits a runtime manifest, and reports 44
-  missing sources, pending pilot approval, missing approval evidence, and an incomplete release;
+- Pilot Candidate V1 was owner-approved, and the primary package now truthfully builds all 48
+  original faces plus a matching back from immutable 1600×2560 WebP masters;
+- its complete technical runtime manifest, all 48 table/thumbnail derivatives, and both complete
+  contact sheets build deterministically, while release still reports the intentionally absent
+  digest-bound `approval.json`;
 - a complete 48-face plus back second technical package is built in tests and decoded through the
   strict runtime manifest contract;
 - implementation commit `31da04f` is on `origin/main`; CI run `31327748444` and Pages run
   `31327748453` passed the full repository and Phase 2E gates, the cache-busted live page rendered,
   and the local-only Workshop route returned 404;
-- final visual acceptance is intentionally not claimed because the owner has not yet approved or
-  requested revisions to Pilot Candidate V1, and the remaining 44 faces do not yet exist.
+- final visual acceptance is intentionally not claimed because the owner has not yet reviewed the
+  complete 48-face candidate or requested card-specific revisions.
 
 Architecture is locked in
 [`ADR 0011`](./adr/0011-phase-2e-workshop-import-approval-boundary.md).

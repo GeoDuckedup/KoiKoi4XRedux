@@ -2,8 +2,8 @@
 
 **Updated:** August 9, 2026
 
-**Overall state:** Greenfield rewrite, Phase 2E tooling deployed and original four-face plus back
-Pilot Candidate V1 generated; owner pilot decision is required before bulk art production
+**Overall state:** Greenfield rewrite, Phase 2E tooling deployed, Pilot Candidate V1 owner-approved,
+and the complete original 48-face deck candidate generated; final owner deck review is required
 
 **Runtime state:** Complete deterministic headless match engine with formal projections, replay,
 hashes, retry-safe command receipts, and protocol records, plus a presentation-only responsive Pixi
@@ -14,10 +14,10 @@ deterministic deck Workshop/raster review pipeline
 ## Current result
 
 Phase 2E adds a separate local authoring surface and deterministic raster pipeline without changing
-the deployed game runtime. The current primary package truthfully contains four original Pilot
-Candidate V1 faces plus a matching back, normalized to immutable 1600×2560 WebP masters. The other
-44 faces and owner approval are absent, so its runtime manifest is withheld and the release gate
-fails by design.
+the deployed game runtime. The current primary package truthfully contains 48 original faces plus a
+matching back, normalized to immutable digest-named 1600×2560 WebP masters. It builds a complete
+technical runtime manifest and complete review sheets. The final owner approval record is absent, so
+the owner-gated release check still fails by design.
 
 Phase 2D consumes an injected recipient-scoped observation and its legal actions through a pure
 presentation controller. Guided/Fast pointer and keyboard paths emit one immutable diagnostic intent
@@ -188,19 +188,17 @@ in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
 
 ## Validation
 
-- Pilot Candidate V1 uses five immutable 1600×2560 WebP masters with no source-quality warning. The
-  four face derivatives, back, both review sheets, and the atomically committed four-card 390×844
-  board preview were visually inspected; the local Workshop browser trace completes without errors.
-- Phase 2E's technical gate passes 16 focused files / 112 tests, builds the four-source pilot and
-  both 48-slot sheets, exercises the local Workshop at desktop and 390×844, and passes both root and
+- The primary candidate uses 49 immutable 1600×2560 WebP masters with no source-quality warning.
+  All 48 face derivatives, the back, both complete review sheets, and the approved four-card 390×844
+  pilot board were visually inspected.
+- Phase 2E's technical gate passes 16 focused files / 113 tests, builds the complete primary
+  candidate, exercises the local Workshop at desktop and 390×844, and passes both root and
   repository-prefixed seven-viewport production matrices with the Workshop absent.
-- The owner-gated release command truthfully reports 44 `MISSING_SOURCE` errors plus
-  `APPROVAL_RECORD_REQUIRED`, `PILOT_NOT_APPROVED`, and `RELEASE_PACKAGE_INCOMPLETE`; it does not
-  emit a primary runtime manifest or approval-ready report.
+- The owner-gated release command now truthfully reports only `APPROVAL_RECORD_REQUIRED`; the
+  complete manifest remains labeled `technical-placeholder` until the full-deck owner decision.
 - The normal production build still contains only the Phase 2D technical table. The local Workshop
-  reports 48 slots, 3 Auto pilots, 1 Manual pilot, 44 missing, and `engineExecution:notAvailable`.
-- `npm run check` passes 33 files / 346 tests, the isolated 10,002-match generated gate (102 seconds
-  in the latest local run),
+  reports 48 slots, 47 Auto faces, 1 Manual face, 0 missing, and `engineExecution:notAvailable`.
+- `npm run check` passes 33 files / 347 tests and the isolated 10,002-match generated gate,
   all workspace checks, authored-package validation, and the 764-module production build. Isolating
   the CPU-heavy generated gate prevents Sharp raster tests from starving its deterministic timeout.
 - Three independent Phase 2E reviews report no blocker, high, or medium finding after selected-build,
@@ -266,10 +264,9 @@ in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
   include local opponent/draw fixture allocations and must not be mistaken for a public engine
   observation. A real recipient adapter must represent hidden identities as opaque backs/counts.
   Real observation-to-board presentation and local execution remain Phase 3.
-- Both installed runtime packages remain generated technical placeholders. The primary authored
-  deck now has four original finished-geometry pilot candidates and a matching back, but they remain
-  unapproved and the other 44 faces are absent. Owner pilot approval or revision direction is the
-  current Phase 2E blocker.
+- Both installed game-runtime packages remain generated technical placeholders. The primary authored
+  deck now has 48 original finished-geometry candidates and a matching back; the four-card pilot is
+  approved, but the complete deck still requires an explicit owner approval or revision decision.
 - Hosted CI currently emits a nonblocking maintenance annotation that v4 checkout/setup/artifact
   actions target deprecated Node.js 20 and are being forced onto Node.js 24. The run remains green;
   workflow-action upgrades can be handled as isolated infrastructure maintenance.
@@ -281,18 +278,18 @@ in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
    the public page intentionally remains the Phase 2D technical harness.
 2. On a development machine, pull `main`, run `npm ci`, then `npm run dev:workshop` and open the
    local URL printed by Vite. The Workshop is intentionally unavailable on GitHub Pages.
-3. Review Pilot Candidate V1 in both generated sheets and the 390×844 board. Explicitly approve its
-   art direction or request concrete revisions; automation will not manufacture that decision.
-4. After pilot approval, produce/import the remaining 44 faces, resolve every warning/error, review both full
-   sheets again, create the exact digest-bound `approval.json`, and run
+3. Review the complete Bulk Candidate V1 in both generated sheets. Use the Workshop for full-size,
+   phone-size, and four-card board inspection when needed. Explicitly approve the complete set or
+   request card-specific revisions; automation will not manufacture that decision.
+4. Only after approval, create the exact digest-bound `approval.json` and run
    `npm run validate:phase2e:release`. Do not create the approval record before visually reviewing
-   the current artifacts.
+   the current complete artifacts.
 
 The deployed baseline is
 [`https://geoduckedup.github.io/KoiKoi4XRedux/`](https://geoduckedup.github.io/KoiKoi4XRedux/).
 
 ## Next subphase
 
-**Phase 2E Pilot Visual Decision:** the owner reviews and either approves Pilot Candidate V1 or
-requests revisions. Approval unlocks bulk production of the remaining 44 faces; Phase 3 starts only
-after the complete deck passes the later owner-gated release check.
+**Phase 2E Final Deck Visual Decision:** the owner reviews and either approves Bulk Candidate V1 or
+requests card-specific revisions. Approval unlocks the digest-bound release record and final release
+gate; Phase 3 starts only after that gate passes.

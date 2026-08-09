@@ -613,10 +613,9 @@ Phase 0D implementation paths:
 - validation: `npm run validate:decks`;
 - deterministic regeneration: `npm run generate:deck-artifacts`.
 
-The four checked-in pilot images are explicitly technical process placeholders, not approved visual
-direction or finished card art. They prove input readability, geometry, hashing, transform planning,
-and immutable-source handling. The real board, Workshop, contact-sheet, and visual-approval checks
-remain Phase 2 gates.
+The original four checked-in Phase 0D pilot images were explicitly technical process placeholders.
+They proved input readability, geometry, hashing, transform planning, and immutable-source handling;
+Phase 2E later replaced their active mappings with owner-reviewed original candidate art.
 
 ## Phase 2B
 
@@ -670,10 +669,11 @@ The Workshop is not a production route. Normal Vite and Pages builds exclude `wo
 filesystem bridge, authored source files, transforms, and the Sharp/Node adapter. The game continues
 to consume only a complete browser-portable `RuntimeDeckManifestV1`.
 
-The current checked-in primary sources are original Pilot Candidate V1 artwork: 4 of 48 faces plus a
-matching back, normalized to immutable 1600×2560 WebP masters. They exercise the import pipeline and
-required board/contact-sheet review mechanics, but they do not constitute the required visual
-decision. Pilot approval and final visual approval remain owner actions.
+The current checked-in primary sources are the complete original Bulk Candidate V1: 48 distinct
+faces plus a matching back, normalized to immutable digest-named 1600×2560 WebP masters. The four
+locked pilot roles are owner-approved. The complete set builds both review sheets and a technical
+runtime manifest, but the final full-deck visual decision and digest-bound `approval.json` remain
+owner actions.
 
 This deliberately places art tooling before the one-round vertical slice is treated as visually mature, so production of the new deck can proceed alongside rendering work rather than becoming a late manual conversion task.
 

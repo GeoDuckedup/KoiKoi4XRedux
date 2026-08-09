@@ -1,14 +1,14 @@
 # New Primary Deck — Pilot Candidate V1
 
-**Status:** Awaiting owner visual approval  
+**Status:** Approved by owner on August 9, 2026; bulk production authorized
 **Generated:** August 9, 2026  
 **Method:** OpenAI built-in image generation, one original raster per asset  
 **Native output:** 992 × 1586 PNG, approximately 5:8 portrait  
 **Imported master:** 1600 × 2560 WebP, deterministic centered cover resize, quality 95
 
-This set is an original candidate art direction. It is not copied from an existing commercial deck
-or a named living artist. It remains unapproved until the owner reviews both contact sheets and the
-real `390 × 844` pilot board.
+This set is an original art direction. It is not copied from an existing commercial deck or a named
+living artist. The owner reviewed the pilot board and approved it by replying “Proceed” on August 9, 2026. That decision locks the direction and authorizes bulk production; it does not replace the
+separate final 48-card visual-approval record.
 
 ## Shared direction
 
@@ -65,5 +65,5 @@ identity marker, border, or directional cue.
 - `november-rain` → `source/november-rain-767b8c42a52b.webp`
 - card back → `source/card-back-6ce88507155b.webp`
 
-The earlier Phase 0D technical placeholders remain unreferenced for provenance and can be removed in
-a separately approved cleanup after the pilot direction is accepted.
+The earlier Phase 0D technical placeholders remain unreferenced for provenance. Bulk Candidate V1 is
+documented separately in `BULK_CANDIDATE_V1.md`.

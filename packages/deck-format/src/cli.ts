@@ -159,8 +159,12 @@ function validateCommand(args: readonly string[]): number {
   issues.push(...registryReport.issues);
 
   for (const [packageId, loaded] of loadedById) {
+    const mappedSourcesComplete = Object.values(loaded.packageDefinition.cards).every(
+      (mapping) => mapping !== undefined && existsSync(resolve(loaded.directory, mapping.file)),
+    );
+    const usePilotSourceScope = !release && loaded.pilot !== null && !mappedSourcesComplete;
     const selectedCardIds =
-      !release && loaded.pilot !== null ? pilotCardIdSet(loaded.pilot) : undefined;
+      usePilotSourceScope && loaded.pilot !== null ? pilotCardIdSet(loaded.pilot) : undefined;
     const sourceResult = validateLocalPackageSources(
       loaded.directory,
       loaded.packageDefinition,
@@ -174,7 +178,7 @@ function validateCommand(args: readonly string[]): number {
           validatePilotReadiness(loaded.pilot, loaded.packageDefinition),
         ),
       );
-      if (!release) {
+      if (usePilotSourceScope) {
         const unchecked =
           Object.keys(loaded.packageDefinition.cards).length - loaded.pilot.cards.length;
         if (unchecked > 0) {

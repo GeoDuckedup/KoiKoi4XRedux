@@ -72,16 +72,6 @@ export function validatePilotReadiness(
     );
   }
 
-  if (pilot.approvalStatus === "approved") {
-    issues.push(
-      Object.freeze({
-        severity: "warning" as const,
-        code: "PILOT_BOARD_APPROVAL_DEFERRED",
-        path: "$.approvalStatus",
-        message: "Final pilot approval requires the Phase 2 390×844 board review.",
-      }),
-    );
-  }
   return Object.freeze(issues);
 }
 

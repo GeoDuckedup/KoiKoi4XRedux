@@ -263,11 +263,8 @@ async function drawBoardPreview(generation: number): Promise<void> {
   );
   nextContext.fillStyle = "#e9bb5a";
   nextContext.font = "700 13px sans-serif";
-  nextContext.fillText(
-    "FOUR-CARD PILOT CANDIDATE · NOT APPROVED",
-    18,
-    layout.cardZones.field.y + 18,
-  );
+  nextContext.fillText("PILOT APPROVED", 18, layout.cardZones.field.y + 18);
+  nextContext.fillText("FULL DECK REVIEW PENDING", 18, layout.cardZones.field.y + 34);
   let renderedCardCount = 0;
   for (const [index, cardId] of snapshot.pilotCardIds.entries()) {
     const cardSlot = snapshot.grid.groups
