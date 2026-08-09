@@ -2,8 +2,8 @@
 
 **Updated:** August 9, 2026
 
-**Overall state:** Greenfield rewrite, Phase 2C semantic AnimationDirector implemented and locally
-accepted; commit, hosted deployment, and owner review pending
+**Overall state:** Greenfield rewrite, Phase 2C semantic AnimationDirector implemented,
+independently accepted, committed, and deployed; owner review pending
 
 **Runtime state:** Complete deterministic headless match engine with formal projections, replay,
 hashes, retry-safe command receipts, and protocol records, plus a presentation-only responsive Pixi
@@ -147,12 +147,11 @@ Phase 2C semantic planning, queue, motion, and interruption choices are recorded
   regressions, canonical/hash/projection/protocol/replay fixtures, and the generated gate.
 - The generated gate passes 10,002 complete matches, exactly 3,334 per 3/6/12-round format, with
   production validation after every transition and sampled full replay/privacy/hash equality.
-- The last uncontended full `npm run check` passed 30 files / 317 tests and the 756-module build.
-  Post-review hardening adds two passing web tests; current format/lint/five-workspace typecheck,
-  focused 60-test gate, and build pass. A final combined 319-test local rerun passed 318 assertions,
-  but the unchanged 10,002-match Phase 1E stress test was starved by an external 99%-CPU Steam
-  process and timed out after 566 seconds; the same gate passed earlier in 68.74 seconds. Hosted CI
-  remains the uncontended full-gate authority for the pending commit.
+- Hosted CI run `31316814794` passed the exact Phase 2C implementation commit: 30 files / 319 tests,
+  the complete 10,002-match generated gate, the 756-module production build, all 100 technical deck
+  artifacts, 7 files / 60 focused tests, and both seven-viewport browser matrices. A final local
+  combined rerun had previously timed out only because an external 99%-CPU process starved the same
+  generated test; the uncontended hosted result closes that environmental verification gap.
 - Seven-viewport Phase 2C smoke passes root and repository-prefixed builds, all four modes, live
   mid-clip resize, mid-clip deck switching, accelerate, finish, cancel/snap, fullscreen, stable scene
   and CardView identities, exact target settlement, and zero console/network errors.
@@ -162,6 +161,9 @@ Phase 2C semantic planning, queue, motion, and interruption choices are recorded
 - Three independent Phase 2C planner/privacy, Pixi/runtime, and fixture/deployment reviews report no
   blocker, high, or medium finding after FIFO empty-plan, exact projection-equality, and settled
   chrome-refresh hardening.
+- Pages run `31316814785` deployed commit `0139892`. A cache-busted live browser run completed the
+  Hand-to-Field scenario with equal display/target fingerprints, 48 unique persistent CardViews,
+  no queued/transit card, and no browser error.
 
 ## Known constraints and risks
 

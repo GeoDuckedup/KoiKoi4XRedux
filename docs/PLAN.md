@@ -375,7 +375,7 @@ Current result:
 
 ### Phase 2C — Semantic AnimationDirector
 
-Status: **implemented and locally accepted; commit/deployment and owner review pending**.
+Status: **implemented, independently accepted, committed, and deployed; awaiting owner review**.
 
 Deliver:
 
@@ -420,18 +420,18 @@ Current result:
 - persistent CardViews interpolate through EffectsLayer without recreation, cache unchanged geometry,
   and settle face/layer/zone state exactly;
 - the focused gate passes 7 files / 60 tests plus 100 generated technical artifacts;
-- the last uncontended full repository check passed 30 files / 317 tests and a 756-module build,
-  including the complete 10,002-match deterministic engine regression in 68.74 seconds; two later
-  review-repair web tests pass in the focused 60-test gate. A final combined 319-test rerun passed
-  318 assertions, but the unchanged generated gate was starved by an external 99%-CPU process and
-  hit its timeout after 566 seconds; hosted CI remains the uncontended full-gate authority;
+- hosted CI run `31316814794` passed 30 files / 319 tests, including the complete 10,002-match
+  deterministic engine regression, the 756-module build, all 100 technical artifacts, the focused
+  7-file / 60-test gate, and both seven-viewport browser bases;
 - both seven-viewport browser bases pass every policy, mid-flight deck switch and resize, accelerate,
   finish, cancel/snap, fullscreen, exact no-transit settlement, and zero browser/network errors;
 - compact 320×568 runtime inspection caught and closed a control-row canvas regression before
   acceptance by overlaying controls on the already-reserved action area;
 - three independent final reviews report no blocker, high, or medium finding after FIFO empty-plan,
   exact source-equality, and settled chrome-refresh repairs;
-- commit, hosted CI/Pages, and live verification remain before Phase 2C deployment is complete.
+- implementation commit `0139892` is on `origin/main`, Pages run `31316814785` deployed, and a
+  cache-busted live run completed Hand-to-Field with equal display/target fingerprints, 48 unique
+  CardViews, no transit/queue residue, and no browser error.
 
 ## Later phases
 

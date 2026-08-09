@@ -426,5 +426,16 @@ Original prompt: read the package and understand it, then let me know when we ar
   stress test was starved by an external Steam process consuming about 99% CPU and timed out after
   566 seconds. This is recorded as environmental rather than hidden: the same gate passed earlier,
   Phase 2C's complete current gate passed, and hosted CI will rerun the full repository uncontended.
-- Remaining: commit/push, hosted CI/Pages, and cache-busted live verification. Next after acceptance:
-  Phase 2D selection and input.
+
+## 2026-08-09 — Phase 2C deployed
+
+- Implementation commit `0139892` is on `origin/main`.
+- Hosted CI run `31316814794` passed the current 30-file / 319-test repository check, including the
+  10,002-match generated gate and 756-module build, then passed the 100-artifact, 7-file / 60-test
+  Phase 2C gate and both seven-viewport browser bases.
+- Pages run `31316814785` passed and deployed the repository-prefixed build.
+- A cache-busted live browser run completed Hand-to-Field on the public Pages URL. It reported equal
+  display/target fingerprints, all 48 unique persistent CardViews, zero queued/transit cards, and no
+  browser error; the deployed desktop render was visually inspected.
+- Phase 2C is implemented, independently accepted, pushed, and deployed; it now awaits owner review.
+  Next after approval: Phase 2D selection and input.
