@@ -69,7 +69,10 @@ See [`ARCHITECTURE.md`](./ARCHITECTURE.md) and
 - Independent read-only review verified the reference RNG algorithm, command/random-consumption
   boundaries, deal and outcome rules, evidence/privacy ordering, fixtures, and phase ownership after
   repairs; no blocker, high, or medium issue remains.
-- GitHub CI, Pages deployment, and cache-busted live-site verification remain before final handoff.
+- Commit `bbe3113` was pushed to `origin/main`. Hosted CI run `31285949428` passed in 1m09s,
+  including the clean repository check, five-viewport browser smoke, and artifact upload.
+- Pages run `31285949450` passed its build and deploy jobs. A cache-busted live request returned HTTP
+  200 with the expected `/KoiKoi4XRedux/assets/` paths and unchanged KoiKoi4x boot document.
 
 ## Known constraints and risks
 
