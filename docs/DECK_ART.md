@@ -671,9 +671,9 @@ to consume only a complete browser-portable `RuntimeDeckManifestV1`.
 
 The current checked-in primary sources are the complete original Bulk Candidate V1: 48 distinct
 faces plus a matching back, normalized to immutable digest-named 1600×2560 WebP masters. The four
-locked pilot roles are owner-approved. The complete set builds both review sheets and a technical
-runtime manifest, but the final full-deck visual decision and digest-bound `approval.json` remain
-owner actions.
+locked pilot roles and complete set are owner-approved. Package v1.0.0 builds both current review
+sheets and an approved runtime manifest; `approval.json` binds the owner/date/note to their exact
+digests and the 390×844 pilot set.
 
 This deliberately places art tooling before the one-round vertical slice is treated as visually mature, so production of the new deck can proceed alongside rendering work rather than becoming a late manual conversion task.
 

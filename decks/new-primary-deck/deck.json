@@ -1,10 +1,10 @@
 {
   "formatVersion": 1,
   "id": "new-primary-deck",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "name": "New Primary Deck",
   "author": "KoiKoi4x Project",
-  "license": "Original AI-generated artwork; final owner visual approval pending",
+  "license": "Original AI-generated artwork; owner-approved for KoiKoi4x",
   "extends": null,
   "framePolicy": "game",
   "sourceDefaults": {

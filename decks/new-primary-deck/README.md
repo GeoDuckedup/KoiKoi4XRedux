@@ -1,4 +1,4 @@
-# New Primary Deck — Phase 2E full-deck candidate
+# New Primary Deck v1.0.0 — owner-approved
 
 `deck.json` maps every canonical CardId to one immutable digest-named source. The current mapping
 uses 48 original AI-generated faces plus a matching card back, all normalized to the preferred
@@ -9,6 +9,6 @@ roles remain locked in `pilot.json`; the complete bulk provenance and prompt led
 `BULK_CANDIDATE_V1.md`. If revisions are requested, import new siblings rather than overwriting an
 existing source. Authoring tools write derivatives only to `generated/`.
 
-The complete 48-card art-review sheet, gameplay-size sheet, and representative real-board layouts
-must still receive explicit owner review. Release validation must remain blocked until a current
-digest-bound `approval.json` records that separate final decision.
+The owner approved the complete 48-card art-review sheet, gameplay-size sheet, corrected July Bush
+Clover Plain B, and representative board layouts on August 9, 2026. `approval.json` binds that
+decision to the exact current sheet digests; strict release validation passes.

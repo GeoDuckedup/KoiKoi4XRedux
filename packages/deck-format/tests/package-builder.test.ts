@@ -129,7 +129,7 @@ describe("Phase 2E raster and package builder", () => {
     });
   });
 
-  it("builds the complete primary candidate while withholding only final visual approval", async () => {
+  it("builds the owner-approved primary package and strict release manifest", async () => {
     const output = await temporaryDirectory("phase2e-primary-candidate");
     const report = await buildDeckPackageV1({
       decksRoot: join(repositoryRoot, "decks"),
@@ -139,13 +139,13 @@ describe("Phase 2E raster and package builder", () => {
     });
     expect(report.cards.map((card) => card.cardId)).toEqual(CARD_IDS);
     expect(report.completeRuntimeManifest).toBe(true);
-    expect(report.approvalReady).toBe(false);
+    expect(report.approvalReady).toBe(true);
     expect(report.runtimeManifestPath).toBe("runtime/manifest.v1.json");
-    expect(report.issues.map((entry) => entry.code)).toEqual(["APPROVAL_RECORD_REQUIRED"]);
+    expect(report.issues).toEqual([]);
     const manifest = decodeRuntimeDeckManifestV1(
       JSON.parse(await readFile(join(output, "runtime/manifest.v1.json"), "utf8")),
     );
-    expect(manifest.approvalStatus).toBe("technical-placeholder");
+    expect(manifest.approvalStatus).toBe("approved");
     expect(await readFile(join(output, "runtime/manifest.v1.json"), "utf8")).toContain(
       '"inheritanceChain": ["new-primary-deck"]',
     );

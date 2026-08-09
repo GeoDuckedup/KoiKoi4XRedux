@@ -1,8 +1,8 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository
-has completed and deployed **Phase 2D: selection and input** and now includes the local Phase 2E
-deck-authoring toolchain. It contains the canonical rules
+has completed **Phase 2E: Deck Workshop and final visual approval** with an owner-approved primary
+deck. It contains the canonical rules
 authority, all 48 artwork-independent card records, the complete deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
 boundaries, and a responsive Pixi table with 48 persistent canonical CardViews, local atomic deck
@@ -90,10 +90,9 @@ executed. Artifacts are written under `output/phase-2d/e2e/`.
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot
 contact sheets. `npm run validate:phase2e` runs the technical Workshop/importer/production-exclusion
-gate. `npm run validate:phase2e:release` is stricter and is expected to fail until all 48 finished
-faces plus the back are present and an explicit owner approval record matches the current review
-sheets and approved 390×844 pilot review. The assets are complete; only that final owner decision is
-currently outstanding. The Workshop and its write bridge are absent from production/Pages.
+gate. `npm run validate:phase2e:release` verifies all 48 finished faces, the back, approved pilot,
+and the exact digest-bound owner approval record. It now passes for `new-primary-deck` v1.0.0. The
+Workshop and its write bridge remain absent from production/Pages.
 
 ## Workspace map
 
@@ -120,5 +119,5 @@ No Firebase project, credentials, database migration, or production domain is ne
 2E tooling deployment. The live page remains the responsive technical animation/input harness and local
 Sunrise/Moonlight selector. Its card, decision, and motion controls are presentation-only: they emit
 diagnostic intents but execute no engine command or game state. A real playable observation adapter
-arrives in Phase 3. The Deck Workshop is run locally; the finished candidate is checked in, and
-explicit full-deck visual approval remains the required Phase 2E owner step before Phase 3 begins.
+arrives in Phase 3A. The Deck Workshop is run locally, and the approved primary deck is checked in.
+Additional independent or inherited deck packages can be added without changing engine rules.

@@ -3,7 +3,7 @@
   "builderVersion": 1,
   "artSpecVersion": 1,
   "packageId": "new-primary-deck",
-  "packageVersion": "0.3.0",
+  "packageVersion": "1.0.0",
   "pilotApprovalStatus": "approved",
   "completeRuntimeManifest": true,
   "note": "Deterministic pilot source/transform plan; full-deck visual approval remains a separate gate.",

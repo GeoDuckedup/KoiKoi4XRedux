@@ -2,8 +2,8 @@
 
 **Updated:** August 9, 2026
 
-**Overall state:** Greenfield rewrite, Phase 2E tooling deployed, Pilot Candidate V1 owner-approved,
-and the complete original 48-face deck candidate generated; final owner deck review is required
+**Overall state:** Greenfield rewrite, Phase 2E complete; original primary deck v1.0.0 is
+owner-approved and release-validated, and Phase 3A is ready to begin
 
 **Runtime state:** Complete deterministic headless match engine with formal projections, replay,
 hashes, retry-safe command receipts, and protocol records, plus a presentation-only responsive Pixi
@@ -16,8 +16,9 @@ deterministic deck Workshop/raster review pipeline
 Phase 2E adds a separate local authoring surface and deterministic raster pipeline without changing
 the deployed game runtime. The current primary package truthfully contains 48 original faces plus a
 matching back, normalized to immutable digest-named 1600×2560 WebP masters. It builds a complete
-technical runtime manifest and complete review sheets. The final owner approval record is absent, so
-the owner-gated release check still fails by design.
+runtime manifest and complete review sheets. The owner approved the full deck after correcting July
+Bush Clover Plain B; its current digest-bound approval record validates and the strict release gate
+passes with zero issues.
 
 Phase 2D consumes an injected recipient-scoped observation and its legal actions through a pure
 presentation controller. Guided/Fast pointer and keyboard paths emit one immutable diagnostic intent
@@ -194,8 +195,8 @@ in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
 - Phase 2E's technical gate passes 16 focused files / 113 tests, builds the complete primary
   candidate, exercises the local Workshop at desktop and 390×844, and passes both root and
   repository-prefixed seven-viewport production matrices with the Workshop absent.
-- The owner-gated release command now truthfully reports only `APPROVAL_RECORD_REQUIRED`; the
-  complete manifest remains labeled `technical-placeholder` until the full-deck owner decision.
+- The owner-gated release command passes with zero issues. The v1.0.0 runtime manifest is labeled
+  `approved` and matches the exact reviewed sheet digests.
 - The normal production build still contains only the Phase 2D technical table. The local Workshop
   reports 48 slots, 47 Auto faces, 1 Manual face, 0 missing, and `engineExecution:notAvailable`.
 - `npm run check` passes 33 files / 347 tests and the isolated 10,002-match generated gate,
@@ -264,9 +265,8 @@ in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
   include local opponent/draw fixture allocations and must not be mistaken for a public engine
   observation. A real recipient adapter must represent hidden identities as opaque backs/counts.
   Real observation-to-board presentation and local execution remain Phase 3.
-- Both installed game-runtime packages remain generated technical placeholders. The primary authored
-  deck now has 48 original finished-geometry candidates and a matching back; the four-card pilot is
-  approved, but the complete deck still requires an explicit owner approval or revision decision.
+- Both currently installed game-runtime packages remain generated technical placeholders. The
+  separate primary authored package is approved and ready for Phase 3A runtime integration.
 - Hosted CI currently emits a nonblocking maintenance annotation that v4 checkout/setup/artifact
   actions target deprecated Node.js 20 and are being forced onto Node.js 24. The run remains green;
   workflow-action upgrades can be handled as isolated infrastructure maintenance.
@@ -278,18 +278,16 @@ in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
    the public page intentionally remains the Phase 2D technical harness.
 2. On a development machine, pull `main`, run `npm ci`, then `npm run dev:workshop` and open the
    local URL printed by Vite. The Workshop is intentionally unavailable on GitHub Pages.
-3. Review the complete Bulk Candidate V1 in both generated sheets. Use the Workshop for full-size,
-   phone-size, and four-card board inspection when needed. Explicitly approve the complete set or
-   request card-specific revisions; automation will not manufacture that decision.
-4. Only after approval, create the exact digest-bound `approval.json` and run
-   `npm run validate:phase2e:release`. Do not create the approval record before visually reviewing
-   the current complete artifacts.
+3. No further Phase 2E owner action is required. `npm run validate:phase2e:release` can be rerun at
+   any time to prove the approved assets and sheet digests remain current.
+4. Additional decks may be added as complete packages or as inherited packages that override only
+   selected faces/back; each deck receives its own review and approval evidence.
 
 The deployed baseline is
 [`https://geoduckedup.github.io/KoiKoi4XRedux/`](https://geoduckedup.github.io/KoiKoi4XRedux/).
 
 ## Next subphase
 
-**Phase 2E Final Deck Visual Decision:** the owner reviews and either approves Bulk Candidate V1 or
-requests card-specific revisions. Approval unlocks the digest-bound release record and final release
-gate; Phase 3 starts only after that gate passes.
+**Phase 3A — Complete Local Turn Loop:** replace the technical input fixture with a real local
+player-observation adapter and make one round's Hand → Draw → Capture → handoff loop playable with a
+text recap, using the approved primary deck.

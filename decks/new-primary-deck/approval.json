@@ -1,0 +1,14 @@
+{
+  "formatVersion": 1,
+  "packageId": "new-primary-deck",
+  "status": "approved",
+  "approvedBy": "GeoDuckedup",
+  "approvedOn": "2026-08-09",
+  "artReviewSha256": "712557adb6a8a64b1e374a654ba01436b7a1586c6c619c41963fd2d9167d9da9",
+  "gameplayReviewSha256": "2973e030dd0d145a5bc67942dc82494079807ee60fcd6ccba0fb136bb5b0d442",
+  "boardReview": {
+    "viewport": "390x844",
+    "cardIds": ["november-rain", "september-sake-cup", "december-phoenix", "january-pine-plain-a"],
+    "note": "Repository owner approved Pilot Candidate V1, the complete 48-card Bulk Candidate V1, and corrected July Bush Clover Plain B."
+  }
+}

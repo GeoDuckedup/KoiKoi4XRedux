@@ -1,8 +1,9 @@
 # New Primary Deck — Bulk Candidate V1
 
-**Status:** Complete 48-face candidate awaiting final owner visual approval
+**Status:** Owner-approved as New Primary Deck v1.0.0
 **Pilot approved:** August 9, 2026
 **Bulk generated:** August 9, 2026
+**Full deck approved:** August 9, 2026
 **Method:** OpenAI built-in image generation, one original raster per distinct card
 **Native bulk output:** 992 × 1586 PNG, approximately 5:8 portrait
 **Imported master:** 1600 × 2560 WebP, deterministic centered cover resize, Lanczos3, quality 95

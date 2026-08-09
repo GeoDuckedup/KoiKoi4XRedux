@@ -593,3 +593,15 @@ Original prompt: read the package and understand it, then let me know when we ar
   with a new hagi/Lespedeza illustration using slender arching sprays, small purple pea-shaped
   flowers, and oval trifoliate leaflets; imported it as a new immutable digest-named master while
   retaining the rejected source only as unmapped provenance.
+
+## 2026-08-09 — Phase 2E full-deck approval
+
+- Owner approved the complete Bulk Candidate V1 after reviewing the corrected July Bush Clover
+  Plain B and confirmed publication to GitHub.
+- Promoted `new-primary-deck` to v1.0.0, updated its license status, and created the strict
+  digest-bound `approval.json` naming the exact current art-review/gameplay sheet digests, approved
+  four-card 390×844 pilot set, reviewer, date, and review note.
+- `npm run validate:phase2e:release` builds 48/48 faces plus the back, emits an `approved` runtime
+  manifest, reports `approvalReady:true`, and passes with zero issues.
+- Phase 2E is complete. Additional complete or inherited deck packages remain supported without
+  changing canonical CardIds or engine rules. Next: Phase 3A complete local turn loop.

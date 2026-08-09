@@ -2,8 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 9, 2026
-**Current gate:** Phase 2E full 48-face candidate generated and verified; owner full-deck approval or
-revision direction is required before creating release evidence and starting Phase 3
+**Current gate:** Phase 2E complete—primary deck v1.0.0 is owner-approved and passes release
+validation; Phase 3A complete local turn loop is ready to begin
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -493,7 +493,7 @@ Current result:
 
 ### Phase 2E — Deck Workshop and final visual approval
 
-Status: **tooling deployed; pilot approved and complete 48-face candidate awaits final owner review**.
+Status: **completed, owner-approved, and release-validated**.
 
 Deliver:
 
@@ -515,8 +515,8 @@ Gate:
   transforms/sources, deterministic raster outputs, both contact sheets, complete second-package
   proof, atomic saves, digest-named import, local Workshop behavior, exact approval evidence, and
   production exclusion/release rejection;
-- `npm run validate:phase2e` passes the technical unit/browser/production gates without pretending
-  a complete but unapproved candidate is release-ready;
+- `npm run validate:phase2e` passes the technical unit/browser/production gates without weakening
+  owner approval or production-exclusion boundaries;
 - `npm run validate:phase2e:release` must fail while any source is missing, the four-card pilot is
   not owner-approved, an exact approval record is absent/stale, or the runtime package is incomplete;
 - the four finished pilot cards and back must first be reviewed in both sheets and the 390×844 board;
@@ -531,24 +531,26 @@ Current result:
   bridge, strict approval validator, and technical/release scripts are implemented;
 - Pilot Candidate V1 was owner-approved, and the primary package now truthfully builds all 48
   original faces plus a matching back from immutable 1600×2560 WebP masters;
-- its complete technical runtime manifest, all 48 table/thumbnail derivatives, and both complete
-  contact sheets build deterministically, while release still reports the intentionally absent
-  digest-bound `approval.json`;
+- its complete runtime manifest, all 48 table/thumbnail derivatives, and both complete contact
+  sheets build deterministically;
+- the owner approved the complete deck after the July Bush Clover Plain B correction; package
+  v1.0.0 now has a current digest-bound `approval.json`, an `approved` runtime manifest, and a clean
+  `npm run validate:phase2e:release` result;
 - a complete 48-face plus back second technical package is built in tests and decoded through the
   strict runtime manifest contract;
 - implementation commit `31da04f` is on `origin/main`; CI run `31327748444` and Pages run
   `31327748453` passed the full repository and Phase 2E gates, the cache-busted live page rendered,
   and the local-only Workshop route returned 404;
-- final visual acceptance is intentionally not claimed because the owner has not yet reviewed the
-  complete 48-face candidate or requested card-specific revisions.
+- additional decks remain supported as separate complete packages or inherited packages that
+  override selected faces/back without changing canonical CardIds or engine rules.
 
 Architecture is locked in
 [`ADR 0011`](./adr/0011-phase-2e-workshop-import-approval-boundary.md).
 
 ## Later phases
 
-1. **Phase 3 — One-round vertical slice:** complete playable local round and presentation, only
-   after Phase 2E visual approval.
+1. **Phase 3 — One-round vertical slice:** begin with Phase 3A's complete playable local turn loop;
+   the Phase 2E visual-approval prerequisite is satisfied.
 2. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook.
 3. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, and pass-and-play.
 4. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
