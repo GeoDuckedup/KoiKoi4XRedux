@@ -1,10 +1,10 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository is
-currently at **Phase 1A: deterministic headless state, RNG, and deal foundation**. It contains the
+currently at **Phase 1B: deterministic turn and capture state machine**. It contains the
 canonical rules authority, all 48 artwork-independent card records, a versioned deck authoring
-contract, strict workspace boundaries, a tested PixiJS boot surface, and the first deterministic
-gameplay-domain transition. Player-controlled turns intentionally begin in Phase 1B.
+contract, strict workspace boundaries, a tested PixiJS boot surface, reproducible match setup, and
+the complete headless hand-play/capture/draw turn loop through its End-of-Play handoff.
 
 ## Prerequisites
 
@@ -25,6 +25,7 @@ Open the URL printed by Vite. Press `F` to enter or leave fullscreen; `Esc` exit
 ```sh
 npm run check
 npm run validate:phase1a
+npm run validate:phase1b
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -41,10 +42,15 @@ outcome, event-visibility, and DEAL-001–012 fixture suite. The browser smoke p
 screenshots and the serialized runtime state under
 `output/phase-0b/e2e/`.
 
+`npm run validate:phase1b` executes the pure capture primitive, gameplay command state machine,
+legal-action generation, authoritative invariants, and all eight CAP-000 through CAP-DRAW-003
+fixtures. Exact two-match hand choices travel atomically with the hand command; exact two-match draw
+choices persist as an authoritative pending phase.
+
 ## Workspace map
 
 - `apps/web` — Vite/Pixi browser presentation.
-- `packages/engine` — pure deterministic card, RNG, setup-state, deal, and opening-outcome domain.
+- `packages/engine` — pure deterministic card, RNG, setup, turn, capture, and state domain.
 - `packages/deck-format` — portable deck schemas, resolution, transforms, Art Spec, and Node authoring CLI.
 - `packages/protocol` — versioned shared contracts.
 - `packages/test-fixtures` — deterministic fixture ownership.
@@ -63,5 +69,5 @@ workflow derives the correct Vite base path from the repository name and deploys
 after checks pass.
 
 No Firebase project, credentials, database migration, final artwork upload, or production domain is
-needed in Phase 1A. This subphase is a headless engine foundation, so the deployed page intentionally
-remains the Phase 0B boot surface until rendering/gameplay integration begins.
+needed in Phase 1B. This subphase is headless, so the deployed page intentionally remains the Phase
+0B boot surface until rendering/gameplay integration begins.

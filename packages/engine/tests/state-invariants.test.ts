@@ -112,4 +112,30 @@ describe("Phase 1A authoritative state invariants", () => {
       "SETUP_MATCH_STATE_INVALID",
     );
   });
+
+  it("preserves the Phase 1A setup codes for isolated version and metadata failures", () => {
+    const baseline = mutableClone(validState());
+    const versionCases: readonly AuthoritativeGameStateV1[] = [
+      { ...baseline, formatVersion: 2 as 1 },
+      { ...baseline, rulesVersion: "2.0" as "1.0" },
+      { ...baseline, stateVersion: 2 },
+    ];
+    for (const state of versionCases) {
+      expect(validateInitialSetupState(state).map((entry) => entry.code)).toEqual([
+        "STATE_VERSION_INVALID",
+      ]);
+    }
+
+    const metadataCases: readonly AuthoritativeGameStateV1[] = [
+      { ...baseline, status: "complete" },
+      { ...baseline, matchId: "" },
+      { ...baseline, lastAcceptedCommandId: "" },
+      { ...baseline, history: [{}] as unknown as never[] },
+    ];
+    for (const state of metadataCases) {
+      expect(validateInitialSetupState(state).map((entry) => entry.code)).toEqual([
+        "SETUP_MATCH_STATE_INVALID",
+      ]);
+    }
+  });
 });

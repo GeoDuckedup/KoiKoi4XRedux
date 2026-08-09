@@ -2,6 +2,7 @@
 export const TEST_FIXTURES_PACKAGE_ID = "@koikoi4x/test-fixtures" as const;
 
 export * from "./rules/card-bindings";
+export * from "./rules/capture-fixtures";
 export * from "./rules/deal-fixture-builder";
 export * from "./rules/deal-fixtures";
 export * from "./rules/fixture-types";

@@ -133,3 +133,20 @@ Original prompt: read the package and understand it, then let me know when we ar
   boot surface is intentionally unchanged because Phase 0D adds no browser runtime UI.
 - Phase 0D is implemented, independently reviewed, pushed, deployed, and awaiting owner approval.
 - Next: Phase 1A deterministic headless state, seeded RNG, and deal foundation after owner approval.
+
+## 2026-08-08 — Phase 1B verification in progress
+
+- Implemented the deterministic hand-play, draw, capture, pending draw-choice, turn-completion, and
+  End-of-Play seam transitions in the headless engine.
+- Added the eight locked `CAP-*` fixtures as complete canonical 48-card allocations and generated
+  regression coverage for both legal targets where a two-match choice is required.
+- Focused verification passes all five workspace typechecks and 9 test files / 64 tests.
+- The browser surface is intentionally unchanged in this headless subphase; visual regression will
+  be covered by the existing smoke suite during the full repository check.
+- Full formatting, lint, five-workspace typecheck, deck validation, 18-file / 151-test repository
+  suite, production build, five-viewport browser smoke, and canvas/text-state inspection passed.
+- Independent integration review found two medium invariant/compatibility gaps and two cleanup items;
+  all were repaired with regression coverage. No blocker, high, or medium issue remains.
+- Clean install, five-viewport browser smoke, and skill-based canvas/text-state inspection pass; the
+  inspected browser remains the intended Phase 0B boot surface.
+- Remaining work: commit, push, verify hosted CI/Pages, and record the deployment result.

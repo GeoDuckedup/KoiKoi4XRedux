@@ -24,7 +24,7 @@ point. Phase 0D does not install deck packages into the browser runtime.
 
 ## Deterministic headless engine
 
-Phase 1A introduces the first gameplay transition wholly inside `packages/engine`:
+Phases 1A and 1B establish deterministic gameplay transitions wholly inside `packages/engine`:
 
 - `random/` owns the versioned `xoshiro128**` source, snapshots, unbiased bounded integers, and
   immutable Fisher–Yates shuffle;
@@ -33,11 +33,27 @@ Phase 1A introduces the first gameplay transition wholly inside `packages/engine
 - `rules/round-setup.ts` owns the start command, locked shuffle-then-starter consumption order,
   8/8/8/24 deal layout, atomic state-version-1 commit, and semantic setup events;
 - `rules/opening-outcomes.ts` owns complete-month and exact-four-pairs classification plus strict
-  field-cancellation-before-lucky precedence.
+  field-cancellation-before-lucky precedence;
+- `rules/capture.ts` owns ordered 0/1/2/3 same-month inspection and immutable placement, selected
+  pair, and Four-Card Sweep resolution;
+- `rules/turn.ts` owns command validation, legal-action generation, hand resolution, ordered draw
+  reveal/resolution, pending draw choices, turn completion, and the End-of-Play handoff.
 
 The RNG checkpoint is returned alongside, not embedded in, authoritative gameplay state. Production
 setup uses the random source; authored ordered decks are available only as a deterministic
 fixture/practice input. Generated states and transitions are recursively frozen.
+
+An accepted gameplay command advances `stateVersion` exactly once and records its command ID. A
+two-match hand choice is part of the atomic `playHandCard` command. A two-match draw instead commits
+`awaitingDrawCapture`, where the revealed card is its own authoritative card zone and the two legal
+targets remain ordered field references; `chooseDrawCapture` then completes that turn in a second
+transition. Captures append source first and selected field card(s) in field order. Normal gameplay
+does not consume randomness, so callers carry the Phase 1A RNG checkpoint forward unchanged.
+
+Phase 1B leaves explicit insertion seams after each hand and draw capture for Phase 1C yaku checks.
+After both hands empty, the engine enters `awaitingEndOfPlayResolution`; Phase 1D owns scoring and
+round/match consequences. Legal actions are requested for one player at a time, while Phase 1E still
+owns formal client projections, redaction, replay, and full idempotency storage.
 
 Every setup event declares an audience: public, private to one player, or server-only. Phase 1A
 preserves those semantics but does not yet construct formal client projections. Full projection,
@@ -59,7 +75,7 @@ round/month advancement, and match recap/history behavior.
 ## Testing layers
 
 Vitest owns pure unit, fixture, invariant, determinism, privacy-semantics, and boundary checks. The
-DEAL-001 through DEAL-012 suite lives in `packages/test-fixtures` while production behavior stays in
-the engine. The project smoke script owns browser, responsive,
+DEAL-001 through DEAL-012 and CAP-000 through CAP-DRAW-003 suites live in
+`packages/test-fixtures` while production behavior stays in the engine. The project smoke script owns browser, responsive,
 fullscreen, semantic DOM, canvas, diagnostic-hook, and browser-error checks. The bundled web-game
 client provides an additional artifact-compatible canvas/text-state pass during local validation.

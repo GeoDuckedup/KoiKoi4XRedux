@@ -2,7 +2,7 @@
 
 **Plan version:** 1.0  
 **Updated:** August 8, 2026  
-**Current gate:** Phase 1A verification and owner review
+**Current gate:** Phase 1B verification and owner review
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -114,7 +114,7 @@ Result:
 
 ### Phase 1A — Deterministic state, RNG, and deal
 
-Status: **implemented; awaiting owner review**.
+Status: **completed, deployed, and owner-approved**.
 
 Deliver versioned authoritative match/round state, seeded deterministic randomness and checkpoints,
 immutable shuffle/deal, opening cancellation and lucky-hand outcomes, ownership/setup invariants,
@@ -142,10 +142,40 @@ Result:
   Phase 1D retains automatic-round transition/history ownership and Phase 1E retains projections and
   replay.
 
+### Phase 1B — Turn and capture state machine
+
+Status: **implemented; awaiting owner review**.
+
+Deliver legal hand play, canonical 0/1/2/3 same-month capture behavior, explicit two-target choices,
+Four-Card Sweeps, ordered draw resolution, player-scoped legal actions, deterministic command
+rejection, complete turn advancement, and an explicit End-of-Play handoff.
+
+Gate: every CAP-000 through CAP-DRAW-003 vector executes from a complete 48-card deal; equal state
+plus command produces byte-identical immutable output; accepted commands increment the state version
+once while rejected commands leave input untouched; revealed/persisted cards remain in exactly one
+authoritative zone; legal actions never expose an opponent hand or future draw order; and gameplay
+uses no RNG, clock, rendering, browser, backend, or deck-format dependency.
+
+Result:
+
+- pure capture resolution preserves field order, appends zero-match placements, captures source
+  first, and distinguishes selected pairs from Four-Card Sweeps;
+- `playHandCard` resolves hand placement/capture and the top ordered draw atomically unless the draw
+  has exactly two targets, in which case `awaitingDrawCapture` preserves the revealed card and legal
+  targets for `chooseDrawCapture`;
+- player-scoped legal actions preserve hand and field order, including both legal two-match targets;
+- public semantic events describe played/revealed cards, placements, capture movement, choice
+  windows, completed turns, and End of Play without including still-hidden cards;
+- authoritative validation covers pending draw ownership/targets and turn progress, and the turn loop
+  reaches an explicit Phase 1D seam with both hands empty and eight draw cards unused;
+- all eight authored CAP fixtures use exact canonical 8/8/8/24 allocations and execute against the
+  production transition API, with Phase 1C retaining yaku/trigger ownership and Phase 1E retaining
+  formal projection/replay ownership.
+
 ## Later phases
 
-1. **Phase 1B–1E — Complete the headless engine:** capture phases, yaku triggers, round/match rules,
-   projections, visibility, and replay.
+1. **Phase 1C–1E — Complete the headless engine:** yaku triggers, round/match rules, projections,
+   visibility, and replay.
 2. **Phase 2 — Rendering foundation:** responsive Pixi table, persistent cards, deck-package runtime, AnimationDirector, input, and Deck Workshop.
 3. **Phase 3 — One-round vertical slice:** complete playable local round and presentation.
 4. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook.

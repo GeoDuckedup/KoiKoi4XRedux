@@ -11,6 +11,7 @@ export type PlayerId = (typeof PLAYER_IDS)[number];
 export type MatchLength = (typeof MATCH_LENGTHS)[number];
 export type TableMultiplier = 1 | 2 | 3 | 4;
 export type PlayerPair<T> = readonly [T, T];
+export type CapturePhase = "hand" | "draw";
 
 export interface CompleteMonthEvidence {
   readonly month: MonthNumber;
@@ -115,6 +116,16 @@ export type EnginePhaseV1 =
       readonly playerId: PlayerId;
     }
   | {
+      readonly kind: "awaitingDrawCapture";
+      readonly playerId: PlayerId;
+      readonly drawnCardId: CardId;
+      readonly targetFieldCardIds: readonly [CardId, CardId];
+    }
+  | {
+      readonly kind: "awaitingEndOfPlayResolution";
+      readonly lastActorId: PlayerId;
+    }
+  | {
       readonly kind: "roundComplete";
       readonly result: AutomaticOpeningResult;
       readonly transitionPending: true;
@@ -217,4 +228,90 @@ export interface StartMatchCommandV1 {
   readonly matchLength: MatchLength;
   readonly starterPolicy:
     { readonly kind: "chooseWithRng" } | { readonly kind: "provided"; readonly playerId: PlayerId };
+}
+
+interface GameplayCommandBaseV1 {
+  readonly commandId: string;
+  readonly matchId: string;
+  readonly actorId: PlayerId;
+  readonly expectedStateVersion: number;
+}
+
+export interface PlayHandCardCommandV1 extends GameplayCommandBaseV1 {
+  readonly type: "playHandCard";
+  readonly cardId: CardId;
+  readonly targetFieldCardId?: CardId;
+}
+
+export interface ChooseDrawCaptureCommandV1 extends GameplayCommandBaseV1 {
+  readonly type: "chooseDrawCapture";
+  readonly targetFieldCardId: CardId;
+}
+
+export type GameplayCommandV1 = PlayHandCardCommandV1 | ChooseDrawCaptureCommandV1;
+
+export type LegalActionV1 =
+  | {
+      readonly type: "playHandCard";
+      readonly actorId: PlayerId;
+      readonly cardId: CardId;
+      readonly targetFieldCardId?: CardId;
+    }
+  | {
+      readonly type: "chooseDrawCapture";
+      readonly actorId: PlayerId;
+      readonly drawnCardId: CardId;
+      readonly targetFieldCardId: CardId;
+    };
+
+interface TurnEventBase {
+  readonly audience: EventAudience;
+  readonly actorId: PlayerId;
+}
+
+export type TurnEventV1 =
+  | (TurnEventBase & {
+      readonly type: "handCardPlayed";
+      readonly cardId: CardId;
+    })
+  | (TurnEventBase & {
+      readonly type: "cardPlacedOnField";
+      readonly phase: CapturePhase;
+      readonly cardId: CardId;
+    })
+  | (TurnEventBase & {
+      readonly type: "captureStarted";
+      readonly phase: CapturePhase;
+      readonly sourceCardId: CardId;
+      readonly targetFieldCardIds: readonly CardId[];
+      readonly captureKind: "pair" | "fourCardSweep";
+    })
+  | (TurnEventBase & {
+      readonly type: "cardsCaptured";
+      readonly phase: CapturePhase;
+      readonly cardIds: readonly CardId[];
+      readonly captureKind: "pair" | "fourCardSweep";
+    })
+  | (TurnEventBase & {
+      readonly type: "drawCardRevealed";
+      readonly cardId: CardId;
+      readonly remainingDrawPileCount: number;
+    })
+  | (TurnEventBase & {
+      readonly type: "drawCaptureChoiceRequired";
+      readonly drawnCardId: CardId;
+      readonly targetFieldCardIds: readonly [CardId, CardId];
+    })
+  | (TurnEventBase & {
+      readonly type: "turnCompleted";
+      readonly nextPlayerId: PlayerId | null;
+    })
+  | (TurnEventBase & {
+      readonly type: "endOfPlayReached";
+      readonly unusedDrawPileCount: number;
+    });
+
+export interface GameplayTransitionV1 {
+  readonly state: AuthoritativeGameStateV1;
+  readonly events: readonly TurnEventV1[];
 }
