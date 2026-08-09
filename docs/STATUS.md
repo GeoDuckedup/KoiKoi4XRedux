@@ -2,8 +2,8 @@
 
 **Updated:** August 9, 2026
 
-**Overall state:** Greenfield rewrite, Phase 2D selection/input implemented and locally accepted;
-commit/deployment and owner review next
+**Overall state:** Greenfield rewrite, Phase 2D selection/input implemented, independently accepted,
+committed, and deployed; owner review next
 
 **Runtime state:** Complete deterministic headless match engine with formal projections, replay,
 hashes, retry-safe command receipts, and protocol records, plus a presentation-only responsive Pixi
@@ -172,6 +172,10 @@ in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
   screenshot and the Guided/Yaku/desktop browser screenshots were inspected.
 - Three independent Phase 2D reviews report no blocker, high, or medium finding after source-phase,
   exact Draw target, monotonic observation, duplicate suppression, and DOM focus hardening.
+- Hosted CI run `31322149519` passed the full repository and Phase 2D gates. Pages run `31322149502`
+  passed its repository-prefixed matrix and deployed commit `05800e0`. A cache-busted live run
+  selected April Cuckoo, exposed exactly two legal targets, reported ten semantic controls and 48
+  stable CardViews, and retained `intentExecution:notExecuted`.
 - Phase 2C's focused unit gate passes 7 files / 60 tests and byte-checks all 100 generated technical
   artifacts. Both seven-viewport root and `/KoiKoi4XRedux/` browser matrices pass.
 - `npm run validate:phase1e` passes 16 test files / 176 tests, including all prior Phase 1A–1D

@@ -486,3 +486,16 @@ Original prompt: read the package and understand it, then let me know when we ar
   in 66 seconds and the final combined check passed in 74 seconds.
 - Three independent final reviews report no blocker, high, or medium issue. Remaining: commit/push,
   hosted CI/Pages verification, and cache-busted live inspection.
+
+## 2026-08-09 — Phase 2D deployed
+
+- Committed Phase 2D as `3d4bc32`; hosted Linux exposed a compact 320×568 canvas-height dependency
+  on font metrics and border-box sizing. Follow-up fixes `f4cdb87` and `05800e0` reserve 424 CSS
+  pixels so the canvas content remains above the locked 420-pixel compact minimum.
+- Hosted CI run `31322149519` passed `npm run check`, the full `validate:phase2d` root/Pages matrices,
+  and artifact upload. Pages run `31322149502` passed and deployed `05800e0`.
+- A cache-busted live game-client run selected April Cuckoo and reported `inputRuntime`, exactly two
+  legal public targets, ten semantic controls, 48 stable CardViews, and
+  `intentExecution:notExecuted`; the live screenshot was inspected.
+- Phase 2D is implemented, independently accepted, pushed, deployed, and ready for owner review.
+  Next after approval: Phase 2E Deck Workshop and final visual approval.

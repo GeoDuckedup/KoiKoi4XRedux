@@ -2,7 +2,7 @@
 
 **Plan version:** 1.1
 **Updated:** August 9, 2026
-**Current gate:** Phase 2D implemented and locally accepted; commit/deployment and owner review next
+**Current gate:** Phase 2D implemented, independently accepted, and deployed; owner review next
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -435,7 +435,7 @@ Current result:
 
 ### Phase 2D — Selection and input
 
-Status: **implemented and locally accepted; commit/deployment and owner review next**.
+Status: **implemented, independently accepted, committed, and deployed; owner review next**.
 
 Deliver:
 
@@ -486,6 +486,9 @@ Current result:
 - the required game client produced the selected/two-target `inputRuntime` diagnostic and screenshot;
 - three independent final reviews report no blocker, high, or medium finding after pending-intent,
   observation-order, phase/action, exact Draw target, and DOM focus re-entrancy hardening.
+- implementation commit `3d4bc32` plus compact-host fixes through `05800e0` are on `origin/main`;
+  CI run `31322149519` and Pages run `31322149502` passed, and a cache-busted live interaction
+  selected April Cuckoo with the exact two legal targets and no executed intent.
 
 ## Later phases
 
