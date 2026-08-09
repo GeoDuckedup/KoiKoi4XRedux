@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { access, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -7,6 +8,7 @@ import { CARD_IDS } from "@koikoi4x/engine";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { decodeRuntimeDeckManifestV1 } from "../src/runtime-manifest.ts";
+import type { DeckPackageV1 } from "../src/types.ts";
 import {
   assignWorkshopSourceV1,
   buildDeckPackageV1,
@@ -21,6 +23,37 @@ import { ART_SPEC_V1 } from "../src/art-spec.ts";
 const temporaryRoots: string[] = [];
 const repositoryRoot = resolve(import.meta.dirname, "../../..");
 const primaryRoot = join(repositoryRoot, "decks/new-primary-deck");
+const primaryPackage = JSON.parse(
+  readFileSync(join(primaryRoot, "deck.json"), "utf8"),
+) as DeckPackageV1;
+const primaryPilotCardIds = [
+  "november-rain",
+  "september-sake-cup",
+  "december-phoenix",
+  "january-pine-plain-a",
+] as const;
+
+function primaryCardSource(cardId: (typeof primaryPilotCardIds)[number]): string {
+  const file = primaryPackage.cards[cardId]?.file;
+  if (file === undefined) throw new Error(`Missing primary source mapping for ${cardId}.`);
+  return file;
+}
+
+const primaryBackSource = (() => {
+  const file = primaryPackage.backs?.default;
+  if (file === undefined) throw new Error("Primary package has no card back.");
+  return file;
+})();
+
+async function copyPrimaryFixture(packageRoot: string): Promise<void> {
+  await mkdir(join(packageRoot, "source"), { recursive: true });
+  for (const name of ["deck.json", "transforms.json", "pilot.json"]) {
+    await copyFile(join(primaryRoot, name), join(packageRoot, name));
+  }
+  for (const relativePath of [...primaryPilotCardIds.map(primaryCardSource), primaryBackSource]) {
+    await copyFile(join(primaryRoot, relativePath), join(packageRoot, relativePath));
+  }
+}
 
 async function temporaryDirectory(name: string): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), `${name}-`));
@@ -37,7 +70,7 @@ afterEach(async () => {
 
 describe("Phase 2E raster and package builder", () => {
   it("ART2E-005 renders deterministic table/thumbnail derivatives without mutating source", async () => {
-    const source = join(primaryRoot, "source/november-rain.png");
+    const source = join(primaryRoot, primaryCardSource("november-rain"));
     const before = sourceFileDigest(source);
     const first = await renderRasterDerivativeV1(source, ART_SPEC_V1.derivatives.table, {
       mode: "manual",
@@ -54,7 +87,7 @@ describe("Phase 2E raster and package builder", () => {
     expect(createHash("sha256").update(first.buffer).digest("hex")).toBe(
       createHash("sha256").update(second.buffer).digest("hex"),
     );
-    expect(readSourceImageMetadata(source)).toEqual({ format: "png", width: 1600, height: 2560 });
+    expect(readSourceImageMetadata(source)).toEqual({ format: "webp", width: 1600, height: 2560 });
     expect(sourceFileDigest(source)).toBe(before);
   });
 
@@ -180,23 +213,11 @@ describe("Phase 2E raster and package builder", () => {
   it("ART2E-008 saves transforms atomically while every source digest remains unchanged", async () => {
     const root = await temporaryDirectory("phase2e-save");
     const packageRoot = join(root, "new-primary-deck");
-    await mkdir(join(packageRoot, "source"), { recursive: true });
-    for (const name of ["deck.json", "transforms.json", "pilot.json"]) {
-      await copyFile(join(primaryRoot, name), join(packageRoot, name));
-    }
-    for (const name of [
-      "november-rain.png",
-      "september-sake-cup.png",
-      "december-phoenix.png",
-      "january-pine-plain-a.png",
-      "card-back.png",
-    ]) {
-      await copyFile(join(primaryRoot, "source", name), join(packageRoot, "source", name));
-    }
+    await copyPrimaryFixture(packageRoot);
+    const immutableRain = primaryCardSource("november-rain");
+    const immutableCup = primaryCardSource("september-sake-cup");
     const digestsBefore = await Promise.all(
-      ["november-rain.png", "september-sake-cup.png"].map((name) =>
-        sourceFileDigest(join(packageRoot, "source", name)),
-      ),
+      [immutableRain, immutableCup].map((path) => sourceFileDigest(join(packageRoot, path))),
     );
     const next = await saveWorkshopTransformV1({
       decksRoot: root,
@@ -211,56 +232,43 @@ describe("Phase 2E raster and package builder", () => {
       focusY: 0.72,
     });
     expect(
-      ["november-rain.png", "september-sake-cup.png"].map((name) =>
-        sourceFileDigest(join(packageRoot, "source", name)),
-      ),
+      [immutableRain, immutableCup].map((path) => sourceFileDigest(join(packageRoot, path))),
     ).toEqual(digestsBefore);
   });
 
   it("ART2E-009 assigns a digest-named source without overwriting prior originals", async () => {
     const root = await temporaryDirectory("phase2e-assign");
     const packageRoot = join(root, "new-primary-deck");
-    await mkdir(join(packageRoot, "source"), { recursive: true });
-    for (const name of ["deck.json", "transforms.json", "pilot.json"]) {
-      await copyFile(join(primaryRoot, name), join(packageRoot, name));
-    }
-    for (const name of [
-      "november-rain.png",
-      "september-sake-cup.png",
-      "december-phoenix.png",
-      "january-pine-plain-a.png",
-      "card-back.png",
-    ]) {
-      await copyFile(join(primaryRoot, "source", name), join(packageRoot, "source", name));
-    }
-    const donor = await readFile(join(packageRoot, "source/september-sake-cup.png"));
-    const donorDigest = sourceFileDigest(join(packageRoot, "source/september-sake-cup.png"));
-    const originalBackDigest = sourceFileDigest(join(packageRoot, "source/card-back.png"));
+    await copyPrimaryFixture(packageRoot);
+    const immutableCup = primaryCardSource("september-sake-cup");
+    const donor = await readFile(join(packageRoot, immutableCup));
+    const donorDigest = sourceFileDigest(join(packageRoot, immutableCup));
+    const originalBackDigest = sourceFileDigest(join(packageRoot, primaryBackSource));
     const next = await assignWorkshopSourceV1({
       decksRoot: root,
       packageId: "new-primary-deck",
       cardId: "january-crane",
-      mediaType: "image/png",
+      mediaType: "image/webp",
       base64: donor.toString("base64"),
     });
     const mapping = next.packageDefinition.cards["january-crane"]?.file;
-    expect(mapping).toMatch(/^source\/january-crane-[a-f0-9]{12}\.png$/u);
+    expect(mapping).toMatch(/^source\/january-crane-[a-f0-9]{12}\.webp$/u);
     expect(sourceFileDigest(join(packageRoot, mapping ?? "missing"))).toBe(donorDigest);
-    expect(sourceFileDigest(join(packageRoot, "source/september-sake-cup.png"))).toBe(donorDigest);
+    expect(sourceFileDigest(join(packageRoot, immutableCup))).toBe(donorDigest);
 
     const backNext = await assignWorkshopSourceV1({
       decksRoot: root,
       packageId: "new-primary-deck",
       cardId: "back",
-      mediaType: "image/png",
+      mediaType: "image/webp",
       base64: donor.toString("base64"),
     });
     expect(backNext.packageDefinition.backs?.default).toMatch(
-      /^source\/card-back-[a-f0-9]{12}\.png$/u,
+      /^source\/card-back-[a-f0-9]{12}\.webp$/u,
     );
     expect(
       sourceFileDigest(join(packageRoot, backNext.packageDefinition.backs?.default ?? "missing")),
     ).toBe(donorDigest);
-    expect(sourceFileDigest(join(packageRoot, "source/card-back.png"))).toBe(originalBackDigest);
+    expect(sourceFileDigest(join(packageRoot, primaryBackSource))).toBe(originalBackDigest);
   });
 });

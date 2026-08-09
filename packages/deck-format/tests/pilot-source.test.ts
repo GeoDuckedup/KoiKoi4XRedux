@@ -41,6 +41,16 @@ const packageDefinition = loadJson<DeckPackageV1>(join(deckDirectory, "deck.json
 const transforms = loadJson<DeckTransformsV1>(join(deckDirectory, "transforms.json"));
 const pilot = loadJson<DeckPilotV1>(join(deckDirectory, "pilot.json"));
 
+function pilotSourceFile(cardId: (typeof pilot.cards)[number]["cardId"]): string {
+  const mapping = packageDefinition.cards[cardId];
+  if (mapping === undefined) throw new Error(`Missing mapping for ${cardId}`);
+  return mapping.file;
+}
+
+const pilotSourceFiles = pilot.cards.map((entry) => pilotSourceFile(entry.cardId));
+const backSourceFile = packageDefinition.backs?.default;
+if (backSourceFile === undefined) throw new Error("Primary package is missing its card back.");
+
 function crc32(buffer: Buffer): number {
   let crc = 0xffffffff;
   for (const byte of buffer) {
@@ -77,13 +87,13 @@ function solidPng(width: number, height: number): Buffer {
 }
 
 describe("primary-deck pilot readiness", () => {
-  it("locks four distinct technical roles without claiming visual approval", () => {
+  it("locks four distinct candidate roles without claiming visual approval", () => {
     expect(validateDeckPackageDefinition(packageDefinition)).toEqual([]);
     expect(validateDeckTransformsDefinition(transforms)).toEqual([]);
     expect(validateDeckPilotDefinition(pilot)).toEqual([]);
     expect(validatePilotReadiness(pilot, packageDefinition)).toEqual([]);
     expect(pilot).toMatchObject({
-      approvalStatus: "technical-placeholder",
+      approvalStatus: "awaiting-finished-art",
       cards: [
         { role: "dense", cardId: "november-rain" },
         { role: "simple", cardId: "september-sake-cup" },
@@ -106,11 +116,11 @@ describe("primary-deck pilot readiness", () => {
     });
     expect(result.issues).toEqual([]);
     expect(Object.values(result.metadataByCardId)).toEqual(
-      Array.from({ length: 4 }, () => ({ format: "png", width: 1600, height: 2560 })),
+      Array.from({ length: 4 }, () => ({ format: "webp", width: 1600, height: 2560 })),
     );
     expect(sourcePaths.map(sourceFileDigest)).toEqual(before);
-    expect(readSourceImageMetadata(join(deckDirectory, "source/card-back.png"))).toEqual({
-      format: "png",
+    expect(readSourceImageMetadata(join(deckDirectory, backSourceFile))).toEqual({
+      format: "webp",
       width: 1600,
       height: 2560,
     });
@@ -122,7 +132,7 @@ describe("primary-deck pilot readiness", () => {
     expect(plan).toMatchObject({
       artSpecVersion: 1,
       completeRuntimeManifest: false,
-      pilotApprovalStatus: "technical-placeholder",
+      pilotApprovalStatus: "awaiting-finished-art",
     });
     const cards = plan.cards as readonly Record<string, unknown>[];
     expect(cards).toHaveLength(4);
@@ -135,19 +145,10 @@ describe("primary-deck pilot readiness", () => {
     const temporaryRoot = mkdtempSync(join(tmpdir(), "koikoi4x-deck-artifacts-"));
     const temporaryDeck = join(temporaryRoot, "decks/new-primary-deck");
     mkdirSync(join(temporaryDeck, "source"), { recursive: true });
-    for (const filename of [
-      "november-rain.png",
-      "september-sake-cup.png",
-      "december-phoenix.png",
-      "january-pine-plain-a.png",
-      "card-back.png",
-    ]) {
-      copyFileSync(
-        join(deckDirectory, "source", filename),
-        join(temporaryDeck, "source", filename),
-      );
+    for (const relativePath of [...pilotSourceFiles, backSourceFile]) {
+      copyFileSync(join(deckDirectory, relativePath), join(temporaryDeck, relativePath));
     }
-    const immutablePath = join(temporaryDeck, "source/november-rain.png");
+    const immutablePath = join(temporaryDeck, pilotSourceFile("november-rain"));
     const before = sourceFileDigest(immutablePath);
     const paths = generateLockedDeckArtifacts(
       temporaryRoot,
@@ -165,14 +166,11 @@ describe("primary-deck pilot readiness", () => {
     const sourceDirectory = join(temporaryRoot, "source");
     mkdirSync(sourceDirectory, { recursive: true });
     writeFileSync(join(sourceDirectory, "small.png"), solidPng(799, 1279));
-    copyFileSync(
-      join(deckDirectory, "source/card-back.png"),
-      join(sourceDirectory, "card-back.png"),
-    );
+    copyFileSync(join(deckDirectory, backSourceFile), join(temporaryRoot, backSourceFile));
     const smallPackage: DeckPackageV1 = {
       ...packageDefinition,
       cards: { "january-pine-plain-a": { file: "source/small.png" } },
-      backs: { default: "source/card-back.png" },
+      backs: { default: backSourceFile },
     };
     expect(
       validateLocalPackageSources(temporaryRoot, smallPackage).issues.map((entry) => entry.code),
@@ -202,7 +200,7 @@ describe("primary-deck pilot readiness", () => {
       ),
     ).toContain("MISSING_CARD_BACK_SOURCE");
 
-    symlinkSync(join(deckDirectory, "source/card-back.png"), join(sourceDirectory, "linked.png"));
+    symlinkSync(join(deckDirectory, backSourceFile), join(sourceDirectory, "linked.png"));
     const symlinkPackage: DeckPackageV1 = {
       ...floorPackage,
       cards: { "january-pine-plain-a": { file: "source/linked.png" } },

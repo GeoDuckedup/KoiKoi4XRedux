@@ -66,7 +66,7 @@ export function buildPilotImportPlan(
     packageVersion: packageDefinition.version,
     pilotApprovalStatus: pilot.approvalStatus,
     completeRuntimeManifest: false,
-    note: "Phase 0D transform/import plan only; raster derivatives and visual approval remain Phase 2E.",
+    note: "Deterministic pilot source/transform plan; owner visual approval remains a separate gate.",
     cards: Object.freeze(cards),
   });
 }

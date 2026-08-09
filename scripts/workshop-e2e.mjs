@@ -155,6 +155,9 @@ try {
   );
 
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForFunction(
+    () => document.querySelector("[data-board-preview]")?.dataset.renderedCardCount === "4",
+  );
   await page.screenshot({
     path: resolve(outputDirectory, "workshop-mobile-390x844.png"),
     fullPage: true,
@@ -168,6 +171,9 @@ try {
       (await page.locator("[data-board-preview]").getAttribute("height")) === "844",
     "Pilot board preview does not use the locked primary viewport.",
   );
+  await page.locator("[data-board-preview]").screenshot({
+    path: resolve(outputDirectory, "pilot-board-390x844.png"),
+  });
 
   const finalState = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
   await writeFile(

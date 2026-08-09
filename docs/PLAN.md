@@ -2,8 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 9, 2026
-**Current gate:** Phase 2E authoring/tooling implemented, verified, and deployed; final artwork and
-owner visual approval remain required before Phase 3
+**Current gate:** Phase 2E Pilot Candidate V1 generated and verified; owner pilot approval or
+revision direction is required before producing the remaining 44 faces
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -493,7 +493,7 @@ Current result:
 
 ### Phase 2E — Deck Workshop and final visual approval
 
-Status: **authoring/tooling implementation complete and deployed; owner art gate pending**.
+Status: **tooling deployed; four-face plus back Pilot Candidate V1 awaits owner visual decision**.
 
 Deliver:
 
@@ -528,16 +528,16 @@ Current result:
 
 - the deterministic importer, package builder, dual sheets, local Workshop, token-protected local
   bridge, strict approval validator, and technical/release scripts are implemented;
-- the current primary package truthfully builds 4 of 48 technical pilot faces plus the back, omits
-  a runtime manifest, and reports 44 missing sources, pending pilot approval, missing approval
-  evidence, and an incomplete release;
+- the current primary package truthfully builds 4 of 48 original Pilot Candidate V1 faces plus a
+  matching back from immutable 1600×2560 WebP masters, omits a runtime manifest, and reports 44
+  missing sources, pending pilot approval, missing approval evidence, and an incomplete release;
 - a complete 48-face plus back second technical package is built in tests and decoded through the
   strict runtime manifest contract;
 - implementation commit `31da04f` is on `origin/main`; CI run `31327748444` and Pages run
   `31327748453` passed the full repository and Phase 2E gates, the cache-busted live page rendered,
   and the local-only Workshop route returned 404;
-- final visual acceptance is intentionally not claimed because no finished licensed art has been
-  supplied and the checked-in pilots are process placeholders only.
+- final visual acceptance is intentionally not claimed because the owner has not yet approved or
+  requested revisions to Pilot Candidate V1, and the remaining 44 faces do not yet exist.
 
 Architecture is locked in
 [`ADR 0011`](./adr/0011-phase-2e-workshop-import-approval-boundary.md).

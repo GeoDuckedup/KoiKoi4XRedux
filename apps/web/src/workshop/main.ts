@@ -62,6 +62,7 @@ let transformDraft: CardTransform = canonicalAutoTransform();
 let pendingSourceFile: File | null = null;
 let pendingBackSourceFile: File | null = null;
 let busy = false;
+let previewGeneration = 0;
 
 function requiredElement<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -242,22 +243,32 @@ function drawTransformed(
   context.setLineDash([]);
 }
 
-async function drawBoardPreview(): Promise<void> {
+async function drawBoardPreview(generation: number): Promise<void> {
   const context = boardCanvas.getContext("2d");
   if (!context || !snapshot) return;
-  context.fillStyle = "#0b2a20";
-  context.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
+  const next = document.createElement("canvas");
+  next.width = boardCanvas.width;
+  next.height = boardCanvas.height;
+  const nextContext = next.getContext("2d");
+  if (!nextContext) return;
+  nextContext.fillStyle = "#0b2a20";
+  nextContext.fillRect(0, 0, next.width, next.height);
   const layout = computeBoardLayout({ width: 390, height: 844 });
-  context.fillStyle = "rgba(255,243,207,.06)";
-  context.fillRect(
+  nextContext.fillStyle = "rgba(255,243,207,.06)";
+  nextContext.fillRect(
     layout.cardZones.field.x,
     layout.cardZones.field.y,
     layout.cardZones.field.width,
     layout.cardZones.field.height,
   );
-  context.fillStyle = "#e9bb5a";
-  context.font = "700 13px sans-serif";
-  context.fillText("FOUR-CARD TECHNICAL PILOT · NOT APPROVED", 18, layout.cardZones.field.y + 18);
+  nextContext.fillStyle = "#e9bb5a";
+  nextContext.font = "700 13px sans-serif";
+  nextContext.fillText(
+    "FOUR-CARD PILOT CANDIDATE · NOT APPROVED",
+    18,
+    layout.cardZones.field.y + 18,
+  );
+  let renderedCardCount = 0;
   for (const [index, cardId] of snapshot.pilotCardIds.entries()) {
     const cardSlot = snapshot.grid.groups
       .flatMap((group) => group.cards)
@@ -274,13 +285,21 @@ async function drawBoardPreview(): Promise<void> {
       bitmap,
       cardSlot.cardId === selectedCardId ? transformDraft : cardSlot.transform,
     );
-    context.drawImage(temporary, fieldSlot.x, fieldSlot.y, fieldSlot.width, fieldSlot.height);
+    nextContext.drawImage(temporary, fieldSlot.x, fieldSlot.y, fieldSlot.width, fieldSlot.height);
+    renderedCardCount += 1;
   }
+  if (generation !== previewGeneration) return;
+  context.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
+  context.drawImage(next, 0, 0);
+  boardCanvas.dataset.renderedCardCount = String(renderedCardCount);
 }
 
 async function drawPreviews(): Promise<void> {
+  const generation = ++previewGeneration;
+  boardCanvas.dataset.renderedCardCount = "0";
   const slot = currentSlot();
   const bitmap = slot.source?.exists ? await sourceBitmap(selectedCardId) : null;
+  if (generation !== previewGeneration) return;
   if (!bitmap) {
     clearCanvas(sourceCanvas, "MISSING SOURCE");
     clearCanvas(frameCanvas, "MISSING SOURCE");
@@ -293,9 +312,10 @@ async function drawPreviews(): Promise<void> {
     drawTransformed(phoneCanvas, bitmap, transformDraft);
   }
   const back = await sourceBitmap("back");
+  if (generation !== previewGeneration) return;
   if (back) drawTransformed(backCanvas, back, canonicalAutoTransform());
   else clearCanvas(backCanvas, "MISSING BACK");
-  await drawBoardPreview();
+  await drawBoardPreview(generation);
 }
 
 function syncEditor(): void {

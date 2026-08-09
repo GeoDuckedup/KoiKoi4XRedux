@@ -670,9 +670,10 @@ The Workshop is not a production route. Normal Vite and Pages builds exclude `wo
 filesystem bridge, authored source files, transforms, and the Sharp/Node adapter. The game continues
 to consume only a complete browser-portable `RuntimeDeckManifestV1`.
 
-The current checked-in pilot sources remain technical placeholders: 4 of 48 faces plus the back.
-They validate the import pipeline and required board/contact-sheet review mechanics, but they do not
-constitute the required finished-art visual decision. Final visual approval remains an owner action.
+The current checked-in primary sources are original Pilot Candidate V1 artwork: 4 of 48 faces plus a
+matching back, normalized to immutable 1600×2560 WebP masters. They exercise the import pipeline and
+required board/contact-sheet review mechanics, but they do not constitute the required visual
+decision. Pilot approval and final visual approval remain owner actions.
 
 This deliberately places art tooling before the one-round vertical slice is treated as visually mature, so production of the new deck can proceed alongside rendering work rather than becoming a late manual conversion task.
 

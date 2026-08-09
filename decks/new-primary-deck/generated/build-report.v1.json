@@ -5,77 +5,77 @@
     {
       "cardId": "january-pine-plain-a",
       "source": {
-        "format": "png",
+        "format": "webp",
         "width": 1600,
         "height": 2560,
-        "file": "source/january-pine-plain-a.png",
-        "sha256": "27dbfaf9d05a930a8c3a18196cdc27adac14fd919b917008a2a2c0468c7106c5"
+        "file": "source/january-pine-plain-a-89dd9700428f.webp",
+        "sha256": "89dd9700428fb3557e5151fe98148e1328d0f3de68eed2fdd003eddbc29824f0"
       },
       "sourcePackageId": "new-primary-deck",
       "table": {
         "path": "runtime/cards/january-pine-plain-a.png",
-        "sha256": "7180e2d6de695c9edacd9dd800d2ec5edbe0608caf3426e5d3d7b13d6f61f3ea"
+        "sha256": "79f7b8628fec9939231fe9932cfe7d2bd95c3dc22f87eacac4327c7d9637e8d9"
       },
       "thumbnail": {
         "path": "thumbnails/january-pine-plain-a.png",
-        "sha256": "2825b53848ee782bc9e5bd706086f97c965c6b91f740eeb3289be34922dedd5a"
+        "sha256": "7096411804de2dd4633fbe0a28012251b20c8f5c6336b1c08b4bb0c40c019339"
       }
     },
     {
       "cardId": "september-sake-cup",
       "source": {
-        "format": "png",
+        "format": "webp",
         "width": 1600,
         "height": 2560,
-        "file": "source/september-sake-cup.png",
-        "sha256": "6d139c16529171b56c1b2cfd7042f87d85235cab743b6ce6d4a2065bf59292ed"
+        "file": "source/september-sake-cup-461782769f44.webp",
+        "sha256": "461782769f44e6636e569848d21d446a0036504a0551b15e688d0038e792a9a6"
       },
       "sourcePackageId": "new-primary-deck",
       "table": {
         "path": "runtime/cards/september-sake-cup.png",
-        "sha256": "a9eac949543c659b8aa36b6c47572fa86bd8feb7c0ddb5073142987761de25ec"
+        "sha256": "5420b004b7e1f4bae97162484cd230c333ad5005dd211d438caec26ae88384ab"
       },
       "thumbnail": {
         "path": "thumbnails/september-sake-cup.png",
-        "sha256": "dab467f91a7e6d2f904d4f1a6fe90e70c31c2244341046a6e1e8a5b951db71cb"
+        "sha256": "2feaab05d252d0bb70ac1946b1db4cfdc183fe02a97749ac438c956211b6b107"
       }
     },
     {
       "cardId": "november-rain",
       "source": {
-        "format": "png",
+        "format": "webp",
         "width": 1600,
         "height": 2560,
-        "file": "source/november-rain.png",
-        "sha256": "a39655e715eb1cb3454c4c440df9ef866b572cb3727d4a17b59c5dcc1f2028df"
+        "file": "source/november-rain-767b8c42a52b.webp",
+        "sha256": "767b8c42a52bb3768895d6a847263c8081d6f6da26542fc81007a0827b174647"
       },
       "sourcePackageId": "new-primary-deck",
       "table": {
         "path": "runtime/cards/november-rain.png",
-        "sha256": "94188504a0bdbcc30ec5afa40adc832ec06f3a6722d32089308f0ecb20b4b5ee"
+        "sha256": "7549d5a15327403543e6e0ddd9f5a677e3f8b104a9a507a87256f06c21329904"
       },
       "thumbnail": {
         "path": "thumbnails/november-rain.png",
-        "sha256": "84ee3462d8241bf0b9ed63ac78bd20c2f9c4cd744f4655beac491bca23b60a1c"
+        "sha256": "9cc5e0ebfa848f4094f79376d82eaf85229ca100056beb686aa6651138c107fe"
       }
     },
     {
       "cardId": "december-phoenix",
       "source": {
-        "format": "png",
+        "format": "webp",
         "width": 1600,
         "height": 2560,
-        "file": "source/december-phoenix.png",
-        "sha256": "e2d0e9f95d3449bba06e0855ae9c18599f7dbd7452fdf6bbe11dcb28a424914e"
+        "file": "source/december-phoenix-f8ddb9bf96d2.webp",
+        "sha256": "f8ddb9bf96d220132b353f73395d9cae87f896854dc1bfcc482be17f6e0bcedd"
       },
       "sourcePackageId": "new-primary-deck",
       "table": {
         "path": "runtime/cards/december-phoenix.png",
-        "sha256": "019d26bd6101ebffea66247d98b189e54fc38514dc4ea400c9b1876f72d7d804"
+        "sha256": "3f49c8bdb57dc0486242f6e668abd566e9764f8a3e853feb5f560131b1f22fe1"
       },
       "thumbnail": {
         "path": "thumbnails/december-phoenix.png",
-        "sha256": "48009ec2d3a3ab384e250d6c8b0f5a715600ee0cfe5e9d5506623b7b8e5a1a18"
+        "sha256": "1cda959cbea77033ca5972072b8e6bd4c1d6bddd795976e2a042b998a6c453cc"
       }
     }
   ],
@@ -83,11 +83,11 @@
   "contactSheets": {
     "artReview": {
       "path": "contact-sheets/art-review.png",
-      "sha256": "f6eb14ed37645bf66460b5730b740a6afafd748ccf95050820833cdd1023cb2b"
+      "sha256": "89229b0d493acda866fb19ac34c0ceb1a2a8a230d975e8bab610e3acc9e8f038"
     },
     "gameplay": {
       "path": "contact-sheets/gameplay-390x844.png",
-      "sha256": "d897e644eb3df003b2d04089cd3ce8a36b6e9789b8e7a1dbfe689042f4cb0d1d"
+      "sha256": "90c2fc3b03ec8dc41bbc9580f712dd8e8f94314e43c8b63fc3ed8b7ab9593b82"
     }
   },
   "formatVersion": 1,
@@ -358,6 +358,6 @@
     }
   ],
   "packageId": "new-primary-deck",
-  "packageVersion": "0.1.0",
+  "packageVersion": "0.2.0",
   "runtimeManifestPath": null
 }

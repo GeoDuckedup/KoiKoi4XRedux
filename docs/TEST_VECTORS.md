@@ -262,7 +262,7 @@ Phase 2D binding:
 
 ## 11. Phase 2E deck-authoring and approval vectors
 
-These assertions govern local authoring and review. They do not make technical placeholder art a
+These assertions govern local authoring and review. They do not make development or candidate art a
 release deck and do not permit an automated tool to impersonate owner visual approval.
 
 | ID | Required expectation |
@@ -272,7 +272,7 @@ release deck and do not permit an automated tool to impersonate owner visual app
 | `ART2E-003` | Auto/Manual transform editing is immutable, normalized, deterministic, and resolution-independent. |
 | `ART2E-004` | Art-review and gameplay sheet plans have literal dimensions, canonical card order, 48 slots, and locked card geometry. |
 | `ART2E-005` | Identical source and transform produce byte-identical table/thumbnail derivatives without changing the source digest. |
-| `ART2E-006` | The four-source technical pilot builds both complete 48-slot review sheets, remains visibly incomplete, and withholds a runtime manifest and approval. |
+| `ART2E-006` | The four-source pilot candidate builds both complete 48-slot review sheets, remains visibly incomplete, and withholds a runtime manifest and approval. |
 | `ART2E-007` | A complete second technical package builds 48 faces plus a back and decodes through the strict runtime manifest contract. |
 | `ART2E-008` | Transform saves are atomic and leave every immutable source digest unchanged. |
 | `ART2E-009` | Source assignment writes a digest-named immutable copy and never overwrites the original or another card's source. |

@@ -3,20 +3,20 @@
   "builderVersion": 1,
   "artSpecVersion": 1,
   "packageId": "new-primary-deck",
-  "packageVersion": "0.1.0",
-  "pilotApprovalStatus": "technical-placeholder",
+  "packageVersion": "0.2.0",
+  "pilotApprovalStatus": "awaiting-finished-art",
   "completeRuntimeManifest": false,
-  "note": "Phase 0D transform/import plan only; raster derivatives and visual approval remain Phase 2E.",
+  "note": "Deterministic pilot source/transform plan; owner visual approval remains a separate gate.",
   "cards": [
     {
       "role": "dense",
       "cardId": "november-rain",
       "source": {
-        "file": "source/november-rain.png",
-        "sha256": "a39655e715eb1cb3454c4c440df9ef866b572cb3727d4a17b59c5dcc1f2028df",
+        "file": "source/november-rain-767b8c42a52b.webp",
+        "sha256": "767b8c42a52bb3768895d6a847263c8081d6f6da26542fc81007a0827b174647",
         "width": 1600,
         "height": 2560,
-        "format": "png"
+        "format": "webp"
       },
       "transform": {
         "mode": "manual",
@@ -86,11 +86,11 @@
       "role": "simple",
       "cardId": "september-sake-cup",
       "source": {
-        "file": "source/september-sake-cup.png",
-        "sha256": "6d139c16529171b56c1b2cfd7042f87d85235cab743b6ce6d4a2065bf59292ed",
+        "file": "source/september-sake-cup-461782769f44.webp",
+        "sha256": "461782769f44e6636e569848d21d446a0036504a0551b15e688d0038e792a9a6",
         "width": 1600,
         "height": 2560,
-        "format": "png"
+        "format": "webp"
       },
       "transform": {
         "mode": "auto",
@@ -155,11 +155,11 @@
       "role": "brightLargeFocal",
       "cardId": "december-phoenix",
       "source": {
-        "file": "source/december-phoenix.png",
-        "sha256": "e2d0e9f95d3449bba06e0855ae9c18599f7dbd7452fdf6bbe11dcb28a424914e",
+        "file": "source/december-phoenix-f8ddb9bf96d2.webp",
+        "sha256": "f8ddb9bf96d220132b353f73395d9cae87f896854dc1bfcc482be17f6e0bcedd",
         "width": 1600,
         "height": 2560,
-        "format": "png"
+        "format": "webp"
       },
       "transform": {
         "mode": "auto",
@@ -224,11 +224,11 @@
       "role": "plain",
       "cardId": "january-pine-plain-a",
       "source": {
-        "file": "source/january-pine-plain-a.png",
-        "sha256": "27dbfaf9d05a930a8c3a18196cdc27adac14fd919b917008a2a2c0468c7106c5",
+        "file": "source/january-pine-plain-a-89dd9700428f.webp",
+        "sha256": "89dd9700428fb3557e5151fe98148e1328d0f3de68eed2fdd003eddbc29824f0",
         "width": 1600,
         "height": 2560,
-        "format": "png"
+        "format": "webp"
       },
       "transform": {
         "mode": "auto",

@@ -545,3 +545,24 @@ Original prompt: read the package and understand it, then let me know when we ar
   local-only Workshop route returned 404.
 - Phase 2E tooling deployment is complete. Remaining before Phase 3: owner-supplied finished art
   and explicit Phase 2E visual approval.
+
+## 2026-08-09 — Phase 2E Pilot Candidate V1 generated
+
+- Owner said to proceed with the art-production gate. Generated an original cohesive pilot direction
+  using the built-in image generator: contemporary woodblock/screen-print faces with deep indigo
+  grounds, mineral gold/vermilion/teal accents, bold mobile-readable silhouettes, and washi texture.
+- Created the locked four roles—November Rain dense composition, September Sake Cup simple
+  composition, December Phoenix Bright focal, and January Pine Plain—plus a rotationally balanced
+  matching card back. No borders, text, labels, logos, UI, or commercial-deck imitation are baked in.
+- Preserved the native 992×1586 PNG outputs in the generation archive, normalized selected masters
+  to exact 1600×2560 high-quality WebP, and imported them through the real Workshop service as
+  immutable digest-named files without overwriting the technical placeholders.
+- Rebuilt the four table derivatives, thumbnails, card back, 968×4516 art-review sheet, and 390×1624
+  gameplay sheet. The package reports 3 Auto / 1 Manual / 44 Missing / 0 Warning, remains
+  `awaiting-finished-art`, and correctly withholds both runtime manifest and approval.
+- The real local Workshop browser trace passes at desktop and mobile and now captures the exact
+  390×844 pilot board. Remaining gate: owner approves the pilot direction or requests revisions;
+  only approval permits production of the other 44 faces.
+- `npm run check` passes formatting, lint, all workspace typechecks, 33 files / 346 tests, the
+  isolated 10,002-match deterministic gate in 102 seconds, authored-deck validation, and the
+  764-module production build.
