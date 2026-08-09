@@ -2,7 +2,7 @@
 
 **Plan version:** 1.1
 **Updated:** August 9, 2026
-**Current gate:** Phase 2B independently accepted; commit and deployment verification in progress
+**Current gate:** Phase 2B deployed and awaiting owner review; Phase 2C is next
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -333,7 +333,7 @@ Current result:
 
 ### Phase 2B — Persistent cards and runtime deck packages
 
-Status: **implemented and independently accepted; commit and deployment verification in progress**.
+Status: **implemented, independently accepted, committed, and deployed; awaiting owner review**.
 
 Deliver:
 
@@ -364,6 +364,14 @@ Gate:
 
 Phase ownership remains strict: AnimationDirector is 2C, selection/target/keyboard input is 2D, and
 Deck Workshop plus final visual approval is 2E.
+
+Current result:
+
+- implementation commit `7549973` is on `origin/main`;
+- hosted CI run `31300988963` passed the full repository and Phase 2B browser/artifact gates;
+- Pages run `31300988958` passed its repository-prefixed build/browser gate and deployed;
+- a cache-busted live 390×844 browser check returned HTTP 200, switched Sunrise to Moonlight,
+  preserved all 48 CardView tokens, changed texture bindings, and reported no geometry/browser error.
 
 ## Later phases
 

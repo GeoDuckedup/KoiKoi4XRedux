@@ -2,8 +2,8 @@
 
 **Updated:** August 9, 2026
 
-**Overall state:** Greenfield rewrite, Phase 2B persistent-card/deck runtime implemented and
-independently accepted; commit and deployment verification in progress
+**Overall state:** Greenfield rewrite, Phase 2B persistent-card/deck runtime implemented,
+independently accepted, committed, and deployed; awaiting owner review
 
 **Runtime state:** Complete deterministic headless match engine with formal projections, replay,
 hashes, retry-safe command receipts, and protocol records, plus a presentation-only responsive Pixi
@@ -138,8 +138,13 @@ recorded in [`ADR 0008`](./adr/0008-phase-2b-persistent-card-runtime.md).
   diagnostics. Its desktop screenshot plus representative portrait/desktop Sunrise and Moonlight
   browser screenshots were visually inspected.
 - Independent manifest/asset, Pixi/runtime, and test/deployment reviews report no remaining blocker,
-  high, or medium issue after inactive/stale texture eviction and provenance repairs. Hosted commit
-  and deployment verification are the remaining release steps.
+  high, or medium issue after inactive/stale texture eviction and provenance repairs.
+- Phase 2B implementation commit `7549973` is on `origin/main`. Hosted CI run `31300988963` passed
+  the full check, Phase 2B validation, and screenshot artifact upload in 4m22s. Pages run
+  `31300988958` passed its complete repository-prefixed browser build and deployed successfully.
+- A cache-busted live 390×844 request returned HTTP 200. Technical Sunrise and Technical Moonlight
+  screenshots were visually inspected; the runtime reported 48/48 unique views, stable tokens,
+  changed texture bindings, empty geometry diagnostics, and no console/page/network errors.
 
 ## Known constraints and risks
 

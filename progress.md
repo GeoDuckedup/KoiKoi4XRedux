@@ -364,3 +364,17 @@ Original prompt: read the package and understand it, then let me know when we ar
 - Runtime provenance is now constrained to the declared inheritance chain. Three independent
   follow-up reviews report no remaining blocker, high, or medium issue.
 - Remaining: commit/push, hosted CI/Pages verification, and cache-busted live deck-switch inspection.
+
+## 2026-08-09 — Phase 2B deployed
+
+- Committed the accepted implementation as `7549973` and pushed `main` to GitHub.
+- Hosted CI run `31300988963` passed in 4m22s, including the full 301-test repository check, the
+  complete 42-test/two-base Phase 2B browser gate, and screenshot artifact upload.
+- Pages run `31300988958` passed its 100-artifact check, full repository check, repository-prefixed
+  seven-viewport browser switch gate, artifact upload, and deployment.
+- A cache-busted live 390×844 request returned HTTP 200. The live runtime switched from Technical
+  Sunrise to Technical Moonlight, preserved every one of 48 CardView tokens, changed the texture
+  bindings, and reported no clipped/invalid/overlapping zones or browser/network error. Both live
+  screenshots were inspected and are readable and contained.
+- Phase 2B is implemented, independently accepted, pushed, deployed, and ready for owner review.
+  Next: Phase 2C AnimationDirector after owner approval; gameplay input remains Phase 2D.
