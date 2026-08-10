@@ -62,8 +62,19 @@ describe("Phase 2B table diagnostics", () => {
         lastIntentType: null,
         emittedIntentCount: 0,
       },
-      inputFixtureId: "handPlay",
       semanticControlCount: 8,
+      localRound: {
+        viewerId: "player-a",
+        activePlayerId: "player-a",
+        stateVersion: 3,
+        phase: "awaitingHandPlay",
+        roundNumber: 1,
+        scheduledMonth: 1,
+        handoffPending: false,
+        recapCount: 1,
+        latestRecap: "Round ready. Player A begins.",
+        commandCount: 0,
+      },
       layout,
       ready: true,
       deck: {
@@ -92,7 +103,6 @@ describe("Phase 2B table diagnostics", () => {
         },
       },
       simulationTimeMs: 500,
-      scenarioId: "handToField",
       viewport: { width: 390, height: 844 },
     });
     const serialized = serializeTablePreviewSnapshot(snapshot);
@@ -109,15 +119,19 @@ describe("Phase 2B table diagnostics", () => {
       input: {
         status: "idle",
         confirmationMode: "guided",
-        fixtureId: "handPlay",
         semanticControlCount: 8,
-        intentExecution: "notExecuted",
+        intentExecution: "executedLocally",
+      },
+      localRound: {
+        viewerId: "player-a",
+        stateVersion: 3,
+        phase: "awaitingHandPlay",
+        handoffPending: false,
       },
       simulationTimeMs: 500,
       animation: {
         status: "completed",
         mode: "normal",
-        scenarioId: "handToField",
         transitCardCount: 0,
       },
       coordinateSystem: COORDINATE_SYSTEM,
@@ -135,6 +149,7 @@ describe("Phase 2B table diagnostics", () => {
         activeDeckId: "technical-sunrise",
         cardViewCount: 48,
         uniqueCardIdCount: 48,
+        visibleViews: expect.any(Array),
       },
       layout: {
         mode: "portrait",
@@ -143,7 +158,8 @@ describe("Phase 2B table diagnostics", () => {
       },
       diagnostics: { clippedZones: [], invalidZones: [], overlapViolations: [] },
     });
-    expect(serialized).toContain("january-crane");
+    expect(serialized).toContain("march-curtain");
+    expect(serialized).not.toContain("january-crane");
     expect(serialized).not.toContain("cards/january-crane.svg");
     expect(serialized).not.toContain("drawPileOrdered");
     expect(serialized).not.toContain("commandId");
@@ -151,7 +167,39 @@ describe("Phase 2B table diagnostics", () => {
     expect(Object.isFrozen(snapshot)).toBe(true);
     expect(Object.isFrozen(snapshot.layout)).toBe(true);
     expect(Object.isFrozen(snapshot.cards)).toBe(true);
-    expect(Object.isFrozen(snapshot.cards.views)).toBe(true);
+    expect(Object.isFrozen(snapshot.cards.visibleViews)).toBe(true);
     expect(Object.isFrozen(snapshot.deck.availableDeckIds)).toBe(true);
+  });
+
+  it("fans legal field overflow over the stable eight field lanes", () => {
+    const layout = computeBoardLayout({ width: 390, height: 565 });
+    const overflowIds = ["august-pampas-plain-a", "august-pampas-plain-b"] as const;
+    const overflowIdSet = new Set<string>(overflowIds);
+    const projection = CARD_SHOWCASE_ASSIGNMENTS.map((state) => {
+      const overflowIndex = overflowIds.indexOf(state.cardId as (typeof overflowIds)[number]);
+      return overflowIndex < 0
+        ? state
+        : Object.freeze({
+            ...state,
+            zone: "field" as const,
+            faceUp: true,
+            slotIndex: 8 + overflowIndex,
+            slotId: `field:${8 + overflowIndex}`,
+          });
+    });
+    const placements = computeCardPlacements(layout, projection);
+    const overflow = placements.filter(({ cardId }) => overflowIdSet.has(cardId));
+
+    expect(overflow).toHaveLength(2);
+    for (const placement of overflow) {
+      expect(placement.bounds.x).toBeGreaterThanOrEqual(layout.cardZones.field.x);
+      expect(placement.bounds.y).toBeGreaterThanOrEqual(layout.cardZones.field.y);
+      expect(placement.bounds.x + placement.bounds.width).toBeLessThanOrEqual(
+        layout.cardZones.field.x + layout.cardZones.field.width,
+      );
+      expect(placement.bounds.y + placement.bounds.height).toBeLessThanOrEqual(
+        layout.cardZones.field.y + layout.cardZones.field.height,
+      );
+    }
   });
 });

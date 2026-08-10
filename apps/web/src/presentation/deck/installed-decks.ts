@@ -1,5 +1,10 @@
 export const INSTALLED_DECKS = Object.freeze([
   Object.freeze({
+    id: "new-primary-deck",
+    name: "Primary Deck",
+    manifestPath: "decks/new-primary-deck/manifest.v1.json",
+  }),
+  Object.freeze({
     id: "technical-sunrise",
     name: "Technical Sunrise",
     manifestPath: "decks/technical-sunrise/manifest.v1.json",

@@ -83,7 +83,11 @@ describe("Phase 2B CardAssetManager", () => {
     expect(moonlight.status).toBe("activated");
     expect(sunriseAgain.status).toBe("activated");
     expect(manager.active?.manifest.packageId).toBe("technical-sunrise");
-    expect(manager.installedDeckIds).toEqual(["technical-sunrise", "technical-moonlight"]);
+    expect(manager.installedDeckIds).toEqual([
+      "new-primary-deck",
+      "technical-sunrise",
+      "technical-moonlight",
+    ]);
     expect(requestedManifests).toEqual([
       "https://example.test/KoiKoi4XRedux/decks/technical-sunrise/manifest.v1.json",
       "https://example.test/KoiKoi4XRedux/decks/technical-moonlight/manifest.v1.json",

@@ -615,3 +615,31 @@ Original prompt: read the package and understand it, then let me know when we ar
   Workshop and both seven-viewport browser matrices; the full repository gate passes 33 files / 348
   tests, all 10,002 generated matches, all workspace checks, deck validation, and the 764-module
   production build.
+
+## 2026-08-09 — Phase 3A complete local turn loop
+
+- Replaced the public technical input fixture with a deterministic browser-local runtime over real
+  `startMatch`, `projectPlayerObservation`, legal intents, and `applyGameplayCommand` seams.
+- Made the approved `new-primary-deck` v1.0.0 the default runtime package and added a Vite adapter
+  that serves/copies its existing generated 48-face/back package for development, root production,
+  and repository-prefixed Pages builds. Technical decks remain optional switch targets.
+- Added recipient-relative board projection and public-event animation boundaries. The player sees
+  their own hand plus public cards; face-down opponent/draw identities are absent from
+  `render_game_to_text`.
+- Live browser play revealed that legal unmatched turns can grow the field above eight cards. Added
+  contained overflow fanning over the stable 2×4 lanes and a focused regression instead of rejecting
+  the authoritative move.
+- Added full-table pass-device privacy cover, explicit next-player Ready activation, dynamic
+  player/score/month/multiplier chrome, and concise HTML turn recap independent of the canvas.
+- `LOCAL-001` through `LOCAL-008` bind the approved deck, safe observation, command execution,
+  animation boundaries, captures/field overflow, handoff, recap, and complete deterministic round.
+- The focused gate passes 17 files / 119 tests, approved release validation, all 100 technical deck
+  artifacts, and the Workshop trace. The required game client loaded the approved deck with 48
+  persistent CardViews and no errors. Root and Pages smokes each pass seven viewports plus a real
+  Normal-motion 390×844 Player A turn, recap, privacy cover, Player B Ready, and New round reset.
+- `npm run check` passes formatting, zero-warning lint, all five workspace typechecks, deck
+  validation, 34 files / 353 tests plus the isolated 10,002-match deterministic gate, and the
+  765-module production build.
+- Phase 3A is locally accepted. Remaining before owner verification: commit, push, hosted CI/Pages
+  checks, and cache-busted live validation. Next after acceptance: Phase 3B
+  yaku/progress/Bank/Koi presentation.

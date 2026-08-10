@@ -53,7 +53,7 @@ select:focus-visible {
 
 .app-shell {
   display: grid;
-  grid-template-rows: auto minmax(240px, 1fr) auto;
+  grid-template-rows: auto minmax(420px, 1fr) auto auto auto;
   width: min(100%, 1600px);
   min-height: 100vh;
   min-height: 100svh;
@@ -62,12 +62,7 @@ select:focus-visible {
   gap: clamp(5px, 1vw, 12px);
 }
 
-.animation-toolbar {
-  position: absolute;
-  z-index: 5;
-  right: clamp(8px, 1.2vw, 18px);
-  bottom: clamp(7px, 1vw, 14px);
-  left: clamp(8px, 1.2vw, 18px);
+.round-toolbar {
   display: flex;
   min-width: 0;
   align-items: end;
@@ -77,11 +72,11 @@ select:focus-visible {
   border: 1px solid rgb(233 187 90 / 24%);
   border-radius: 14px;
   background: rgb(10 33 24 / 94%);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 28%);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
   scrollbar-width: thin;
 }
 
-.animation-toolbar label {
+.round-toolbar label {
   display: grid;
   flex: 0 0 auto;
   gap: 3px;
@@ -92,8 +87,8 @@ select:focus-visible {
   text-transform: uppercase;
 }
 
-.animation-toolbar select,
-.animation-toolbar button {
+.round-toolbar select,
+.round-toolbar button {
   min-height: 44px;
   border: 1px solid rgb(255 243 207 / 32%);
   border-radius: 10px;
@@ -101,15 +96,7 @@ select:focus-visible {
   background: #173b2c;
 }
 
-.toolbar-divider {
-  width: 1px;
-  height: 34px;
-  flex: 0 0 1px;
-  align-self: center;
-  background: rgb(233 187 90 / 24%);
-}
-
-.animation-toolbar select {
+.round-toolbar select {
   min-width: 132px;
   padding: 0.45rem 1.6rem 0.45rem 0.55rem;
 }
@@ -185,12 +172,88 @@ select:focus-visible {
   outline-offset: 3px;
 }
 
-.technical-label {
+.runtime-label {
   flex: 0 0 auto;
   align-self: center;
   color: rgb(233 187 90 / 78%);
   font-size: 0.66rem;
   letter-spacing: 0.04em;
+}
+
+.new-round-button {
+  flex: 0 0 auto;
+  padding-inline: 0.8rem;
+  cursor: pointer;
+}
+
+.handoff {
+  position: absolute;
+  z-index: 12;
+  display: grid;
+  inset: 0;
+  place-items: center;
+  padding: 20px;
+  background: radial-gradient(circle at center, rgb(31 89 65 / 74%), rgb(2 8 5 / 98%) 65%), #020805;
+}
+
+.handoff-card {
+  width: min(100%, 390px);
+  padding: clamp(22px, 6vw, 42px);
+  border: 1px solid rgb(233 187 90 / 50%);
+  border-radius: 22px;
+  text-align: center;
+  background: #0a2118;
+  box-shadow: 0 24px 70px rgb(0 0 0 / 45%);
+}
+
+.handoff-card h2,
+.turn-recap h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.2rem, 3vw, 1.75rem);
+}
+
+.handoff-card p:not(.eyebrow) {
+  color: rgb(255 243 207 / 78%);
+  line-height: 1.55;
+}
+
+.handoff-card button {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #e9bb5a;
+  border-radius: 999px;
+  color: #061711;
+  font-weight: 800;
+  background: #e9bb5a;
+  cursor: pointer;
+}
+
+.turn-recap {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.22fr) 1fr;
+  gap: clamp(12px, 2vw, 28px);
+  align-items: start;
+  max-height: 156px;
+  overflow: auto;
+  padding: clamp(10px, 1.5vw, 16px);
+  border: 1px solid rgb(233 187 90 / 24%);
+  border-radius: 16px;
+  background: rgb(10 33 24 / 82%);
+}
+
+.turn-recap ol {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 1.35rem;
+  color: rgb(255 243 207 / 78%);
+  font-size: clamp(0.72rem, 1.3vw, 0.86rem);
+  line-height: 1.45;
+}
+
+.turn-recap li:last-child {
+  color: #fff3cf;
 }
 
 .app-header,
@@ -313,7 +376,7 @@ kbd {
 
 @media (max-width: 520px) {
   .app-shell {
-    grid-template-rows: auto minmax(424px, 1fr) auto;
+    grid-template-rows: auto minmax(424px, 1fr) auto auto auto;
     padding: 6px;
   }
 
@@ -355,28 +418,65 @@ kbd {
     display: none;
   }
 
-  .animation-toolbar {
+  .round-toolbar {
+    flex-wrap: wrap;
+    overflow-x: visible;
     padding-block: 4px;
   }
 
-  .technical-label {
+  .round-toolbar label {
+    min-width: 0;
+    flex: 1 1 132px;
+  }
+
+  .round-toolbar select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .runtime-label {
     display: none;
   }
 
-  .animation-toolbar label > span {
+  .round-toolbar label > span {
     display: none;
+  }
+
+  .turn-recap {
+    grid-template-columns: 1fr;
+    max-height: 132px;
+  }
+
+  .turn-recap > div {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .turn-recap .eyebrow {
+    margin: 0;
+  }
+}
+
+@media (min-width: 521px) and (max-width: 900px) and (min-height: 700px) {
+  .game-frame {
+    min-height: 760px;
   }
 }
 
 @media (max-height: 480px) and (orientation: landscape) {
   .app-shell {
-    grid-template-rows: 44px minmax(240px, 1fr);
+    grid-template-rows: 44px minmax(304px, 1fr) auto;
     padding: 4px;
     gap: 4px;
   }
 
   .app-header {
     min-height: 40px;
+  }
+
+  .game-frame {
+    min-height: 304px;
   }
 
   .app-header > div {
@@ -411,12 +511,16 @@ kbd {
     display: none;
   }
 
-  .animation-toolbar {
+  .turn-recap {
+    display: none;
+  }
+
+  .round-toolbar {
     padding-block: 2px;
   }
 
-  .animation-toolbar label > span,
-  .technical-label {
+  .round-toolbar label > span,
+  .runtime-label {
     display: none;
   }
 }

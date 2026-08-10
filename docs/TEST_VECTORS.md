@@ -293,7 +293,33 @@ Phase 2E binding:
 - the normal production app contains no Workshop entry, local write API, authored source, approval
   record, Sharp import, or runtime transform resolver.
 
-## 12. Approved-decision coverage matrix
+## 12. Phase 3A local-round vectors
+
+| ID | Required expectation |
+|---|---|
+| `LOCAL-001` | The production browser loads the owner-approved `new-primary-deck` as its default complete 48-face/back package at root and repository-prefixed bases. |
+| `LOCAL-002` | One real player observation projects exactly 48 persistent cards while opponent-hand and unrevealed-draw identities remain face-down and absent from the text/debug surface. |
+| `LOCAL-003` | A legal Hand intent becomes one real gameplay command, increments authoritative state once, and emits the engine's public Hand/Draw events. |
+| `LOCAL-004` | Every public event has one recipient-relative animation boundary plus the final target; legal field counts above eight fan over the stable 2×4 lanes without rejecting gameplay. |
+| `LOCAL-005` | Real pair/sweep captures move the exact public card IDs into the acting player's category rails, and exact-two choices expose only engine-provided targets. |
+| `LOCAL-006` | A completed turn covers the full table before switching observations; the next player's private hand appears only after explicit Ready activation. |
+| `LOCAL-007` | Every completed turn appends one concise HTML recap naming public played, drawn, captured, yaku/result, and next-player facts without hidden data. |
+| `LOCAL-008` | A deterministic legal-action driver completes the entire first round through real observation/command/handoff seams and produces exactly one durable round result. |
+
+Phase 3A binding:
+
+- focused tests carry all eight exact IDs and execute the production local runtime, observation
+  adapter, animation-boundary planner, recap formatter, legal-capture path, handoff, and complete
+  round;
+- root and `/KoiKoi4XRedux/` browser gates load the approved primary deck at all seven viewports,
+  execute a real Hand → Draw → field/capture turn, inspect the recap, prove the privacy cover, switch
+  to Player B, and restart without browser or network errors;
+- the local adapter may assign command IDs and execute the pure engine, but the input controller,
+  Pixi scene, semantic DOM controls, and deck runtime remain rule-free;
+- Phase 3B retains finished yaku/Bank/Koi presentation and Phase 3C retains the finished round-end
+  result experience.
+
+## 13. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

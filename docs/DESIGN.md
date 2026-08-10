@@ -3532,12 +3532,19 @@ Phase 2 acceptance:
 
 ### Phase 3A — Complete local turn loop
 
-- one playable round;
-- hand play;
-- draw;
-- capture;
-- handoff;
-- text recap.
+- one full first round executes through real `PlayerObservationV1` inputs and engine gameplay
+  commands; no browser/Pixi capture or scoring logic;
+- legal Hand play, automatic Draw, exact-two Hand/Draw targets, pair/sweep capture, and the existing
+  engine decision seam cannot deadlock;
+- the owner-approved primary deck is the default while additional packages remain texture-only;
+- public events drive recipient-relative animation boundaries, including legal field overflow above
+  the base stable 2×4 lanes;
+- completed turns cover the whole table before local viewer handoff and reveal the next private hand
+  only after explicit Ready activation;
+- a concise HTML text recap records public played, drawn, captured, yaku/result, and next-player
+  facts; canvas output is not the sole record;
+- opponent hands, unrevealed draw order, RNG/checkpoints, and command IDs remain outside player text
+  and semantic controls.
 
 ### Phase 3B — Yaku decision presentation
 

@@ -1,3 +1,7 @@
+import type { PlayerId, PublicPhaseV1 } from "@koikoi4x/engine";
+import type { RuntimeDeckApprovalStatus } from "@koikoi4x/deck-format";
+
+import type { AnimationInspectionV1 } from "../presentation/animation/types";
 import type {
   BoardLayout,
   BoardLayoutDiagnostics,
@@ -5,84 +9,89 @@ import type {
   BoardViewport,
 } from "../presentation/board/types";
 import type { CardRuntimeInspection } from "../presentation/cards/types";
-import type { AnimationInspectionV1 } from "../presentation/animation/types";
-import type { TechnicalAnimationScenarioId } from "../presentation/animation/technical-scenarios";
-import type { RuntimeDeckApprovalStatus } from "@koikoi4x/deck-format";
 import type { InputInteractionInspectionV1 } from "../presentation/input/types";
-import type { TechnicalInputFixtureId } from "../presentation/input/technical-input-fixtures";
 
-export const TABLE_SCREEN_ID = "inputRuntime" as const;
-export const TABLE_PRESENTATION_MODE = "technicalInputDemo" as const;
+export const TABLE_SCREEN_ID = "localRound" as const;
+export const TABLE_PRESENTATION_MODE = "authoritativeLocalRound" as const;
 export const COORDINATE_SYSTEM = "origin top-left; +x right; +y down" as const;
 
+export interface LocalRoundSnapshotV1 {
+  readonly activePlayerId: PlayerId | null;
+  readonly commandCount: number;
+  readonly handoffPending: boolean;
+  readonly latestRecap: string | null;
+  readonly phase: PublicPhaseV1["kind"];
+  readonly recapCount: number;
+  readonly roundNumber: number;
+  readonly scheduledMonth: number;
+  readonly stateVersion: number;
+  readonly viewerId: PlayerId;
+}
+
 export interface TablePreviewSnapshot {
-  animation: AnimationInspectionV1 & {
-    readonly scenarioId: TechnicalAnimationScenarioId;
-    readonly transitCardCount: number;
+  readonly animation: AnimationInspectionV1 & { readonly transitCardCount: number };
+  readonly boardViewport: BoardViewport;
+  readonly canvasCount: number;
+  readonly cards: Omit<CardRuntimeInspection, "views"> & {
+    readonly visibleViews: readonly CardRuntimeInspection["views"][number][];
   };
-  boardViewport: BoardViewport;
-  canvasCount: number;
-  coordinateSystem: typeof COORDINATE_SYSTEM;
-  diagnostics: BoardLayoutDiagnostics;
-  deck: {
-    activeDeckId: string | null;
-    approvalStatus: RuntimeDeckApprovalStatus | null;
-    availableDeckIds: readonly string[];
-    status: "error" | "loading" | "ready";
+  readonly coordinateSystem: typeof COORDINATE_SYSTEM;
+  readonly deck: {
+    readonly activeDeckId: string | null;
+    readonly approvalStatus: RuntimeDeckApprovalStatus | null;
+    readonly availableDeckIds: readonly string[];
+    readonly status: "error" | "loading" | "ready";
   };
-  fullscreen: boolean;
-  input: InputInteractionInspectionV1 & {
-    readonly fixtureId: TechnicalInputFixtureId;
+  readonly diagnostics: BoardLayoutDiagnostics;
+  readonly fullscreen: boolean;
+  readonly input: InputInteractionInspectionV1 & {
+    readonly intentExecution: "executedLocally";
     readonly semanticControlCount: number;
-    readonly intentExecution: "notExecuted";
   };
-  layerOrder: BoardLayout["layerOrder"];
-  layout: {
-    cardZoneCount: number;
-    fieldSlotCount: number;
-    mode: BoardLayout["mode"];
-    scale: number;
-    uiZones: BoardLayout["uiZones"];
-    zones: BoardLayout["cardZones"];
+  readonly layerOrder: BoardLayout["layerOrder"];
+  readonly layout: {
+    readonly cardZoneCount: number;
+    readonly fieldSlotCount: number;
+    readonly mode: BoardLayout["mode"];
+    readonly scale: number;
+    readonly uiZones: BoardLayout["uiZones"];
+    readonly zones: BoardLayout["cardZones"];
   };
-  presentationMode: typeof TABLE_PRESENTATION_MODE;
-  cards: CardRuntimeInspection;
-  ready: boolean;
-  scene: BoardSceneInspection;
-  screen: typeof TABLE_SCREEN_ID;
-  simulationTimeMs: number;
-  viewport: BoardViewport;
+  readonly localRound: LocalRoundSnapshotV1;
+  readonly presentationMode: typeof TABLE_PRESENTATION_MODE;
+  readonly ready: boolean;
+  readonly scene: BoardSceneInspection;
+  readonly screen: typeof TABLE_SCREEN_ID;
+  readonly simulationTimeMs: number;
+  readonly viewport: BoardViewport;
 }
 
 export function advancePreviewTime(currentTimeMs: number, deltaMs: number): number {
   if (!Number.isFinite(deltaMs) || deltaMs < 0) {
     throw new RangeError("advanceTime requires a finite, non-negative number of milliseconds.");
   }
-
   const nextTimeMs = currentTimeMs + deltaMs;
   if (!Number.isFinite(nextTimeMs) || Math.abs(nextTimeMs) > Number.MAX_SAFE_INTEGER) {
     throw new RangeError("advanceTime exceeded the deterministic clock's safe numeric range.");
   }
-
   return nextTimeMs;
 }
 
 export function createTablePreviewSnapshot(input: {
-  animation: AnimationInspectionV1;
-  boardViewport: BoardViewport;
-  canvasCount: number;
-  diagnostics: BoardLayoutDiagnostics;
-  deck: TablePreviewSnapshot["deck"];
-  fullscreen: boolean;
-  input: InputInteractionInspectionV1;
-  inputFixtureId: TechnicalInputFixtureId;
-  semanticControlCount: number;
-  layout: BoardLayout;
-  ready: boolean;
-  scene: BoardSceneInspection & { readonly cards: CardRuntimeInspection };
-  simulationTimeMs: number;
-  scenarioId: TechnicalAnimationScenarioId;
-  viewport: BoardViewport;
+  readonly animation: AnimationInspectionV1;
+  readonly boardViewport: BoardViewport;
+  readonly canvasCount: number;
+  readonly deck: TablePreviewSnapshot["deck"];
+  readonly diagnostics: BoardLayoutDiagnostics;
+  readonly fullscreen: boolean;
+  readonly input: InputInteractionInspectionV1;
+  readonly layout: BoardLayout;
+  readonly localRound: LocalRoundSnapshotV1;
+  readonly ready: boolean;
+  readonly scene: BoardSceneInspection & { readonly cards: CardRuntimeInspection };
+  readonly semanticControlCount: number;
+  readonly simulationTimeMs: number;
+  readonly viewport: BoardViewport;
 }): TablePreviewSnapshot {
   const scene = Object.freeze({
     root: Object.freeze({ ...input.scene.root }),
@@ -93,9 +102,14 @@ export function createTablePreviewSnapshot(input: {
     invalidZones: Object.freeze([...input.diagnostics.invalidZones]),
     overlapViolations: Object.freeze([...input.diagnostics.overlapViolations]),
   });
+  const visibleViews = input.scene.cards.views
+    .filter(({ faceUp }) => faceUp)
+    .map((view) => Object.freeze({ ...view }));
   const cards = Object.freeze({
-    ...input.scene.cards,
-    views: Object.freeze(input.scene.cards.views.map((view) => Object.freeze({ ...view }))),
+    activeDeckId: input.scene.cards.activeDeckId,
+    cardViewCount: input.scene.cards.cardViewCount,
+    uniqueCardIdCount: input.scene.cards.uniqueCardIdCount,
+    visibleViews: Object.freeze(visibleViews),
     zoneCounts: Object.freeze({ ...input.scene.cards.zoneCounts }),
   });
   return Object.freeze({
@@ -111,17 +125,16 @@ export function createTablePreviewSnapshot(input: {
       selectableCardIds: Object.freeze([...input.input.selectableCardIds]),
       legalTargetCardIds: Object.freeze([...input.input.legalTargetCardIds]),
       decisionChoices: Object.freeze([...input.input.decisionChoices]),
-      fixtureId: input.inputFixtureId,
       semanticControlCount: input.semanticControlCount,
-      intentExecution: "notExecuted" as const,
+      intentExecution: "executedLocally" as const,
     }),
+    localRound: Object.freeze({ ...input.localRound }),
     simulationTimeMs: input.simulationTimeMs,
     animation: Object.freeze({
       ...input.animation,
       activeClip: input.animation.activeClip
         ? Object.freeze({ ...input.animation.activeClip })
         : null,
-      scenarioId: input.scenarioId,
       transitCardCount: input.scene.cards.zoneCounts.transit,
     }),
     coordinateSystem: COORDINATE_SYSTEM,

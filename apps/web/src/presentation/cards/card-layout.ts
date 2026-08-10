@@ -59,11 +59,30 @@ function boundsFor(
   zoneCounts: ReadonlyMap<CardZone, number>,
   layout: BoardLayout,
 ): BoardRect {
-  if (state.zone === "playerHand" || state.zone === "opponentHand" || state.zone === "field") {
+  if (state.zone === "playerHand" || state.zone === "opponentHand") {
     const slots = layout.slots[state.zone];
     const slot = slots[state.slotIndex];
     if (!slot) throw new RangeError(`${state.slotId} does not fit the ${state.zone} layout.`);
     return freezeRect(slot);
+  }
+  if (state.zone === "field") {
+    const slots = layout.slots.field;
+    const slot = slots[state.slotIndex % slots.length];
+    if (!slot) throw new RangeError(`${state.slotId} does not fit the field layout.`);
+    const overflowLevel = Math.floor(state.slotIndex / slots.length);
+    if (overflowLevel === 0) return freezeRect(slot);
+    const offset = Math.min(slot.width * 0.15, 10 * layout.scale) * overflowLevel;
+    return freezeRect({
+      ...slot,
+      x: Math.min(
+        layout.cardZones.field.x + layout.cardZones.field.width - slot.width,
+        slot.x + offset,
+      ),
+      y: Math.min(
+        layout.cardZones.field.y + layout.cardZones.field.height - slot.height,
+        slot.y + offset,
+      ),
+    });
   }
   if (state.zone === "drawPile") {
     const offset = Math.min(state.slotIndex, 3) * Math.max(0.8, 1.4 * layout.scale);

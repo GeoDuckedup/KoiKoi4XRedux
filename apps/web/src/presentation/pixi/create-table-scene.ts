@@ -22,6 +22,18 @@ interface TableSceneFrame {
   layout: BoardLayout;
 }
 
+export interface TableSceneStatusV1 {
+  readonly actionLabel: string;
+  readonly multiplier: number;
+  readonly opponentHandCount: number;
+  readonly opponentLabel: string;
+  readonly opponentScore: number;
+  readonly playerHandCount: number;
+  readonly playerLabel: string;
+  readonly playerScore: number;
+  readonly roundLabel: string;
+}
+
 export interface TableScene {
   applyDeck: (textures: ActiveDeckTextures<Texture>) => void;
   destroy: () => void;
@@ -29,6 +41,7 @@ export interface TableScene {
   renderClip: (clip: AnimationClipV1, progress: number, mode: AnimationMode) => void;
   redraw: (frame: TableSceneFrame) => void;
   setInteractionState: (state: InteractionVisualStateV1) => void;
+  setStatus: (status: TableSceneStatusV1) => void;
   snapTo: (projection: PresentationBoardProjection) => void;
 }
 
@@ -135,11 +148,12 @@ function label(
 function renderHand(
   layer: Container,
   bounds: BoardRect,
-  owner: "opponent" | "player",
+  handLabel: string,
+  handCount: number,
   scale: number,
 ): void {
   layer.addChild(
-    label(owner === "opponent" ? "OPPONENT HAND · 8" : "YOUR HAND · 8", bounds.x, bounds.y, {
+    label(`${handLabel.toUpperCase()} · ${handCount}`, bounds.x, bounds.y, {
       color: COLORS.creamMuted,
       fontSize: Math.max(8, 9 * scale),
       fontWeight: "700",
@@ -266,17 +280,17 @@ function renderReveal(layer: Container, layout: BoardLayout): void {
   );
 }
 
-function renderStatus(layer: Container, layout: BoardLayout, fullscreen: boolean): void {
+function renderStatus(
+  layer: Container,
+  layout: BoardLayout,
+  fullscreen: boolean,
+  tableStatus: TableSceneStatusV1,
+): void {
   const identity = layout.uiZones.opponentIdentity;
   const status = layout.uiZones.roundStatus;
   const action = layout.uiZones.actionBar;
   const compact = layout.mode === "compactPortrait" || layout.mode === "landscape";
-  const actionLabel =
-    layout.mode === "desktop"
-      ? "PERSISTENT CARD RUNTIME · DECK SWITCHING IS LOCAL-ONLY"
-      : compact
-        ? "CARD RUNTIME · INPUT IN 2D"
-        : "PERSISTENT CARDS · GAMEPLAY INPUT IN 2D";
+  const actionLabel = tableStatus.actionLabel.toUpperCase();
 
   layer.addChild(
     panel(identity, {
@@ -287,7 +301,7 @@ function renderStatus(layer: Container, layout: BoardLayout, fullscreen: boolean
       strokeAlpha: 0.14,
     }),
     label(
-      "OPPONENT",
+      tableStatus.opponentLabel.toUpperCase(),
       identity.x + Math.max(8, identity.width * 0.04),
       identity.y + identity.height / 2,
       {
@@ -299,7 +313,7 @@ function renderStatus(layer: Container, layout: BoardLayout, fullscreen: boolean
       },
     ),
     label(
-      "0 PTS",
+      `${tableStatus.opponentScore} PTS`,
       identity.x + identity.width - Math.max(8, identity.width * 0.04),
       identity.y + identity.height / 2,
       {
@@ -318,7 +332,7 @@ function renderStatus(layer: Container, layout: BoardLayout, fullscreen: boolean
       strokeAlpha: 0.14,
     }),
     label(
-      compact ? "ROUND 1 · JAN" : "ROUND 1 · JANUARY",
+      compact ? tableStatus.roundLabel.replace("JANUARY", "JAN") : tableStatus.roundLabel,
       status.x + Math.max(8, status.width * 0.03),
       status.y + status.height / 2,
       {
@@ -339,7 +353,7 @@ function renderStatus(layer: Container, layout: BoardLayout, fullscreen: boolean
       { fill: COLORS.red, radius: 999 },
     ),
     label(
-      "1×",
+      `${tableStatus.multiplier}×`,
       status.x + status.width - Math.max(23, 29 * layout.scale),
       status.y + status.height / 2,
       {
@@ -498,6 +512,17 @@ export function createTableScene(
     focusedCardId: null,
     locked: true,
   });
+  let tableStatus: TableSceneStatusV1 = Object.freeze({
+    actionLabel: "Loading local round",
+    multiplier: 1,
+    opponentHandCount: 0,
+    opponentLabel: "Opponent",
+    opponentScore: 0,
+    playerHandCount: 0,
+    playerLabel: "Player",
+    playerScore: 0,
+    roundLabel: "Round 1 · January",
+  });
   let currentAnimationFrame: {
     readonly clip: AnimationClipV1;
     readonly mode: AnimationMode;
@@ -564,7 +589,8 @@ export function createTableScene(
     renderHand(
       requiredChrome("OpponentHandLayer"),
       layout.cardZones.opponentHand,
-      "opponent",
+      `${tableStatus.opponentLabel} hand`,
+      tableStatus.opponentHandCount,
       layout.scale,
     );
     const currentCards = cardRegistry.inspect();
@@ -586,10 +612,11 @@ export function createTableScene(
     renderHand(
       requiredChrome("PlayerHandLayer"),
       layout.cardZones.playerHand,
-      "player",
+      `${tableStatus.playerLabel} hand · ${tableStatus.playerScore} pts`,
+      tableStatus.playerHandCount,
       layout.scale,
     );
-    renderStatus(requiredChrome("InteractionOverlayLayer"), layout, fullscreen);
+    renderStatus(requiredChrome("InteractionOverlayLayer"), layout, fullscreen, tableStatus);
     renderInteractionHighlights(
       requiredChrome("InteractionOverlayLayer"),
       layout,
@@ -609,6 +636,10 @@ export function createTableScene(
         selectableCardIds: Object.freeze([...state.selectableCardIds]),
         legalTargetCardIds: Object.freeze([...state.legalTargetCardIds]),
       });
+      if (currentLayout) redraw({ fullscreen: currentFullscreen, layout: currentLayout });
+    },
+    setStatus: (status) => {
+      tableStatus = Object.freeze({ ...status });
       if (currentLayout) redraw({ fullscreen: currentFullscreen, layout: currentLayout });
     },
     snapTo: (projection) => {

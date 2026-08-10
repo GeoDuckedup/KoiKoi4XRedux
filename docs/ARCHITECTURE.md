@@ -98,7 +98,7 @@ resulting public hash. Future Firebase transaction storage/publication remains P
 
 - The web app is framework-free TypeScript on Vite and PixiJS.
 - The Pixi ticker remains stopped. One presentation-owned AnimationDirector advances through an
-  explicit delta; the browser supplies `requestAnimationFrame` only while a technical plan is
+  explicit delta; the browser supplies `requestAnimationFrame` only while a public-event plan is
   active, and `window.advanceTime(ms)` switches to the same director's deterministic manual clock.
 - The prescribed ten scene layers persist, with separate chrome and card child containers. Chrome
   redraws for resize never recreate the scene layers or the 48 canonical CardViews.
@@ -110,15 +110,15 @@ resulting public hash. Future Firebase transaction storage/publication remains P
 - Normal, Fast, Instant, and Reduced Motion share one FIFO clip plan and exact final projection.
   Finish, cancel/snap, resize rebase, destruction, and deck switching cannot leave stale queued work
   or a CardView in transit.
-- The installed scenario controls are an explicitly local technical animation fixture, not a match,
-  command source, replay record, or privacy-safe player observation. A future real observation must
-  use opaque backs/counts for hidden opponent-hand and draw identities.
+- Phase 3A's browser-local adapter owns the sole production call from an accepted input intent to an
+  engine command. Input/Pixi remain rule-free, and a fresh `PlayerObservationV1` replaces the source
+  after the public-event animation settles.
 - The browser asset manager validates and preloads every candidate face/back before atomically
   switching local textures. Candidate failure leaves the active deck unchanged.
 - `window.render_game_to_text()` returns stable JSON describing responsive layout, scene/CardView
-  identity, active technical deck, animation status/mode/clip/counts/projection fingerprints, and
-  geometry diagnostics. It omits raw events, commands, engine state, RNG, texture URLs, and runtime
-  coordinates. These diagnostics remain development-only and do not represent a player observation.
+  counts, face-up card identities, approved active deck, current player/public phase, input,
+  animation, recap, and handoff state. It omits face-down identities, raw authoritative state,
+  commands, checkpoints, RNG, texture URLs, and runtime coordinates.
 - The Vite base path is configurable with `VITE_BASE_PATH` for repository-relative GitHub Pages
   deployment.
 - Firebase dependencies and configuration are deliberately deferred to Phase 7 so Phase 0B cannot
@@ -157,3 +157,11 @@ session-token bridge. Normal Vite/Pages builds exclude that entry and bridge and
 complete runtime manifests. Source files are immutable inputs, assigned imports are digest-named,
 and automated builds may verify but never manufacture owner visual approval. See
 [`ADR 0011`](./adr/0011-phase-2e-workshop-import-approval-boundary.md).
+
+Phase 3A adds a browser-local runtime adapter without changing engine ownership. It starts a
+deterministic match, projects only the current player's observation, converts one already-validated
+intent into one gameplay command, and uses public events for animation and recap. Hidden cards stay
+face-down and are omitted from the text surface. Turn completion enters a full privacy cover before
+the next player's observation is requested. The approved primary runtime directory is served/copied
+by Vite and remains separate from authoring source. See
+[`ADR 0012`](./adr/0012-phase-3a-local-round-adapter.md).

@@ -1,13 +1,13 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository
-has completed **Phase 2E: Deck Workshop and final visual approval** with an owner-approved primary
-deck. It contains the canonical rules
+has completed **Phase 3A: Complete Local Turn Loop** with an owner-approved primary deck. It contains
+the canonical rules
 authority, all 48 artwork-independent card records, the complete deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
 boundaries, and a responsive Pixi table with 48 persistent canonical CardViews, local atomic deck
-switching, one deterministic presentation-only animation queue, and a keyboard-accessible
-intent-only technical input harness.
+switching, deterministic public-event animation, keyboard-accessible authoritative local play,
+private pass-the-device handoff, and accessible turn recap.
 
 ## Prerequisites
 
@@ -37,6 +37,7 @@ npm run validate:phase2b
 npm run validate:phase2c
 npm run validate:phase2d
 npm run validate:phase2e
+npm run validate:phase3a
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -44,9 +45,8 @@ npm run test:e2e:smoke
 ```
 
 `npm run generate:deck-artifacts` regenerates the JSON Schemas, SVG Art Guide, and pilot import plan
-from the locked Phase 0D constants. Development deck validation now accepts the complete 48-face
-primary candidate plus its back. Release validation remains blocked until an explicit owner approval
-record is bound to the current full-deck review sheets.
+from the locked Phase 0D constants. Development and release validation accept the complete 48-face
+owner-approved primary package plus its back and current semantic-digest-bound approval record.
 
 `npm run generate:technical-runtime-decks` regenerates the two complete Phase 2B browser fixtures,
 and `npm run validate:technical-runtime-decks` proves their 100 checked-in manifest/face/back
@@ -87,6 +87,13 @@ legal Hand/Draw/Yaku targets, duplicate suppression, semantic card labels, point
 input, presentation locks, and both seven-viewport browser bases. Intents are displayed but never
 executed. Artifacts are written under `output/phase-2d/e2e/`.
 
+`npm run validate:phase3a` adds `LOCAL-001` through `LOCAL-008`, the real local
+observation-to-command adapter, recipient-safe 48-card projection, legal field overflow, exact
+public-event animation boundaries, complete-round deterministic play, full-table private handoff,
+and HTML turn recap. Root and Pages browser gates load the approved Primary Deck at seven viewports
+and execute a real Player A turn into Player B Ready. Artifacts are written under
+`output/phase-3a/e2e/`.
+
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot
 contact sheets. `npm run validate:phase2e` runs the technical Workshop/importer/production-exclusion
@@ -115,9 +122,9 @@ Pages workflow. Set **Settings → Pages → Build and deployment → Source** t
 workflow derives the correct Vite base path from the repository name and deploys `apps/web/dist` only
 after checks pass.
 
-No Firebase project, credentials, database migration, or production domain is needed for the Phase
-2E tooling deployment. The live page remains the responsive technical animation/input harness and local
-Sunrise/Moonlight selector. Its card, decision, and motion controls are presentation-only: they emit
-diagnostic intents but execute no engine command or game state. A real playable observation adapter
-arrives in Phase 3A. The Deck Workshop is run locally, and the approved primary deck is checked in.
-Additional independent or inherited deck packages can be added without changing engine rules.
+No Firebase project, credentials, database migration, or production domain is needed for Phase 3A.
+The live page plays one authoritative browser-local round with the approved Primary Deck, Guided or
+Fast input, public-event animation, private Player A/Player B handoff, and an accessible recap. New
+round restarts the deterministic first-round slice; multi-round persistence is deferred. The Deck
+Workshop remains local-only. Additional independent or inherited deck packages can be added without
+changing engine rules.

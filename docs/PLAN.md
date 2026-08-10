@@ -2,8 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 9, 2026
-**Current gate:** Phase 2E complete—primary deck v1.0.0 is owner-approved and passes release
-validation; Phase 3A complete local turn loop is ready to begin
+**Current gate:** Phase 3A complete local turn loop implemented and locally accepted; commit,
+deployment, and hosted verification are pending
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -547,10 +547,43 @@ Current result:
 Architecture is locked in
 [`ADR 0011`](./adr/0011-phase-2e-workshop-import-approval-boundary.md).
 
+### Phase 3A — Complete local turn loop
+
+Status: **implemented and locally accepted; deployment pending**.
+
+Deliver:
+
+- replace the technical input browser fixture with a real local `PlayerObservationV1` adapter;
+- execute legal Hand, Draw-choice, capture, and existing decision intents through the pure engine;
+- use the approved primary deck by default while retaining additional installed deck packages;
+- animate engine public events through recipient-relative trusted projection boundaries;
+- support legal field overflow above eight cards without abandoning the stable 2×4 layout;
+- cover the table before switching local players and reveal the next hand only after explicit Ready;
+- append a concise accessible HTML recap after every completed turn or round-result boundary;
+- keep hidden hands/draw order, checkpoints, RNG, and command IDs out of the public text surface.
+
+Gate:
+
+- `LOCAL-001` through `LOCAL-008` execute the real runtime/projection/command/animation/recap/handoff
+  paths with literal expectations;
+- a deterministic legal-action driver completes the first round and records one authoritative
+  result without mutating earlier observations or consuming gameplay RNG;
+- the root and repository-prefixed production builds load the approved 48-card primary package at
+  seven supported viewports with no clipped layout zones or browser/network errors;
+- a real 390×844 browser trace executes Hand → Draw → field/capture, appends one recap, enters the
+  full privacy cover, switches to Player B only after Ready, and restarts cleanly;
+- `render_game_to_text` includes only face-up card identities plus recipient/public state and never
+  includes an opponent hand, future draw order, RNG, checkpoint, or command ID;
+- Phase 2E's owner approval/release validation and local-only Workshop production exclusion remain
+  green.
+
+Architecture is locked in
+[`ADR 0012`](./adr/0012-phase-3a-local-round-adapter.md).
+
 ## Later phases
 
-1. **Phase 3 — One-round vertical slice:** begin with Phase 3A's complete playable local turn loop;
-   the Phase 2E visual-approval prerequisite is satisfied.
+1. **Phase 3 — One-round vertical slice:** continue with Phase 3B's yaku/progress/Bank/Koi
+   presentation, followed by Phase 3C round-end presentation.
 2. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook.
 3. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, and pass-and-play.
 4. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.

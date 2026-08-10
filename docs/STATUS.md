@@ -2,35 +2,49 @@
 
 **Updated:** August 9, 2026
 
-**Overall state:** Greenfield rewrite, Phase 2E complete; original primary deck v1.0.0 is
-owner-approved and release-validated, and Phase 3A is ready to begin
+**Overall state:** Greenfield rewrite, Phase 3A implemented and locally accepted; deployment and
+hosted verification are pending
 
-**Runtime state:** Complete deterministic headless match engine with formal projections, replay,
-hashes, retry-safe command receipts, and protocol records, plus a presentation-only responsive Pixi
-table with 48 persistent canonical CardViews, two locally switchable technical packages, one
-deterministic semantic animation queue, an intent-only accessible input harness, and a local-only
-deterministic deck Workshop/raster review pipeline
+**Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
+round using real player observations and commands, the owner-approved primary deck, persistent Pixi
+cards, deterministic public-event animation, private pass-the-device handoff, accessible turn recap,
+and the retained local-only deterministic deck Workshop/raster review pipeline
 
 ## Current result
 
-Phase 2E adds a separate local authoring surface and deterministic raster pipeline without changing
-the deployed game runtime. The current primary package truthfully contains 48 original faces plus a
-matching back, normalized to immutable digest-named 1600×2560 WebP masters. It builds a complete
-runtime manifest and complete review sheets. The owner approved the full deck after correcting July
-Bush Clover Plain B; its current digest-bound approval record validates and the strict release gate
-passes with zero issues.
+Phase 3A replaces the technical browser fixture with a deterministic local runtime. The existing
+rule-free input controller consumes the active player's real `PlayerObservationV1`; its intent is
+turned into one engine gameplay command, and public engine events drive the trusted animation
+boundaries and accessible recap. The whole first round is executable, including exact capture
+choices and the existing Bank/Koi engine seam.
 
-Phase 2D consumes an injected recipient-scoped observation and its legal actions through a pure
-presentation controller. Guided/Fast pointer and keyboard paths emit one immutable diagnostic intent
-without a command ID, engine execution, RNG, or state mutation.
+A completed turn covers the full table before the active observation changes. Player B's hand is
+not projected until the Ready button is activated. The serialized text surface includes only
+face-up identities and player/public state, never opponent-hand assignment, unrevealed draw order,
+RNG, checkpoint, or command IDs.
 
-The browser consumes a strict, complete runtime manifest rather than authoring source/transform
-data. Two generated technical packages exercise all 48 faces, a back, repository-base routing, and
-atomic local switching. Five animation scenarios exercise persistent identities and interruption
-behavior. They remain intentionally non-final development fixtures rather than a playable or
-privacy-safe match. Phase 2D's browser fixture is explicitly technical and does not execute intents.
+The approved `new-primary-deck` v1.0.0 is the default root/Pages runtime package. Technical Sunrise
+and Moonlight remain optional installed packages, proving that more decks can be added without
+changing engine state or canonical CardIds.
 
-## Phase 2E authoring runtime now present
+## Phase 3A local-round runtime now present
+
+- Production local runtime over `startMatch`, `projectPlayerObservation`, legal input intents, and
+  `applyGameplayCommand`, with one accepted command/state-version increment per activation.
+- Recipient-relative 48-card board projection, public-event animation boundaries, stable hidden
+  backs, and field-overflow fanning above the base eight slots.
+- Guided/Fast pointer and keyboard play, exact Hand/Draw targets, existing Bank/Koi commands, and
+  deck/animation input locks remain connected to the Phase 2 foundations.
+- Full-table private handoff plus explicit Ready activation before changing to the next player's
+  observation.
+- HTML turn recap names public play, draw, capture, yaku/result, and next-player facts independently
+  of the canvas.
+- `LOCAL-001` through `LOCAL-008`, a deterministic complete-round driver, seven root/Pages
+  viewports, and a real 390×844 two-player handoff trace pass locally.
+
+Architecture: [`ADR 0012`](./adr/0012-phase-3a-local-round-adapter.md).
+
+## Phase 2E authoring runtime retained
 
 - Portable 48-slot Workshop/status, normalized transform-editing, contact-sheet geometry, and strict
   owner-approval contracts under `@koikoi4x/deck-format`.
@@ -187,6 +201,10 @@ Phase 2C semantic planning, queue, motion, and interruption choices are recorded
 [`ADR 0009`](./adr/0009-phase-2c-animation-director.md).
 Phase 2D observation, intent, confirmation, semantic-overlay, and execution boundaries are recorded
 in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
+Phase 2E authoring/approval boundaries are recorded in
+[`ADR 0011`](./adr/0011-phase-2e-workshop-import-approval-boundary.md), and Phase 3A local execution,
+projection, recap, and handoff are recorded in
+[`ADR 0012`](./adr/0012-phase-3a-local-round-adapter.md).
 
 ## Validation
 
@@ -198,8 +216,9 @@ in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
   repository-prefixed seven-viewport production matrices with the Workshop absent.
 - The owner-gated release command passes with zero issues. The v1.0.0 runtime manifest is labeled
   `approved` and matches the exact semantic review identities on both macOS and Linux.
-- The normal production build still contains only the Phase 2D technical table. The local Workshop
-  reports 48 slots, 47 Auto faces, 1 Manual face, 0 missing, and `engineExecution:notAvailable`.
+- The Phase 3A production build contains the approved primary runtime and real local-round adapter;
+  the local Workshop still reports 48 slots, 47 Auto faces, 1 Manual face, 0 missing, and
+  `engineExecution:notAvailable`.
 - `npm run check` passes 33 files / 348 tests and the isolated 10,002-match generated gate,
   all workspace checks, authored-package validation, and the 764-module production build. Isolating
   the CPU-heavy generated gate prevents Sharp raster tests from starving its deterministic timeout.
@@ -208,8 +227,15 @@ in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
   and Pages-gating repairs.
 - Implementation commit `31da04f` is on `origin/main`. Hosted CI run `31327748444` passed the full
   repository and Phase 2E gates; Pages run `31327748453` passed the same gates and deployed. A
-  cache-busted live browser run rendered the technical table without errors, the public root
+  cache-busted Phase 2E live browser run rendered the then-current technical table without errors, the public root
   returned 200, and the intentionally local-only `workshop.html` route returned 404.
+- Phase 3A's focused gate passes 17 files / 119 tests plus all 100 technical deck artifacts,
+  approved release validation, and the local Workshop browser trace. Root and repository-prefixed
+  smokes each pass seven viewports plus a Normal-motion 390×844
+  Hand/Draw/recap/privacy-handoff/Player-B/New-round trace with zero browser or network errors.
+- `npm run check` passes formatting, zero-warning lint, all five workspace typechecks, deck
+  validation, 34 files / 353 tests plus the isolated 10,002-match deterministic gate, and the
+  765-module production build. Hosted CI/Pages remain before deployment acceptance.
 - Phase 2D's focused gate passes 8 files / 76 tests and byte-checks all 100 generated technical
   artifacts. Both seven-viewport root and `/KoiKoi4XRedux/` baseline matrices and each base's complete
   390×844 interaction trace pass with zero browser/network errors.
@@ -262,33 +288,36 @@ in [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
   the only privilege holder, the starter takes turns 1/3/.../15, and the nonstarter necessarily owns
   turn 16's final Draw. The owner selected Option A: their stable IDs now assert authoritative
   `ROUND_PRIVILEGE_INVALID` rejection rather than impossible scoring outcomes.
-- The Phase 2D table is a technical animation/input harness, not a playable match. Its visible CardIds
-  include local opponent/draw fixture allocations and must not be mistaken for a public engine
-  observation. A real recipient adapter must represent hidden identities as opaque backs/counts.
-  Real observation-to-board presentation and local execution remain Phase 3.
-- Both currently installed game-runtime packages remain generated technical placeholders. The
-  separate primary authored package is approved and ready for Phase 3A runtime integration.
+- The browser-local Phase 3A runtime deliberately restarts the first round and stores nothing.
+  Multi-round continuation/save-resume remains Phase 5, while authenticated remote command transport
+  remains Phase 7/8.
+- Phase 3A can execute engine Bank/Koi decisions so the round cannot deadlock, but the finished yaku,
+  progress, multiplier, and Bank/Koi presentation remains Phase 3B; finished round-result
+  presentation remains Phase 3C.
 - Hosted CI currently emits a nonblocking maintenance annotation that v4 checkout/setup/artifact
   actions target deprecated Node.js 20 and are being forced onto Node.js 24. The run remains green;
   workflow-action upgrades can be handled as isolated infrastructure maintenance.
-- Final artwork, Firebase, persistence, multiplayer, CPU play, and finished rendering remain deferred.
+- Firebase, persistence, multiplayer, CPU play, onboarding, and final presentation polish remain
+  deferred. The primary card artwork itself is approved and deployed with Phase 3A.
 
 ## Owner verification and deployment steps
 
-1. No hosting configuration or secret is required. The Phase 2E tooling commit is deployed, while
-   the public page intentionally remains the Phase 2D technical harness.
-2. On a development machine, pull `main`, run `npm ci`, then `npm run dev:workshop` and open the
-   local URL printed by Vite. The Workshop is intentionally unavailable on GitHub Pages.
-3. No further Phase 2E owner action is required. `npm run validate:phase2e:release` can be rerun at
-   any time to prove the approved assets and semantic review identities remain current.
-4. Additional decks may be added as complete packages or as inherited packages that override only
-   selected faces/back; each deck receives its own review and approval evidence.
+1. No hosting configuration, Firebase project, secret, or migration is required. Pushing `main`
+   triggers CI and GitHub Pages.
+2. After deployment, open the live URL, select a hand card, confirm the move, wait for Hand/Draw
+   animation, verify the text recap, activate Player B Ready, and confirm Player B receives a new
+   playable hand.
+3. Use New round to restore Player A/state version 1. Deck switching remains texture-only, and the
+   approved Primary Deck should be selected by default.
+4. Additional decks may still be added as complete or inherited packages; each receives separate
+   evidence and approval.
 
 The deployed baseline is
 [`https://geoduckedup.github.io/KoiKoi4XRedux/`](https://geoduckedup.github.io/KoiKoi4XRedux/).
 
 ## Next subphase
 
-**Phase 3A — Complete Local Turn Loop:** replace the technical input fixture with a real local
-player-observation adapter and make one round's Hand → Draw → Capture → handoff loop playable with a
-text recap, using the approved primary deck.
+**Phase 3B — Yaku and Bank/Koi presentation:** turn the existing authoritative yaku-decision phase
+into the finished player-facing progress/decision experience, including current yaku, newly
+completed yaku, table multiplier, Bank award, Koi-Koi continuation, and Hand-trigger draw
+interruption/resumption.
