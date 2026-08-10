@@ -740,4 +740,7 @@ Original prompt: read the package and understand it, then let me know when we ar
   Workshop, root, and Pages gates. `npm run check` passed 40 files / 390 tests, the 10,002-match
   deterministic gate, and a 767-module build. Independent review signed off after terminal-total,
   fail-closed match, multiplier-copy, traceability, and formatting repairs.
-- Hosted CI/Pages deployment and live verification remain the release gate before Phase 4A.
+- CI run `31351999052` and Pages run `31351999091` passed for exact release `c2224aa`. The public
+  Pages build returned HTTP 200 and initialized in a real browser with the approved Primary Deck,
+  playable local round, eight accessible hand controls, public yaku progress, and turn recap.
+- Phase 3C evidence maturity is now `live`. Phase 4A onboarding foundation is next.

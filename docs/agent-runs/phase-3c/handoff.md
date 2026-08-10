@@ -5,12 +5,13 @@
 The operational tracking model, discovery, bounded implementation, Sol integration, browser
 validation, and independent review are complete. Phase 3C adds the public-only result model,
 twelve literal fixture contracts, accessible result/modal shell, responsive browser evidence, and
-release gates without changing engine authority or multi-round scope.
+release gates without changing engine authority or multi-round scope. CI, Pages deployment, and
+live initialization passed for release `c2224aa`.
 
 ## Immediate next action
 
-Commit and push the integrated release, monitor CI and Pages, exercise the deployed result flow,
-then update this ledger from `browser` through `hosted`, `deployed`, and `live` before Phase 4A.
+Begin Phase 4A onboarding foundation: lock the tutorial-director contract, the “Learn in 60
+Seconds” surface, and contextual guidance acceptance criteria before implementation.
 
 ## Open decisions for Sol
 

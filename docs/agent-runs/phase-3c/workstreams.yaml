@@ -1,6 +1,6 @@
 phase: "3C"
 title: "Round-end presentation"
-status: "locally_accepted_deployment_pending"
+status: "completed_deployed_live"
 evidence_maturity_order:
   - specified
   - implemented
@@ -21,7 +21,7 @@ workstreams:
     write_scope: ["integration-owned files after discovery"]
     dependencies: []
     acceptance_ids: ["PRES-RESULT-001", "PRES-RESULT-002", "PRES-RESULT-003", "PRES-RESULT-004", "PRES-RESULT-005", "PRES-RESULT-006", "PRES-RESULT-007", "PRES-RESULT-008", "PRES-RESULT-009", "PRES-RESULT-010", "PRES-RESULT-011", "PRES-RESULT-012"]
-    evidence_maturity: "browser"
+    evidence_maturity: "live"
     constraints: ["Preserve authoritative engine/protocol ownership", "Do not approve runtime claims without runtime evidence"]
     reviewer: "3C-REVIEW"
     findings: []
@@ -129,7 +129,7 @@ workstreams:
     write_scope: ["tightly coupled integration files assigned by Sol"]
     dependencies: ["3C-IMPLEMENT", "3C-FIXTURES"]
     acceptance_ids: ["PRES-RESULT-001", "PRES-RESULT-002", "PRES-RESULT-003", "PRES-RESULT-004", "PRES-RESULT-005", "PRES-RESULT-006", "PRES-RESULT-007", "PRES-RESULT-008", "PRES-RESULT-009", "PRES-RESULT-010", "PRES-RESULT-011", "PRES-RESULT-012"]
-    evidence_maturity: "browser"
+    evidence_maturity: "live"
     constraints: ["Preserve Phase 3B", "Presentation-only next-round shell", "No hidden state in snapshot", "Root and Pages browser evidence"]
     reviewer: "3C-REVIEW"
     findings: []
@@ -147,7 +147,7 @@ workstreams:
     write_scope: []
     dependencies: ["3C-IMPLEMENT", "3C-FIXTURES", "3C-INTEGRATION"]
     acceptance_ids: ["PRES-RESULT-001", "PRES-RESULT-002", "PRES-RESULT-003", "PRES-RESULT-004", "PRES-RESULT-005", "PRES-RESULT-006", "PRES-RESULT-007", "PRES-RESULT-008", "PRES-RESULT-009", "PRES-RESULT-010", "PRES-RESULT-011", "PRES-RESULT-012"]
-    evidence_maturity: "browser"
+    evidence_maturity: "live"
     constraints: ["Read-only", "Inspect independent of implementation ownership", "Do not substitute static inspection for runtime evidence"]
     reviewer: "3C-ARCH"
     findings: []

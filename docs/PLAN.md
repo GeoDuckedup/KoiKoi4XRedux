@@ -2,8 +2,7 @@
 
 **Plan version:** 1.1
 **Updated:** August 9, 2026
-**Current gate:** Phase 3C implemented and locally accepted; commit, hosted deployment, and live
-verification are next
+**Current gate:** Phase 3C deployed and accepted; Phase 4A onboarding foundation is next
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 

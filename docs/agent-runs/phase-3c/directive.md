@@ -2,9 +2,8 @@
 
 ## Status
 
-**Implemented and locally accepted.** Unit, integration, root/Pages browser, and independent-review
-evidence is recorded. Hosted deployment and live verification remain pending until the release
-revision is pushed.
+**Completed, deployed, and live.** Unit, integration, root/Pages browser, independent-review,
+hosted CI, Pages deployment, and live initialization evidence is recorded for release `c2224aa`.
 
 ## Objective
 
@@ -35,4 +34,4 @@ animation, a durable round recap, and a clear next-round transition shell.
 The owner can complete a local round without developer controls, see an authoritative result and
 score transition with a readable recap, acknowledge the next-round shell, and find all twelve
 `PRES-RESULT-*` contracts covered by relevant unit and browser evidence. Hosted and live evidence
-are the remaining release steps.
+must also be recorded before closure. All of those gates passed for release `c2224aa`.

@@ -2,9 +2,9 @@
 
 ## Evidence status
 
-Current maturity: **browser**. Implementation, focused/full automation, real root/Pages gameplay,
-artifact inspection, and independent review are complete. Hosted, deployed, and live evidence are
-pending the release push.
+Current maturity: **live**. Implementation, focused/full automation, real root/Pages gameplay,
+artifact inspection, independent review, hosted CI, Pages deployment, and live initialization are
+complete for release `c2224aa`.
 
 ## Completed local evidence
 
@@ -20,7 +20,12 @@ pending the release push.
   `state-0.json`; no error artifact was emitted.
 - Independent `3C-REVIEW`: no blocker, high, or medium finding after repairs.
 
-## Required closure evidence
+## Hosted and live evidence
 
-- hosted CI and Pages workflow evidence for the release revision;
-- live verification of the deployed result flow.
+- [CI run 31351999052](https://github.com/GeoDuckedup/KoiKoi4XRedux/actions/runs/31351999052)
+  passed for exact head `c2224aaccab443575c193ce737d801f6bcef440a`.
+- [Pages run 31351999091](https://github.com/GeoDuckedup/KoiKoi4XRedux/actions/runs/31351999091)
+  passed and deployed the same head.
+- [Live GitHub Pages](https://geoduckedup.github.io/KoiKoi4XRedux/) returned HTTP 200 and initialized
+  in a real browser with the approved Primary Deck, playable local round, eight accessible hand-card
+  controls, public yaku progress, and turn recap present.

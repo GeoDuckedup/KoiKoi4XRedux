@@ -2,8 +2,8 @@
 
 **Updated:** August 9, 2026
 
-**Overall state:** Greenfield rewrite through Phase 3B deployed and accepted; Phase 3C round-end
-presentation is implemented and locally accepted, with hosted deployment verification pending
+**Overall state:** Greenfield rewrite through Phase 3C deployed, live, and accepted; Phase 4A
+onboarding foundation is next
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -12,7 +12,8 @@ and the retained local-only deterministic deck Workshop/raster review pipeline
 
 ## Current result
 
-Phase 3C implementation and local acceptance are complete. Twelve `PRES-RESULT-*` contracts verify
+Phase 3C implementation, hosted deployment, and live acceptance are complete. Twelve
+`PRES-RESULT-*` contracts verify
 authoritative Bank,
 End-of-Play, no-score, automatic evidence, privileged multiplier, next-starter, match-result,
 privacy, and modal-lock presentation. The browser will display only public result/history/event
@@ -48,7 +49,7 @@ The approved `new-primary-deck` v1.0.0 is the default root/Pages runtime package
 and Moonlight remain optional installed packages, proving that more decks can be added without
 changing engine state or canonical CardIds.
 
-## Phase 3C implemented and locally accepted
+## Phase 3C deployed and accepted
 
 - Twelve typed, deeply frozen `PRES-RESULT-*` fixtures and a pure public-result mapper cover Bank,
   End of Play, 0–0, cancellation/lucky evidence, January transition, privileged multiplier split,
@@ -63,6 +64,9 @@ changing engine state or canonical CardIds.
   Workshop exclusion/runtime trace, root/Pages browser runs, and zero browser/network errors.
 - `npm run check` passes 40 test files / 390 tests, the 10,002-match deterministic replay gate, and
   a 767-module production build. Independent review reports no blocker, high, or medium findings.
+- CI run `31351999052` and Pages run `31351999091` passed for release `c2224aa`; the live Pages
+  build returned HTTP 200 and initialized the approved deck and playable local round in a real
+  browser.
 
 ## Phase 3B completed and accepted
 
