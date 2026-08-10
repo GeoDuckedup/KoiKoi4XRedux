@@ -351,7 +351,41 @@ Phase 3B binding:
   zero-console/network-error baseline; focused traces add yaku decision/continuation/Bank screenshots
   under `output/phase-3b/e2e`.
 
-## 14. Approved-decision coverage matrix
+## 14. Phase 3C round-result presentation vectors
+
+These public-presentation contracts consume completed public observations, public history, and
+projected public events. The browser may format authoritative enums and numbers but may not
+recalculate scoring, Yaku, starter/privilege policy, evidence visibility, or match outcome.
+
+| ID | Required expectation |
+|---|---|
+| `PRES-RESULT-001-BANKED-SCORE` | Shows the authoritative scorer, active Yaku, base/table/scoring/award values, public deltas/totals, and next-round plan. |
+| `PRES-RESULT-002-END-PLAY-LAST-KOI` | Names End of Play and awards the most recent Koi-Koi caller even when that player is not the final actor. |
+| `PRES-RESULT-003-END-PLAY-NO-SCORE` | States that no Koi-Koi caller exists and the round ends 0–0; no Yaku arithmetic or award is invented. |
+| `PRES-RESULT-004-FIELD-CANCELLATION` | Shows cancellation, all committed complete-field-month evidence, and 0–0 without revealing private lucky evidence. |
+| `PRES-RESULT-005-LUCKY-WIN-EVIDENCE` | Shows the committed lucky qualification/eight-card evidence and exact authoritative 6-point award. |
+| `PRES-RESULT-006-BOTH-LUCKY-DRAW-EVIDENCE` | Shows both committed lucky evidence groups and 0–0 without a tiebreaker. |
+| `PRES-RESULT-007-JANUARY-ZERO-TRANSITION` | Displays the authoritative February starter and January alternation explanation literally. |
+| `PRES-RESULT-008-PRIVILEGED-BANK-SPLIT` | Keeps visible table 1× distinct from scoring 2× and copies the exact award/next-starter consequence. |
+| `PRES-RESULT-009-MATCH-COMPLETE-WINNER` | Shows final public scores, winner, public round history, no next-round plan, and `Start a new local match`. |
+| `PRES-RESULT-010-MATCH-COMPLETE-TIE` | Shows equal final public scores and a tied match without an invented tiebreaker. |
+| `PRES-RESULT-011-SAFE-PROJECTION` | Result text contains only committed public facts/evidence and omits private hands, unused draw identities/order, RNG, checkpoint, command IDs, and authoritative state. |
+| `PRES-RESULT-012-MODAL-LOCK` | Result focus opens after the score beat; cards and unrelated controls remain unavailable until the explicit local action. |
+
+Phase 3C binding:
+
+- the exact typed, frozen catalog binds all twelve IDs to existing Phase 1D/DEAL/history/privacy
+  authority; no production state injector is added;
+- the real production seed supplies root and `/KoiKoi4XRedux/` Bank and final-Draw Koi-Koi result
+  traces. Page-side ordering evidence proves cards settle, Phase 3B feedback appears, then the result
+  modal receives focus;
+- the Bank result remains horizontally contained and vertically scrollable inside the game frame at
+  every supported viewport; focused 390×844 artifacts cover Bank and End-of-Play result screens,
+  public score movement, modal locking, and local restart;
+- the next-round plan is informational in Phase 3C. `Start another local round` resets the explicit
+  one-round slice and is never labeled as beginning the authoritative next scheduled month.
+
+## 15. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

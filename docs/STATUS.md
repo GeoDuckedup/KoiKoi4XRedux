@@ -2,8 +2,8 @@
 
 **Updated:** August 9, 2026
 
-**Overall state:** Greenfield rewrite through Phase 3B implemented and accepted; GitHub Pages deploys
-the same validated browser artifact from `main`
+**Overall state:** Greenfield rewrite through Phase 3B deployed and accepted; Phase 3C round-end
+presentation is implemented and locally accepted, with hosted deployment verification pending
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -11,6 +11,21 @@ cards, deterministic public-event animation, private pass-the-device handoff, ac
 and the retained local-only deterministic deck Workshop/raster review pipeline
 
 ## Current result
+
+Phase 3C implementation and local acceptance are complete. Twelve `PRES-RESULT-*` contracts verify
+authoritative Bank,
+End-of-Play, no-score, automatic evidence, privileged multiplier, next-starter, match-result,
+privacy, and modal-lock presentation. The browser will display only public result/history/event
+facts; the browser does not calculate scoring or transition policy.
+
+The responsive result dialog opens only after card motion and the Phase 3B consequence beat. It
+copies public scoring arithmetic, explicit table/scoring multipliers, committed automatic evidence,
+score deltas/totals, terminal winner/tie, and next-round consequences. Card and unrelated toolbar
+controls remain locked until the focused result action is chosen.
+
+The next-round shell shows the authoritative next month/starter/privilege, then offers an explicitly
+named local one-round restart. It does not call `advanceRound` or mislabel the January reset as the
+displayed next month; full local match execution remains Phase 5.
 
 Phase 3B completes the deterministic local runtime's player-facing Yaku and Bank/Koi-Koi seam. The
 browser displays canonical public Yaku progress for both players, presents one accessible combined
@@ -32,6 +47,22 @@ RNG, checkpoint, or command IDs.
 The approved `new-primary-deck` v1.0.0 is the default root/Pages runtime package. Technical Sunrise
 and Moonlight remain optional installed packages, proving that more decks can be added without
 changing engine state or canonical CardIds.
+
+## Phase 3C implemented and locally accepted
+
+- Twelve typed, deeply frozen `PRES-RESULT-*` fixtures and a pure public-result mapper cover Bank,
+  End of Play, 0–0, cancellation/lucky evidence, January transition, privileged multiplier split,
+  winner/tie, privacy, and modal locking.
+- The production trace reaches both final-Draw Koi-Koi (`11 × 3× = 33`) and Hand Bank
+  (`3 × 1× = 3`) through real engine commands, public projections, card animation, feedback, and
+  result focus; no state injector or browser scoring evaluator exists.
+- Root and repository-prefixed Pages traces pass all seven supported viewports. Result cards remain
+  horizontally contained and vertically scrollable, and the explicit local restart cannot be
+  mistaken for advancing to the displayed authoritative February plan.
+- `npm run validate:phase3c` passes 22 test files / 153 tests, the approved-deck release gate,
+  Workshop exclusion/runtime trace, root/Pages browser runs, and zero browser/network errors.
+- `npm run check` passes 40 test files / 390 tests, the 10,002-match deterministic replay gate, and
+  a 767-module production build. Independent review reports no blocker, high, or medium findings.
 
 ## Phase 3B completed and accepted
 
@@ -334,8 +365,10 @@ projection, recap, and handoff are recorded in
    triggers CI and GitHub Pages.
 2. After deployment, open the live URL and play the deterministic local round. At each Yaku
    decision, verify the public Yaku list, Bank award, Koi-Koi multiplier, and combined decision text;
-   unrelated controls must remain locked until Bank or Koi-Koi is chosen.
-3. Use New round to restore Player A/state version 1. Deck switching remains texture-only, and the
+   unrelated controls must remain locked until Bank or Koi-Koi is chosen. Bank to inspect the result
+   screen, exact arithmetic, updated scores, and authoritative February starter/privilege plan.
+3. Use `Start another local round` on the result screen to restore Player A/state version 1. It is a
+   local practice restart, not February advancement. Deck switching remains texture-only, and the
    approved Primary Deck should be selected by default.
 4. Additional decks may still be added as complete or inherited packages; each receives separate
    evidence and approval.
@@ -345,5 +378,6 @@ The deployed baseline is
 
 ## Next subphase
 
-**Phase 3C — Round-end presentation:** add the dedicated result screen, authoritative scoring
-breakdown/animation, and clear next-round transition without duplicating engine scoring rules.
+**Phase 4A — Onboarding foundation:** lock the tutorial-director contract and build the newcomer
+entry experience, beginning with Learn in 60 Seconds and contextual table guidance over the
+authoritative local round.

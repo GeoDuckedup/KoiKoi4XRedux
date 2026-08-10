@@ -2,8 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 9, 2026
-**Current gate:** Phase 3A complete local turn loop implemented, accepted, committed, and deployed;
-owner verification is next
+**Current gate:** Phase 3C implemented and locally accepted; commit, hosted deployment, and live
+verification are next
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -609,15 +609,39 @@ Gate:
 
 Phase 3C owns the dedicated round-result screen, scoring animation, and next-round transition.
 
+### Phase 3C — Round-end presentation
+
+Status: **implemented and locally accepted; deployment verification pending**.
+
+Deliver:
+
+- one accessible result dialog driven only by completed public observations/history/events;
+- exact Bank, End-of-Play, no-score, automatic evidence, privileged multiplier, and match-complete
+  presentation without browser-side scoring or transition-policy calculation;
+- a short score-settlement beat with identical final output in every animation mode;
+- a public next-round consequence shell plus truthfully named local-slice restart;
+- recipient-safe result snapshot, modal focus/input lock, seven-viewport root/Pages evidence, and
+  real production-seed Bank/final-Koi browser traces.
+
+Gate:
+
+- all twelve `PRES-RESULT-*` literals are typed, frozen, exported, and executed;
+- exact authoritative reason/arithmetic/evidence/next-starter values remain unchanged through the
+  presentation mapper and serialized surface;
+- cards settle before Phase 3B feedback, score/result reveal, and modal focus; the modal cannot be
+  escaped through card, deck, motion, fullscreen, handoff, or restart controls;
+- `npm run check` retains the 10,002-match deterministic gate, while `validate:phase3c` retains the
+  release deck, Workshop exclusion, root/Pages, and all prior Phase 3 gates.
+
+Architecture is recorded in [`ADR 0014`](./adr/0014-phase-3c-round-result-presentation.md).
+
 ## Later phases
 
-1. **Phase 3 — One-round vertical slice:** continue with Phase 3C round-end presentation after the
-   accepted Phase 3B yaku/progress/Bank/Koi surface.
-2. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook.
-3. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, and pass-and-play.
-4. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
-5. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
-6. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
-7. **Phase 9 — Production polish:** content, accessibility, performance, telemetry/reliability, and release.
+1. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook.
+2. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, and pass-and-play.
+3. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
+4. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
+5. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
+6. **Phase 9 — Production polish:** content, accessibility, performance, telemetry/reliability, and release.
 
 No later phase may bypass the acceptance gate of the preceding phase.

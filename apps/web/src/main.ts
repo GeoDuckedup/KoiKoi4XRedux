@@ -1,5 +1,6 @@
 import { Application, type Texture } from "pixi.js";
 import {
+  getCardDefinition,
   getMonthDefinition,
   type PlayerId,
   type PlayerObservationV1,
@@ -23,6 +24,10 @@ import {
   projectTransitionForPlayer,
 } from "./game/observation-presentation";
 import { formatTurnRecap } from "./game/turn-recap";
+import {
+  createRoundResultPresentation,
+  type RoundResultPresentationV1,
+} from "./game/round-result-presentation";
 import {
   createYakuPresentationState,
   type YakuPresentationStateV1,
@@ -97,6 +102,29 @@ const yakuBankUnavailable = queryRequired<HTMLElement>("[data-yaku-bank-unavaila
 const yakuBankButton = queryRequired<HTMLButtonElement>("[data-yaku-bank]");
 const yakuKoiKoiButton = queryRequired<HTMLButtonElement>("[data-yaku-koi-koi]");
 const yakuProgress = queryRequired<HTMLElement>("[data-yaku-progress]");
+const roundResult = queryRequired<HTMLElement>("[data-round-result]");
+const roundResultContext = queryRequired<HTMLElement>("[data-round-result-context]");
+const roundResultTitle = queryRequired<HTMLElement>("[data-round-result-title]");
+const roundResultOutcome = queryRequired<HTMLElement>("[data-round-result-outcome]");
+const roundResultScore = queryRequired<HTMLElement>("[data-round-result-score]");
+const roundResultArithmetic = queryRequired<HTMLElement>("[data-round-result-arithmetic]");
+const roundResultMultipliers = queryRequired<HTMLElement>("[data-round-result-multipliers]");
+const roundResultYaku = queryRequired<HTMLUListElement>("[data-round-result-yaku]");
+const roundResultScoreA = queryRequired<HTMLElement>("[data-round-result-score-a]");
+const roundResultScoreB = queryRequired<HTMLElement>("[data-round-result-score-b]");
+const roundResultEvidence = queryRequired<HTMLElement>("[data-round-result-evidence]");
+const roundResultEvidenceList = queryRequired<HTMLUListElement>(
+  "[data-round-result-evidence-list]",
+);
+const roundResultTransition = queryRequired<HTMLElement>("[data-round-result-transition]");
+const roundResultTransitionTitle = queryRequired<HTMLElement>(
+  "[data-round-result-transition-title]",
+);
+const roundResultTransitionCopy = queryRequired<HTMLElement>("[data-round-result-transition-copy]");
+const roundResultPrivilege = queryRequired<HTMLElement>("[data-round-result-privilege]");
+const roundResultHistory = queryRequired<HTMLElement>("[data-round-result-history]");
+const roundResultHistoryList = queryRequired<HTMLOListElement>("[data-round-result-history-list]");
+const roundResultAction = queryRequired<HTMLButtonElement>("[data-round-result-action]");
 
 let application: Application | undefined;
 let tableScene: TableScene | undefined;
@@ -110,6 +138,9 @@ let observation: PlayerObservationV1 = runtime.observe();
 let projection: PresentationBoardProjection = projectObservationToBoard(observation);
 let recentYakuEvents: readonly LocalRoundTransitionV1["events"][number][] = Object.freeze([]);
 let yakuPresentation: YakuPresentationStateV1 = createYakuPresentationState({ observation });
+let resultPresentation: RoundResultPresentationV1 | null = createRoundResultPresentation({
+  observation,
+});
 let ready = false;
 let simulationTimeMs = 0;
 let deckStatus: "error" | "loading" | "ready" = "loading";
@@ -123,6 +154,7 @@ let previousFrameTime: number | undefined;
 let manualAnimationClock = false;
 let pendingTurnEvents: LocalRoundTransitionV1["events"][number][] = [];
 let focusedYakuDecisionKey: string | null = null;
+let focusedRoundResultKey: string | null = null;
 const recaps: string[] = ["Round ready. Player A begins."];
 
 const unavailableAnimation: AnimationInspectionV1 = Object.freeze({
@@ -251,6 +283,7 @@ function snapshot() {
     },
     diagnostics: inspectBoardLayout(layout),
     yaku: yakuPresentation,
+    result: resultPresentation,
   });
 }
 
@@ -278,6 +311,10 @@ function currentInputLock(): InputLockReason | null {
 
 function isYakuDecisionOpen(): boolean {
   return observation.publicState.phase.kind === "awaitingYakuDecision";
+}
+
+function isRoundResultOpen(): boolean {
+  return resultPresentation !== null;
 }
 
 function inputMessage(inspection: InputInteractionInspectionV1): string {
@@ -358,7 +395,7 @@ function renderYakuProgress(): void {
 
 function renderYakuFeedback(): void {
   const feedback = yakuPresentation.feedback;
-  if (!feedback) {
+  if (!feedback || (isRoundResultOpen() && !processingIntent)) {
     yakuFeedback.hidden = true;
     yakuFeedbackMessage.textContent = "";
     return;
@@ -444,6 +481,113 @@ function refreshYakuPresentation(
   });
 }
 
+function resultPlayerLabel(playerId: PlayerId): string {
+  return playerName(playerId);
+}
+
+function evidenceItems(presentation: RoundResultPresentationV1): readonly string[] {
+  if (presentation.evidence === null) return Object.freeze([]);
+  if (presentation.evidence.kind === "fieldCancellation") {
+    return Object.freeze(
+      presentation.evidence.completeFieldMonths.map(({ month, cardIds }) => {
+        const cards = cardIds.map((cardId) => getCardDefinition(cardId).displayName).join(", ");
+        return `${getMonthDefinition(month).name}: ${cards}.`;
+      }),
+    );
+  }
+  return Object.freeze(
+    presentation.evidence.hands.map(({ playerId, fullHand, qualification }) => {
+      const qualificationLabel =
+        qualification.kind === "fourMonth" ? "Four Cards of the Same Month" : "Four Month Pairs";
+      const cards = fullHand.map((cardId) => getCardDefinition(cardId).displayName).join(", ");
+      return `${resultPlayerLabel(playerId)} · ${qualificationLabel}: ${cards}.`;
+    }),
+  );
+}
+
+function renderRoundResult(): void {
+  const presentation = resultPresentation;
+  const visible = presentation !== null && !processingIntent && handoffPlayerId === null;
+  if (!presentation || !visible) {
+    roundResult.hidden = true;
+    focusedRoundResultKey = null;
+    return;
+  }
+
+  roundResultContext.textContent = `${presentation.visibility === "matchResult" ? "Match result" : "Round result"} · Round ${presentation.roundNumber} · ${getMonthDefinition(presentation.scheduledMonth).name}`;
+  roundResultTitle.textContent = presentation.title;
+  roundResultOutcome.textContent = presentation.outcomeLabel;
+  roundResultScoreA.textContent = `${presentation.matchScoresAfter["player-a"]} (${presentation.pointDeltas["player-a"] > 0 ? "+" : "±"}${presentation.pointDeltas["player-a"]})`;
+  roundResultScoreB.textContent = `${presentation.matchScoresAfter["player-b"]} (${presentation.pointDeltas["player-b"] > 0 ? "+" : "±"}${presentation.pointDeltas["player-b"]})`;
+  roundResultArithmetic.textContent = presentation.scoring?.arithmeticLabel ?? "0 points awarded.";
+  roundResultMultipliers.textContent = presentation.scoring
+    ? [presentation.scoring.tableMultiplierLabel, presentation.scoring.scoringMultiplierLabel]
+        .filter((label): label is string => label !== null)
+        .join(" ")
+    : "";
+  roundResultYaku.replaceChildren(
+    ...(presentation.activeYaku.length > 0
+      ? presentation.activeYaku.map((entry) =>
+          Object.assign(document.createElement("li"), {
+            textContent: `${entry.name} · ${entry.points} ${entry.points === 1 ? "point" : "points"}`,
+          }),
+        )
+      : [Object.assign(document.createElement("li"), { textContent: "No scoring yaku." })]),
+  );
+  roundResultScore.hidden = presentation.scoring === null;
+
+  const evidence = evidenceItems(presentation);
+  roundResultEvidence.hidden = evidence.length === 0;
+  roundResultEvidenceList.replaceChildren(
+    ...evidence.map((copy) => Object.assign(document.createElement("li"), { textContent: copy })),
+  );
+
+  if ("plan" in presentation.action) {
+    const { plan } = presentation.action;
+    roundResultTransition.hidden = false;
+    roundResultTransitionTitle.textContent = "Authoritative next-round plan";
+    roundResultTransitionCopy.textContent = `Round ${plan.roundNumber} · ${getMonthDefinition(plan.scheduledMonth).name}. ${resultPlayerLabel(plan.starterId)} starts. ${presentation.action.starterReasonLabel}`;
+    roundResultPrivilege.hidden = plan.specialPrivilege === null;
+    roundResultPrivilege.textContent =
+      plan.specialPrivilege === null
+        ? ""
+        : `${resultPlayerLabel(plan.specialPrivilege.playerId)} has the next-round-only special 2× privilege.`;
+  } else {
+    roundResultTransition.hidden = false;
+    roundResultTransitionTitle.textContent = "Match complete";
+    roundResultTransitionCopy.textContent = `${presentation.action.outcomeLabel} Final scores are committed after ${presentation.action.result.roundsPlayed} rounds.`;
+    roundResultPrivilege.hidden = true;
+    roundResultPrivilege.textContent = "";
+  }
+
+  roundResultHistory.hidden = presentation.visibility !== "matchResult";
+  roundResultHistoryList.replaceChildren(
+    ...presentation.history.map((entry) =>
+      Object.assign(document.createElement("li"), {
+        textContent: `Round ${entry.roundNumber} · ${getMonthDefinition(entry.scheduledMonth).name}: ${entry.reasonCode}, ${entry.awardedPoints} points awarded.`,
+      }),
+    ),
+  );
+  roundResultAction.textContent = presentation.action.actionLabel;
+  roundResult.hidden = false;
+
+  const key = `${observation.publicState.matchId}:${observation.publicState.stateVersion}:${presentation.kind}`;
+  if (focusedRoundResultKey === key) return;
+  focusedRoundResultKey = key;
+  queueMicrotask(() => {
+    if (!roundResult.hidden && !processingIntent) roundResultAction.focus();
+  });
+}
+
+function refreshRoundResultPresentation(
+  events: readonly LocalRoundTransitionV1["events"][number][] = [],
+): void {
+  resultPresentation = createRoundResultPresentation({
+    observation,
+    ...(events.length > 0 ? { recentEvents: events } : {}),
+  });
+}
+
 function refreshInteractionSurface(): void {
   if (!interactionController || !currentLayout || !tableScene) return;
   interactionController.setExternalLock(currentInputLock());
@@ -460,10 +604,12 @@ function refreshInteractionSurface(): void {
       inspection.status === "decision",
   });
   renderSemanticCardBridge();
-  inputModeSelect.disabled = processingIntent || handoffPlayerId !== null || isYakuDecisionOpen();
+  inputModeSelect.disabled =
+    processingIntent || handoffPlayerId !== null || isYakuDecisionOpen() || isRoundResultOpen();
   inputConfirmButton.disabled = !inspection.confirmAvailable;
   inputCancelButton.disabled = !inspection.cancelAvailable;
   renderYakuPresentation(inspection);
+  renderRoundResult();
   inputInstruction.textContent = inputMessage(inspection);
   updateControls();
   application?.render();
@@ -472,12 +618,14 @@ function refreshInteractionSurface(): void {
 function updateControls(): void {
   const busy = animationDirector?.isBusy() ?? false;
   const decisionOpen = isYakuDecisionOpen();
+  const resultOpen = isRoundResultOpen();
   accelerateButton.disabled = !busy;
   finishButton.disabled = !busy;
-  deckSelect.disabled = deckStatus === "loading" || processingIntent || decisionOpen;
-  modeSelect.disabled = processingIntent || decisionOpen;
-  fullscreenButton.disabled = processingIntent || decisionOpen;
-  newRoundButton.disabled = busy || processingIntent || handoffPlayerId !== null || decisionOpen;
+  deckSelect.disabled = deckStatus === "loading" || processingIntent || decisionOpen || resultOpen;
+  modeSelect.disabled = processingIntent || decisionOpen || resultOpen;
+  fullscreenButton.disabled = processingIntent || decisionOpen || resultOpen;
+  newRoundButton.disabled =
+    busy || processingIntent || handoffPlayerId !== null || decisionOpen || resultOpen;
 }
 
 async function waitForYakuFeedbackBeat(): Promise<void> {
@@ -575,6 +723,7 @@ async function executeIntent(intent: InputCommandIntentV1): Promise<void> {
     interactionController?.replaceSource(createInteractionSourceFromObservation(observation));
     handoffPlayerId = transition.handoffPlayerId;
     refreshYakuPresentation(transition.events, transition.before);
+    refreshRoundResultPresentation(transition.events);
     if (yakuPresentation.feedback) {
       refreshInteractionSurface();
       await waitForYakuFeedbackBeat();
@@ -624,10 +773,14 @@ async function acceptHandoff(): Promise<void> {
   refreshInteractionSurface();
 }
 
-async function resetLocalRound(): Promise<void> {
+async function resetLocalRound(fromResultAction = false): Promise<void> {
   if (!animationDirector) return;
   if (isYakuDecisionOpen()) {
     status.textContent = "Resolve the Bank or Koi-Koi decision before starting a new round.";
+    return;
+  }
+  if (isRoundResultOpen() && !fromResultAction) {
+    status.textContent = "Use the round-result action before starting another local round.";
     return;
   }
   restartCount += 1;
@@ -635,6 +788,7 @@ async function resetLocalRound(): Promise<void> {
   observation = runtime.observe();
   projection = projectObservationToBoard(observation);
   refreshYakuPresentation();
+  refreshRoundResultPresentation();
   pendingTurnEvents = [];
   recaps.splice(0, recaps.length, "Round ready. Player A begins.");
   commandCount = 0;
@@ -659,7 +813,7 @@ function redraw(): void {
 }
 
 async function toggleFullscreen(): Promise<void> {
-  if (isYakuDecisionOpen()) return;
+  if (isYakuDecisionOpen() || isRoundResultOpen()) return;
   try {
     if (document.fullscreenElement) await document.exitFullscreen();
     else if (document.fullscreenEnabled) await document.documentElement.requestFullscreen();
@@ -678,7 +832,7 @@ function updateFullscreenLabel(): void {
 
 async function switchDeck(deckId: string): Promise<void> {
   if (!isInstalledDeckId(deckId) || !cardAssetManager || !tableScene || !application) return;
-  if (isYakuDecisionOpen()) {
+  if (isYakuDecisionOpen() || isRoundResultOpen()) {
     deckSelect.value = cardAssetManager.active?.manifest.packageId ?? INSTALLED_DECKS[0].id;
     return;
   }
@@ -718,6 +872,7 @@ window.advanceTime = (milliseconds: number) => {
 fullscreenButton.addEventListener("click", () => void toggleFullscreen());
 deckSelect.addEventListener("change", () => void switchDeck(deckSelect.value));
 modeSelect.addEventListener("change", () => {
+  if (isRoundResultOpen()) return;
   animationDirector?.setMode(readAnimationMode(modeSelect.value));
 });
 accelerateButton.addEventListener("click", () => {
@@ -727,6 +882,7 @@ accelerateButton.addEventListener("click", () => {
 });
 finishButton.addEventListener("click", () => void animationDirector?.finishImmediately());
 inputModeSelect.addEventListener("change", () => {
+  if (isRoundResultOpen()) return;
   interactionController?.setConfirmationMode(readInputConfirmationMode(inputModeSelect.value));
   refreshInteractionSurface();
 });
@@ -747,9 +903,19 @@ yakuKoiKoiButton.addEventListener("click", () => {
   refreshInteractionSurface();
 });
 newRoundButton.addEventListener("click", () => void resetLocalRound());
+roundResultAction.addEventListener("click", () => void resetLocalRound(true));
 handoffReady.addEventListener("click", () => void acceptHandoff());
 document.addEventListener("fullscreenchange", updateFullscreenLabel);
 window.addEventListener("keydown", (event) => {
+  if (isRoundResultOpen() && !processingIntent) {
+    if (event.key === "Tab") {
+      event.preventDefault();
+      roundResultAction.focus();
+    } else if (event.key === "Escape" || event.key.toLowerCase() === "f") {
+      event.preventDefault();
+    }
+    return;
+  }
   if (isYakuDecisionOpen()) {
     if (event.key === "Tab") {
       const actions = [yakuBankButton, yakuKoiKoiButton].filter(

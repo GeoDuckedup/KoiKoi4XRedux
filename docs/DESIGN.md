@@ -3565,9 +3565,20 @@ Phase 2 acceptance:
 
 ### Phase 3C — Round end
 
-- scoring animation;
-- round recap;
-- next-round transition shell.
+- Render one public result dialog only after card motion and any Phase 3B consequence feedback have
+  settled. The dialog copies `RoundResultV1`/`MatchResultV1` values and committed public evidence; it
+  does not calculate scoring, starter policy, privilege, or match outcome.
+- Show the scheduled month/result reason, scorer or explicit 0–0 outcome, canonical active Yaku,
+  base/table/scoring/award values, public score deltas and totals, and committed cancellation/lucky
+  evidence where applicable.
+- Animate the authoritative score change as a short presentation beat. Fast, Instant, and Reduced
+  Motion reach the same final text and values; critical result information is never animation-only.
+- Show the authoritative next-round month, starter, starter reason, and special privilege when
+  present. Phase 3C's local action is explicitly `Start another local round`; it does not call the
+  engine's multi-round advance seam or claim that the deterministic reset begins the displayed next
+  month. Actual 3/6/12-round local execution remains Phase 5.
+- Lock cards and every unrelated control while the modal is open, trap focus within its legal
+  action, and include a recipient-safe whitelisted result object in `render_game_to_text`.
 
 Phase 3 acceptance:
 

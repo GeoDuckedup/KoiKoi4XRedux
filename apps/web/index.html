@@ -8,6 +8,7 @@
       content="KoiKoi4x — a modern, newcomer-friendly Hanafuda strategy game."
     />
     <meta name="theme-color" content="#10271f" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>KoiKoi4x</title>
   </head>
   <body>
@@ -77,6 +78,46 @@
             <button type="button" data-yaku-bank hidden>Bank</button>
             <button type="button" data-yaku-koi-koi hidden>Call Koi-Koi</button>
           </div>
+        </section>
+        <section
+          class="round-result"
+          data-round-result
+          hidden
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="round-result-title"
+          aria-describedby="round-result-outcome"
+        >
+          <article class="round-result__card">
+            <div class="round-result__heading">
+              <p class="eyebrow" data-round-result-context>Round result</p>
+              <h2 id="round-result-title" data-round-result-title>Round complete</h2>
+              <p id="round-result-outcome" data-round-result-outcome></p>
+            </div>
+            <div class="round-result__score" data-round-result-score>
+              <p class="round-result__arithmetic" data-round-result-arithmetic></p>
+              <p class="round-result__multipliers" data-round-result-multipliers></p>
+              <ul class="round-result__yaku" data-round-result-yaku></ul>
+            </div>
+            <div class="round-result__totals" aria-label="Match scores after this round">
+              <p><span>Player A</span><strong data-round-result-score-a>0</strong></p>
+              <p><span>Player B</span><strong data-round-result-score-b>0</strong></p>
+            </div>
+            <section class="round-result__evidence" data-round-result-evidence hidden>
+              <h3>Committed evidence</h3>
+              <ul data-round-result-evidence-list></ul>
+            </section>
+            <section class="round-result__transition" data-round-result-transition>
+              <h3 data-round-result-transition-title>Next-round plan</h3>
+              <p data-round-result-transition-copy></p>
+              <p class="round-result__privilege" data-round-result-privilege hidden></p>
+            </section>
+            <section class="round-result__history" data-round-result-history hidden>
+              <h3>Match history</h3>
+              <ol data-round-result-history-list></ol>
+            </section>
+            <button type="button" data-round-result-action>Start another local round</button>
+          </article>
         </section>
       </section>
 

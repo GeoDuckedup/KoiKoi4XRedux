@@ -15,6 +15,8 @@
 | Intentional differences from legacy | `docs/LEGACY_DIFFERENCES.md` |
 | Runtime/package ownership boundaries | `docs/ARCHITECTURE.md` |
 | AI coding/delegation workflow | `docs/AI_WORKFLOW.md` |
+| Sol-led subagent operational tracking | `docs/SUBAGENT_PLAN.md` |
+| Per-phase agent evidence ledgers | `docs/agent-runs/` |
 | Current implementation plan | `docs/PLAN.md` |
 | Current implementation status | `docs/STATUS.md` |
 | Architectural decisions | `docs/adr/` |

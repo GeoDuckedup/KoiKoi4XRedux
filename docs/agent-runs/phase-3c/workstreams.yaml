@@ -1,0 +1,156 @@
+phase: "3C"
+title: "Round-end presentation"
+status: "locally_accepted_deployment_pending"
+evidence_maturity_order:
+  - specified
+  - implemented
+  - unit
+  - integration
+  - browser
+  - hosted
+  - deployed
+  - live
+workstreams:
+  - id: "3C-ARCH"
+    objective: "Own Phase 3C decomposition, architecture, acceptance criteria, integration, and final verification."
+    role: "Sol / primary orchestrator"
+    model: "gpt-5.6-sol preferred; closest supported primary model otherwise"
+    mode: "edit"
+    status: "completed"
+    read_scope: ["docs/", "apps/web/", "packages/engine/", "packages/protocol/"]
+    write_scope: ["integration-owned files after discovery"]
+    dependencies: []
+    acceptance_ids: ["PRES-RESULT-001", "PRES-RESULT-002", "PRES-RESULT-003", "PRES-RESULT-004", "PRES-RESULT-005", "PRES-RESULT-006", "PRES-RESULT-007", "PRES-RESULT-008", "PRES-RESULT-009", "PRES-RESULT-010", "PRES-RESULT-011", "PRES-RESULT-012"]
+    evidence_maturity: "browser"
+    constraints: ["Preserve authoritative engine/protocol ownership", "Do not approve runtime claims without runtime evidence"]
+    reviewer: "3C-REVIEW"
+    findings: []
+    repair_links: []
+    verification_links: ["docs/agent-runs/phase-3c/verification.md", "output/phase-3c/e2e/"]
+    stopping_or_escalation: "Escalate unresolved product, authority, privacy, or cross-system decisions to Sol/owner before implementation."
+
+  - id: "3C-RULES-MAP"
+    objective: "Map canonical round-result, scoring, evidence-reveal, and next-starter contracts without changing code."
+    role: "Terra / engineering investigator"
+    model: "gpt-5.6-terra preferred; closest supported engineering model otherwise"
+    mode: "read_only"
+    status: "completed"
+    read_scope: ["docs/RULES.md", "docs/RULES_DECISIONS.md", "docs/TEST_VECTORS.md", "docs/adr/", "packages/engine/", "packages/protocol/"]
+    write_scope: []
+    dependencies: []
+    acceptance_ids: ["PRES-RESULT-001", "PRES-RESULT-002", "PRES-RESULT-003", "PRES-RESULT-004", "PRES-RESULT-005", "PRES-RESULT-006", "PRES-RESULT-007", "PRES-RESULT-008", "PRES-RESULT-009", "PRES-RESULT-010", "PRES-RESULT-011", "PRES-RESULT-012"]
+    evidence_maturity: "specified"
+    constraints: ["Read-only", "Do not infer browser scoring or reveal pre-commit private evidence"]
+    reviewer: "3C-ARCH"
+    findings: []
+    repair_links: []
+    verification_links: []
+    stopping_or_escalation: "Stop and report if public-result timing, score authority, or evidence visibility is ambiguous."
+
+  - id: "3C-PRESENTATION-MAP"
+    objective: "Map browser presentation seams, existing recap/animation lifecycle, responsive risks, and test entry points."
+    role: "Terra / presentation investigator"
+    model: "gpt-5.6-terra preferred; closest supported engineering model otherwise"
+    mode: "read_only"
+    status: "completed"
+    read_scope: ["apps/web/", "docs/DESIGN.md", "apps/web/tests/", "scripts/"]
+    write_scope: []
+    dependencies: []
+    acceptance_ids: ["PRES-RESULT-001", "PRES-RESULT-002", "PRES-RESULT-003", "PRES-RESULT-004", "PRES-RESULT-005", "PRES-RESULT-006", "PRES-RESULT-007", "PRES-RESULT-008", "PRES-RESULT-009", "PRES-RESULT-010", "PRES-RESULT-011", "PRES-RESULT-012"]
+    evidence_maturity: "specified"
+    constraints: ["Read-only", "Preserve no-browser-rules and recipient-privacy boundaries"]
+    reviewer: "3C-ARCH"
+    findings: []
+    repair_links: []
+    verification_links: []
+    stopping_or_escalation: "Stop and report if a result transition requires browser-side rules or overlapping ownership."
+
+  - id: "3C-TEST-MAP"
+    objective: "Inventory deterministic result paths, existing fixtures, and browser/hosted validation needs for Phase 3C."
+    role: "Luna / validation mapper"
+    model: "gpt-5.6-luna preferred; closest supported bounded-worker model otherwise"
+    mode: "read_only"
+    status: "completed_by_synthesis"
+    read_scope: ["packages/test-fixtures/", "apps/web/tests/", "scripts/", "package.json", ".github/workflows/"]
+    write_scope: []
+    dependencies: []
+    acceptance_ids: ["PRES-RESULT-001", "PRES-RESULT-002", "PRES-RESULT-003", "PRES-RESULT-004", "PRES-RESULT-005", "PRES-RESULT-006", "PRES-RESULT-007", "PRES-RESULT-008", "PRES-RESULT-009", "PRES-RESULT-010", "PRES-RESULT-011", "PRES-RESULT-012"]
+    evidence_maturity: "specified"
+    constraints: ["Read-only", "Separate static, browser, hosted, and live evidence"]
+    reviewer: "3C-ARCH"
+    findings: []
+    repair_links: []
+    verification_links: []
+    stopping_or_escalation: "Stop and report if existing deterministic traces cannot reach a required result safely."
+
+  - id: "3C-IMPLEMENT"
+    objective: "Implement the pure public-result presentation model and focused unit tests."
+    role: "Terra / gameplay presentation engineer"
+    model: "gpt-5.6-terra preferred; closest supported engineering model otherwise"
+    mode: "edit"
+    status: "completed"
+    read_scope: ["packages/engine/src/state/types.ts", "packages/engine/src/state/projection.ts", "apps/web/src/game/", "apps/web/tests/"]
+    write_scope: ["apps/web/src/game/round-result-presentation.ts", "apps/web/tests/round-result-presentation.test.ts"]
+    dependencies: ["3C-ARCH", "3C-RULES-MAP", "3C-PRESENTATION-MAP", "3C-TEST-MAP"]
+    acceptance_ids: ["PRES-RESULT-001", "PRES-RESULT-002", "PRES-RESULT-003", "PRES-RESULT-004", "PRES-RESULT-005", "PRES-RESULT-006", "PRES-RESULT-007", "PRES-RESULT-008", "PRES-RESULT-009", "PRES-RESULT-010", "PRES-RESULT-011"]
+    evidence_maturity: "unit"
+    constraints: ["Use only authoritative public results/events", "Do not edit DOM/runtime integration", "Do not calculate gameplay outcomes"]
+    reviewer: "3C-REVIEW"
+    findings: []
+    repair_links: []
+    verification_links: ["apps/web/tests/round-result-presentation.test.ts"]
+    stopping_or_escalation: "Stop if a requested display fact is not present in public state/events."
+
+  - id: "3C-FIXTURES"
+    objective: "Create the twelve typed literal Phase 3C fixture contracts and catalog tests."
+    role: "Terra / acceptance engineer"
+    model: "gpt-5.6-terra preferred; closest supported engineering model otherwise"
+    mode: "edit"
+    status: "completed"
+    read_scope: ["docs/TEST_VECTORS.md", "packages/test-fixtures/src/rules/phase1d-fixtures.ts", "packages/test-fixtures/src/rules/phase3b-presentation-fixtures.ts"]
+    write_scope: ["packages/test-fixtures/src/rules/phase3c-presentation-fixtures.ts", "packages/test-fixtures/tests/phase3c-presentation-fixtures.test.ts", "packages/test-fixtures/src/index.ts"]
+    dependencies: ["3C-ARCH", "3C-RULES-MAP", "3C-PRESENTATION-MAP", "3C-TEST-MAP"]
+    acceptance_ids: ["PRES-RESULT-001", "PRES-RESULT-002", "PRES-RESULT-003", "PRES-RESULT-004", "PRES-RESULT-005", "PRES-RESULT-006", "PRES-RESULT-007", "PRES-RESULT-008", "PRES-RESULT-009", "PRES-RESULT-010", "PRES-RESULT-011", "PRES-RESULT-012"]
+    evidence_maturity: "unit"
+    constraints: ["Strict discriminated schema", "Literal expectations", "No loose Record result payload", "No production scenario injection"]
+    reviewer: "3C-ARCH"
+    findings: []
+    repair_links: []
+    verification_links: ["packages/test-fixtures/tests/phase3c-presentation-fixtures.test.ts"]
+    stopping_or_escalation: "Stop if a fixture cannot bind to an existing authoritative source vector."
+
+  - id: "3C-INTEGRATION"
+    objective: "Integrate result model into DOM, animation, snapshot, runtime reset shell, E2E, docs, and release gates."
+    role: "Sol / integration owner"
+    model: "gpt-5.6-sol preferred; closest supported primary model otherwise"
+    mode: "edit"
+    status: "completed"
+    read_scope: ["apps/web/", "scripts/", "docs/", ".github/workflows/", "package.json"]
+    write_scope: ["tightly coupled integration files assigned by Sol"]
+    dependencies: ["3C-IMPLEMENT", "3C-FIXTURES"]
+    acceptance_ids: ["PRES-RESULT-001", "PRES-RESULT-002", "PRES-RESULT-003", "PRES-RESULT-004", "PRES-RESULT-005", "PRES-RESULT-006", "PRES-RESULT-007", "PRES-RESULT-008", "PRES-RESULT-009", "PRES-RESULT-010", "PRES-RESULT-011", "PRES-RESULT-012"]
+    evidence_maturity: "browser"
+    constraints: ["Preserve Phase 3B", "Presentation-only next-round shell", "No hidden state in snapshot", "Root and Pages browser evidence"]
+    reviewer: "3C-REVIEW"
+    findings: []
+    repair_links: []
+    verification_links: ["scripts/e2e-smoke.mjs", "output/phase-3c/e2e/", "docs/agent-runs/phase-3c/verification.md"]
+    stopping_or_escalation: "Stop for any rule, privacy, or scope expansion beyond the accepted decisions."
+
+  - id: "3C-REVIEW"
+    objective: "Independently inspect integrated Phase 3C behavior, privacy, accessibility, regressions, and evidence closure."
+    role: "Terra / independent reviewer"
+    model: "gpt-5.6-terra preferred; closest supported engineering model otherwise"
+    mode: "read_only"
+    status: "completed"
+    read_scope: ["integrated Phase 3C diff", "governing docs", "tests", "browser artifacts"]
+    write_scope: []
+    dependencies: ["3C-IMPLEMENT", "3C-FIXTURES", "3C-INTEGRATION"]
+    acceptance_ids: ["PRES-RESULT-001", "PRES-RESULT-002", "PRES-RESULT-003", "PRES-RESULT-004", "PRES-RESULT-005", "PRES-RESULT-006", "PRES-RESULT-007", "PRES-RESULT-008", "PRES-RESULT-009", "PRES-RESULT-010", "PRES-RESULT-011", "PRES-RESULT-012"]
+    evidence_maturity: "browser"
+    constraints: ["Read-only", "Inspect independent of implementation ownership", "Do not substitute static inspection for runtime evidence"]
+    reviewer: "3C-ARCH"
+    findings: []
+    repair_links: []
+    verification_links: ["docs/agent-runs/phase-3c/findings.md", "docs/agent-runs/phase-3c/verification.md"]
+    stopping_or_escalation: "Report findings with stable IDs; do not approve absent browser or hosted evidence as runtime proof."

@@ -7,6 +7,7 @@ export * from "./rules/yaku-fixtures";
 export * from "./rules/phase1d-fixtures";
 export * from "./rules/phase1e-fixtures";
 export * from "./rules/phase3b-presentation-fixtures";
+export * from "./rules/phase3c-presentation-fixtures";
 export * from "./rules/deal-fixture-builder";
 export * from "./rules/deal-fixtures";
 export * from "./rules/fixture-types";

@@ -707,3 +707,37 @@ Original prompt: read the package and understand it, then let me know when we ar
   both root and Pages gates pass with the hardened observation.
 - Phase 3C is next: a dedicated round-result screen, score breakdown/animation, and next-round
   transition surface driven by the existing authoritative result state.
+
+## 2026-08-09 — Phase 3C architecture and agent ledger locked
+
+- Owner approved Phase 3C using the upgraded Sol-led workflow and requested durable documentation
+  of the overall subagent plan. A Terra documentation workstream created `docs/SUBAGENT_PLAN.md`,
+  the ledger guide, and the Phase 3C directive/workstream/decision/finding/verification/handoff set.
+- Parallel Terra engine and UX investigations agreed that completed public observations/history and
+  events already contain every result, arithmetic, evidence, starter, privilege, and match fact the
+  browser needs; no engine or rules change is required.
+- Sol resolved the sole scope disagreement in favor of the documented phase boundary: Phase 3C
+  shows the authoritative next-round plan but uses a truthfully named local one-round restart.
+  Actual `advanceRound`, new-deal privacy handoff, and full match formats remain Phase 5.
+- Locked twelve `PRES-RESULT-*` contracts, production-seed Bank and final-Draw Koi-Koi browser paths,
+  page-side feedback/result ordering evidence, modal input/focus locks, and root/Pages seven-viewport
+  gates. Pure result-model and literal-fixture implementations now have separate Terra write scopes;
+  Sol retains tightly coupled DOM/runtime integration and final verification.
+
+## 2026-08-09 — Phase 3C implemented and locally accepted
+
+- Added the public-only result mapper, twelve typed/frozen presentation fixtures, recipient-safe
+  diagnostic result DTO, accessible score/result modal, committed evidence/history presentation,
+  explicit table-versus-scoring multiplier copy, modal focus/input locks, and truthful local restart.
+- The real production seed passes both result paths: final-Draw Koi-Koi commits End of Play at
+  `11 × 3× = 33`, while a fresh Hand Bank commits `3 × 1× = 3` and preserves the authoritative
+  February starter/privilege plan without pretending the local reset advances that plan.
+- Root and Pages browser runs pass seven opening layouts plus seven Bank-result layouts, with focused
+  End-of-Play captures, page-side feedback-before-result evidence, no private/server tokens, and no
+  browser/network errors. The required web-game client also returned the real text snapshot and a
+  clean screenshot without an error artifact.
+- `npm run validate:phase3c` passed 22 files / 153 tests, the approved release deck, technical deck,
+  Workshop, root, and Pages gates. `npm run check` passed 40 files / 390 tests, the 10,002-match
+  deterministic gate, and a 767-module build. Independent review signed off after terminal-total,
+  fail-closed match, multiplier-copy, traceability, and formatting repairs.
+- Hosted CI/Pages deployment and live verification remain the release gate before Phase 4A.

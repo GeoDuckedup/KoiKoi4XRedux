@@ -6,7 +6,7 @@ import { chromium } from "playwright";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-3b/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-3c/e2e");
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
 const mountedBasePath = smokeBasePath === "/" ? "/" : `${smokeBasePath}/`;
@@ -139,6 +139,84 @@ async function chooseYakuDecision(page, choice) {
   );
 }
 
+async function chooseYakuDecisionThroughResultBeat(page, choice) {
+  const before = await readState(page);
+  const selector = choice === "bank" ? "[data-yaku-bank]" : "[data-yaku-koi-koi]";
+  await page.evaluate(() => {
+    const feedback = document.querySelector("[data-yaku-feedback]");
+    const result = document.querySelector("[data-round-result]");
+    if (!(feedback instanceof HTMLElement) || !(result instanceof HTMLElement)) {
+      throw new Error("Phase 3C feedback/result surfaces are missing.");
+    }
+    globalThis.__phase3cResultObserver?.disconnect();
+    const trace = [];
+    const record = () => {
+      const state = JSON.parse(globalThis.render_game_to_text());
+      trace.push({
+        feedbackVisible: !feedback.hidden,
+        resultVisible: !result.hidden,
+        inputLockReason: state.input.lockReason,
+        stateVersion: state.localRound.stateVersion,
+      });
+    };
+    const observer = new MutationObserver(record);
+    observer.observe(feedback, { attributeFilter: ["hidden"], attributes: true });
+    observer.observe(result, { attributeFilter: ["hidden"], attributes: true });
+    globalThis.__phase3cResultTrace = trace;
+    globalThis.__phase3cResultObserver = observer;
+    record();
+  });
+  await page.locator(selector).click();
+  await page.waitForFunction(
+    (version) =>
+      globalThis.__phase3cResultTrace?.some(
+        (entry) =>
+          entry.stateVersion > version &&
+          entry.inputLockReason === "awaitingObservation" &&
+          entry.feedbackVisible &&
+          !entry.resultVisible,
+      ),
+    before.localRound.stateVersion,
+    { timeout: 30_000 },
+  );
+  await page.waitForFunction(
+    (version) => {
+      const state = JSON.parse(globalThis.render_game_to_text());
+      const result = document.querySelector("[data-round-result]");
+      return (
+        state.localRound.stateVersion > version &&
+        state.input.lockReason !== "awaitingObservation" &&
+        result instanceof HTMLElement &&
+        !result.hidden
+      );
+    },
+    before.localRound.stateVersion,
+    { timeout: 30_000 },
+  );
+  const state = await readState(page);
+  const trace = await page.evaluate(() => {
+    globalThis.__phase3cResultObserver?.disconnect();
+    const entries = globalThis.__phase3cResultTrace ?? [];
+    delete globalThis.__phase3cResultObserver;
+    delete globalThis.__phase3cResultTrace;
+    return entries;
+  });
+  return { state, trace };
+}
+
+async function waitForResultVisualSettlement(page) {
+  await page.waitForFunction(() => {
+    const result = document.querySelector("[data-round-result]");
+    const score = document.querySelector("[data-round-result-score]");
+    return (
+      result instanceof HTMLElement &&
+      !result.hidden &&
+      getComputedStyle(result).opacity === "1" &&
+      (!(score instanceof HTMLElement) || score.hidden || getComputedStyle(score).opacity === "1")
+    );
+  });
+}
+
 async function acceptHandoffIfPending(page) {
   const state = await readState(page);
   if (!state.localRound.handoffPending) return state;
@@ -267,7 +345,7 @@ const PHASE_3B_FINAL_DRAW_SEQUENCE = Object.freeze([
 await mkdir(outputDirectory, { recursive: true });
 const { server: staticServer, baseUrl } = await startStaticServer();
 const pageUrl = `${baseUrl}${mountedBasePath}`;
-process.stdout.write(`Phase 3B smoke server ready at ${pageUrl}.\n`);
+process.stdout.write(`Phase 3C smoke server ready at ${pageUrl}.\n`);
 
 let browser;
 try {
@@ -305,7 +383,7 @@ try {
         );
       }
       const state = await readState(page);
-      assert(state.screen === "localRound", "Phase 3B must identify the local round screen.");
+      assert(state.screen === "localRound", "Phase 3C must identify the local round screen.");
       assert(
         state.presentationMode === "authoritativeLocalRound",
         "The technical fixture must be replaced by an authoritative local round.",
@@ -349,7 +427,7 @@ try {
         fullPage: true,
       });
     }
-    process.stdout.write("Phase 3B seven-viewport baseline passed.\n");
+    process.stdout.write("Phase 3C seven-viewport baseline passed.\n");
   } else {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(pageUrl, { waitUntil: "networkidle" });
@@ -468,6 +546,42 @@ try {
     await page.locator("[data-new-round]").isDisabled(),
     "New Round can discard an unresolved final-Draw decision.",
   );
+  const finalKoiResult = await chooseYakuDecisionThroughResultBeat(page, "koiKoi");
+  await waitForResultVisualSettlement(page);
+  assert(
+    finalKoiResult.state.localRound.phase === "roundComplete" &&
+      finalKoiResult.state.result?.kind === "endOfPlayLastKoiCaller",
+    "Final-Draw Koi-Koi did not produce the committed End-of-Play result.",
+  );
+  assert(
+    finalKoiResult.state.result.scorerId === "player-b" &&
+      finalKoiResult.state.result.scoring?.basePoints === 11 &&
+      finalKoiResult.state.result.scoring?.scoringMultiplier === 3 &&
+      finalKoiResult.state.result.scoring?.awardedPoints === 33,
+    `Final-Draw result arithmetic changed: ${JSON.stringify(finalKoiResult.state.result)}.`,
+  );
+  assert(
+    await page.locator("[data-round-result]").isVisible(),
+    "End-of-Play result modal is not visible.",
+  );
+  assert(
+    (await page.locator("[data-round-result-outcome]").textContent())?.includes(
+      "last Koi-Koi caller",
+    ) &&
+      (await page.locator("[data-round-result-arithmetic]").textContent())?.includes(
+        "11 points × 3× = 33 points",
+      ),
+    "End-of-Play result copy omitted the authoritative caller/arithmetic.",
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `end-of-play-result-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  process.stdout.write("Phase 3C End-of-Play result passed.\n");
+
   await page.goto(pageUrl, { waitUntil: "networkidle" });
   await waitForApplicationReady(page, browserErrors, networkErrors);
   await page.locator("[data-animation-mode]").selectOption("instant");
@@ -479,8 +593,9 @@ try {
       hasYaku(freshHandAnimals, "animals"),
     "The fresh Bank trace did not reach Hand Animals.",
   );
-  await chooseYakuDecision(page, "bank");
-  const banked = await readState(page);
+  const bankResult = await chooseYakuDecisionThroughResultBeat(page, "bank");
+  await waitForResultVisualSettlement(page);
+  const banked = bankResult.state;
   assert(banked.localRound.phase === "roundComplete", "Hand Bank did not complete the round.");
   assert(
     !banked.localRound.latestRecap?.includes("Drew"),
@@ -492,23 +607,83 @@ try {
   );
   assert(
     banked.yaku.feedback?.bankAward?.awardedPoints === 3 &&
-      (await page.locator("[data-yaku-feedback-message]").textContent())?.includes(
-        "Player B banked 3 points",
-      ),
-    "Bank award feedback omitted the authoritative awarded points.",
+      bankResult.trace.some((entry) => entry.feedbackVisible && !entry.resultVisible),
+    "Bank award feedback did not precede the authoritative result.",
   );
   assert(
     (await page.locator("[data-turn-recaps]").textContent())?.includes("banked 3 × 1× = 3 points"),
     "Bank award recap omitted the authoritative scoring arithmetic.",
   );
-  await page.screenshot({
-    path: resolve(
-      outputDirectory,
-      `hand-bank-award-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-    ),
-    fullPage: true,
-  });
-  process.stdout.write("Phase 3B Hand Bank award passed.\n");
+  assert(
+    banked.result?.kind === "bankedScore" &&
+      banked.result.scorerId === "player-b" &&
+      banked.result.scoring?.arithmeticLabel === "3 points × 1× = 3 points." &&
+      banked.result.matchScoresAfter["player-b"] === 3,
+    `Bank result snapshot changed: ${JSON.stringify(banked.result)}.`,
+  );
+  assert(
+    banked.result.action.actionLabel === "Start another local round" &&
+      banked.result.action.plan?.scheduledMonth === 2 &&
+      banked.result.action.plan?.starterId === "player-a",
+    "The truthful local action or authoritative February plan is missing.",
+  );
+  assert(
+    (await page.locator("[data-round-result-context]").textContent())?.includes("January") &&
+      (await page.locator("[data-round-result-transition-copy]").textContent())?.includes(
+        "February",
+      ),
+    "The result modal omitted its month context or next-round plan.",
+  );
+  assert(
+    (await page.locator("[data-round-result-action]").textContent()) ===
+      "Start another local round",
+    "The local result acknowledgement overclaims authoritative next-round advancement.",
+  );
+  for (const selector of [
+    "[data-deck-select]",
+    "[data-fullscreen-button]",
+    "[data-input-mode]",
+    "[data-animation-mode]",
+    "[data-new-round]",
+  ]) {
+    assert(await page.locator(selector).isDisabled(), `${selector} escaped the result modal lock.`);
+  }
+  assert(
+    banked.input.semanticControlCount === 0 &&
+      (await page.evaluate(() => document.activeElement?.matches("[data-round-result-action]"))) ===
+        true,
+    "The committed result did not lock card input and focus its sole action.",
+  );
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+    const resultBox = await page.locator("[data-round-result]").boundingBox();
+    assert(resultBox !== null, `${viewport.width}×${viewport.height} result modal disappeared.`);
+    const documentHeight = await page.evaluate(() => document.documentElement.scrollHeight);
+    assert(
+      resultBox.x >= 0 &&
+        resultBox.y >= 0 &&
+        resultBox.x + resultBox.width <= viewport.width + 1 &&
+        resultBox.y + resultBox.height <= documentHeight + 1,
+      `${viewport.width}×${viewport.height} result overlay escaped the horizontally bounded, vertically scrollable page: ${JSON.stringify({ resultBox, documentHeight })}.`,
+    );
+    const cardBox = await page.locator(".round-result__card").boundingBox();
+    assert(
+      cardBox !== null &&
+        cardBox.x >= resultBox.x - 1 &&
+        cardBox.y >= resultBox.y - 1 &&
+        cardBox.x + cardBox.width <= resultBox.x + resultBox.width + 1 &&
+        cardBox.y + cardBox.height <= resultBox.y + resultBox.height + 1,
+      `${viewport.width}×${viewport.height} result card is clipped: ${JSON.stringify(cardBox)}.`,
+    );
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `bank-result-${viewport.width}x${viewport.height}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+  }
+  process.stdout.write("Phase 3C Bank result seven-viewport modal passed.\n");
   assert(
     !JSON.stringify(banked).includes("drawPileOrdered") &&
       !JSON.stringify(banked).includes("rng") &&
@@ -516,10 +691,25 @@ try {
       !JSON.stringify(banked).includes("commandId"),
     "The browser text surface leaked server-only state.",
   );
+  await page.locator("[data-round-result-action]").click();
+  await page.waitForFunction(() => {
+    const state = JSON.parse(window.render_game_to_text());
+    return (
+      state.localRound.phase === "awaitingHandPlay" &&
+      state.localRound.stateVersion === 1 &&
+      state.localRound.roundNumber === 1 &&
+      state.localRound.scheduledMonth === 1 &&
+      state.result === null
+    );
+  });
+  assert(
+    !(await page.locator("[data-round-result]").isVisible()),
+    "The explicit local restart did not dismiss the result shell.",
+  );
   assert(browserErrors.length === 0, `Browser errors: ${browserErrors.join("\n")}`);
   assert(networkErrors.length === 0, `Network errors: ${networkErrors.join("\n")}`);
   process.stdout.write(
-    "Phase 3B root/Pages viewport, yaku decision, Koi-Koi continuation, and Bank smoke passed.\n",
+    "Phase 3C root/Pages yaku, End-of-Play, Bank result, modal-lock, and restart smoke passed.\n",
   );
 } finally {
   if (browser) await browser.close();

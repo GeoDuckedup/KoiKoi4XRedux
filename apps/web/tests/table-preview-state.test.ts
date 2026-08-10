@@ -109,6 +109,7 @@ describe("Phase 2B table diagnostics", () => {
       yaku: createYakuPresentationState({
         observation: getTechnicalInputFixture("handPlay").source.observation,
       }),
+      result: null,
     });
     const serialized = serializeTablePreviewSnapshot(snapshot);
     const decoded = JSON.parse(serialized) as Record<string, unknown>;
@@ -171,6 +172,7 @@ describe("Phase 2B table diagnostics", () => {
           { playerId: "player-b", activeYaku: [], currentYakuTotal: 0 },
         ],
       },
+      result: null,
     });
     expect(serialized).toContain("march-curtain");
     expect(serialized).not.toContain("january-crane");
