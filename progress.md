@@ -640,6 +640,10 @@ Original prompt: read the package and understand it, then let me know when we ar
 - `npm run check` passes formatting, zero-warning lint, all five workspace typechecks, deck
   validation, 34 files / 353 tests plus the isolated 10,002-match deterministic gate, and the
   765-module production build.
-- Phase 3A is locally accepted. Remaining before owner verification: commit, push, hosted CI/Pages
-  checks, and cache-busted live validation. Next after acceptance: Phase 3B
-  yaku/progress/Bank/Koi presentation.
+- Phase 3A implementation commit `7f3d5f1` is on `origin/main`. Hosted CI run `31344124822` passed
+  in 5m58s, and Pages run `31344124824` passed and deployed the same commit.
+- The cache-busted public runtime manifest returned HTTP 200 and identified the approved primary
+  package. A real public browser run reached `ready:true` with 48 persistent CardViews and the
+  authoritative Player A `awaitingHandPlay` state; its rendered table was visually inspected.
+- Phase 3A is accepted and deployed. Owner verification is next; after approval, proceed to Phase
+  3B yaku/progress/Bank/Koi presentation.

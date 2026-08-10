@@ -2,8 +2,8 @@
 
 **Updated:** August 9, 2026
 
-**Overall state:** Greenfield rewrite, Phase 3A implemented and locally accepted; deployment and
-hosted verification are pending
+**Overall state:** Greenfield rewrite, Phase 3A implemented, accepted, committed, and deployed;
+owner verification is next
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -235,7 +235,12 @@ projection, recap, and handoff are recorded in
   Hand/Draw/recap/privacy-handoff/Player-B/New-round trace with zero browser or network errors.
 - `npm run check` passes formatting, zero-warning lint, all five workspace typechecks, deck
   validation, 34 files / 353 tests plus the isolated 10,002-match deterministic gate, and the
-  765-module production build. Hosted CI/Pages remain before deployment acceptance.
+  765-module production build. Implementation commit `7f3d5f1` is on `origin/main`; hosted CI run
+  `31344124822` and Pages run `31344124824` passed the Phase 3A gates and deployed it.
+- The cache-busted public approved manifest returned HTTP 200 with package
+  `new-primary-deck`/`approvalStatus:approved`. A real public browser run reported `ready:true`, 48
+  persistent CardViews, the approved primary deck, and the authoritative `awaitingHandPlay` local
+  round; its rendered table was visually inspected without clipping.
 - Phase 2D's focused gate passes 8 files / 76 tests and byte-checks all 100 generated technical
   artifacts. Both seven-viewport root and `/KoiKoi4XRedux/` baseline matrices and each base's complete
   390×844 interaction trace pass with zero browser/network errors.

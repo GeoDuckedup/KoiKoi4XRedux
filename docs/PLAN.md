@@ -2,8 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 9, 2026
-**Current gate:** Phase 3A complete local turn loop implemented and locally accepted; commit,
-deployment, and hosted verification are pending
+**Current gate:** Phase 3A complete local turn loop implemented, accepted, committed, and deployed;
+owner verification is next
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -549,7 +549,7 @@ Architecture is locked in
 
 ### Phase 3A — Complete local turn loop
 
-Status: **implemented and locally accepted; deployment pending**.
+Status: **implemented, accepted, committed, and deployed; owner verification next**.
 
 Deliver:
 
