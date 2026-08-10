@@ -3548,11 +3548,20 @@ Phase 2 acceptance:
 
 ### Phase 3B — Yaku decision presentation
 
-- yaku progress;
-- Bank arithmetic;
-- Koi-Koi;
-- 1×–4× visuals;
-- hand-phase interruption.
+- Render only the authoritative public active-yaku list/current total, value-change events, decision
+  context, legal Bank/Koi-Koi actions, and table multiplier; browser presentation must not calculate
+  yaku, scores, privilege, forced-Koi availability, or continuation outcomes.
+- Show every new yaku in a phase together in one accessible decision surface. Hand and Draw remain
+  separate decision windows, so a Koi-Koi call may lead to one later Draw decision, never concurrent
+  decision surfaces.
+- Make Bank arithmetic and Koi-Koi consequence explicit from the legal action: visible table and
+  scoring multiplier are distinct under the special privilege; a 4× call remains 4×.
+- Keep all decision controls actor-scoped and lock card play while an authoritative decision is open.
+- Public yaku progress, multiplier, decision arithmetic, and post-command award/continuation feedback
+  may enter accessible DOM/text output. Opponent hands, face-down identities, draw order, RNG,
+  checkpoints, and command IDs may not.
+- Phase 3B may state the authoritative Bank award/recap, but a dedicated round result, scoring
+  animation, and transition screen remain Phase 3C work.
 
 ### Phase 3C — Round end
 

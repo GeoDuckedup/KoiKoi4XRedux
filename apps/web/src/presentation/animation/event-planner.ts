@@ -50,6 +50,24 @@ interface ClipSpec {
   readonly settlesBoundary: boolean;
 }
 
+function isLaterCombinedFeedback(
+  event: PublicGameEventV1,
+  nextEvent: PublicGameEventV1 | undefined,
+): boolean {
+  if (!nextEvent) return false;
+  if (event.type === "yakuCompleted" || event.type === "yakuValueChanged") {
+    return (
+      nextEvent.type === "yakuCompleted" ||
+      nextEvent.type === "yakuValueChanged" ||
+      nextEvent.type === "yakuDecisionRequired"
+    );
+  }
+  if (event.type === "yakuDecisionChosen") {
+    return nextEvent.type === "koiKoiCalled" || nextEvent.type === "roundResultCommitted";
+  }
+  return false;
+}
+
 function clipSpecs(event: PublicGameEventV1, hasProjectionChange: boolean): readonly ClipSpec[] {
   switch (event.type) {
     case "handCardPlayed":
@@ -174,6 +192,7 @@ export function planPublicEvents(
       );
       continue;
     }
+    if (isLaterCombinedFeedback(event, events[eventIndex + 1])) continue;
     let current = before;
     for (const [sequence, spec] of clipSpecs(event, changed.length > 0).entries()) {
       const to = spec.settlesBoundary ? after : current;

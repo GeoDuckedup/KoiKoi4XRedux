@@ -2,8 +2,8 @@
 
 **Updated:** August 9, 2026
 
-**Overall state:** Greenfield rewrite, Phase 3A implemented, accepted, committed, and deployed;
-owner verification is next
+**Overall state:** Greenfield rewrite through Phase 3B implemented and accepted; GitHub Pages deploys
+the same validated browser artifact from `main`
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -12,11 +12,17 @@ and the retained local-only deterministic deck Workshop/raster review pipeline
 
 ## Current result
 
-Phase 3A replaces the technical browser fixture with a deterministic local runtime. The existing
-rule-free input controller consumes the active player's real `PlayerObservationV1`; its intent is
-turned into one engine gameplay command, and public engine events drive the trusted animation
-boundaries and accessible recap. The whole first round is executable, including exact capture
-choices and the existing Bank/Koi engine seam.
+Phase 3B completes the deterministic local runtime's player-facing Yaku and Bank/Koi-Koi seam. The
+browser displays canonical public Yaku progress for both players, presents one accessible combined
+decision per capture phase, and copies Bank/Koi-Koi arithmetic only from authoritative legal
+actions. Public feedback is shown after cards settle and before decision focus; a pending decision
+locks all unrelated controls.
+
+The Phase 3A foundation replaces the technical browser fixture with a deterministic local runtime.
+The existing rule-free input controller consumes the active player's real `PlayerObservationV1`;
+its intent is turned into one engine gameplay command, and public engine events drive the trusted
+animation boundaries and accessible recap. The whole first round is executable, including exact
+capture choices and the existing Bank/Koi engine seam.
 
 A completed turn covers the full table before the active observation changes. Player B's hand is
 not projected until the Ready button is activated. The serialized text surface includes only
@@ -26,6 +32,23 @@ RNG, checkpoint, or command IDs.
 The approved `new-primary-deck` v1.0.0 is the default root/Pages runtime package. Technical Sunrise
 and Moonlight remain optional installed packages, proving that more decks can be added without
 changing engine state or canonical CardIds.
+
+## Phase 3B completed and accepted
+
+- Ten typed, deeply frozen `PRES-*` fixtures bind public yaku progress, combined decisions,
+  incremental and Bright upgrades, Bank/Koi decisions, privilege/forced/capped cases, and safe text
+  state to Phase 1C/1D/1E authoritative source fixtures.
+- Browser presentation may consume public `activeYaku`, `currentYakuTotal`, decision context, legal
+  decision actions, multiplier, and public events. It may not infer any rule outcome or disclose
+  hidden cards, draw order, RNG, checkpoints, or command IDs.
+- Seed `00000000000000000000000000000003` is the locked production-local Phase 3B browser trace;
+  it reaches Hand Animals, Koi-Koi Draw continuation, and a later combined final-Draw decision.
+- Phase 3C remains responsible for the finished round-result/score-transition experience. Phase 3B
+  only presents the authoritative award/recap and locks the completed local round.
+- The focused gate passes 20 Vitest files / 136 tests, the local-only Workshop exclusion check, all
+  seven root and Pages viewports, and real Hand Animals, Koi-Koi Draw continuation, combined
+  final-Draw, and Bank award browser traces. Independent authority/privacy and interaction reviews
+  report no blocker, high, or medium findings.
 
 ## Phase 3A local-round runtime now present
 
@@ -309,9 +332,9 @@ projection, recap, and handoff are recorded in
 
 1. No hosting configuration, Firebase project, secret, or migration is required. Pushing `main`
    triggers CI and GitHub Pages.
-2. After deployment, open the live URL, select a hand card, confirm the move, wait for Hand/Draw
-   animation, verify the text recap, activate Player B Ready, and confirm Player B receives a new
-   playable hand.
+2. After deployment, open the live URL and play the deterministic local round. At each Yaku
+   decision, verify the public Yaku list, Bank award, Koi-Koi multiplier, and combined decision text;
+   unrelated controls must remain locked until Bank or Koi-Koi is chosen.
 3. Use New round to restore Player A/state version 1. Deck switching remains texture-only, and the
    approved Primary Deck should be selected by default.
 4. Additional decks may still be added as complete or inherited packages; each receives separate
@@ -322,7 +345,5 @@ The deployed baseline is
 
 ## Next subphase
 
-**Phase 3B — Yaku and Bank/Koi presentation:** turn the existing authoritative yaku-decision phase
-into the finished player-facing progress/decision experience, including current yaku, newly
-completed yaku, table multiplier, Bank award, Koi-Koi continuation, and Hand-trigger draw
-interruption/resumption.
+**Phase 3C — Round-end presentation:** add the dedicated result screen, authoritative scoring
+breakdown/animation, and clear next-round transition without duplicating engine scoring rules.

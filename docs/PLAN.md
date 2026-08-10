@@ -578,12 +578,41 @@ Gate:
   green.
 
 Architecture is locked in
-[`ADR 0012`](./adr/0012-phase-3a-local-round-adapter.md).
+[`ADR 0012`](./adr/0012-phase-3a-local-round-adapter.md) and
+[`ADR 0013`](./adr/0013-phase-3b-yaku-presentation-boundary.md).
+
+### Phase 3B — Yaku and Bank/Koi presentation
+
+Status: **implemented and accepted**.
+
+Deliver:
+
+- public, canonical-order yaku progress for both player capture collections;
+- one accessible combined decision surface driven only by an authoritative
+  `awaitingYakuDecision` context and its legal actions;
+- new-yaku, incremental-value-change, Bank award, Koi-Koi continuation, multiplier, special
+  privilege, forced-Koi, and 4× cap feedback without browser rule calculation;
+- recipient-safe text snapshot/semantic controls and a deterministic production-local browser trace
+  using seed `00000000000000000000000000000003`.
+
+Gate:
+
+- all ten `PRES-YAKU-*`, `PRES-KOI-*`, and `PRES-PRIV-001-SAFE-STATE` literal fixture contracts
+  are frozen, exported, and executed by presentation/runtime tests;
+- root and repository-prefixed production browser traces at 390×844 reach Hand Animals Bank 3 / Koi
+  1×→2×, verify Draw continuation before handoff, then reach the final-Draw Blue Scrolls + Scrolls
+  total 11 decision with Bank 22 / Koi 2×→3×; a separate fresh Bank trace proves no Hand-Bank Draw;
+- seven supported viewports retain the approved deck, 48 persistent cards, no clipped zones, and no
+  browser/network errors; output includes yaku-decision, continuation, and Bank-award screenshots;
+- `npm run check` retains the full 10,002-match deterministic gate, while `npm run validate:phase3b`
+  retains the Phase 2E release/Workshop/root/Pages gates.
+
+Phase 3C owns the dedicated round-result screen, scoring animation, and next-round transition.
 
 ## Later phases
 
-1. **Phase 3 — One-round vertical slice:** continue with Phase 3B's yaku/progress/Bank/Koi
-   presentation, followed by Phase 3C round-end presentation.
+1. **Phase 3 — One-round vertical slice:** continue with Phase 3C round-end presentation after the
+   accepted Phase 3B yaku/progress/Bank/Koi surface.
 2. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook.
 3. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, and pass-and-play.
 4. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.

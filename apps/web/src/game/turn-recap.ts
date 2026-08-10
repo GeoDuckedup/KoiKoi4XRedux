@@ -33,6 +33,14 @@ export function formatTurnRecap(events: readonly PublicGameEventV1[]): string {
       parts.push(`Drew ${cardName(event.cardId)}.`);
     } else if (event.type === "yakuCompleted") {
       parts.push(`Completed ${event.yaku.name} for ${event.yaku.points} points.`);
+    } else if (event.type === "yakuValueChanged") {
+      parts.push(
+        `${event.name} upgraded: ${event.previousPoints} → ${event.currentPoints} points.`,
+      );
+    } else if (event.type === "yakuDecisionChosen") {
+      parts.push(
+        `${playerName(event.actorId)} chose ${event.choice === "bank" ? "Bank" : "Koi-Koi"}.`,
+      );
     } else if (event.type === "koiKoiCalled") {
       parts.push(
         `${playerName(event.actorId)} called Koi-Koi; the table is now ${event.currentTableMultiplier}×.`,
@@ -44,7 +52,15 @@ export function formatTurnRecap(events: readonly PublicGameEventV1[]): string {
           : `Turn complete. ${playerName(event.nextPlayerId)} is next.`,
       );
     } else if (event.type === "roundResultCommitted") {
-      parts.push(`Round complete: ${event.result.reasonCode.replaceAll("_", " ").toLowerCase()}.`);
+      if (event.result.kind === "bankedScore" && event.result.scorerId) {
+        parts.push(
+          `${playerName(event.result.scorerId)} banked ${event.result.basePoints} × ${event.result.scoringMultiplier}× = ${event.result.awardedPoints} points.`,
+        );
+      } else {
+        parts.push(
+          `Round complete: ${event.result.reasonCode.replaceAll("_", " ").toLowerCase()}.`,
+        );
+      }
     }
   }
   return parts.join(" ");

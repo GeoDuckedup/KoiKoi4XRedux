@@ -22,13 +22,13 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run check
-      - run: npm run validate:phase3a
+      - run: npm run validate:phase3b
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-3a-local-round-and-deck-workshop
+          name: phase-3b-yaku-presentation-and-deck-workshop
           path: |
-            output/phase-3a/e2e
+            output/phase-3b/e2e
             output/phase-2e/e2e
             decks/new-primary-deck/generated/contact-sheets
           if-no-files-found: error

@@ -12,6 +12,8 @@ import { computeBoardLayout, inspectBoardLayout } from "../src/presentation/boar
 import { BOARD_LAYER_ORDER, CARD_ZONES } from "../src/presentation/board/types";
 import { computeCardPlacements } from "../src/presentation/cards/card-layout";
 import { CARD_SHOWCASE_ASSIGNMENTS } from "../src/presentation/cards/showcase";
+import { createYakuPresentationState } from "../src/game/yaku-presentation";
+import { getTechnicalInputFixture } from "../src/presentation/input/technical-input-fixtures";
 
 describe("Phase 2B table diagnostics", () => {
   it("advances only by the requested deterministic duration", () => {
@@ -104,6 +106,9 @@ describe("Phase 2B table diagnostics", () => {
       },
       simulationTimeMs: 500,
       viewport: { width: 390, height: 844 },
+      yaku: createYakuPresentationState({
+        observation: getTechnicalInputFixture("handPlay").source.observation,
+      }),
     });
     const serialized = serializeTablePreviewSnapshot(snapshot);
     const decoded = JSON.parse(serialized) as Record<string, unknown>;
@@ -157,6 +162,15 @@ describe("Phase 2B table diagnostics", () => {
         fieldSlotCount: 8,
       },
       diagnostics: { clippedZones: [], invalidZones: [], overlapViolations: [] },
+      yaku: {
+        tableMultiplier: 1,
+        feedback: null,
+        decision: null,
+        players: [
+          { playerId: "player-a", activeYaku: [], currentYakuTotal: 0 },
+          { playerId: "player-b", activeYaku: [], currentYakuTotal: 0 },
+        ],
+      },
     });
     expect(serialized).toContain("march-curtain");
     expect(serialized).not.toContain("january-crane");

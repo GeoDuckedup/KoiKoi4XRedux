@@ -1,13 +1,14 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository
-has completed **Phase 3A: Complete Local Turn Loop** with an owner-approved primary deck. It contains
-the canonical rules
-authority, all 48 artwork-independent card records, the complete deterministic headless match
+has completed **Phase 3B: Yaku and Bank/Koi presentation** with an owner-approved primary deck. It
+contains the canonical rules authority, all 48 artwork-independent card records, the complete
+deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
 boundaries, and a responsive Pixi table with 48 persistent canonical CardViews, local atomic deck
 switching, deterministic public-event animation, keyboard-accessible authoritative local play,
-private pass-the-device handoff, and accessible turn recap.
+private pass-the-device handoff, public Yaku progress, authoritative Bank/Koi-Koi decisions, and
+accessible turn recap.
 
 ## Prerequisites
 
@@ -38,6 +39,7 @@ npm run validate:phase2c
 npm run validate:phase2d
 npm run validate:phase2e
 npm run validate:phase3a
+npm run validate:phase3b
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -94,6 +96,11 @@ and HTML turn recap. Root and Pages browser gates load the approved Primary Deck
 and execute a real Player A turn into Player B Ready. Artifacts are written under
 `output/phase-3a/e2e/`.
 
+`npm run validate:phase3b` retains the Phase 3A/release/Workshop/root/Pages gates and adds the ten
+locked `PRES-*` public-yaku/Bank/Koi contracts. Its production-local seed trace verifies Hand Animals
+Bank/Koi choices, Draw continuation, a combined Blue Scrolls + Scrolls decision, public arithmetic,
+and recipient-safe text output. Artifacts are written under `output/phase-3b/e2e/`.
+
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot
 contact sheets. `npm run validate:phase2e` runs the technical Workshop/importer/production-exclusion
@@ -122,7 +129,7 @@ Pages workflow. Set **Settings → Pages → Build and deployment → Source** t
 workflow derives the correct Vite base path from the repository name and deploys `apps/web/dist` only
 after checks pass.
 
-No Firebase project, credentials, database migration, or production domain is needed for Phase 3A.
+No Firebase project, credentials, database migration, or production domain is needed for Phase 3B.
 The live page plays one authoritative browser-local round with the approved Primary Deck, Guided or
 Fast input, public-event animation, private Player A/Player B handoff, and an accessible recap. New
 round restarts the deterministic first-round slice; multi-round persistence is deferred. The Deck

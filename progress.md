@@ -647,3 +647,58 @@ Original prompt: read the package and understand it, then let me know when we ar
   authoritative Player A `awaitingHandPlay` state; its rendered table was visually inspected.
 - Phase 3A is accepted and deployed. Owner verification is next; after approval, proceed to Phase
   3B yaku/progress/Bank/Koi presentation.
+
+## 2026-08-09 — Phase 3B yaku and Bank/Koi presentation started
+
+- Owner approved the Sol-led multi-agent workflow. Sol retains the Phase 3B architecture,
+  cross-system integration, gameplay judgment, and final verification; three explicit GPT-5.6
+  Terra agents received non-overlapping engine-seam, presentation/UX, and acceptance investigations.
+- The investigations agree that the existing `PlayerObservationV1`, public yaku events, decision
+  context, and legal actions already contain every authoritative value required for a finished
+  decision surface. Browser code must not recalculate scoring, privilege, forced-Koi availability,
+  or continuation rules.
+- Locked Phase 3B progress scope to public active-yaku/current-total tracking plus combined
+  new-yaku and value-change feedback. Near-threshold “one card away” guidance would require a new
+  engine-owned read model and remains tutorial-phase work rather than duplicated browser rules.
+- Locked a DOM-led accessible decision/feedback surface with compact public yaku tracking, while
+  Pixi retains persistent cards, capture rails, and short table status. Cards settle before one
+  combined yaku feedback beat; only then does the decision receive focus.
+- Rejected a shipped browser fixture injector. Deterministic seed `00000000000000000000000000000003`
+  naturally reaches a Hand-phase Animals decision, resumes Draw after Koi-Koi, and later reaches a
+  combined Draw decision, allowing the production-local runtime itself to supply browser evidence.
+- Terra implementation is underway in three serialized-safe units: pure presentation model/tests,
+  deterministic authoritative runtime trace/tests, and the strict ten-vector Phase 3B fixture
+  catalog. Sol will integrate the DOM/Pixi/animation/snapshot/browser seams after those contracts land.
+
+## 2026-08-09 — Phase 3B acceptance and deployment gate locked
+
+- Added the ten typed, frozen `PRES-*` presentation contracts and linked each to Phase 1C/1D/1E
+  authority rather than duplicating yaku, scoring, privilege, or continuation rules in the browser.
+- Locked production-local seed `00000000000000000000000000000003` for the real root/Pages browser
+  trace: Hand Animals offers Bank 3 or Koi-Koi 1×→2×; later final Draw combines Blue Scrolls and
+  Scrolls for total 11 with Bank 22 or Koi-Koi 2×→3×. A clean fresh-run Bank path must prove no Draw
+  after Hand Bank and record the public award recap.
+- Added `validate:phase3b`, which keeps release deck validation, Workshop exclusion, all web/deck
+  tests, and root/Pages browser traces. The separate full `check` retains the 10,002-match
+  deterministic gate. CI/Pages
+  now publish Phase 3B screenshot artifacts at `output/phase-3b/e2e`.
+- Phase 3C remains next after Phase 3B: it owns the dedicated round-result, scoring animation, and
+  next-round transition surface.
+
+## 2026-08-09 — Phase 3B implemented and accepted
+
+- Integrated public canonical-order Yaku progress, one combined accessible decision surface per
+  capture phase, public feedback/value changes, authoritative Bank/Koi-Koi arithmetic, and pending
+  decision input/focus locks. The browser consumes only player observations, public events, and
+  legal actions; it does not recalculate scoring or expose hidden state.
+- The production-local seed trace passes on both root and repository-prefixed builds at all seven
+  supported viewports. Focused 390×844 traces prove Hand Animals Bank/Koi choices, Koi-Koi Draw
+  continuation, the combined Blue Scrolls + Scrolls final-Draw decision, and Hand Bank award/no Draw.
+- `npm run validate:phase3b` passed its release deck, 20-file/136-test, Workshop, root, and Pages
+  gates. Independent authority/privacy and interaction reviews report no blocker, high, or medium
+  findings after the decision-lock and feedback-order repairs.
+- The final `npm run check` passed formatting, zero-warning lint, all five workspace typechecks,
+  both deck packages, 38 files / 373 ordinary tests, the 10,002-match generated replay/invariant
+  gate, and the 766-module production build.
+- Phase 3C is next: a dedicated round-result screen, score breakdown/animation, and next-round
+  transition surface driven by the existing authoritative result state.

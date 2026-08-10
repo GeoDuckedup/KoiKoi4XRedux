@@ -87,6 +87,94 @@ describe("Phase 2C event planner", () => {
     expect(plan.clips.every(({ affectedCardIds }) => affectedCardIds.length === 0)).toBe(true);
   });
 
+  it("PRES-YAKU-001-MULTI-HAND coalesces simultaneous completions and one decision into one feedback pause", () => {
+    const projection = getTechnicalAnimationScenario("multiplierFeedback").projections[0];
+    if (!projection) throw new Error("Missing feedback projection.");
+    const events: readonly PublicGameEventV1[] = [
+      {
+        type: "yakuCompleted",
+        actorId: "player-a",
+        phase: "hand",
+        yaku: { key: "blossomViewing", name: "Blossom Viewing", points: 5 },
+      },
+      {
+        type: "yakuCompleted",
+        actorId: "player-a",
+        phase: "hand",
+        yaku: { key: "moonViewing", name: "Moon Viewing", points: 5 },
+      },
+      {
+        type: "yakuDecisionRequired",
+        actorId: "player-a",
+        context: {
+          phase: "hand",
+          newYaku: [
+            { key: "blossomViewing", name: "Blossom Viewing", points: 5 },
+            { key: "moonViewing", name: "Moon Viewing", points: 5 },
+          ],
+          activeYaku: [
+            { key: "blossomViewing", name: "Blossom Viewing", points: 5 },
+            { key: "moonViewing", name: "Moon Viewing", points: 5 },
+          ],
+          currentYakuTotal: 10,
+          resume: { kind: "drawPhase" },
+        },
+      },
+    ];
+    const plan = planPublicEvents(events, {
+      projections: [projection, projection, projection, projection],
+    });
+    expect(plan.clips.map(({ eventType, kind }) => ({ eventType, kind }))).toEqual([
+      { eventType: "yakuDecisionRequired", kind: "feedback" },
+    ]);
+  });
+
+  it("PRES-YAKU-002-INCREMENT-NO-DECISION keeps one incremental feedback pause", () => {
+    const projection = getTechnicalAnimationScenario("multiplierFeedback").projections[0];
+    if (!projection) throw new Error("Missing feedback projection.");
+    const events: readonly PublicGameEventV1[] = [
+      {
+        type: "yakuValueChanged",
+        actorId: "player-a",
+        phase: "draw",
+        yakuKey: "animals",
+        name: "Animals",
+        previousPoints: 3,
+        currentPoints: 4,
+      },
+    ];
+    const plan = planPublicEvents(events, { projections: [projection, projection] });
+    expect(plan.clips.map(({ eventType, kind }) => ({ eventType, kind }))).toEqual([
+      { eventType: "yakuValueChanged", kind: "feedback" },
+    ]);
+  });
+
+  it("PRES-KOI-002-CONTINUE-AND-RESUME coalesces the decision choice into the Koi-Koi feedback", () => {
+    const projection = getTechnicalAnimationScenario("multiplierFeedback").projections[0];
+    if (!projection) throw new Error("Missing feedback projection.");
+    const events: readonly PublicGameEventV1[] = [
+      {
+        type: "yakuDecisionChosen",
+        actorId: "player-a",
+        choice: "koiKoi",
+        privilegeUsed: false,
+      },
+      {
+        type: "koiKoiCalled",
+        actorId: "player-a",
+        previousTableMultiplier: 1,
+        currentTableMultiplier: 2,
+        privilegeUsed: false,
+      },
+    ];
+    const plan = planPublicEvents(events, {
+      projections: [projection, projection, projection],
+    });
+    expect(plan.clips.map(({ eventType, kind }) => ({ eventType, kind }))).toEqual([
+      { eventType: "koiKoiCalled", kind: "feedback" },
+    ]);
+  });
+
   it("ANIM-003 keeps a drawn card face-down through travel and reveals it only in the flip clip", () => {
     const scenario = getTechnicalAnimationScenario("drawReveal");
     const plan = planPublicEvents(scenario.events, { projections: scenario.projections });

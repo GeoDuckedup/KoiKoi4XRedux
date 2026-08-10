@@ -53,7 +53,7 @@ select:focus-visible {
 
 .app-shell {
   display: grid;
-  grid-template-rows: auto minmax(420px, 1fr) auto auto auto;
+  grid-template-rows: auto minmax(420px, 1fr) auto auto auto auto;
   width: min(100%, 1600px);
   min-height: 100vh;
   min-height: 100svh;
@@ -229,6 +229,166 @@ select:focus-visible {
   cursor: pointer;
 }
 
+.yaku-feedback,
+.yaku-decision {
+  position: absolute;
+  z-index: 9;
+  border: 1px solid rgb(233 187 90 / 62%);
+  color: #fff3cf;
+  background: rgb(6 23 17 / 95%);
+  box-shadow: 0 18px 44px rgb(0 0 0 / 42%);
+}
+
+.yaku-feedback {
+  z-index: 13;
+  top: clamp(10px, 2vw, 20px);
+  left: 50%;
+  width: min(calc(100% - 28px), 460px);
+  padding: 0.68rem 0.85rem;
+  border-radius: 14px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.yaku-feedback .eyebrow {
+  margin-bottom: 0.12rem;
+}
+
+.yaku-feedback p:last-child {
+  margin: 0;
+  color: rgb(255 243 207 / 88%);
+  font-size: clamp(0.72rem, 1.6vw, 0.9rem);
+  line-height: 1.42;
+}
+
+.yaku-decision {
+  right: 50%;
+  bottom: clamp(10px, 2.1vw, 20px);
+  width: min(calc(100% - 24px), 490px);
+  max-height: calc(100% - 24px);
+  overflow: auto;
+  padding: clamp(14px, 3vw, 24px);
+  border-radius: 18px;
+  transform: translateX(50%);
+}
+
+.yaku-decision h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.1rem, 2.8vw, 1.5rem);
+}
+
+.yaku-decision p:not(.eyebrow) {
+  margin: 0.55rem 0 0;
+  color: rgb(255 243 207 / 82%);
+  line-height: 1.4;
+}
+
+.yaku-decision__total {
+  color: #fff3cf !important;
+  font-weight: 800;
+}
+
+.yaku-decision__resume,
+.yaku-decision__unavailable {
+  font-size: 0.82rem;
+}
+
+.yaku-decision__unavailable {
+  color: #e9bb5a !important;
+}
+
+.yaku-decision__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 1rem;
+}
+
+.yaku-decision__actions button {
+  min-height: 48px;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #e9bb5a;
+  border-radius: 12px;
+  color: #061711;
+  font-size: clamp(0.74rem, 1.7vw, 0.9rem);
+  font-weight: 800;
+  line-height: 1.2;
+  background: #e9bb5a;
+  cursor: pointer;
+}
+
+.yaku-decision__actions button[data-yaku-koi-koi] {
+  color: #fff3cf;
+  background: #173b2c;
+}
+
+.yaku-decision__actions button:only-child {
+  grid-column: 1 / -1;
+}
+
+.yaku-decision__actions button:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.yaku-progress {
+  display: grid;
+  grid-template-columns: minmax(138px, 0.22fr) 1fr;
+  gap: clamp(12px, 2vw, 28px);
+  align-items: stretch;
+  padding: clamp(10px, 1.5vw, 16px);
+  border: 1px solid rgb(233 187 90 / 24%);
+  border-radius: 16px;
+  background: rgb(10 33 24 / 82%);
+}
+
+.yaku-progress h2,
+.yaku-progress h3 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.yaku-progress h2 {
+  font-size: clamp(1.05rem, 2.4vw, 1.4rem);
+}
+
+.yaku-progress__players {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.yaku-progress__player {
+  min-width: 0;
+  padding: 0.55rem 0.68rem;
+  border: 1px solid rgb(255 243 207 / 14%);
+  border-radius: 12px;
+  background: rgb(6 23 17 / 42%);
+}
+
+.yaku-progress__player h3 {
+  color: #fff3cf;
+  font-size: clamp(0.85rem, 1.7vw, 1rem);
+}
+
+.yaku-progress__total {
+  margin: 0.22rem 0;
+  color: #e9bb5a;
+  font-size: clamp(0.7rem, 1.35vw, 0.82rem);
+  font-weight: 800;
+}
+
+.yaku-progress ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding-left: 1rem;
+  color: rgb(255 243 207 / 78%);
+  font-size: clamp(0.67rem, 1.25vw, 0.78rem);
+  line-height: 1.35;
+}
+
 .turn-recap {
   display: grid;
   grid-template-columns: minmax(130px, 0.22fr) 1fr;
@@ -376,12 +536,16 @@ kbd {
 
 @media (max-width: 520px) {
   .app-shell {
-    grid-template-rows: auto minmax(424px, 1fr) auto auto auto;
+    grid-template-rows: auto minmax(565px, 1fr) auto auto auto auto;
     padding: 6px;
   }
 
   .app-header {
     flex-wrap: wrap;
+  }
+
+  .game-frame {
+    min-height: 565px;
   }
 
   .header-actions {
@@ -456,6 +620,35 @@ kbd {
   .turn-recap .eyebrow {
     margin: 0;
   }
+
+  .yaku-progress {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .yaku-progress__heading {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .yaku-progress .eyebrow {
+    margin: 0;
+  }
+
+  .yaku-decision {
+    bottom: 8px;
+    width: calc(100% - 16px);
+    padding: 14px;
+  }
+
+  .yaku-decision__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .yaku-decision__actions button:only-child {
+    grid-column: auto;
+  }
 }
 
 @media (min-width: 521px) and (max-width: 900px) and (min-height: 700px) {
@@ -513,6 +706,35 @@ kbd {
 
   .turn-recap {
     display: none;
+  }
+
+  .yaku-progress {
+    grid-template-columns: auto 1fr;
+    padding-block: 5px;
+  }
+
+  .yaku-progress__heading .eyebrow {
+    display: none;
+  }
+
+  .yaku-progress h2 {
+    font-size: 0.86rem;
+  }
+
+  .yaku-progress__player {
+    padding: 0.3rem 0.45rem;
+  }
+
+  .yaku-progress__player h3,
+  .yaku-progress__total,
+  .yaku-progress ul {
+    font-size: 0.62rem;
+  }
+
+  .yaku-decision {
+    bottom: 6px;
+    max-height: calc(100% - 12px);
+    padding: 10px;
   }
 
   .round-toolbar {

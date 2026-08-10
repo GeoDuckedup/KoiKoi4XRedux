@@ -319,7 +319,39 @@ Phase 3A binding:
 - Phase 3B retains finished yaku/Bank/Koi presentation and Phase 3C retains the finished round-end
   result experience.
 
-## 13. Approved-decision coverage matrix
+## 13. Phase 3B yaku and Bank/Koi presentation vectors
+
+These are public-presentation contracts. They consume `PlayerObservationV1`, public events, and
+engine legal actions; they do not recalculate yaku, scoring, privilege, forced-Koi availability, or
+continuation rules. Their complete typed, frozen source catalog is
+`PHASE_3B_PRESENTATION_FIXTURES` under `@koikoi4x/test-fixtures`.
+
+| ID | Required expectation |
+|---|---|
+| `PRES-YAKU-001-MULTI-HAND` | The Hand decision shows Blossom Viewing 5 and Moon Viewing 5 together, active total 10, one decision surface, and `Bank 10 points`. |
+| `PRES-YAKU-002-INCREMENT-NO-DECISION` | An Animals increase from 3 to 4 updates public progress and announces `Animals upgraded: 3 → 4 points.` without opening a decision. |
+| `PRES-YAKU-003-BRIGHT-UPGRADE` | A public before/after active-Yaku diff shows Four Brights 8 replaced by Five Brights 10, never stacked, and announces `Four Brights upgraded to Five Brights: 8 → 10 points.` without recalculating the hierarchy. |
+| `PRES-YAKU-004-TWO-WINDOW-TURN` | A Hand decision followed by Koi-Koi and a distinct Draw decision shows two sequential panels, never concurrent; the first call reaches 2×. |
+| `PRES-KOI-001-BANK-HAND-AWARD` | Hand Bank at table/scoring 1× awards 10, skips Draw, and states `Player A banked 10 points.`; the full round-result screen remains Phase 3C scope. |
+| `PRES-KOI-002-CONTINUE-AND-RESUME` | `Koi-Koi → 2×` updates the public table/caller and resumes the same actor's Draw before handoff. |
+| `PRES-KOI-003-PRIVILEGE-SPLIT` | A privilege decision distinguishes visible table 1× from Bank `10 points × 2× = 20`, while the Koi-Koi consequence is `Koi-Koi → 3×`. |
+| `PRES-KOI-004-FORCED-KOI` | When authoritative legal actions omit Bank, no executable Bank control exists; the required Koi-Koi path reaches 2×. |
+| `PRES-KOI-005-CAP-CALLER` | At 4×, Koi-Koi remains legal, says `Koi-Koi — table remains 4×`, and updates the latest caller without claiming 5×. |
+| `PRES-PRIV-001-SAFE-STATE` | Text/semantic output may contain public active yaku, total, multiplier, and decision arithmetic, but never opponent-hand identities, face-down identities, draw order, RNG, checkpoints, or command IDs. |
+
+Phase 3B binding:
+
+- `00000000000000000000000000000003` is the production local deterministic deal used by focused
+  root and `/KoiKoi4XRedux/` 390×844 browser traces. The trace reaches Hand Animals (Bank 3 at
+  1×, Koi-Koi 1×→2×), then a final-Draw Blue Scrolls + Scrolls combined decision (total 11,
+  Bank 22 at 2×, Koi-Koi 2×→3×) through real observations, legal actions, and commands;
+- a separate fresh-run Bank trace proves no draw event follows Hand Bank and records the public
+  award/recap; this is not a fixture injector or a browser scoring implementation;
+- root and Pages builds retain the seven-viewport layout, asset, persistent-card, privacy, and
+  zero-console/network-error baseline; focused traces add yaku decision/continuation/Bank screenshots
+  under `output/phase-3b/e2e`.
+
+## 14. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

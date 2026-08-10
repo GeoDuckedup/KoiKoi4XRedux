@@ -16,8 +16,12 @@ import {
 import type { InputCommandIntentV1, InteractionSourceV1 } from "../presentation/input/types";
 import { createInteractionSourceFromObservation } from "./observation-presentation";
 
-export const PHASE_3A_LOCAL_SEED = "00000000000000000000000000000001" as const;
-export const PHASE_3A_MATCH_ID = "phase3a-local-round" as const;
+export const PHASE_3B_LOCAL_SEED = "00000000000000000000000000000003" as const;
+/** @deprecated Use PHASE_3B_LOCAL_SEED for the deterministic vertical-slice deal. */
+export const PHASE_3A_LOCAL_SEED = PHASE_3B_LOCAL_SEED;
+export const PHASE_3B_MATCH_ID = "phase3b-local-round" as const;
+/** @deprecated Use PHASE_3B_MATCH_ID. */
+export const PHASE_3A_MATCH_ID = PHASE_3B_MATCH_ID;
 
 export interface LocalRoundTransitionV1 {
   readonly after: PlayerObservationV1;
@@ -72,7 +76,7 @@ export function createLocalRoundRuntime(input?: {
   readonly matchId?: string;
   readonly seed?: string;
 }): LocalRoundRuntimeV1 {
-  const matchId = input?.matchId ?? PHASE_3A_MATCH_ID;
+  const matchId = input?.matchId ?? PHASE_3B_MATCH_ID;
   const started = startMatch(
     {
       type: "startMatch",
@@ -82,10 +86,10 @@ export function createLocalRoundRuntime(input?: {
       matchLength: 3,
       starterPolicy: { kind: "provided", playerId: "player-a" },
     },
-    createSeededRandomSource(input?.seed ?? PHASE_3A_LOCAL_SEED),
+    createSeededRandomSource(input?.seed ?? PHASE_3B_LOCAL_SEED),
   );
   if (started.state.phase.kind !== "awaitingHandPlay") {
-    throw new Error("PHASE3A_OPENING_RESULT: the locked local seed must begin a playable round.");
+    throw new Error("PHASE3B_OPENING_RESULT: the locked local seed must begin a playable round.");
   }
   let state = started.state;
   let viewerId: PlayerId = started.state.phase.playerId;

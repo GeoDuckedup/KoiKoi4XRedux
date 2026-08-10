@@ -52,6 +52,55 @@
             <button type="button" data-handoff-ready>Ready</button>
           </div>
         </div>
+        <section class="yaku-feedback" data-yaku-feedback hidden role="status" aria-live="polite">
+          <p class="eyebrow">Table update</p>
+          <p data-yaku-feedback-message></p>
+        </section>
+        <section
+          class="yaku-decision"
+          data-yaku-decision
+          hidden
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="yaku-decision-title"
+          aria-describedby="yaku-decision-summary yaku-decision-total yaku-decision-resume"
+        >
+          <p class="eyebrow">Yaku decision</p>
+          <h2 id="yaku-decision-title" data-yaku-decision-title>Choose your next move</h2>
+          <p data-yaku-decision-summary></p>
+          <p class="yaku-decision__total" data-yaku-decision-total></p>
+          <p class="yaku-decision__resume" data-yaku-decision-resume></p>
+          <p class="yaku-decision__unavailable" data-yaku-bank-unavailable hidden>
+            Bank is unavailable for this decision.
+          </p>
+          <div class="yaku-decision__actions">
+            <button type="button" data-yaku-bank hidden>Bank</button>
+            <button type="button" data-yaku-koi-koi hidden>Call Koi-Koi</button>
+          </div>
+        </section>
+      </section>
+
+      <section class="yaku-progress" data-yaku-progress aria-labelledby="yaku-progress-title">
+        <div class="yaku-progress__heading">
+          <p class="eyebrow">Public yaku</p>
+          <h2 id="yaku-progress-title">Current yaku progress</h2>
+        </div>
+        <div class="yaku-progress__players">
+          <article class="yaku-progress__player" data-yaku-player="player-a">
+            <h3>Player A</h3>
+            <p class="yaku-progress__total" data-yaku-total>0 current points</p>
+            <ul data-yaku-active>
+              <li>No active yaku yet.</li>
+            </ul>
+          </article>
+          <article class="yaku-progress__player" data-yaku-player="player-b">
+            <h3>Player B</h3>
+            <p class="yaku-progress__total" data-yaku-total>0 current points</p>
+            <ul data-yaku-active>
+              <li>No active yaku yet.</li>
+            </ul>
+          </article>
+        </div>
       </section>
 
       <div class="round-toolbar" aria-label="Local round controls">
@@ -74,8 +123,6 @@
         <div class="input-buttons" aria-label="Turn actions">
           <button type="button" data-input-confirm disabled>Confirm play</button>
           <button type="button" data-input-cancel disabled>Cancel</button>
-          <button type="button" data-input-bank hidden>Bank</button>
-          <button type="button" data-input-koi-koi hidden>Koi-Koi</button>
         </div>
         <div class="animation-buttons" aria-label="Animation controls">
           <button type="button" data-animation-accelerate disabled>Faster</button>
