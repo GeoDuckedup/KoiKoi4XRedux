@@ -186,19 +186,39 @@ async function playHandCardThroughFeedbackBeat(page, cardId) {
   const before = await readState(page);
   const button = page.locator(`[data-input-role="selectable"][data-card-id="${cardId}"]`);
   assert((await button.count()) === 1, `The feedback-boundary card ${cardId} is not selectable.`);
+  await page.evaluate(() => {
+    const feedback = document.querySelector("[data-yaku-feedback]");
+    const decision = document.querySelector("[data-yaku-decision]");
+    if (!(feedback instanceof HTMLElement) || !(decision instanceof HTMLElement)) {
+      throw new Error("Phase 3B feedback surfaces are missing.");
+    }
+    globalThis.__phase3bFeedbackObserver?.disconnect();
+    const trace = [];
+    const record = () => {
+      const state = JSON.parse(globalThis.render_game_to_text());
+      trace.push({
+        decisionVisible: !decision.hidden,
+        feedbackVisible: !feedback.hidden,
+        inputLockReason: state.input.lockReason,
+        stateVersion: state.localRound.stateVersion,
+      });
+    };
+    const observer = new MutationObserver(record);
+    observer.observe(feedback, { attributeFilter: ["hidden"], attributes: true });
+    observer.observe(decision, { attributeFilter: ["hidden"], attributes: true });
+    globalThis.__phase3bFeedbackTrace = trace;
+    globalThis.__phase3bFeedbackObserver = observer;
+    record();
+  });
   await button.click();
   await page.waitForFunction(
     (version) => {
-      const state = JSON.parse(window.render_game_to_text());
-      const feedback = document.querySelector("[data-yaku-feedback]");
-      const decision = document.querySelector("[data-yaku-decision]");
-      return (
-        state.localRound.stateVersion > version &&
-        state.input.lockReason === "awaitingObservation" &&
-        feedback instanceof HTMLElement &&
-        !feedback.hidden &&
-        decision instanceof HTMLElement &&
-        decision.hidden
+      return globalThis.__phase3bFeedbackTrace?.some(
+        (entry) =>
+          entry.stateVersion > version &&
+          entry.inputLockReason === "awaitingObservation" &&
+          entry.feedbackVisible &&
+          !entry.decisionVisible,
       );
     },
     before.localRound.stateVersion,
@@ -209,7 +229,13 @@ async function playHandCardThroughFeedbackBeat(page, cardId) {
     null,
     { timeout: 30_000 },
   );
-  return readState(page);
+  const state = await readState(page);
+  await page.evaluate(() => {
+    globalThis.__phase3bFeedbackObserver?.disconnect();
+    delete globalThis.__phase3bFeedbackObserver;
+    delete globalThis.__phase3bFeedbackTrace;
+  });
+  return state;
 }
 
 function hasYaku(state, key) {

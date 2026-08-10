@@ -700,5 +700,10 @@ Original prompt: read the package and understand it, then let me know when we ar
 - The final `npm run check` passed formatting, zero-warning lint, all five workspace typechecks,
   both deck packages, 38 files / 373 ordinary tests, the 10,002-match generated replay/invariant
   gate, and the 766-module production build.
+- The first hosted CI run exposed a timing-only Playwright race: the runner completed the short
+  feedback beat before its external poll observed the transient state. The browser trace now
+  installs a page-side mutation observer before the decisive click, retaining the exact
+  feedback-visible/dialog-hidden/input-locked assertion without lengthening player-facing timing;
+  both root and Pages gates pass with the hardened observation.
 - Phase 3C is next: a dedicated round-result screen, score breakdown/animation, and next-round
   transition surface driven by the existing authoritative result state.
