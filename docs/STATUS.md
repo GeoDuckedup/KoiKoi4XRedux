@@ -2,8 +2,7 @@
 
 **Updated:** August 11, 2026
 
-**Overall state:** Greenfield rewrite through Phase 3D-B deployed and accepted; Phase 3D-C runtime
-themes and compact shell passed local acceptance and are ready to deploy
+**Overall state:** Greenfield rewrite through Phase 3D-C deployed and accepted
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -23,6 +22,11 @@ The production shell now keeps one concise turn instruction plus conditional Con
 the table, compact active-Yaku names/totals for both players, and the latest event with full history
 behind a native disclosure. Deck, play style, motion, animation utilities, fullscreen, and local
 restart remain accessible in Options instead of occupying permanent table space.
+
+Release commit `9313b93` passed CI run `31536377258` and Pages run `31536377294`. The live page
+returned HTTP 200 and a cache-busted real-browser check reached ready state with the approved Primary
+Deck, Ink & Parchment default, one canvas, all 48 persistent CardViews, eight legal hand controls,
+and no clipped, invalid, or overlapping board zones.
 
 Phase 3D-B now completes the desired direct interaction flow. Selecting a no-match card highlights
 the field placement surface; selecting a unique match highlights its one matching card; exact-two

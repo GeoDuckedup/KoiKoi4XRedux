@@ -839,3 +839,13 @@ Original prompt: read the package and understand it, then let me know when we ar
   validation, 43 files/415 ordinary tests, the 10,002-match deterministic generated gate, and the
   769-module production build. The final Pages-path smoke also passes every gameplay and viewport
   trace. Phase 3D-C is ready to commit and deploy; adaptive 9–17-card field sizing is Phase 3D-D.
+
+## 2026-08-11 — Phase 3D-C deployed and accepted
+
+- Pushed release commit `9313b93`. CI run `31536377258` and Pages run `31536377294` both passed the
+  full `npm run check` plus `validate:phase3dc` workflow; the Pages deploy job completed successfully.
+- The public URL returned HTTP 200 with the new Options/theme shell. A cache-busted real-browser
+  check reached ready state with Ink & Parchment, the approved Primary Deck, one canvas, 48
+  persistent CardViews, eight legal hand controls, and no board-layout diagnostics.
+- Phase 3D-C evidence maturity is `live`. No manual hosting setting, secret, migration, or cache
+  reset is required. Phase 3D-D adaptive dense-field layout is the next recommended subphase.

@@ -2,8 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 11, 2026
-**Current gate:** Phase 3D-C runtime themes and compact production shell passed local acceptance;
-commit, GitHub Actions deployment, and live verification are pending
+**Current gate:** Phase 3D-C runtime themes and compact production shell are deployed and accepted;
+Phase 3D-D adaptive dense-field implementation awaits owner approval
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -637,7 +637,7 @@ Architecture is recorded in [`ADR 0014`](./adr/0014-phase-3c-round-result-presen
 
 ### Phase 3D — Table clarity and direct interaction
 
-Status: **Phase 3D-A/B accepted; Phase 3D-C passed local acceptance and is ready to deploy**.
+Status: **Phase 3D-A/B/C deployed and accepted**.
 
 Phase 3D addresses the owner-reported visual clutter, disliked color scheme, direct tap-to-match
 interaction, and field growth beyond eight cards before onboarding teaches the table.
