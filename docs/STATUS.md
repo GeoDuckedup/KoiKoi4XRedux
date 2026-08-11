@@ -2,8 +2,8 @@
 
 **Updated:** August 11, 2026
 
-**Overall state:** Greenfield rewrite through Phase 3D-C deployed and accepted; Phase 3D-D locally
-accepted and ready to deploy
+**Overall state:** Greenfield rewrite through Phase 3D-D deployed and accepted; Phase 4A tutorial
+director is next
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -42,6 +42,12 @@ with full arrow/Home/End/Enter/Escape keyboard parity.
 The isolated non-shipping Pixi harness passed 17-card pointer/keyboard checks at all fourteen root
 and Pages viewport combinations, with one canvas, 48 persistent CardViews, no clipped zones, and no
 browser/network errors. Six representative screenshots are under `output/phase-3d-d/e2e/`.
+
+Release commit `07ae604` passed CI run `31545456869` and Pages run `31545456817`, including the
+complete Phase 3D-D gate and Pages deploy job. The live page returned HTTP 200; a cache-busted
+real-browser check reached ready state with the approved Primary Deck, Ink & Parchment, one canvas,
+all 48 persistent CardViews, eight legal hand controls, and no clipped, invalid, or overlapping
+zones. The non-shipping density-review route returned HTTP 404 as required.
 
 Phase 3D-B now completes the desired direct interaction flow. Selecting a no-match card highlights
 the field placement surface; selecting a unique match highlights its one matching card; exact-two
@@ -92,7 +98,7 @@ The approved `new-primary-deck` v1.0.0 is the default root/Pages runtime package
 and Moonlight remain optional installed packages, proving that more decks can be added without
 changing engine state or canonical CardIds.
 
-## Phase 3D-D local acceptance
+## Phase 3D-D deployed and accepted
 
 - `TABLE-DENSITY-001` through `008` cover stable eight-card geometry, 9/12/17-card grids, public
   field order, resize, non-overlapping targets, separated reflow, immutability, and the legal bound.
@@ -106,7 +112,8 @@ changing engine state or canonical CardIds.
   technical assets, 26 files/189 retained web/deck/turn tests, Workshop, root/Pages gameplay, and
   the 14-viewport dense review. `npm run check` passes 44 files/423 tests, the 10,002-match gate, and
   the production build. Independent review reports no blocker, high, or medium finding.
-- Hosted deployment verification remains before the phase can be marked deployed/live.
+- CI, Pages, and live-browser verification passed. No manual hosting setting, secret, migration, or
+  cache reset is required.
 
 ## Phase 3C deployed and accepted
 

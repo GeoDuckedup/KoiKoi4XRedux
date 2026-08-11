@@ -875,4 +875,14 @@ Original prompt: read the package and understand it, then let me know when we ar
   the production build.
 - Independent final review found and closed one missing pointer-action assertion, then signed off
   with no blocker, high, or medium finding. The production build explicitly returns 404 for the
-  review entry. Deployment/live verification remains.
+  review entry.
+
+## 2026-08-11 — Phase 3D-D deployed and accepted
+
+- Pushed release commit `07ae604`. CI run `31545456869` and Pages run `31545456817` both passed;
+  the Pages deploy job completed successfully after the complete `validate:phase3dd` gate.
+- The public URL returned HTTP 200. A cache-busted real-browser check reached ready state with the
+  approved Primary Deck, Ink & Parchment, one canvas, 48 persistent CardViews, eight legal hand
+  controls, and no layout diagnostics.
+- The deliberately non-shipping `field-density-review.html` route returned HTTP 404 on the live
+  site. Phase 3D-D evidence maturity is `live`; Phase 4A tutorial director is next.

@@ -2,8 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 11, 2026
-**Current gate:** Phase 3D-D adaptive dense-field implementation, full local verification, and
-independent review are complete; deployment and live acceptance are in progress
+**Current gate:** Phase 3D-D adaptive dense field is deployed and accepted; Phase 4A tutorial
+director is the next recommended subphase
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -637,7 +637,7 @@ Architecture is recorded in [`ADR 0014`](./adr/0014-phase-3c-round-result-presen
 
 ### Phase 3D — Table clarity and direct interaction
 
-Status: **Phase 3D-A/B/C deployed and accepted; Phase 3D-D locally implemented**.
+Status: **Phase 3D-A/B/C/D deployed and accepted**.
 
 Phase 3D addresses the owner-reported visual clutter, disliked color scheme, direct tap-to-match
 interaction, and field growth beyond eight cards before onboarding teaches the table.
