@@ -42,6 +42,7 @@ import {
   type PresentationBoardProjection,
 } from "./presentation/animation/types";
 import { computeBoardLayout, inspectBoardLayout } from "./presentation/board/board-layout";
+import { computeAdaptiveFieldLayout } from "./presentation/board/adaptive-field-layout";
 import { CARD_ZONES, type BoardLayout } from "./presentation/board/types";
 import type { CardRuntimeInspection } from "./presentation/cards/types";
 import {
@@ -318,6 +319,10 @@ function snapshot() {
     },
     simulationTimeMs,
     layout,
+    fieldLayout: computeAdaptiveFieldLayout(
+      layout,
+      projection.filter(({ zone }) => zone === "field").length,
+    ),
     scene,
     deck: {
       activeDeckId: activeManifest?.packageId ?? null,

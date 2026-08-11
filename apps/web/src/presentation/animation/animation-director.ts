@@ -67,8 +67,10 @@ export function createAnimationDirector(input: {
     const entry = activeEntry();
     const clip = entry?.plan.clips[clipIndex];
     if (!entry || !clip) return;
-    input.surface.snapTo(clip.to);
-    displayProjection = clip.to;
+    if (clip.settlesProjection) {
+      input.surface.snapTo(clip.to);
+      displayProjection = clip.to;
+    }
     clipIndex += 1;
     clipElapsedMs = 0;
   };

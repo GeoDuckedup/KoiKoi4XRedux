@@ -1,4 +1,5 @@
 import type { BoardLayout, BoardLayerName, BoardRect, CardZone } from "../board/types";
+import { computeAdaptiveFieldLayout } from "../board/adaptive-field-layout";
 import type { CardPlacement, CardPresentationState } from "./types";
 
 const ZONE_LAYERS = Object.freeze({
@@ -57,6 +58,7 @@ function captureBounds(
 function boundsFor(
   state: CardPresentationState,
   zoneCounts: ReadonlyMap<CardZone, number>,
+  fieldSlots: readonly BoardRect[],
   layout: BoardLayout,
 ): BoardRect {
   if (state.zone === "playerHand" || state.zone === "opponentHand") {
@@ -66,23 +68,9 @@ function boundsFor(
     return freezeRect(slot);
   }
   if (state.zone === "field") {
-    const slots = layout.slots.field;
-    const slot = slots[state.slotIndex % slots.length];
+    const slot = fieldSlots[state.slotIndex];
     if (!slot) throw new RangeError(`${state.slotId} does not fit the field layout.`);
-    const overflowLevel = Math.floor(state.slotIndex / slots.length);
-    if (overflowLevel === 0) return freezeRect(slot);
-    const offset = Math.min(slot.width * 0.15, 10 * layout.scale) * overflowLevel;
-    return freezeRect({
-      ...slot,
-      x: Math.min(
-        layout.cardZones.field.x + layout.cardZones.field.width - slot.width,
-        slot.x + offset,
-      ),
-      y: Math.min(
-        layout.cardZones.field.y + layout.cardZones.field.height - slot.height,
-        slot.y + offset,
-      ),
-    });
+    return freezeRect(slot);
   }
   if (state.zone === "drawPile") {
     const offset = Math.min(state.slotIndex, 3) * Math.max(0.8, 1.4 * layout.scale);
@@ -117,12 +105,13 @@ export function computeCardPlacements(
 ): readonly CardPlacement[] {
   const zoneCounts = new Map<CardZone, number>();
   for (const state of states) zoneCounts.set(state.zone, (zoneCounts.get(state.zone) ?? 0) + 1);
+  const fieldSlots = computeAdaptiveFieldLayout(layout, zoneCounts.get("field") ?? 0).slots;
 
   return Object.freeze(
     states.map((state) =>
       Object.freeze({
         ...state,
-        bounds: boundsFor(state, zoneCounts, layout),
+        bounds: boundsFor(state, zoneCounts, fieldSlots, layout),
         layer: ZONE_LAYERS[state.zone],
       }),
     ),

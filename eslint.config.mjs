@@ -5,7 +5,14 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["**/dist/**", "**/node_modules/**", "coverage/**", "output/**", "*.zip"],
+    ignores: [
+      "**/dist/**",
+      "**/dist-phase3dd/**",
+      "**/node_modules/**",
+      "coverage/**",
+      "output/**",
+      "*.zip",
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.strict,
@@ -35,7 +42,11 @@ export default tseslint.config(
     },
   },
   {
-    files: ["scripts/e2e-smoke.mjs", "scripts/phase3da-visual-review.mjs"],
+    files: [
+      "scripts/e2e-smoke.mjs",
+      "scripts/phase3da-visual-review.mjs",
+      "scripts/phase3dd-density-review.mjs",
+    ],
     languageOptions: {
       globals: {
         ...globals.node,

@@ -9,6 +9,7 @@ import {
   TABLE_SCREEN_ID,
 } from "../src/app/table-preview-state";
 import { computeBoardLayout, inspectBoardLayout } from "../src/presentation/board/board-layout";
+import { computeAdaptiveFieldLayout } from "../src/presentation/board/adaptive-field-layout";
 import { BOARD_LAYER_ORDER, CARD_ZONES } from "../src/presentation/board/types";
 import { computeCardPlacements } from "../src/presentation/cards/card-layout";
 import { CARD_SHOWCASE_ASSIGNMENTS } from "../src/presentation/cards/showcase";
@@ -80,6 +81,10 @@ describe("Phase 2B table diagnostics", () => {
         commandCount: 0,
       },
       layout,
+      fieldLayout: computeAdaptiveFieldLayout(
+        layout,
+        CARD_SHOWCASE_ASSIGNMENTS.filter(({ zone }) => zone === "field").length,
+      ),
       ready: true,
       deck: {
         activeDeckId: "technical-sunrise",
@@ -191,7 +196,7 @@ describe("Phase 2B table diagnostics", () => {
     expect(Object.isFrozen(snapshot.deck.availableDeckIds)).toBe(true);
   });
 
-  it("fans legal field overflow over the stable eight field lanes", () => {
+  it("shrinks legal field overflow into distinct adaptive slots", () => {
     const layout = computeBoardLayout({ width: 390, height: 565 });
     const overflowIds = ["august-pampas-plain-a", "august-pampas-plain-b"] as const;
     const overflowIdSet = new Set<string>(overflowIds);
@@ -221,5 +226,7 @@ describe("Phase 2B table diagnostics", () => {
         layout.cardZones.field.y + layout.cardZones.field.height,
       );
     }
+    expect(overflow[0]?.bounds).not.toEqual(overflow[1]?.bounds);
+    expect(overflow[0]?.bounds.width).toBeLessThan(layout.cardMetrics.width);
   });
 });

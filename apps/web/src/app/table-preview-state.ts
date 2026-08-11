@@ -8,6 +8,7 @@ import type {
   BoardSceneInspection,
   BoardViewport,
 } from "../presentation/board/types";
+import type { AdaptiveFieldLayoutV1 } from "../presentation/board/adaptive-field-layout";
 import type { CardRuntimeInspection } from "../presentation/cards/types";
 import type { InputInteractionInspectionV1 } from "../presentation/input/types";
 import type { YakuPresentationStateV1 } from "../game/yaku-presentation";
@@ -55,6 +56,13 @@ export interface TablePreviewSnapshot {
   readonly layout: {
     readonly cardZoneCount: number;
     readonly fieldSlotCount: number;
+    readonly field: Pick<
+      AdaptiveFieldLayoutV1,
+      "columns" | "fieldCardCount" | "gap" | "rows" | "version"
+    > & {
+      readonly cardHeight: number;
+      readonly cardWidth: number;
+    };
     readonly mode: BoardLayout["mode"];
     readonly scale: number;
     readonly uiZones: BoardLayout["uiZones"];
@@ -95,6 +103,7 @@ export function createTablePreviewSnapshot(input: {
   readonly fullscreen: boolean;
   readonly input: InputInteractionInspectionV1;
   readonly layout: BoardLayout;
+  readonly fieldLayout: AdaptiveFieldLayoutV1;
   readonly localRound: LocalRoundSnapshotV1;
   readonly ready: boolean;
   readonly scene: BoardSceneInspection & { readonly cards: CardRuntimeInspection };
@@ -162,7 +171,16 @@ export function createTablePreviewSnapshot(input: {
       mode: input.layout.mode,
       scale: input.layout.scale,
       cardZoneCount: Object.keys(input.layout.cardZones).length,
-      fieldSlotCount: input.layout.slots.field.length,
+      fieldSlotCount: input.fieldLayout.slots.length,
+      field: Object.freeze({
+        version: input.fieldLayout.version,
+        fieldCardCount: input.fieldLayout.fieldCardCount,
+        columns: input.fieldLayout.columns,
+        rows: input.fieldLayout.rows,
+        gap: input.fieldLayout.gap,
+        cardWidth: input.fieldLayout.cardMetrics.width,
+        cardHeight: input.fieldLayout.cardMetrics.height,
+      }),
       zones: input.layout.cardZones,
       uiZones: input.layout.uiZones,
     }),

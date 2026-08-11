@@ -15,6 +15,10 @@ import type {
 import type { ActiveDeckTextures } from "../deck/card-asset-manager";
 import type { InteractionVisualStateV1 } from "../input/types";
 import {
+  computeAdaptiveFieldLayout,
+  type AdaptiveFieldLayoutV1,
+} from "../board/adaptive-field-layout";
+import {
   ACTIVE_PHASE_3D_VISUAL_DIRECTION,
   type Phase3DVisualDirectionV1,
   type TableSceneColorsV1,
@@ -210,7 +214,12 @@ function renderCaptureSummary(
   }
 }
 
-function renderField(layer: Container, layout: BoardLayout, colors: TableSceneColorsV1): void {
+function renderField(
+  layer: Container,
+  layout: BoardLayout,
+  fieldLayout: AdaptiveFieldLayoutV1,
+  colors: TableSceneColorsV1,
+): void {
   const bounds = layout.cardZones.field;
   layer.addChild(
     panel(bounds, {
@@ -221,7 +230,9 @@ function renderField(layer: Container, layout: BoardLayout, colors: TableSceneCo
       strokeAlpha: 0.16,
     }),
     label(
-      "FIELD · STABLE 2 × 4 SLOTS",
+      fieldLayout.fieldCardCount <= 8
+        ? "FIELD · STABLE 2 × 4 SLOTS"
+        : `FIELD · ${fieldLayout.fieldCardCount} CARDS · ${fieldLayout.columns} × ${fieldLayout.rows}`,
       bounds.x + Math.max(8, 10 * layout.scale),
       bounds.y + Math.max(4, 6 * layout.scale),
       {
@@ -233,10 +244,10 @@ function renderField(layer: Container, layout: BoardLayout, colors: TableSceneCo
     ),
   );
 
-  for (const [index, slot] of layout.slots.field.entries()) {
+  for (const [index, slot] of fieldLayout.slots.entries()) {
     layer.addChild(
       new Graphics()
-        .roundRect(slot.x, slot.y, slot.width, slot.height, layout.cardMetrics.cornerRadius)
+        .roundRect(slot.x, slot.y, slot.width, slot.height, fieldLayout.cardMetrics.cornerRadius)
         .fill({ color: colors.cream, alpha: 0.025 })
         .stroke({ color: colors.cream, alpha: 0.2, width: Math.max(1, layout.scale) }),
       label(String(index + 1), slot.x + slot.width / 2, slot.y + slot.height / 2, {
@@ -583,6 +594,15 @@ export function createTableScene(
     for (const layer of chromeLayers.values()) {
       clearLayer(layer);
     }
+    const chromeProjection = currentAnimationFrame
+      ? currentAnimationFrame.clip.settlesProjection
+        ? currentAnimationFrame.clip.to
+        : currentAnimationFrame.clip.from
+      : displayProjection;
+    const fieldLayout = computeAdaptiveFieldLayout(
+      layout,
+      chromeProjection.filter(({ zone }) => zone === "field").length,
+    );
     const cardPlacements = currentAnimationFrame
       ? computeAnimatedCardPlacements(
           layout,
@@ -636,7 +656,7 @@ export function createTableScene(
       currentCards.zoneCounts,
       theme.table,
     );
-    renderField(requiredChrome("FieldLayer"), layout, theme.table);
+    renderField(requiredChrome("FieldLayer"), layout, fieldLayout, theme.table);
     renderDrawPile(requiredChrome("DrawPileLayer"), layout, theme.table);
     renderReveal(requiredChrome("RevealLayer"), layout, theme.table);
     renderCaptureSummary(

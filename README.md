@@ -45,6 +45,7 @@ npm run validate:phase3c
 npm run validate:phase3da
 npm run validate:phase3db
 npm run validate:phase3dc
+npm run validate:phase3dd
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -125,6 +126,12 @@ four-card-sweep interaction previews plus real Guided placement/pair browser tra
 Indigo/Warm Ivory runtime selection, IndexedDB reload persistence, in-place Pixi/CardView repaint,
 the accessible compact Options/turn/Yaku/history shell, all prior interaction/result traces, and
 both root and Pages builds. Artifacts are written under `output/phase-3d-c/e2e/`.
+
+`npm run validate:phase3dd` retains the complete Phase 3D-C/release/Workshop/root/Pages gate and
+adds deterministic 8/9/12/17-card adaptive-field geometry, public field-order preservation,
+non-overlapping dense target territories, and separated direct-motion/reflow checks. Its isolated
+non-shipping Pixi harness exercises 17 cards plus pointer/keyboard targets across all seven root and
+Pages viewports. Representative artifacts are written under `output/phase-3d-d/e2e/`.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

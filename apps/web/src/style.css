@@ -32,6 +32,32 @@ kbd {
   font: inherit;
 }
 
+body[data-density-review] .density-review {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+body[data-density-review] .density-review__header {
+  align-items: center;
+}
+
+body[data-density-review] .density-review__header .eyebrow {
+  margin: 0 0 0.14rem;
+}
+
+body[data-density-review] .density-review__summary {
+  margin: 0;
+  color: var(--theme-text-muted);
+  font-size: clamp(0.7rem, 1.6vw, 0.9rem);
+  font-weight: 700;
+  text-align: right;
+}
+
+@media (max-width: 520px) {
+  body[data-density-review] .density-review__summary {
+    max-width: 44%;
+  }
+}
+
 button:focus-visible,
 select:focus-visible {
   outline: 3px solid #fff3cf;
@@ -159,6 +185,7 @@ select:focus-visible {
 }
 
 .card-input-control--target {
+  min-height: 1px;
   border: 3px solid #e9bb5a;
   background: rgb(233 187 90 / 11%);
   box-shadow:

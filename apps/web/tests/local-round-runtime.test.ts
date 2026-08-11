@@ -65,6 +65,10 @@ describe("Phase 3A local authoritative round", () => {
     const observation = runtime.observe();
     const source = createInteractionSourceFromObservation(observation);
     const projection = projectObservationToBoard(observation);
+    const projectedFieldOrder = projection
+      .filter(({ zone }) => zone === "field")
+      .sort((left, right) => left.slotIndex - right.slotIndex)
+      .map(({ cardId }) => cardId);
 
     expect(observation.playerId).toBe("player-a");
     expect(observation.publicState.phase).toEqual({
@@ -72,6 +76,7 @@ describe("Phase 3A local authoritative round", () => {
       playerId: "player-a",
     });
     expect(projection).toHaveLength(48);
+    expect(projectedFieldOrder).toEqual(observation.publicState.round.field);
     expect(new Set(projection.map(({ cardId }) => cardId))).toEqual(new Set(CARD_IDS));
     expect(
       projection.filter(({ zone }) => zone === "playerHand").every(({ faceUp }) => faceUp),

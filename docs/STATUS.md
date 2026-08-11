@@ -2,7 +2,8 @@
 
 **Updated:** August 11, 2026
 
-**Overall state:** Greenfield rewrite through Phase 3D-C deployed and accepted
+**Overall state:** Greenfield rewrite through Phase 3D-C deployed and accepted; Phase 3D-D locally
+accepted and ready to deploy
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -28,11 +29,26 @@ returned HTTP 200 and a cache-busted real-browser check reached ready state with
 Deck, Ink & Parchment default, one canvas, all 48 persistent CardViews, eight legal hand controls,
 and no clipped, invalid, or overlapping board zones.
 
+Phase 3D-D replaces the old above-eight fan with deterministic shrink-to-fit 5:8 grids. Counts
+through eight retain the familiar four-by-two field; 9–17 cards maximize readable card size inside
+the existing field, preserve exact public order, center the final row, and never overlap. A separate
+reflow clip moves unrelated cards only after direct placement/capture motion completes.
+
+Dense legal target territories are partitioned between visible cards rather than independently
+expanded, so tapping one highlighted card cannot activate another. Hand controls remain 44px. At
+the 17-card short-landscape boundary, field targets use an explicit non-overlapping 24×36px minimum
+with full arrow/Home/End/Enter/Escape keyboard parity.
+
+The isolated non-shipping Pixi harness passed 17-card pointer/keyboard checks at all fourteen root
+and Pages viewport combinations, with one canvas, 48 persistent CardViews, no clipped zones, and no
+browser/network errors. Six representative screenshots are under `output/phase-3d-d/e2e/`.
+
 Phase 3D-B now completes the desired direct interaction flow. Selecting a no-match card highlights
 the field placement surface; selecting a unique match highlights its one matching card; exact-two
 continues to expose two authoritative choices; and a four-card sweep highlights all three matching
 field cards. Guided mode accepts the highlighted field/card or Confirm, while Fast keeps immediate
-unambiguous play. Field overflow still fans above eight slots and is reserved for Phase 3D-D.
+unambiguous play. Phase 3D-D now supplies the adaptive field geometry for those same authoritative
+targets.
 
 The browser never derives this from Pixi coordinates or reimplements capture rules. Every Hand
 legal action carries a frozen public resolution preview produced beside engine legality. The input
@@ -76,6 +92,22 @@ The approved `new-primary-deck` v1.0.0 is the default root/Pages runtime package
 and Moonlight remain optional installed packages, proving that more decks can be added without
 changing engine state or canonical CardIds.
 
+## Phase 3D-D local acceptance
+
+- `TABLE-DENSITY-001` through `008` cover stable eight-card geometry, 9/12/17-card grids, public
+  field order, resize, non-overlapping targets, separated reflow, immutability, and the legal bound.
+- The recipient projection now preserves `publicState.round.field` order instead of normalizing
+  field positions by canonical CardId.
+- Snapshot diagnostics report adaptive field count, rows/columns, gap, and card dimensions while
+  continuing to omit hidden identities and runtime coordinates from the production text surface.
+- The 17-card review entry builds only to `apps/web/dist-phase3dd`; the normal root/Pages production
+  build has no state injection or review route.
+- `npm run validate:phase3dd` passes the 3-file/23-test theme gate, approved deck release, 100
+  technical assets, 26 files/189 retained web/deck/turn tests, Workshop, root/Pages gameplay, and
+  the 14-viewport dense review. `npm run check` passes 44 files/423 tests, the 10,002-match gate, and
+  the production build. Independent review reports no blocker, high, or medium finding.
+- Hosted deployment verification remains before the phase can be marked deployed/live.
+
 ## Phase 3C deployed and accepted
 
 - Twelve typed, deeply frozen `PRES-RESULT-*` fixtures and a pure public-result mapper cover Bank,
@@ -117,7 +149,7 @@ changing engine state or canonical CardIds.
 - Production local runtime over `startMatch`, `projectPlayerObservation`, legal input intents, and
   `applyGameplayCommand`, with one accepted command/state-version increment per activation.
 - Recipient-relative 48-card board projection, public-event animation boundaries, stable hidden
-  backs, and field-overflow fanning above the base eight slots.
+  backs, and Phase 3D-D adaptive field geometry above the base eight slots.
 - Guided/Fast pointer and keyboard play, exact Hand/Draw targets, existing Bank/Koi commands, and
   deck/animation input locks remain connected to the Phase 2 foundations.
 - Full-table private handoff plus explicit Ready activation before changing to the next player's

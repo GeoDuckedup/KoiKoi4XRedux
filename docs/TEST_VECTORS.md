@@ -300,7 +300,7 @@ Phase 2E binding:
 | `LOCAL-001` | The production browser loads the owner-approved `new-primary-deck` as its default complete 48-face/back package at root and repository-prefixed bases. |
 | `LOCAL-002` | One real player observation projects exactly 48 persistent cards while opponent-hand and unrevealed-draw identities remain face-down and absent from the text/debug surface. |
 | `LOCAL-003` | A legal Hand intent becomes one real gameplay command, increments authoritative state once, and emits the engine's public Hand/Draw events. |
-| `LOCAL-004` | Every public event has one recipient-relative animation boundary plus the final target; legal field counts above eight fan over the stable 2×4 lanes without rejecting gameplay. |
+| `LOCAL-004` | Every public event has one recipient-relative animation boundary plus the final target; legal field counts above eight use the Phase 3D-D adaptive grid without rejecting gameplay. |
 | `LOCAL-005` | Real pair/sweep captures move the exact public card IDs into the acting player's category rails, and exact-two choices expose only engine-provided targets. |
 | `LOCAL-006` | A completed turn covers the full table before switching observations; the next player's private hand appears only after explicit Ready activation. |
 | `LOCAL-007` | Every completed turn appends one concise HTML recap naming public played, drawn, captured, yaku/result, and next-player facts without hidden data. |
@@ -439,7 +439,34 @@ Phase 3D-C binding:
 - adaptive field-card density remains Phase 3D-D and cannot be introduced as part of a theme or
   shell change.
 
-## 17. Approved-decision coverage matrix
+## 17. Phase 3D-D adaptive dense-field vectors
+
+These presentation vectors consume only recipient-safe public projection order/count and existing
+legal target IDs. They do not create legal actions, infer capture eligibility, or access hidden card
+allocation.
+
+| ID | Required expectation |
+|---|---|
+| `TABLE-DENSITY-001-BASE-EIGHT` | Eight or fewer field cards retain the stable four-by-two geometry and card size. |
+| `TABLE-DENSITY-002-NINE` | Nine field cards occupy one deterministic contained 5:8 grid with no overlap or fanning. |
+| `TABLE-DENSITY-003-TWELVE` | Twelve field cards remain distinct, ordered, and contained at every supported viewport. |
+| `TABLE-DENSITY-004-LEGAL-SEVENTEEN` | The derived legal maximum of seventeen remains visible, contained, and non-overlapping; eighteen fails closed. |
+| `TABLE-DENSITY-005-REFLOW` | Direct placement/capture motion completes before unrelated field cards interpolate to the new density. |
+| `TABLE-DENSITY-006-TARGETS` | Dense legal targets retain public order, distinct pointer territories of at least 24×36px, and complete keyboard activation; hand controls remain 44px. |
+| `TABLE-DENSITY-007-RESIZE` | Resize changes geometry without changing public field order, CardView identity, or active target identity. |
+| `TABLE-DENSITY-008-BOUND` | Non-integer, negative, or above-seventeen presentation counts are rejected without altering source state. |
+
+Phase 3D-D binding:
+
+- geometry tests execute 8/9/12/17 at all seven supported viewports and verify deterministic frozen
+  5:8 slots, containment, non-overlap, ordering, target partitioning, and threshold reflow;
+- a separate non-shipping Vite entry renders the real Pixi scene with 17 cards and three legal
+  targets. Root and `/KoiKoi4XRedux/` builds execute pointer and keyboard activation across all
+  seven viewports with one canvas, 48 persistent CardViews, and zero browser/network errors;
+- the normal application contains no fixture selector, query parameter, global state injector, or
+  deployed density-review HTML entry. Evidence is written under `output/phase-3d-d/e2e/`.
+
+## 18. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

@@ -402,6 +402,11 @@ const PHASE_3B_FINAL_DRAW_SEQUENCE = Object.freeze([
 await mkdir(outputDirectory, { recursive: true });
 const { server: staticServer, baseUrl } = await startStaticServer();
 const pageUrl = `${baseUrl}${mountedBasePath}`;
+const densityReviewResponse = await fetch(`${pageUrl}field-density-review.html`);
+assert(
+  densityReviewResponse.status === 404,
+  "The non-shipping Phase 3D-D density harness entered the production build.",
+);
 process.stdout.write(`Phase 3C smoke server ready at ${pageUrl}.\n`);
 
 let browser;

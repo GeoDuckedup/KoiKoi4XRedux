@@ -2,8 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 11, 2026
-**Current gate:** Phase 3D-C runtime themes and compact production shell are deployed and accepted;
-Phase 3D-D adaptive dense-field implementation awaits owner approval
+**Current gate:** Phase 3D-D adaptive dense-field implementation, full local verification, and
+independent review are complete; deployment and live acceptance are in progress
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -637,7 +637,7 @@ Architecture is recorded in [`ADR 0014`](./adr/0014-phase-3c-round-result-presen
 
 ### Phase 3D — Table clarity and direct interaction
 
-Status: **Phase 3D-A/B/C deployed and accepted**.
+Status: **Phase 3D-A/B/C deployed and accepted; Phase 3D-D locally implemented**.
 
 Phase 3D addresses the owner-reported visual clutter, disliked color scheme, direct tap-to-match
 interaction, and field growth beyond eight cards before onboarding teaches the table.
@@ -686,6 +686,24 @@ Phase 3D-C gate:
 
 Architecture is recorded in
 [`ADR 0016`](./adr/0016-phase-3d-c-runtime-theme-and-options-shell.md).
+
+Phase 3D-D gate:
+
+- counts through eight preserve the familiar four-by-two field, while 9–17 cards use the
+  deterministic maximum-readable-size adaptive grid with exact public field order;
+- 8/9/12/17 remain 5:8, contained, and non-overlapping at every supported viewport; above-seventeen
+  presentation counts fail closed;
+- dense target territories never overlap, remain at least 24×36px at the legal boundary, retain
+  roving-keyboard activation, and leave hand controls at 44px;
+- direct placement/capture motion completes before the separate density reflow settles unrelated
+  cards, with no CardView recreation or browser-side rules;
+- an isolated non-shipping Pixi harness passes all seven root and Pages viewports with 17 cards,
+  three semantic targets, pointer/keyboard activation, one canvas, 48 CardViews, and zero errors;
+- `validate:phase3dd` retains every Phase 3D-C/release/Workshop/root/Pages gate and adds the isolated
+  dense-field browser matrix.
+
+Architecture is recorded in
+[`ADR 0017`](./adr/0017-phase-3d-d-adaptive-dense-field.md).
 
 ## Later phases
 

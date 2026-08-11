@@ -122,6 +122,7 @@ function makeClip(input: {
   from: PresentationBoardProjection;
   kind: AnimationClipKind;
   sequence: number;
+  settlesProjection?: boolean;
   to: PresentationBoardProjection;
 }): AnimationClipV1 {
   return Object.freeze({
@@ -130,6 +131,7 @@ function makeClip(input: {
     eventType: input.event.type,
     kind: input.kind,
     durationMs: NORMAL_DURATIONS[input.kind],
+    settlesProjection: input.settlesProjection ?? true,
     affectedCardIds: Object.freeze([...new Set(input.affectedCardIds)]),
     from: input.from,
     to: input.to,
@@ -155,6 +157,37 @@ export function planPublicEvents(
     const changed = changedCardIds(before, after);
     const directEventCardIds = eventCardIds(event);
     const affected = Object.freeze([...new Set([...directEventCardIds, ...changed])]);
+    if (event.type === "cardPlacedOnField" || event.type === "cardsCaptured") {
+      const direct = new Set(directEventCardIds);
+      const reflowCardIds = Object.freeze(
+        [...before, ...after]
+          .filter(({ zone }) => zone === "field")
+          .map(({ cardId }) => cardId)
+          .filter((cardId, index, all) => !direct.has(cardId) && all.indexOf(cardId) === index),
+      );
+      clips.push(
+        makeClip({
+          affectedCardIds: directEventCardIds,
+          event,
+          eventIndex,
+          from: before,
+          kind: event.type === "cardPlacedOnField" ? "travel" : "capture",
+          sequence: 0,
+          settlesProjection: false,
+          to: after,
+        }),
+        makeClip({
+          affectedCardIds: reflowCardIds,
+          event,
+          eventIndex,
+          from: before,
+          kind: "reflow",
+          sequence: 1,
+          to: after,
+        }),
+      );
+      continue;
+    }
     if (event.type === "drawCardRevealed") {
       const intermediate = createPresentationProjection(
         after.map((state) =>

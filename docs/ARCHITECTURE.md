@@ -123,6 +123,12 @@ resulting public hash. Future Firebase transaction storage/publication remains P
 - The compact Options shell owns secondary browser controls. Critical turn instruction/actions,
   public Yaku names/totals, and latest history remain visible, while Yaku/result/handoff modals keep
   focus priority and prevent unrelated option changes.
+- Phase 3D-D derives adaptive field geometry only from the public field-card count and preserves the
+  exact public field order. Counts through eight retain the four-by-two layout; nine through the
+  legal seventeen-card bound shrink into deterministic non-overlapping 5:8 grids.
+- Dense field targets are non-overlapping card-cell territories with keyboard parity. Direct
+  placement/capture clips complete before a separate reflow clip settles unrelated field cards.
+  The isolated seventeen-card browser harness is built to a non-production output directory.
 - The browser asset manager validates and preloads every candidate face/back before atomically
   switching local textures. Candidate failure leaves the active deck unchanged.
 - `window.render_game_to_text()` returns stable JSON describing responsive layout, scene/CardView
@@ -175,3 +181,7 @@ face-down and are omitted from the text surface. Turn completion enters a full p
 the next player's observation is requested. The approved primary runtime directory is served/copied
 by Vite and remains separate from authoring source. See
 [`ADR 0012`](./adr/0012-phase-3a-local-round-adapter.md).
+
+Phase 3D-D keeps dense layout presentation-owned and public-projection-only. Its deterministic grid,
+target-territory exception, reflow boundary, and non-shipping browser harness are recorded in
+[`ADR 0017`](./adr/0017-phase-3d-d-adaptive-dense-field.md).

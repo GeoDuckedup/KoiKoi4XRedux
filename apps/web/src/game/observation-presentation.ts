@@ -52,13 +52,33 @@ function mutableProjection(
 function normalizeProjection(
   states: ReadonlyMap<CardId, MutablePresentationState>,
 ): PresentationBoardProjection {
-  const zoneIndexes = new Map<CardPresentationState["zone"], number>();
+  const insertionOrder = new Map([...states.keys()].map((cardId, index) => [cardId, index]));
+  const orderedZones = new Map<CardPresentationState["zone"], CardId[]>();
+  for (const state of states.values()) {
+    const zone = orderedZones.get(state.zone) ?? [];
+    zone.push(state.cardId);
+    orderedZones.set(state.zone, zone);
+  }
+  const normalizedIndex = new Map<CardId, number>();
+  for (const cardIds of orderedZones.values()) {
+    cardIds
+      .sort((leftId, rightId) => {
+        const left = states.get(leftId);
+        const right = states.get(rightId);
+        if (!left || !right) throw new Error("PRESENTATION_ORDER_CARD_MISSING");
+        return (
+          left.slotIndex - right.slotIndex ||
+          (insertionOrder.get(leftId) ?? 0) - (insertionOrder.get(rightId) ?? 0)
+        );
+      })
+      .forEach((cardId, index) => normalizedIndex.set(cardId, index));
+  }
   return createPresentationProjection(
     CARD_IDS.map((cardId) => {
       const state = states.get(cardId);
       if (!state) throw new Error(`PRESENTATION_CARD_MISSING: ${cardId}`);
-      const slotIndex = zoneIndexes.get(state.zone) ?? 0;
-      zoneIndexes.set(state.zone, slotIndex + 1);
+      const slotIndex = normalizedIndex.get(cardId);
+      if (slotIndex === undefined) throw new Error(`PRESENTATION_ORDER_MISSING: ${cardId}`);
       return Object.freeze({
         ...state,
         slotIndex,
@@ -79,8 +99,15 @@ function moveCard(
 ): void {
   const state = states.get(cardId);
   if (!state) throw new Error(`PRESENTATION_CARD_MISSING: ${cardId}`);
+  const nextSlotIndex = Math.max(
+    -1,
+    ...[...states.values()]
+      .filter((candidate) => candidate.zone === zone && candidate.cardId !== cardId)
+      .map(({ slotIndex }) => slotIndex),
+  );
   state.zone = zone;
   state.faceUp = faceUp;
+  state.slotIndex = nextSlotIndex + 1;
 }
 
 function preserveHiddenAllocation(input: {

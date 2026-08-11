@@ -50,7 +50,9 @@ export function computeAnimatedCardPlacements(
       const from = fromById.get(cardId);
       const to = toById.get(cardId);
       if (!from || !to) throw new Error(`Animation clip is missing ${cardId}.`);
-      if (!affected.has(cardId)) return Object.freeze({ ...to });
+      if (!affected.has(cardId)) {
+        return Object.freeze({ ...(clip.settlesProjection ? to : from) });
+      }
 
       if (mode === "reducedMotion") {
         return Object.freeze({

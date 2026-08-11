@@ -40,6 +40,7 @@ export interface AnimationClipV1 {
   readonly from: PresentationBoardProjection;
   readonly id: string;
   readonly kind: AnimationClipKind;
+  readonly settlesProjection: boolean;
   readonly to: PresentationBoardProjection;
 }
 

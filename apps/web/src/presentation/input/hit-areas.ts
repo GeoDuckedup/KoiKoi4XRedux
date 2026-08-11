@@ -15,25 +15,6 @@ function freezeRect(rect: BoardRect): BoardRect {
   return Object.freeze({ ...rect });
 }
 
-function containedExpandedRect(bounds: BoardRect, layout: BoardLayout): BoardRect {
-  const minWidth = Math.min(44, layout.safeBounds.width);
-  const minHeight = Math.min(44, layout.safeBounds.height);
-  const width = Math.max(bounds.width, minWidth);
-  const height = Math.max(bounds.height, minHeight);
-  return freezeRect({
-    x: Math.min(
-      layout.safeBounds.x + layout.safeBounds.width - width,
-      Math.max(layout.safeBounds.x, bounds.x - (width - bounds.width) / 2),
-    ),
-    y: Math.min(
-      layout.safeBounds.y + layout.safeBounds.height - height,
-      Math.max(layout.safeBounds.y, bounds.y - (height - bounds.height) / 2),
-    ),
-    width,
-    height,
-  });
-}
-
 function containedHandRect(bounds: BoardRect, layout: BoardLayout): BoardRect {
   const height = Math.max(bounds.height, Math.min(44, layout.safeBounds.height));
   return freezeRect({
@@ -45,6 +26,67 @@ function containedHandRect(bounds: BoardRect, layout: BoardLayout): BoardRect {
     width: bounds.width,
     height,
   });
+}
+
+function partitionedFieldBounds(
+  placements: readonly ReturnType<typeof computeCardPlacements>[number][],
+  layout: BoardLayout,
+): ReadonlyMap<CardId, BoardRect> {
+  const fieldPlacements = placements
+    .filter(({ zone }) => zone === "field")
+    .sort((left, right) => left.bounds.y - right.bounds.y || left.bounds.x - right.bounds.x);
+  const rows: (typeof fieldPlacements)[] = [];
+  for (const placement of fieldPlacements) {
+    const row = rows.find(
+      (candidate) => Math.abs((candidate[0]?.bounds.y ?? -1) - placement.bounds.y) < 0.01,
+    );
+    if (row) row.push(placement);
+    else rows.push([placement]);
+  }
+  const field = layout.cardZones.field;
+  const partitioned = new Map<CardId, BoardRect>();
+  for (const [rowIndex, row] of rows.entries()) {
+    row.sort((left, right) => left.bounds.x - right.bounds.x);
+    const previousRow = rows[rowIndex - 1];
+    const nextRow = rows[rowIndex + 1];
+    const sample = row[0];
+    if (!sample) continue;
+    const gapAbove = previousRow?.[0]
+      ? Math.max(0, sample.bounds.y - (previousRow[0].bounds.y + previousRow[0].bounds.height))
+      : nextRow?.[0]
+        ? Math.max(0, nextRow[0].bounds.y - (sample.bounds.y + sample.bounds.height))
+        : 0;
+    const gapBelow = nextRow?.[0]
+      ? Math.max(0, nextRow[0].bounds.y - (sample.bounds.y + sample.bounds.height))
+      : gapAbove;
+    for (const [columnIndex, placement] of row.entries()) {
+      const previous = row[columnIndex - 1];
+      const next = row[columnIndex + 1];
+      const gapLeft = previous
+        ? Math.max(0, placement.bounds.x - (previous.bounds.x + previous.bounds.width))
+        : next
+          ? Math.max(0, next.bounds.x - (placement.bounds.x + placement.bounds.width))
+          : 0;
+      const gapRight = next
+        ? Math.max(0, next.bounds.x - (placement.bounds.x + placement.bounds.width))
+        : gapLeft;
+      const left = Math.max(field.x, placement.bounds.x - gapLeft / 2);
+      const right = Math.min(
+        field.x + field.width,
+        placement.bounds.x + placement.bounds.width + gapRight / 2,
+      );
+      const top = Math.max(field.y, placement.bounds.y - gapAbove / 2);
+      const bottom = Math.min(
+        field.y + field.height,
+        placement.bounds.y + placement.bounds.height + gapBelow / 2,
+      );
+      partitioned.set(
+        placement.cardId,
+        freezeRect({ x: left, y: top, width: right - left, height: bottom - top }),
+      );
+    }
+  }
+  return partitioned;
 }
 
 export function computeCardHitAreas(input: {
@@ -59,6 +101,7 @@ export function computeCardHitAreas(input: {
     .filter(({ zone }) => zone === "playerHand")
     .sort((left, right) => left.bounds.x - right.bounds.x);
   const partitionedHandBounds = new Map<CardId, BoardRect>();
+  const fieldBounds = partitionedFieldBounds(placements, input.layout);
   for (const [index, placement] of handPlacements.entries()) {
     const previous = handPlacements[index - 1];
     const next = handPlacements[index + 1];
@@ -100,7 +143,7 @@ export function computeCardHitAreas(input: {
       Object.freeze({
         cardId,
         role: "target",
-        bounds: containedExpandedRect(placement.bounds, input.layout),
+        bounds: fieldBounds.get(cardId) ?? freezeRect(placement.bounds),
       }),
     );
   }

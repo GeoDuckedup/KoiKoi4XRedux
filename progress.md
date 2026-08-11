@@ -849,3 +849,30 @@ Original prompt: read the package and understand it, then let me know when we ar
   persistent CardViews, eight legal hand controls, and no board-layout diagnostics.
 - Phase 3D-C evidence maturity is `live`. No manual hosting setting, secret, migration, or cache
   reset is required. Phase 3D-D adaptive dense-field layout is the next recommended subphase.
+
+## 2026-08-11 — Phase 3D-D adaptive dense field integrated
+
+- Replaced the above-eight modulo/fan behavior with a pure versioned adaptive grid. Zero through
+  eight cards retain four-by-two geometry; 9–17 cards choose the deterministic 5:8 grid that
+  maximizes readable width, minimizes empty cells, and centers the final row.
+- Corrected recipient presentation normalization so field slot order follows the public
+  `round.field` sequence rather than canonical CardId order. Resize and themes now change geometry
+  without changing semantic order.
+- Partitioned dense field target territories so they cannot overlap. Hand targets remain 44px; the
+  legal 17-card short-landscape boundary uses an explicit 24×36px field-target minimum with full
+  keyboard parity.
+- Split direct placement/capture motion from projection-settling reflow so unrelated cards do not
+  jump before the direct action completes. The 48 persistent CardViews and scene layers remain in
+  place.
+- Added an isolated, non-shipping Pixi review build. It passed all seven supported viewports for
+  both root and repository-prefixed bases with 17 cards, three semantic targets, pointer/keyboard
+  activation, one canvas, 48 CardViews, no overlap/clipping, and zero browser/network errors. Six
+  screenshots are under `output/phase-3d-d/e2e/`.
+- Focused geometry/animation/runtime/input tests pass 5 files / 52 tests, including all eight dense
+  vectors. `validate:phase3dd` passes the retained 3-file/23-test theme gate, approved release deck,
+  100 technical artifacts, 26 files/189 tests, Workshop, root/Pages gameplay, and the 14-viewport
+  dense matrix. `npm run check` passes 44 files/423 tests, the 10,002-match deterministic gate, and
+  the production build.
+- Independent final review found and closed one missing pointer-action assertion, then signed off
+  with no blocker, high, or medium finding. The production build explicitly returns 404 for the
+  review entry. Deployment/live verification remains.
