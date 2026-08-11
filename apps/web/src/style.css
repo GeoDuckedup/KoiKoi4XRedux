@@ -173,6 +173,42 @@ select:focus-visible {
   outline-offset: 3px;
 }
 
+.field-placement-control {
+  position: absolute;
+  z-index: 1;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 3px dashed #8fd1aa;
+  border-radius: 12px;
+  color: transparent;
+  background: rgb(143 209 170 / 5%);
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.field-placement-control:hover,
+.field-placement-control:focus-visible {
+  border-color: #fff;
+  outline: 3px solid #fff3cf;
+  outline-offset: 3px;
+  background: rgb(143 209 170 / 10%);
+}
+
+:root[data-visual-direction] .field-placement-control {
+  border-color: var(--review-legal);
+  background: color-mix(in srgb, var(--review-legal) 5%, transparent);
+}
+
+:root[data-visual-direction] .field-placement-control:hover,
+:root[data-visual-direction] .field-placement-control:focus-visible {
+  border-color: var(--review-focus);
+  outline-color: var(--review-focus);
+  background: color-mix(in srgb, var(--review-legal) 10%, transparent);
+}
+
 .runtime-label {
   flex: 0 0 auto;
   align-self: center;
@@ -1011,5 +1047,300 @@ kbd {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+}
+
+/* Phase 3D-A review builds only. Normal production builds do not set this data attribute. */
+:root[data-visual-direction="ink-parchment"] {
+  --review-page: #071511;
+  --review-page-glow: #21382d;
+  --review-surface: #0c2820;
+  --review-surface-raised: #163b2d;
+  --review-text: #fff4d6;
+  --review-text-muted: #d8d1b4;
+  --review-accent: #f1c45b;
+  --review-accent-ink: #172016;
+  --review-border: #5f755f;
+  --review-escalation: #b83a42;
+  --review-focus: #fff;
+  --review-legal: #8fd1aa;
+}
+
+:root[data-visual-direction="moonlit-indigo"] {
+  --review-page: #080f1b;
+  --review-page-glow: #1b3048;
+  --review-surface: #0e1b2b;
+  --review-surface-raised: #1c3550;
+  --review-text: #fff5d8;
+  --review-text-muted: #d3d0c5;
+  --review-accent: #e5b65a;
+  --review-accent-ink: #151a20;
+  --review-border: #61758a;
+  --review-escalation: #b93d52;
+  --review-focus: #fff;
+  --review-legal: #76c8cc;
+}
+
+:root[data-visual-direction="warm-ivory"] {
+  --review-page: #ead3a8;
+  --review-page-glow: #fff7e8;
+  --review-surface: #fff8e9;
+  --review-surface-raised: #ecd9b7;
+  --review-text: #2a2118;
+  --review-text-muted: #675b4d;
+  --review-accent: #a85717;
+  --review-accent-ink: #fff8e9;
+  --review-border: #4d3b2b;
+  --review-escalation: #b94738;
+  --review-focus: #1f638f;
+  --review-legal: #2c6d94;
+}
+
+:root[data-visual-direction] {
+  color: var(--review-text);
+  background: var(--review-page);
+}
+
+:root[data-visual-direction] body {
+  color: var(--review-text);
+  background:
+    radial-gradient(
+      circle at 12% 4%,
+      color-mix(in srgb, var(--review-page-glow) 68%, transparent),
+      transparent 28rem
+    ),
+    var(--review-page);
+}
+
+:root[data-visual-direction] button:focus-visible,
+:root[data-visual-direction] select:focus-visible {
+  outline-color: var(--review-focus);
+}
+
+:root[data-visual-direction] .app-shell {
+  grid-template-rows: auto minmax(420px, 1fr) auto auto;
+  gap: clamp(5px, 0.8vw, 10px);
+}
+
+:root[data-visual-direction] .app-header {
+  min-height: 38px;
+}
+
+:root[data-visual-direction] .app-header .eyebrow,
+:root[data-visual-direction] .header-actions,
+:root[data-visual-direction] .round-toolbar,
+:root[data-visual-direction] .app-footer {
+  display: none;
+}
+
+:root[data-visual-direction] .app-header h1 {
+  color: var(--review-text);
+  font-size: clamp(1.15rem, 2.5vw, 1.75rem);
+  letter-spacing: 0.025em;
+}
+
+:root[data-visual-direction] .app-header::after {
+  margin-left: auto;
+  padding: 0.34rem 0.62rem;
+  border: 1px solid color-mix(in srgb, var(--review-border) 72%, transparent);
+  border-radius: 999px;
+  color: var(--review-text-muted);
+  font-size: clamp(0.58rem, 1vw, 0.72rem);
+  font-weight: 750;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+:root[data-visual-direction="ink-parchment"] .app-header::after {
+  content: "A · Ink & Parchment";
+}
+
+:root[data-visual-direction="moonlit-indigo"] .app-header::after {
+  content: "B · Moonlit Indigo";
+}
+
+:root[data-visual-direction="warm-ivory"] .app-header::after {
+  content: "C · Warm Ivory";
+}
+
+:root[data-visual-direction] .game-frame {
+  border-color: color-mix(in srgb, var(--review-border) 74%, transparent);
+  background: var(--review-surface);
+  box-shadow: 0 18px 52px color-mix(in srgb, #000 42%, transparent);
+}
+
+:root[data-visual-direction] .yaku-progress,
+:root[data-visual-direction] .turn-recap {
+  border-color: color-mix(in srgb, var(--review-border) 58%, transparent);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--review-surface) 88%, transparent);
+  box-shadow: none;
+}
+
+:root[data-visual-direction] .yaku-progress {
+  grid-template-columns: 1fr;
+  gap: 5px;
+  padding: 7px;
+}
+
+:root[data-visual-direction] .yaku-progress__heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+:root[data-visual-direction] .yaku-progress__players {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+:root[data-visual-direction] .yaku-progress__player {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 0.2rem 0.5rem;
+  padding: 0.44rem 0.6rem;
+  border-color: color-mix(in srgb, var(--review-border) 34%, transparent);
+  background: color-mix(in srgb, var(--review-surface-raised) 48%, transparent);
+}
+
+:root[data-visual-direction] .yaku-progress__player h3 {
+  color: var(--review-text);
+  font-family: inherit;
+  font-size: clamp(0.72rem, 1.35vw, 0.86rem);
+}
+
+:root[data-visual-direction] .yaku-progress__total {
+  margin: 0;
+  color: var(--review-accent);
+  font-size: clamp(0.66rem, 1.2vw, 0.78rem);
+}
+
+:root[data-visual-direction] .yaku-progress ul {
+  display: none;
+}
+
+:root[data-visual-direction] .turn-recap {
+  grid-template-columns: 1fr;
+  min-height: 42px;
+  max-height: 58px;
+  padding: 0.55rem 0.78rem;
+}
+
+:root[data-visual-direction] .turn-recap > div {
+  display: none;
+}
+
+:root[data-visual-direction] .turn-recap ol {
+  display: block;
+  padding: 0;
+  color: var(--review-text-muted);
+  font-size: clamp(0.7rem, 1.2vw, 0.82rem);
+  list-style: none;
+}
+
+:root[data-visual-direction] .turn-recap li:not(:last-child) {
+  display: none;
+}
+
+:root[data-visual-direction] .turn-recap li {
+  color: var(--review-text-muted);
+}
+
+:root[data-visual-direction] .turn-recap li:last-child::before {
+  content: "Latest · ";
+  color: var(--review-accent);
+  font-weight: 800;
+}
+
+:root[data-visual-direction] .eyebrow,
+:root[data-visual-direction] .round-result h3,
+:root[data-visual-direction] .yaku-progress__total,
+:root[data-visual-direction] .yaku-decision__unavailable {
+  color: var(--review-accent);
+}
+
+:root[data-visual-direction] .card-input-control--selected {
+  border-color: var(--review-text);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--review-escalation) 78%, transparent),
+    0 8px 18px rgb(0 0 0 / 30%);
+}
+
+:root[data-visual-direction] .card-input-control--target {
+  border-color: var(--review-legal);
+  background: color-mix(in srgb, var(--review-legal) 11%, transparent);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--review-legal) 28%, transparent),
+    0 0 22px color-mix(in srgb, var(--review-legal) 34%, transparent);
+}
+
+:root[data-visual-direction="warm-ivory"] .card-input-control--selected {
+  border-color: var(--review-accent);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--review-accent) 78%, transparent),
+    0 8px 18px rgb(54 35 15 / 28%);
+}
+
+:root[data-visual-direction] .handoff-card,
+:root[data-visual-direction] .yaku-feedback,
+:root[data-visual-direction] .yaku-decision,
+:root[data-visual-direction] .round-result__card {
+  border-color: color-mix(in srgb, var(--review-accent) 60%, transparent);
+  color: var(--review-text);
+  background: var(--review-surface);
+}
+
+:root[data-visual-direction] .round-result {
+  background:
+    radial-gradient(
+      circle at 50% 22%,
+      color-mix(in srgb, var(--review-surface-raised) 78%, transparent),
+      transparent 46%
+    ),
+    color-mix(in srgb, var(--review-page) 94%, transparent);
+}
+
+:root[data-visual-direction] .handoff-card button,
+:root[data-visual-direction] .yaku-decision__actions button,
+:root[data-visual-direction] .round-result button {
+  border-color: var(--review-accent);
+  color: var(--review-accent-ink);
+  background: var(--review-accent);
+}
+
+@media (max-width: 520px) {
+  :root[data-visual-direction] .app-shell {
+    grid-template-rows: auto minmax(565px, 1fr) auto auto;
+    gap: 5px;
+  }
+
+  :root[data-visual-direction] .app-header {
+    flex-wrap: nowrap;
+  }
+
+  :root[data-visual-direction] .app-header::after {
+    padding-inline: 0.48rem;
+    font-size: 0.54rem;
+  }
+
+  :root[data-visual-direction] .yaku-progress {
+    gap: 4px;
+  }
+
+  :root[data-visual-direction] .yaku-progress__player {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-height: 480px) and (orientation: landscape) {
+  :root[data-visual-direction] .app-shell {
+    grid-template-rows: 40px minmax(304px, 1fr) auto;
+  }
+
+  :root[data-visual-direction] .yaku-progress {
+    display: none;
   }
 }

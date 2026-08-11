@@ -1,9 +1,9 @@
 # KoiKoi4x Project Status
 
-**Updated:** August 9, 2026
+**Updated:** August 10, 2026
 
-**Overall state:** Greenfield rewrite through Phase 3C deployed, live, and accepted; Phase 4A
-onboarding foundation is next
+**Overall state:** Greenfield rewrite through Phase 3C deployed, live, and accepted; Phase 3D-A is
+owner-approved and Phase 3D-B interaction cues are locally accepted
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -11,6 +11,24 @@ cards, deterministic public-event animation, private pass-the-device handoff, ac
 and the retained local-only deterministic deck Workshop/raster review pipeline
 
 ## Current result
+
+Phase 3D-A now provides three review-only builds over the real approved deck: Ink & Parchment,
+Moonlit Indigo, and Warm Ivory. The owner approved Ink & Parchment as the recommended default and
+the other two as future options-menu themes. Warm Ivory carries forward the original game's calm
+cream canvas, bold dark outlines, restrained orange selection, and blue guidance without copying
+its crowded organization. The deployed default remains unchanged until Phase 3D-C integrates the
+new shell and runtime selector.
+
+Phase 3D-B now completes the desired direct interaction flow. Selecting a no-match card highlights
+the field placement surface; selecting a unique match highlights its one matching card; exact-two
+continues to expose two authoritative choices; and a four-card sweep highlights all three matching
+field cards. Guided mode accepts the highlighted field/card or Confirm, while Fast keeps immediate
+unambiguous play. Field overflow still fans above eight slots and is reserved for Phase 3D-D.
+
+The browser never derives this from Pixi coordinates or reimplements capture rules. Every Hand
+legal action carries a frozen public resolution preview produced beside engine legality. The input
+controller validates that preview against the existing action set, emits only an existing legal
+intent, and requires a newer observation after submission.
 
 Phase 3C implementation, hosted deployment, and live acceptance are complete. Twelve
 `PRES-RESULT-*` contracts verify
@@ -382,6 +400,6 @@ The deployed baseline is
 
 ## Next subphase
 
-**Phase 4A — Onboarding foundation:** lock the tutorial-director contract and build the newcomer
-entry experience, beginning with Learn in 60 Seconds and contextual table guidance over the
-authoritative local round.
+**Phase 3D-C — Decluttered production shell and theme menu:** make Ink & Parchment the default,
+offer Moonlit Indigo and Warm Ivory through an accessible persistent options menu, and collapse the
+advanced controls/history without hiding authoritative turn, Yaku, or result information.

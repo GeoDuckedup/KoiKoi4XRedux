@@ -6,7 +6,7 @@ import { chromium } from "playwright";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-3c/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-3d-b/e2e");
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
 const mountedBasePath = smokeBasePath === "/" ? "/" : `${smokeBasePath}/`;
@@ -110,6 +110,29 @@ async function waitForApplicationReady(page, browserErrors, networkErrors) {
 
 async function readState(page) {
   return page.evaluate(() => JSON.parse(window.render_game_to_text()));
+}
+
+async function resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors) {
+  await page.goto(pageUrl, { waitUntil: "networkidle" });
+  await waitForApplicationReady(page, browserErrors, networkErrors);
+  await page.locator("[data-animation-mode]").selectOption("instant");
+  await page.locator("[data-input-mode]").selectOption("guided");
+}
+
+async function waitForAcceptedHandIntent(page, previousVersion) {
+  await page.waitForFunction(
+    (version) => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
+        state.localRound.stateVersion > version &&
+        state.animation.status !== "playing" &&
+        state.input.status !== "intentPending" &&
+        state.input.lockReason !== "awaitingObservation"
+      );
+    },
+    previousVersion,
+    { timeout: 30_000 },
+  );
 }
 
 async function chooseYakuDecision(page, choice) {
@@ -436,6 +459,80 @@ try {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator("[data-animation-mode]").selectOption("instant");
+  await page.locator("[data-input-mode]").selectOption("guided");
+
+  const placementBefore = await readState(page);
+  await page.locator('[data-input-role="selectable"][data-card-id="november-red-scroll"]').click();
+  await page.waitForFunction(() => {
+    const state = JSON.parse(window.render_game_to_text());
+    return (
+      state.input.status === "confirming" &&
+      state.input.handResolutionKind === "placeOnField" &&
+      state.input.fieldPlacementAvailable === true
+    );
+  });
+  const placementSelected = await readState(page);
+  assert(
+    placementSelected.localRound.stateVersion === placementBefore.localRound.stateVersion &&
+      placementSelected.input.selectedCardId === "november-red-scroll" &&
+      placementSelected.input.legalTargetCardIds.length === 0,
+    "Guided no-match selection mutated state or invented a capture target.",
+  );
+  const placementControl = page.locator("[data-input-field-placement]");
+  assert(await placementControl.isVisible(), "The Guided field-placement surface is missing.");
+  assert(
+    (await placementControl.getAttribute("aria-label"))
+      ?.toLowerCase()
+      .includes("position is automatic"),
+    "The placement surface does not explain that field position is automatic.",
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `guided-place-on-field-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await placementControl.click();
+  await waitForAcceptedHandIntent(page, placementBefore.localRound.stateVersion);
+
+  await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
+  const pairBefore = await readState(page);
+  await page.locator('[data-input-role="selectable"][data-card-id="january-pine-plain-a"]').click();
+  await page.waitForFunction(() => {
+    const state = JSON.parse(window.render_game_to_text());
+    return (
+      state.input.status === "confirming" &&
+      state.input.handResolutionKind === "capturePair" &&
+      state.input.legalTargetCardIds.length === 1
+    );
+  });
+  const pairSelected = await readState(page);
+  assert(
+    pairSelected.localRound.stateVersion === pairBefore.localRound.stateVersion &&
+      pairSelected.input.legalTargetCardIds[0] === "january-pine-plain-b",
+    "Guided unique-match selection did not expose exactly its authoritative match.",
+  );
+  const pairTarget = page.locator(
+    '[data-input-role="target"][data-card-id="january-pine-plain-b"]',
+  );
+  assert(await pairTarget.isVisible(), "The Guided unique-match target is missing.");
+  assert(
+    (await pairTarget.getAttribute("aria-label"))?.includes("confirm matching capture"),
+    "The unique-match target does not expose capture-confirmation semantics.",
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `guided-unique-match-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await pairTarget.click();
+  await waitForAcceptedHandIntent(page, pairBefore.localRound.stateVersion);
+  process.stdout.write("Phase 3D-B Guided placement and unique-match trace passed.\n");
+
+  await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
   await page.locator("[data-input-mode]").selectOption("fast");
 
   await playLockedHandSequence(page, PHASE_3B_HAND_DECISION_SEQUENCE.slice(0, -1));

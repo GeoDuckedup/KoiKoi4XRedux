@@ -61,6 +61,28 @@ function expectRejected(
 }
 
 describe("Phase 1B legal actions and command state machine", () => {
+  it.each([
+    ["CAP-000", "december-phoenix", "placeOnField", []],
+    ["CAP-001", "january-crane", "capturePair", ["january-pine-plain-a"]],
+    [
+      "CAP-003",
+      "april-cuckoo",
+      "fourCardSweep",
+      ["april-red-scroll", "april-wisteria-plain-a", "april-wisteria-plain-b"],
+    ],
+  ] as const)(
+    "publishes an authoritative %s hand-resolution preview",
+    (fixtureId, cardId, kind, matchingFieldCardIds) => {
+      const action = getLegalActions(setup(fixtureId), "player-a").find(
+        (candidate) => candidate.type === "playHandCard" && candidate.cardId === cardId,
+      );
+      if (action?.type !== "playHandCard") throw new Error(`${fixtureId} hand action missing.`);
+      expect(action.resolution).toEqual({ kind, matchingFieldCardIds });
+      expect(Object.isFrozen(action.resolution)).toBe(true);
+      expect(Object.isFrozen(action.resolution.matchingFieldCardIds)).toBe(true);
+    },
+  );
+
   it("enumerates private hand actions and both two-match targets in deterministic order", () => {
     const state = setup("CAP-002A");
     expect(getLegalActions(state, "player-b")).toEqual([]);
@@ -74,12 +96,20 @@ describe("Phase 1B legal actions and command state machine", () => {
         actorId: "player-a",
         cardId: "january-crane",
         targetFieldCardId: "january-pine-plain-a",
+        resolution: {
+          kind: "captureChoice",
+          matchingFieldCardIds: ["january-pine-plain-a", "january-red-text-scroll"],
+        },
       },
       {
         type: "playHandCard",
         actorId: "player-a",
         cardId: "january-crane",
         targetFieldCardId: "january-red-text-scroll",
+        resolution: {
+          kind: "captureChoice",
+          matchingFieldCardIds: ["january-pine-plain-a", "january-red-text-scroll"],
+        },
       },
     ]);
     expect(Object.isFrozen(getLegalActions(state, "player-a"))).toBe(true);

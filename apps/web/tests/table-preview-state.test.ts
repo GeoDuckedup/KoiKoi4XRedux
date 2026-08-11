@@ -55,6 +55,8 @@ describe("Phase 2B table diagnostics", () => {
         selectedCardId: null,
         selectableCardIds: ["march-curtain"],
         legalTargetCardIds: [],
+        handResolutionKind: null,
+        fieldPlacementAvailable: false,
         decisionChoices: [],
         confirmAvailable: false,
         cancelAvailable: false,

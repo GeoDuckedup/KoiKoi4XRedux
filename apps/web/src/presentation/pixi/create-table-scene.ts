@@ -14,6 +14,7 @@ import type {
 } from "../animation/types";
 import type { ActiveDeckTextures } from "../deck/card-asset-manager";
 import type { InteractionVisualStateV1 } from "../input/types";
+import { ACTIVE_TABLE_SCENE_COLORS } from "../theme/visual-directions";
 import type { BoardLayout, BoardRect, BoardSceneInspection, CardZone } from "../board/types";
 import { BOARD_LAYER_ORDER } from "../board/types";
 
@@ -53,19 +54,14 @@ function createSceneObjectToken(kind: "layer" | "root"): string {
   return token;
 }
 
-const COLORS = {
-  backdrop: 0x061711,
-  black: 0x020805,
-  cream: 0xfff3cf,
-  creamMuted: 0xc7c1a4,
-  gold: 0xe9bb5a,
-  green: 0x1f5941,
-  ink: 0x0a2118,
-  red: 0xc9514b,
-  table: 0x123b2c,
-  tableDeep: 0x0b2a20,
-  white: 0xffffff,
-} as const;
+const COLORS = ACTIVE_TABLE_SCENE_COLORS;
+
+function multiplierColor(multiplier: number): number {
+  if (multiplier <= 1) return COLORS.multiplier1;
+  if (multiplier === 2) return COLORS.multiplier2;
+  if (multiplier === 3) return COLORS.multiplier3;
+  return COLORS.multiplier4;
+}
 
 const CAPTURE_ZONE_GROUPS = {
   opponent: [
@@ -350,7 +346,7 @@ function renderStatus(
         width: Math.max(34, 42 * layout.scale),
         height: status.height - Math.max(8, status.height * 0.26),
       },
-      { fill: COLORS.red, radius: 999 },
+      { fill: multiplierColor(tableStatus.multiplier), radius: 999 },
     ),
     label(
       `${tableStatus.multiplier}×`,
@@ -403,6 +399,27 @@ function renderInteractionHighlights(
   state: InteractionVisualStateV1,
 ): void {
   if (state.locked) return;
+  if (state.fieldPlacementAvailable) {
+    const field = layout.cardZones.field;
+    layer.addChild(
+      panel(field, {
+        fill: COLORS.legal,
+        fillAlpha: 0.055,
+        radius: Math.max(8, 14 * layout.scale),
+        stroke: COLORS.legal,
+        strokeAlpha: 0.92,
+        strokeWidth: Math.max(2, 2.5 * layout.scale),
+      }),
+      label("TAP FIELD TO PLACE", field.x + field.width / 2, field.y + field.height / 2, {
+        anchorX: 0.5,
+        anchorY: 0.5,
+        color: COLORS.legal,
+        fontSize: Math.max(8, 10 * layout.scale),
+        fontWeight: "700",
+        letterSpacing: 0.8,
+      }),
+    );
+  }
   const byCardId = new Map(
     computeCardPlacements(layout, projection).map((placement) => [placement.cardId, placement]),
   );
@@ -423,7 +440,7 @@ function renderInteractionHighlights(
       width: placement.bounds.width + padding * 2,
       height: placement.bounds.height + padding * 2,
     };
-    const color = target ? COLORS.gold : selected ? COLORS.cream : COLORS.creamMuted;
+    const color = target ? COLORS.legal : selected ? COLORS.cream : COLORS.creamMuted;
     const alpha = target || selected ? 0.95 : selectable.has(cardId) ? 0.3 : 0;
     layer.addChild(
       new Graphics()
@@ -435,11 +452,17 @@ function renderInteractionHighlights(
         }),
     );
     if (target) {
+      const cueLabel =
+        state.handResolutionKind === "capturePair"
+          ? "MATCH"
+          : state.handResolutionKind === "fourCardSweep"
+            ? "SWEEP"
+            : "CHOOSE";
       layer.addChild(
-        label("LEGAL", bounds.x + bounds.width / 2, Math.max(layout.safeBounds.y, bounds.y - 2), {
+        label(cueLabel, bounds.x + bounds.width / 2, Math.max(layout.safeBounds.y, bounds.y - 2), {
           anchorX: 0.5,
           anchorY: 1,
-          color: COLORS.gold,
+          color: COLORS.legal,
           fontSize: Math.max(7, 8.5 * layout.scale),
           fontWeight: "700",
           letterSpacing: 0.7,
@@ -509,6 +532,8 @@ export function createTableScene(
     selectedCardId: null,
     selectableCardIds: Object.freeze([]),
     legalTargetCardIds: Object.freeze([]),
+    handResolutionKind: null,
+    fieldPlacementAvailable: false,
     focusedCardId: null,
     locked: true,
   });

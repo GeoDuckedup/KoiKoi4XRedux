@@ -382,12 +382,31 @@ export interface AdvanceRoundCommandV1 {
   readonly expectedStateVersion: number;
 }
 
+export type HandPlayResolutionPreviewV1 =
+  | {
+      readonly kind: "placeOnField";
+      readonly matchingFieldCardIds: readonly [];
+    }
+  | {
+      readonly kind: "capturePair";
+      readonly matchingFieldCardIds: readonly [CardId];
+    }
+  | {
+      readonly kind: "captureChoice";
+      readonly matchingFieldCardIds: readonly [CardId, CardId];
+    }
+  | {
+      readonly kind: "fourCardSweep";
+      readonly matchingFieldCardIds: readonly [CardId, CardId, CardId];
+    };
+
 export type LegalActionV1 =
   | {
       readonly type: "playHandCard";
       readonly actorId: PlayerId;
       readonly cardId: CardId;
       readonly targetFieldCardId?: CardId;
+      readonly resolution: HandPlayResolutionPreviewV1;
     }
   | {
       readonly type: "chooseDrawCapture";

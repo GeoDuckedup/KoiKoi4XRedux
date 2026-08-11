@@ -200,36 +200,85 @@ const drawProjection = fixtureProjection({
 });
 
 const handLegalActions: readonly LegalActionV1[] = deepFreeze([
-  { type: "playHandCard", actorId: "player-a", cardId: "march-curtain" },
+  {
+    type: "playHandCard",
+    actorId: "player-a",
+    cardId: "march-curtain",
+    resolution: { kind: "capturePair", matchingFieldCardIds: ["march-red-text-scroll"] },
+  },
   {
     type: "playHandCard",
     actorId: "player-a",
     cardId: "april-cuckoo",
     targetFieldCardId: "april-red-scroll",
+    resolution: {
+      kind: "captureChoice",
+      matchingFieldCardIds: ["april-red-scroll", "april-wisteria-plain-a"],
+    },
   },
   {
     type: "playHandCard",
     actorId: "player-a",
     cardId: "april-cuckoo",
     targetFieldCardId: "april-wisteria-plain-a",
+    resolution: {
+      kind: "captureChoice",
+      matchingFieldCardIds: ["april-red-scroll", "april-wisteria-plain-a"],
+    },
   },
-  { type: "playHandCard", actorId: "player-a", cardId: "may-bridge" },
-  { type: "playHandCard", actorId: "player-a", cardId: "june-butterfly" },
-  { type: "playHandCard", actorId: "player-a", cardId: "august-geese" },
-  { type: "playHandCard", actorId: "player-a", cardId: "march-cherry-plain-a" },
+  {
+    type: "playHandCard",
+    actorId: "player-a",
+    cardId: "may-bridge",
+    resolution: {
+      kind: "fourCardSweep",
+      matchingFieldCardIds: ["may-red-scroll", "may-iris-plain-a", "may-iris-plain-b"],
+    },
+  },
+  {
+    type: "playHandCard",
+    actorId: "player-a",
+    cardId: "june-butterfly",
+    resolution: { kind: "capturePair", matchingFieldCardIds: ["june-blue-scroll"] },
+  },
+  {
+    type: "playHandCard",
+    actorId: "player-a",
+    cardId: "august-geese",
+    resolution: { kind: "placeOnField", matchingFieldCardIds: [] },
+  },
+  {
+    type: "playHandCard",
+    actorId: "player-a",
+    cardId: "march-cherry-plain-a",
+    resolution: { kind: "capturePair", matchingFieldCardIds: ["march-red-text-scroll"] },
+  },
   {
     type: "playHandCard",
     actorId: "player-a",
     cardId: "april-wisteria-plain-b",
     targetFieldCardId: "april-red-scroll",
+    resolution: {
+      kind: "captureChoice",
+      matchingFieldCardIds: ["april-red-scroll", "april-wisteria-plain-a"],
+    },
   },
   {
     type: "playHandCard",
     actorId: "player-a",
     cardId: "april-wisteria-plain-b",
     targetFieldCardId: "april-wisteria-plain-a",
+    resolution: {
+      kind: "captureChoice",
+      matchingFieldCardIds: ["april-red-scroll", "april-wisteria-plain-a"],
+    },
   },
-  { type: "playHandCard", actorId: "player-a", cardId: "june-peony-plain-a" },
+  {
+    type: "playHandCard",
+    actorId: "player-a",
+    cardId: "june-peony-plain-a",
+    resolution: { kind: "capturePair", matchingFieldCardIds: ["june-blue-scroll"] },
+  },
 ]);
 
 function buildFixture(id: TechnicalInputFixtureId, stateVersion: number): TechnicalInputFixtureV1 {
@@ -246,16 +295,6 @@ function buildFixture(id: TechnicalInputFixtureId, stateVersion: number): Techni
           legalActions: handLegalActions,
           stateVersion,
         }),
-        confirmationTargetCardIds: {
-          "march-curtain": ["march-red-text-scroll"],
-          "april-cuckoo": ["april-red-scroll", "april-wisteria-plain-a"],
-          "may-bridge": ["may-red-scroll", "may-iris-plain-a", "may-iris-plain-b"],
-          "june-butterfly": ["june-blue-scroll"],
-          "august-geese": [],
-          "march-cherry-plain-a": ["march-red-text-scroll"],
-          "april-wisteria-plain-b": ["april-red-scroll", "april-wisteria-plain-a"],
-          "june-peony-plain-a": ["june-blue-scroll"],
-        },
       },
     });
   }
@@ -283,7 +322,6 @@ function buildFixture(id: TechnicalInputFixtureId, stateVersion: number): Techni
           })),
           stateVersion,
         }),
-        confirmationTargetCardIds: {},
       },
     });
   }
@@ -326,7 +364,6 @@ function buildFixture(id: TechnicalInputFixtureId, stateVersion: number): Techni
           ],
           stateVersion,
         }),
-        confirmationTargetCardIds: {},
       },
     });
   }
@@ -342,7 +379,6 @@ function buildFixture(id: TechnicalInputFixtureId, stateVersion: number): Techni
         legalActions: [],
         stateVersion,
       }),
-      confirmationTargetCardIds: {},
     },
   });
 }

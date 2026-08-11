@@ -35,7 +35,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["scripts/e2e-smoke.mjs"],
+    files: ["scripts/e2e-smoke.mjs", "scripts/phase3da-visual-review.mjs"],
     languageOptions: {
       globals: {
         ...globals.node,

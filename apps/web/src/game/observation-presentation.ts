@@ -113,21 +113,7 @@ function preserveHiddenAllocation(input: {
 export function createInteractionSourceFromObservation(
   observation: PlayerObservationV1,
 ): InteractionSourceV1 {
-  const confirmationTargetCardIds: Partial<Record<CardId, readonly CardId[]>> = {};
-  const grouped = new Map<CardId, CardId[]>();
-  for (const action of observation.legalActions) {
-    if (action.type !== "playHandCard" || action.targetFieldCardId === undefined) continue;
-    const targets = grouped.get(action.cardId) ?? [];
-    targets.push(action.targetFieldCardId);
-    grouped.set(action.cardId, targets);
-  }
-  for (const [cardId, targets] of grouped) {
-    confirmationTargetCardIds[cardId] = Object.freeze([...targets]);
-  }
-  return Object.freeze({
-    observation,
-    confirmationTargetCardIds: Object.freeze(confirmationTargetCardIds),
-  });
+  return Object.freeze({ observation });
 }
 
 export function projectObservationToBoard(

@@ -5,6 +5,12 @@ import type { BoardLayout, BoardRect } from "../board/types";
 import { computeCardPlacements } from "../cards/card-layout";
 import type { CardHitAreaV1, InputInteractionInspectionV1, SemanticCardControlV1 } from "./types";
 
+function targetActionLabel(kind: InputInteractionInspectionV1["handResolutionKind"]): string {
+  if (kind === "capturePair") return "confirm matching capture";
+  if (kind === "fourCardSweep") return "confirm four-card sweep";
+  return "choose legal capture target";
+}
+
 function freezeRect(rect: BoardRect): BoardRect {
   return Object.freeze({ ...rect });
 }
@@ -119,7 +125,7 @@ export function buildSemanticCardControls(input: {
       const selected = input.inspection.selectedCardId === area.cardId;
       const actionLabel =
         area.role === "target"
-          ? "choose legal capture target"
+          ? targetActionLabel(input.inspection.handResolutionKind)
           : selected
             ? "selected card; activate again to cancel"
             : "select card";

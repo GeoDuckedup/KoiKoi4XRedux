@@ -19,6 +19,8 @@
 | Per-phase agent evidence ledgers | `docs/agent-runs/` |
 | Current implementation plan | `docs/PLAN.md` |
 | Current implementation status | `docs/STATUS.md` |
+| Phase 3D-A visual direction review | `docs/phase-3d-a-visual-direction.md` |
+| Phase 3D-B interaction authority | `docs/adr/0015-phase-3d-b-authoritative-interaction-previews.md` |
 | Architectural decisions | `docs/adr/` |
 | Agent operating instructions | `AGENTS.md` |
 

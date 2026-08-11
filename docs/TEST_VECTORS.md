@@ -385,7 +385,34 @@ Phase 3C binding:
 - the next-round plan is informational in Phase 3C. `Start another local round` resets the explicit
   one-round slice and is never labeled as beginning the authoritative next scheduled month.
 
-## 15. Approved-decision coverage matrix
+## 15. Phase 3D-B authoritative interaction-preview vectors
+
+These vectors lock the public explanation attached to an already-legal Hand action. They do not
+authorize the browser to calculate matches, manufacture targets, or choose a capture from Pixi
+coordinates.
+
+| ID | Required expectation |
+|---|---|
+| `TABLE-INPUT-001-PLACE` | A no-match Hand action carries `placeOnField` with zero matching IDs. Guided selection exposes one semantic field-placement surface and Confirm/Cancel without changing authoritative state. |
+| `TABLE-INPUT-002-PAIR` | A unique match carries `capturePair` with exactly its one public field CardId. Guided highlights that card; tapping it submits the existing target-free action. |
+| `TABLE-INPUT-003-CHOICE` | Exactly two matches carry `captureChoice` with the two ordered public field CardIds and exactly two corresponding targeted legal actions. Tapping one preserves that target. |
+| `TABLE-INPUT-004-SWEEP` | Three matches carry `fourCardSweep` with all three ordered public field CardIds. Guided highlights all three; tapping any submits the one target-free sweep action. |
+| `TABLE-INPUT-005-FAST` | Fast submits no-match, pair, and sweep immediately, but never skips an exact-two target choice. |
+| `TABLE-INPUT-006-A11Y` | Semantic controls truthfully distinguish placing, confirming a matching capture, choosing one of two targets, and confirming a four-card sweep; Confirm/Cancel and keyboard behavior remain equivalent. |
+| `TABLE-INPUT-007-BOUNDARY` | Duplicate, off-field, wrong-count, wrong-kind, or action-inconsistent previews reject before any intent; selection alone never increments state and one accepted intent remains locked until a newer observation. |
+
+Phase 3D-B binding:
+
+- engine fixture tests assert all four exact frozen preview shapes beside canonical legal actions;
+- focused web tests carry every exact ID and exercise Guided/Fast state, emitted intent shape,
+  accessibility labels, malformed-source rejection, and unchanged Draw targeting;
+- root and `/KoiKoi4XRedux/` production browser traces select and execute a real no-match placement
+  plus a real unique pair at 390×844, and retain the seven-viewport, Yaku, result, privacy, card-
+  identity, and zero-browser/network-error gates;
+- field position is automatic presentation only. Adaptive 9–17-card field sizing belongs to Phase
+  3D-D and cannot change action legality.
+
+## 16. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|
@@ -404,7 +431,7 @@ Phase 3C binding:
 | R-013 | All `FINAL-MONTH-*` fixtures |
 | R-014 | Scroll fixed, incremental, seven-Scroll, and no-combined-bonus fixtures |
 
-## 13. Binding gates
+## 17. Binding gates
 
 Phase 0C completed:
 

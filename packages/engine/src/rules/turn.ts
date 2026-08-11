@@ -24,7 +24,12 @@ import {
   type YakuDecisionResumeV1,
 } from "../state/types";
 import { assertValidAuthoritativeState } from "../state/validation";
-import { inspectCapture, resolveCapture, type CaptureResolutionV1 } from "./capture";
+import {
+  getHandPlayResolutionPreview,
+  inspectCapture,
+  resolveCapture,
+  type CaptureResolutionV1,
+} from "./capture";
 import { evaluateYaku } from "./yaku";
 import {
   createMatchResult,
@@ -819,14 +824,16 @@ export function getLegalActions(
     if (player === undefined) return Object.freeze([]);
     const actions = player.hand.flatMap((cardId): readonly LegalActionV1[] => {
       const inspection = inspectCapture(state.round.field, cardId);
+      const resolution = getHandPlayResolutionPreview(state.round.field, cardId);
       return inspection.matchCount === 2
         ? inspection.matchingFieldCardIds.map((targetFieldCardId) => ({
             type: "playHandCard" as const,
             actorId: requestingPlayerId,
             cardId,
             targetFieldCardId,
+            resolution,
           }))
-        : [{ type: "playHandCard" as const, actorId: requestingPlayerId, cardId }];
+        : [{ type: "playHandCard" as const, actorId: requestingPlayerId, cardId, resolution }];
     });
     return deepFreeze(actions);
   }

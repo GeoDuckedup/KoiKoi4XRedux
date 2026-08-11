@@ -1,4 +1,9 @@
-import type { CardId, PlayerId, PlayerObservationV1 } from "@koikoi4x/engine";
+import type {
+  CardId,
+  HandPlayResolutionPreviewV1,
+  PlayerId,
+  PlayerObservationV1,
+} from "@koikoi4x/engine";
 
 import type { BoardRect } from "../board/types";
 
@@ -41,7 +46,6 @@ export interface InputCommandIntentV1 {
 
 export interface InteractionSourceV1 {
   readonly observation: PlayerObservationV1;
-  readonly confirmationTargetCardIds: Readonly<Partial<Record<CardId, readonly CardId[]>>>;
 }
 
 export type InputInteractionStatus =
@@ -54,6 +58,8 @@ export interface InputInteractionInspectionV1 {
   readonly selectedCardId: CardId | null;
   readonly selectableCardIds: readonly CardId[];
   readonly legalTargetCardIds: readonly CardId[];
+  readonly handResolutionKind: HandPlayResolutionPreviewV1["kind"] | null;
+  readonly fieldPlacementAvailable: boolean;
   readonly decisionChoices: readonly ("bank" | "koiKoi")[];
   readonly confirmAvailable: boolean;
   readonly cancelAvailable: boolean;
@@ -80,6 +86,8 @@ export interface InteractionVisualStateV1 {
   readonly selectedCardId: CardId | null;
   readonly selectableCardIds: readonly CardId[];
   readonly legalTargetCardIds: readonly CardId[];
+  readonly handResolutionKind: HandPlayResolutionPreviewV1["kind"] | null;
+  readonly fieldPlacementAvailable: boolean;
   readonly focusedCardId: CardId | null;
   readonly locked: boolean;
 }

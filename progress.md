@@ -744,3 +744,64 @@ Original prompt: read the package and understand it, then let me know when we ar
   Pages build returned HTTP 200 and initialized in a real browser with the approved Primary Deck,
   playable local round, eight accessible hand controls, public yaku progress, and turn recap.
 - Phase 3C evidence maturity is now `live`. Phase 4A onboarding foundation is next.
+
+## 2026-08-10 — Phase 3D-A visual direction review built
+
+- Inserted Phase 3D before onboarding in response to the owner-reported clutter, disliked palette,
+  desired select/highlight/tap matching flow, and need for fields larger than eight cards.
+- Built three environment-selected review directions over the real approved deck without changing
+  the normal production default: Ink & Parchment, Moonlit Indigo, and Charcoal & Moss. Ink &
+  Parchment is recommended after mobile and desktop inspection.
+- The review hierarchy hides the persistent advanced toolbar, compresses Yaku progress to one line
+  per player, keeps only the latest recap, and gives neutral, legal, and escalation states distinct
+  colors.
+- Focused tests passed 3 files / 22 tests. The real-browser review produced ten screenshots with no
+  clipped/invalid board zones or browser/network errors, including a final production-default
+  isolation check, and the required web-game client returned a valid 48-card authoritative snapshot
+  for Direction A.
+- The interaction/layout audit identified the next concrete repairs: live unique-match and sweep
+  highlighting, no-match field placement preview, and a shrink-to-fit field grid tested at 8, 9,
+  12, and the derived 17-card playable bound.
+- Evidence maturity reached `local browser review`; the owner palette decision was the remaining
+  gate at the end of the initial review run.
+
+## 2026-08-10 — Phase 3D-A direction family approved
+
+- Owner approved removal of the untracked iCloud-style `* 2.*` conflict copies; only those eight
+  copies were deleted, while the unrelated design archive was preserved.
+- Owner approved Ink & Parchment and Moonlit Indigo and requested future options-menu theme
+  switching. Ink & Parchment is the recommended default and Moonlit Indigo is an approved alternate.
+- Replaced the rejected Charcoal & Moss review with Warm Ivory, inspired by the original game's calm
+  cream canvas, dark outlines, orange selection, and blue instructional callouts while ignoring its
+  crowded information organization.
+- Runtime selection and persistence belong to Phase 3D-C. Phase 3D-A keeps build-time review
+  isolation, and Phase 3D-B remains focused on authoritative interaction cues.
+- Final validation passed the 3-file/22-test Phase 3D-A gate, all five workspace typechecks,
+  zero-warning lint, 41 files/393 ordinary tests, the 10,002-match deterministic generated gate,
+  the production build, the Warm Ivory web-game-client capture, and independent delta review. All
+  changed files pass Prettier; the global format scan remains blocked only by the preserved untracked
+  design-package archive.
+
+## 2026-08-10 — Phase 3D-B direct interaction implemented
+
+- Added an engine-owned, recursively frozen Hand-resolution preview to every legal Hand action:
+  `placeOnField`, `capturePair`, `captureChoice`, or `fourCardSweep`. The browser validates and
+  displays this public explanation but never recomputes capture legality.
+- Guided no-match now lifts the selected card and turns the field into one semantic placement
+  surface; unique pair highlights its one match; exact-two exposes exactly two choices; sweep
+  highlights all three matching cards. Pair/sweep taps reuse the target-free legal action and
+  exact-two retains the chosen engine target.
+- Fast mode still submits unambiguous no-match/pair/sweep actions immediately, while exact-two and
+  Draw choices remain explicit. Confirm/Cancel and accurate DOM labels remain available for pointer,
+  keyboard, and assistive-technology parity.
+- Focused authority/controller tests pass 3 files / 40 tests and all five workspaces typecheck.
+  Production root and `/KoiKoi4XRedux/` browser runs pass seven viewports, real 390×844 Guided
+  placement and unique-match execution, every prior Yaku/result trace, and zero browser/network
+  errors. Evidence is under `output/phase-3d-b/e2e/`.
+- The final `npm run validate:phase3db` gate passes the 3-file/22-test visual review, approved release
+  deck, 100 technical assets, 24 files/175 Phase 3D-B tests, Workshop browser trace, and both
+  production browser bases. The wider suite passes 42 files/409 tests plus the 10,002-match
+  deterministic replay/invariant gate and production build.
+- Phase 3D-C is next: integrate Ink & Parchment as the default, add Moonlit Indigo and Warm Ivory to
+  the persistent options menu, and collapse advanced controls/history. Adaptive 9–17 card field
+  sizing remains Phase 3D-D.

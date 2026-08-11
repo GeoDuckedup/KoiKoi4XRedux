@@ -1,8 +1,10 @@
 import {
   CARD_IDS,
   deepFreeze,
+  getHandPlayResolutionPreview,
   PLAYER_IDS,
   type CardId,
+  type HandPlayResolutionPreviewV1,
   type LegalActionV1,
 } from "@koikoi4x/engine";
 
@@ -24,6 +26,8 @@ interface ControllerState {
   selectedCardId: CardId | null;
   legalTargetCardIds: readonly CardId[];
   selectedActions: readonly LegalActionV1[];
+  handResolutionKind: HandPlayResolutionPreviewV1["kind"] | null;
+  fieldPlacementAvailable: boolean;
   focusedCardId: CardId | null;
   lastIntentType: InputIntentActionV1["type"] | null;
 }
@@ -57,12 +61,54 @@ function validateSource(source: InteractionSourceV1): void {
   const ownHand = new Set(observation.ownHand);
   const publicField = new Set(observation.publicState.round.field);
   const phase = observation.publicState.phase;
+  const groupedHandActions = new Map<
+    CardId,
+    Extract<LegalActionV1, { readonly type: "playHandCard" }>[]
+  >();
   for (const action of observation.legalActions) {
     if (action.actorId !== observation.playerId) {
       throw new Error("Every legal action must belong to the observing player.");
     }
-    if (action.type === "playHandCard" && !ownHand.has(action.cardId)) {
-      throw new Error("A hand-play action references a card outside the observing player's hand.");
+    if (action.type === "playHandCard") {
+      if (!ownHand.has(action.cardId)) {
+        throw new Error(
+          "A hand-play action references a card outside the observing player's hand.",
+        );
+      }
+      const matchingFieldCardIds = action.resolution.matchingFieldCardIds;
+      const expectedCount =
+        action.resolution.kind === "placeOnField"
+          ? 0
+          : action.resolution.kind === "capturePair"
+            ? 1
+            : action.resolution.kind === "captureChoice"
+              ? 2
+              : 3;
+      if (
+        matchingFieldCardIds.length !== expectedCount ||
+        new Set(matchingFieldCardIds).size !== matchingFieldCardIds.length ||
+        matchingFieldCardIds.some((cardId) => !CARD_ID_SET.has(cardId) || !publicField.has(cardId))
+      ) {
+        throw new Error("A hand-play resolution preview has invalid public field cards.");
+      }
+      const expectedResolution = getHandPlayResolutionPreview(
+        observation.publicState.round.field,
+        action.cardId,
+      );
+      if (
+        action.resolution.kind !== expectedResolution.kind ||
+        matchingFieldCardIds.length !== expectedResolution.matchingFieldCardIds.length ||
+        matchingFieldCardIds.some(
+          (cardId, index) => cardId !== expectedResolution.matchingFieldCardIds[index],
+        )
+      ) {
+        throw new Error(
+          "A hand-play resolution preview disagrees with the engine-owned public-field inspection.",
+        );
+      }
+      const grouped = groupedHandActions.get(action.cardId) ?? [];
+      grouped.push(action);
+      groupedHandActions.set(action.cardId, grouped);
     }
     const targetFieldCardId =
       action.type === "chooseDrawCapture" || action.type === "playHandCard"
@@ -87,20 +133,35 @@ function validateSource(source: InteractionSourceV1): void {
       throw new Error("A legal action does not match the observing player's public phase.");
     }
   }
-  for (const [cardId, targetCardIds] of Object.entries(source.confirmationTargetCardIds)) {
-    if (
-      !CARD_ID_SET.has(cardId as CardId) ||
-      !ownHand.has(cardId as CardId) ||
-      !Array.isArray(targetCardIds)
-    ) {
-      throw new Error("Interaction confirmation hints require canonical CardIds.");
+
+  for (const actions of groupedHandActions.values()) {
+    const first = actions[0];
+    if (!first) continue;
+    const preview = first.resolution;
+    const samePreview = actions.every(
+      (action) =>
+        action.resolution.kind === preview.kind &&
+        action.resolution.matchingFieldCardIds.length === preview.matchingFieldCardIds.length &&
+        action.resolution.matchingFieldCardIds.every(
+          (cardId, index) => cardId === preview.matchingFieldCardIds[index],
+        ),
+    );
+    if (!samePreview) {
+      throw new Error("A hand card's legal actions disagree about its resolution preview.");
     }
-    if (
-      targetCardIds.some(
-        (targetCardId) => !CARD_ID_SET.has(targetCardId) || !publicField.has(targetCardId),
-      )
-    ) {
-      throw new Error("Interaction confirmation hints may reference only public field cards.");
+    if (preview.kind === "captureChoice") {
+      const targetIds = actions.flatMap(({ targetFieldCardId }) =>
+        targetFieldCardId === undefined ? [] : [targetFieldCardId],
+      );
+      if (
+        actions.length !== 2 ||
+        new Set(targetIds).size !== 2 ||
+        targetIds.some((cardId) => !preview.matchingFieldCardIds.includes(cardId))
+      ) {
+        throw new Error("A capture-choice preview must match exactly two legal target actions.");
+      }
+    } else if (actions.length !== 1 || first.targetFieldCardId !== undefined) {
+      throw new Error("An unambiguous hand preview requires one target-free legal action.");
     }
   }
 }
@@ -164,6 +225,8 @@ function stateForSource(source: InteractionSourceV1): ControllerState {
       selectedCardId: null,
       legalTargetCardIds: Object.freeze([]),
       selectedActions: Object.freeze([]),
+      handResolutionKind: null,
+      fieldPlacementAvailable: false,
       focusedCardId: null,
       lastIntentType: null,
     };
@@ -175,6 +238,8 @@ function stateForSource(source: InteractionSourceV1): ControllerState {
       selectedCardId: null,
       legalTargetCardIds: Object.freeze([]),
       selectedActions: Object.freeze([]),
+      handResolutionKind: null,
+      fieldPlacementAvailable: false,
       focusedCardId: null,
       lastIntentType: null,
     };
@@ -187,6 +252,8 @@ function stateForSource(source: InteractionSourceV1): ControllerState {
       selectedCardId: phase.drawnCardId,
       legalTargetCardIds: uniqueCardIds(actions.map(({ targetFieldCardId }) => targetFieldCardId)),
       selectedActions: Object.freeze(actions),
+      handResolutionKind: null,
+      fieldPlacementAvailable: false,
       focusedCardId: actions[0]?.targetFieldCardId ?? null,
       lastIntentType: null,
     };
@@ -199,6 +266,8 @@ function stateForSource(source: InteractionSourceV1): ControllerState {
       selectedCardId: null,
       legalTargetCardIds: Object.freeze([]),
       selectedActions: Object.freeze(actions),
+      handResolutionKind: null,
+      fieldPlacementAvailable: false,
       focusedCardId: null,
       lastIntentType: null,
     };
@@ -210,6 +279,8 @@ function stateForSource(source: InteractionSourceV1): ControllerState {
     selectedCardId: null,
     legalTargetCardIds: Object.freeze([]),
     selectedActions: Object.freeze([]),
+    handResolutionKind: null,
+    fieldPlacementAvailable: false,
     focusedCardId: cards[0] ?? null,
     lastIntentType: null,
   };
@@ -241,6 +312,8 @@ export function createInteractionController(input: {
         selectedCardId: null,
         legalTargetCardIds: Object.freeze([]),
         selectedActions: Object.freeze([]),
+        handResolutionKind: null,
+        fieldPlacementAvailable: false,
         focusedCardId: null,
       };
     }
@@ -262,6 +335,8 @@ export function createInteractionController(input: {
       lockReason: null,
       legalTargetCardIds: Object.freeze([]),
       selectedActions: Object.freeze([]),
+      handResolutionKind: null,
+      fieldPlacementAvailable: false,
       focusedCardId: null,
       lastIntentType: intent.action.type,
     };
@@ -293,12 +368,9 @@ export function createInteractionController(input: {
           emit(action);
           return true;
         }
-        const targetCardIds =
-          actionsForHandCard.length > 1
-            ? actionsForHandCard.flatMap(({ targetFieldCardId }) =>
-                targetFieldCardId === undefined ? [] : [targetFieldCardId],
-              )
-            : (source.confirmationTargetCardIds[cardId] ?? []);
+        const resolution = actionsForHandCard[0]?.resolution;
+        if (!resolution) return false;
+        const targetCardIds = resolution.matchingFieldCardIds;
         state = {
           ...state,
           status: actionsForHandCard.length > 1 ? "targeting" : "confirming",
@@ -306,6 +378,8 @@ export function createInteractionController(input: {
           selectedCardId: cardId,
           legalTargetCardIds: uniqueCardIds(targetCardIds),
           selectedActions: Object.freeze(actionsForHandCard),
+          handResolutionKind: resolution.kind,
+          fieldPlacementAvailable: resolution.kind === "placeOnField",
           focusedCardId: targetCardIds[0] ?? cardId,
         };
         return true;
@@ -364,6 +438,8 @@ export function createInteractionController(input: {
             ? selectableCards(source)
             : [],
         legalTargetCardIds: state.legalTargetCardIds,
+        handResolutionKind: state.handResolutionKind,
+        fieldPlacementAvailable: state.fieldPlacementAvailable,
         decisionChoices: choices,
         confirmAvailable: state.status === "confirming" && state.selectedActions.length === 1,
         cancelAvailable:

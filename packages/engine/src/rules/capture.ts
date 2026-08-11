@@ -1,6 +1,7 @@
 import { getCardDefinition, type CardId } from "../cards/catalog";
 import { deepFreeze } from "../state/freeze";
 import { rejectCommand } from "../state/errors";
+import type { HandPlayResolutionPreviewV1 } from "../state/types";
 
 export interface CaptureInspectionV1 {
   readonly sourceCardId: CardId;
@@ -50,6 +51,32 @@ export function inspectCapture(
     sourceCardId,
     matchingFieldCardIds,
     matchCount: matchingFieldCardIds.length as 0 | 1 | 2 | 3,
+  });
+}
+
+export function getHandPlayResolutionPreview(
+  field: readonly CardId[],
+  sourceCardId: CardId,
+): HandPlayResolutionPreviewV1 {
+  const inspection = inspectCapture(field, sourceCardId);
+  if (inspection.matchCount === 0) {
+    return deepFreeze({ kind: "placeOnField", matchingFieldCardIds: [] });
+  }
+  if (inspection.matchCount === 1) {
+    return deepFreeze({
+      kind: "capturePair",
+      matchingFieldCardIds: inspection.matchingFieldCardIds as readonly [CardId],
+    });
+  }
+  if (inspection.matchCount === 2) {
+    return deepFreeze({
+      kind: "captureChoice",
+      matchingFieldCardIds: inspection.matchingFieldCardIds as readonly [CardId, CardId],
+    });
+  }
+  return deepFreeze({
+    kind: "fourCardSweep",
+    matchingFieldCardIds: inspection.matchingFieldCardIds as readonly [CardId, CardId, CardId],
   });
 }
 

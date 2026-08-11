@@ -1,8 +1,8 @@
 # KoiKoi4x Implementation Plan
 
 **Plan version:** 1.1
-**Updated:** August 9, 2026
-**Current gate:** Phase 3C deployed and accepted; Phase 4A onboarding foundation is next
+**Updated:** August 10, 2026
+**Current gate:** Phase 3D-B locally accepted; Phase 3D-C decluttered shell and theme menu are next
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -610,7 +610,7 @@ Phase 3C owns the dedicated round-result screen, scoring animation, and next-rou
 
 ### Phase 3C — Round-end presentation
 
-Status: **implemented and locally accepted; deployment verification pending**.
+Status: **deployed, live, and owner-accepted**.
 
 Deliver:
 
@@ -634,9 +634,47 @@ Gate:
 
 Architecture is recorded in [`ADR 0014`](./adr/0014-phase-3c-round-result-presentation.md).
 
+### Phase 3D — Table clarity and direct interaction
+
+Status: **Phase 3D-A owner-approved and Phase 3D-B locally accepted; production-shell integration pending**.
+
+Phase 3D addresses the owner-reported visual clutter, disliked color scheme, direct tap-to-match
+interaction, and field growth beyond eight cards before onboarding teaches the table.
+
+- **3D-A — Visual direction:** approved Ink & Parchment as the default plus Moonlit Indigo and the
+  original-game-inspired Warm Ivory as future runtime-selectable themes. Review builds do not change
+  the deployed default.
+- **3D-B — Interaction cues:** implemented authoritative frozen resolution previews for no-match,
+  unique pair, exact-two choice, and sweep. Guided play highlights and accepts the field/matching
+  cards directly; Fast still submits unambiguous moves immediately and retains exact-two choice.
+- **3D-C — Decluttered production shell:** adopt Ink & Parchment as default, add an accessible
+  options-menu theme selector for all three approved schemes, collapse advanced controls and long
+  history, and preserve critical turn/Yaku/result information.
+- **3D-D — Adaptive dense field:** replace overflow fanning with deterministic shrink-to-fit grids
+  for 8, 9, 12, and the derived 17-card playable bound across supported viewports.
+
+The lean Phase 3D-A decision record and local browser evidence are documented in
+[`phase-3d-a-visual-direction.md`](./phase-3d-a-visual-direction.md).
+
+Phase 3D-B gate:
+
+- the engine's `LegalActionV1` supplies the public frozen resolution preview; the web layer may
+  validate and render it but cannot infer capture rules or construct another legal action;
+- Guided no-match exposes one semantic field-placement surface, unique pair highlights one matching
+  field card, exact-two exposes exactly two choices, and sweep highlights all three field cards;
+- activating a pair/sweep target reuses the one target-free engine action, while exact-two preserves
+  the selected target; selection alone never changes authoritative state;
+- root and repository-prefixed Pages traces execute real no-match placement and unique capture at
+  390×844, while seven-viewport and all previous result/Yaku/browser gates remain green;
+- `validate:phase3db` retains the Phase 3D-A review, approved release deck, Workshop, unit,
+  root, and Pages gates.
+
+Architecture is recorded in [`ADR 0015`](./adr/0015-phase-3d-b-authoritative-interaction-previews.md).
+
 ## Later phases
 
-1. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook.
+1. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook,
+   built over the owner-approved Phase 3D table and interaction model.
 2. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, and pass-and-play.
 3. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
 4. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.

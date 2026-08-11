@@ -41,6 +41,8 @@ npm run validate:phase2e
 npm run validate:phase3a
 npm run validate:phase3b
 npm run validate:phase3c
+npm run validate:phase3da
+npm run validate:phase3db
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -107,6 +109,16 @@ model for Bank, End of Play, no-score, automatic evidence, privileged multiplier
 and terminal winner/tie outcomes. Root and Pages traces prove the feedback-to-result ordering, exact
 Bank and final-Draw Koi-Koi arithmetic, result focus/input locking, truthful local restart, and
 responsive result containment. Artifacts are written under `output/phase-3c/e2e/`.
+
+`npm run validate:phase3da` is a review-only gate for the three Phase 3D-A palette/hierarchy
+directions. It runs focused visual, interaction, and layout tests, then captures mobile and desktop
+comparison screenshots under `output/phase-3d-a/visual-directions/`. The normal production build
+keeps the accepted Phase 3C appearance until Phase 3D-C installs the approved theme menu.
+
+`npm run validate:phase3db` retains the approved visual-direction, release-deck, Workshop, root,
+Pages, and prior gameplay gates. It adds the authoritative no-match, unique-pair, exact-two, and
+four-card-sweep interaction previews plus real Guided placement/pair browser traces under
+`output/phase-3d-b/e2e/`.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

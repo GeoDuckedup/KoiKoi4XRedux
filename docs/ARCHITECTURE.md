@@ -113,6 +113,10 @@ resulting public hash. Future Firebase transaction storage/publication remains P
 - Phase 3A's browser-local adapter owns the sole production call from an accepted input intent to an
   engine command. Input/Pixi remain rule-free, and a fresh `PlayerObservationV1` replaces the source
   after the public-event animation settles.
+- Phase 3D-B attaches a frozen public Hand-resolution preview to each engine legal action. The
+  preview distinguishes field placement, unique pair, exact-two choice, and four-card sweep and
+  names only public field cards. Web input validates/renders that preview but still emits only one
+  existing legal action; Pixi positions never create targets or choose a command.
 - The browser asset manager validates and preloads every candidate face/back before atomically
   switching local textures. Candidate failure leaves the active deck unchanged.
 - `window.render_game_to_text()` returns stable JSON describing responsive layout, scene/CardView

@@ -203,6 +203,10 @@ describe("Phase 2D pure interaction controller", () => {
             type: "playHandCard" as const,
             actorId: "player-b" as const,
             cardId: "march-curtain" as const,
+            resolution: {
+              kind: "capturePair" as const,
+              matchingFieldCardIds: ["march-red-text-scroll" as const],
+            },
           },
         ],
       },
@@ -225,6 +229,10 @@ describe("Phase 2D pure interaction controller", () => {
             actorId: "player-a" as const,
             cardId: "march-curtain" as const,
             targetFieldCardId: "january-crane" as const,
+            resolution: {
+              kind: "captureChoice" as const,
+              matchingFieldCardIds: ["march-red-text-scroll" as const, "january-crane" as const],
+            },
           },
         ],
       },

@@ -65,7 +65,14 @@ import {
   type TableScene,
   type TableSceneStatusV1,
 } from "./presentation/pixi/create-table-scene";
+import { ACTIVE_PHASE_3D_VISUAL_DIRECTION } from "./presentation/theme/visual-directions";
 import "./style.css";
+
+if (ACTIVE_PHASE_3D_VISUAL_DIRECTION) {
+  document.documentElement.dataset.visualDirection = ACTIVE_PHASE_3D_VISUAL_DIRECTION.id;
+  const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+  themeColor?.setAttribute("content", ACTIVE_PHASE_3D_VISUAL_DIRECTION.css.page);
+}
 
 function queryRequired<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -81,6 +88,7 @@ const modeSelect = queryRequired<HTMLSelectElement>("[data-animation-mode]");
 const accelerateButton = queryRequired<HTMLButtonElement>("[data-animation-accelerate]");
 const finishButton = queryRequired<HTMLButtonElement>("[data-animation-finish]");
 const cardInputOverlay = queryRequired<HTMLElement>("[data-card-input-overlay]");
+const fieldPlacementControl = queryRequired<HTMLButtonElement>("[data-input-field-placement]");
 const inputModeSelect = queryRequired<HTMLSelectElement>("[data-input-mode]");
 const inputConfirmButton = queryRequired<HTMLButtonElement>("[data-input-confirm]");
 const inputCancelButton = queryRequired<HTMLButtonElement>("[data-input-cancel]");
@@ -187,6 +195,8 @@ const unavailableInput: InputInteractionInspectionV1 = Object.freeze({
   selectedCardId: null,
   selectableCardIds: Object.freeze([]),
   legalTargetCardIds: Object.freeze([]),
+  handResolutionKind: null,
+  fieldPlacementAvailable: false,
   decisionChoices: Object.freeze([]),
   confirmAvailable: false,
   cancelAvailable: false,
@@ -329,9 +339,16 @@ function inputMessage(inspection: InputInteractionInspectionV1): string {
     return `Choose one of ${inspection.legalTargetCardIds.length} highlighted capture targets.`;
   }
   if (inspection.status === "confirming") {
-    return inspection.legalTargetCardIds.length > 0
-      ? "Review the highlighted capture, then confirm."
-      : "This card will be placed on the field. Confirm or cancel.";
+    if (inspection.handResolutionKind === "placeOnField") {
+      return "Tap the highlighted field to place this card, or use Confirm play.";
+    }
+    if (inspection.handResolutionKind === "capturePair") {
+      return "Tap the highlighted matching card to capture it, or use Confirm play.";
+    }
+    if (inspection.handResolutionKind === "fourCardSweep") {
+      return "Three matching cards highlighted. Tap any one or confirm the four-card sweep.";
+    }
+    return "Review the highlighted capture, then confirm.";
   }
   return inspection.confirmationMode === "guided"
     ? "Select a hand card, review the result, then confirm."
@@ -352,13 +369,30 @@ function renderRecaps(): void {
 
 function renderSemanticCardBridge(): void {
   if (!interactionController || !currentLayout) return;
+  const inspection = interactionController.inspect();
   const controls = buildSemanticCardControls({
-    inspection: interactionController.inspect(),
+    inspection,
     layout: currentLayout,
     projection,
   });
-  semanticControlCount = controls.length;
   domCardBridge?.render(controls);
+  const showFieldPlacement =
+    inspection.fieldPlacementAvailable && inspection.selectedCardId !== null;
+  fieldPlacementControl.hidden = !showFieldPlacement;
+  semanticControlCount = controls.length + (showFieldPlacement ? 1 : 0);
+  if (showFieldPlacement && inspection.selectedCardId) {
+    const bounds = currentLayout.cardZones.field;
+    const card = getCardDefinition(inspection.selectedCardId);
+    const month = getMonthDefinition(card.month);
+    fieldPlacementControl.setAttribute(
+      "aria-label",
+      `Place ${month.name} ${card.displayName} on the field. Position is automatic.`,
+    );
+    fieldPlacementControl.style.left = `${bounds.x}px`;
+    fieldPlacementControl.style.top = `${bounds.y}px`;
+    fieldPlacementControl.style.width = `${bounds.width}px`;
+    fieldPlacementControl.style.height = `${bounds.height}px`;
+  }
 }
 
 function formatYakuList(
@@ -597,6 +631,8 @@ function refreshInteractionSurface(): void {
     selectedCardId: inspection.selectedCardId,
     selectableCardIds: inspection.selectableCardIds,
     legalTargetCardIds: inspection.legalTargetCardIds,
+    handResolutionKind: inspection.handResolutionKind,
+    fieldPlacementAvailable: inspection.fieldPlacementAvailable,
     focusedCardId: inspection.focusedCardId,
     locked:
       inspection.status === "locked" ||
@@ -607,6 +643,14 @@ function refreshInteractionSurface(): void {
   inputModeSelect.disabled =
     processingIntent || handoffPlayerId !== null || isYakuDecisionOpen() || isRoundResultOpen();
   inputConfirmButton.disabled = !inspection.confirmAvailable;
+  inputConfirmButton.textContent =
+    inspection.handResolutionKind === "placeOnField"
+      ? "Confirm placement"
+      : inspection.handResolutionKind === "capturePair"
+        ? "Confirm capture"
+        : inspection.handResolutionKind === "fourCardSweep"
+          ? "Confirm sweep"
+          : "Confirm play";
   inputCancelButton.disabled = !inspection.cancelAvailable;
   renderYakuPresentation(inspection);
   renderRoundResult();
@@ -888,6 +932,16 @@ inputModeSelect.addEventListener("change", () => {
 });
 inputConfirmButton.addEventListener("click", () => {
   interactionController?.confirm();
+  refreshInteractionSurface();
+});
+fieldPlacementControl.addEventListener("click", () => {
+  interactionController?.confirm();
+  refreshInteractionSurface();
+});
+fieldPlacementControl.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  event.preventDefault();
+  if (interactionController?.cancel()) status.textContent = "Card selection cancelled.";
   refreshInteractionSurface();
 });
 inputCancelButton.addEventListener("click", () => {
