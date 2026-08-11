@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DEFAULT_PHASE_3D_VISUAL_DIRECTION,
+  DEFAULT_PHASE_3D_VISUAL_DIRECTION_ID,
   findPhase3DVisualDirection,
+  getPhase3DVisualDirection,
   PHASE_3D_VISUAL_DIRECTIONS,
   PHASE_3D_VISUAL_DIRECTION_IDS,
 } from "../src/presentation/theme/visual-directions";
@@ -42,5 +45,13 @@ describe("Phase 3D-A visual directions", () => {
     expect(() => findPhase3DVisualDirection("unknown")).toThrow(
       "Unknown Phase 3D visual direction",
     );
+  });
+
+  it("uses the approved Ink direction as the runtime default and exposes a non-throwing lookup", () => {
+    expect(DEFAULT_PHASE_3D_VISUAL_DIRECTION_ID).toBe("ink-parchment");
+    expect(DEFAULT_PHASE_3D_VISUAL_DIRECTION.id).toBe(DEFAULT_PHASE_3D_VISUAL_DIRECTION_ID);
+    expect(Object.isFrozen(DEFAULT_PHASE_3D_VISUAL_DIRECTION)).toBe(true);
+    expect(getPhase3DVisualDirection("moonlit-indigo")?.id).toBe("moonlit-indigo");
+    expect(getPhase3DVisualDirection("unknown")).toBeNull();
   });
 });

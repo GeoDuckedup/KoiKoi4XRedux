@@ -65,14 +65,22 @@ import {
   type TableScene,
   type TableSceneStatusV1,
 } from "./presentation/pixi/create-table-scene";
-import { ACTIVE_PHASE_3D_VISUAL_DIRECTION } from "./presentation/theme/visual-directions";
+import { createThemePreferenceStore } from "./presentation/theme/theme-preferences";
+import {
+  DEFAULT_PHASE_3D_VISUAL_DIRECTION,
+  type Phase3DVisualDirectionV1,
+} from "./presentation/theme/visual-directions";
 import "./style.css";
 
-if (ACTIVE_PHASE_3D_VISUAL_DIRECTION) {
-  document.documentElement.dataset.visualDirection = ACTIVE_PHASE_3D_VISUAL_DIRECTION.id;
+function applyThemeToDocument(theme: Phase3DVisualDirectionV1): void {
+  document.documentElement.dataset.theme = theme.id;
   const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-  themeColor?.setAttribute("content", ACTIVE_PHASE_3D_VISUAL_DIRECTION.css.page);
+  themeColor?.setAttribute("content", theme.css.page);
 }
+
+const themeStore = createThemePreferenceStore();
+let activeTheme = DEFAULT_PHASE_3D_VISUAL_DIRECTION;
+applyThemeToDocument(activeTheme);
 
 function queryRequired<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -82,6 +90,13 @@ function queryRequired<T extends Element>(selector: string): T {
 
 const host = queryRequired<HTMLElement>("[data-game-host]");
 const status = queryRequired<HTMLElement>("[data-table-status]");
+const optionsTrigger = queryRequired<HTMLButtonElement>("[data-options-trigger]");
+const optionsDialog = queryRequired<HTMLDialogElement>("[data-options-dialog]");
+const optionsClose = queryRequired<HTMLButtonElement>("[data-options-close]");
+const optionsAnnouncement = queryRequired<HTMLElement>("[data-options-announcement]");
+const themeOptions = Object.freeze([
+  ...document.querySelectorAll<HTMLInputElement>("[data-theme-option]"),
+]);
 const fullscreenButton = queryRequired<HTMLButtonElement>("[data-fullscreen-button]");
 const deckSelect = queryRequired<HTMLSelectElement>("[data-deck-select]");
 const modeSelect = queryRequired<HTMLSelectElement>("[data-animation-mode]");
@@ -99,6 +114,7 @@ const handoffTitle = queryRequired<HTMLElement>("[data-handoff-title]");
 const handoffDescription = queryRequired<HTMLElement>("[data-handoff-description]");
 const handoffReady = queryRequired<HTMLButtonElement>("[data-handoff-ready]");
 const recapList = queryRequired<HTMLOListElement>("[data-turn-recaps]");
+const latestRecap = queryRequired<HTMLElement>("[data-latest-recap]");
 const yakuFeedback = queryRequired<HTMLElement>("[data-yaku-feedback]");
 const yakuFeedbackMessage = queryRequired<HTMLElement>("[data-yaku-feedback-message]");
 const yakuDecision = queryRequired<HTMLElement>("[data-yaku-decision]");
@@ -164,6 +180,20 @@ let pendingTurnEvents: LocalRoundTransitionV1["events"][number][] = [];
 let focusedYakuDecisionKey: string | null = null;
 let focusedRoundResultKey: string | null = null;
 const recaps: string[] = ["Round ready. Player A begins."];
+
+function syncThemeControls(): void {
+  for (const option of themeOptions) option.checked = option.value === activeTheme.id;
+}
+
+function applyActiveTheme(theme: Phase3DVisualDirectionV1): void {
+  activeTheme = theme;
+  applyThemeToDocument(theme);
+  syncThemeControls();
+  tableScene?.setTheme(theme);
+  application?.render();
+}
+
+themeStore.subscribe(applyActiveTheme);
 
 const unavailableAnimation: AnimationInspectionV1 = Object.freeze({
   status: "idle",
@@ -282,6 +312,10 @@ function snapshot() {
       latestRecap: recaps.at(-1) ?? null,
       commandCount,
     },
+    theme: {
+      activeId: activeTheme.id,
+      optionsOpen: optionsDialog.open,
+    },
     simulationTimeMs,
     layout,
     scene,
@@ -327,6 +361,27 @@ function isRoundResultOpen(): boolean {
   return resultPresentation !== null;
 }
 
+function isOptionsBlocked(): boolean {
+  return (
+    processingIntent || handoffPlayerId !== null || isYakuDecisionOpen() || isRoundResultOpen()
+  );
+}
+
+function closeOptions(restoreFocus = true): void {
+  if (!optionsDialog.open) return;
+  optionsDialog.close();
+  optionsTrigger.setAttribute("aria-expanded", "false");
+  if (restoreFocus) optionsTrigger.focus();
+}
+
+function openOptions(): void {
+  if (isOptionsBlocked() || optionsDialog.open) return;
+  optionsDialog.showModal();
+  optionsTrigger.setAttribute("aria-expanded", "true");
+  syncThemeControls();
+  queueMicrotask(() => themeOptions.find(({ checked }) => checked)?.focus());
+}
+
 function inputMessage(inspection: InputInteractionInspectionV1): string {
   if (handoffPlayerId) return `Pass the device to ${playerName(handoffPlayerId)}.`;
   if (inspection.status === "intentPending") return "Move accepted. Updating the local round.";
@@ -363,8 +418,10 @@ function renderRecaps(): void {
       return item;
     }),
   );
+  latestRecap.textContent = recaps.at(-1) ?? "No events yet.";
   const recapRegion = recapList.closest<HTMLElement>(".turn-recap");
-  if (recapRegion) recapRegion.scrollTop = recapRegion.scrollHeight;
+  const history = recapRegion?.querySelector<HTMLElement>(".turn-recap__history");
+  if (history?.hasAttribute("open")) recapList.scrollTop = recapList.scrollHeight;
 }
 
 function renderSemanticCardBridge(): void {
@@ -643,6 +700,7 @@ function refreshInteractionSurface(): void {
   inputModeSelect.disabled =
     processingIntent || handoffPlayerId !== null || isYakuDecisionOpen() || isRoundResultOpen();
   inputConfirmButton.disabled = !inspection.confirmAvailable;
+  inputConfirmButton.hidden = !inspection.confirmAvailable;
   inputConfirmButton.textContent =
     inspection.handResolutionKind === "placeOnField"
       ? "Confirm placement"
@@ -652,6 +710,7 @@ function refreshInteractionSurface(): void {
           ? "Confirm sweep"
           : "Confirm play";
   inputCancelButton.disabled = !inspection.cancelAvailable;
+  inputCancelButton.hidden = !inspection.cancelAvailable;
   renderYakuPresentation(inspection);
   renderRoundResult();
   inputInstruction.textContent = inputMessage(inspection);
@@ -670,6 +729,9 @@ function updateControls(): void {
   fullscreenButton.disabled = processingIntent || decisionOpen || resultOpen;
   newRoundButton.disabled =
     busy || processingIntent || handoffPlayerId !== null || decisionOpen || resultOpen;
+  optionsTrigger.disabled = isOptionsBlocked();
+  for (const option of themeOptions) option.disabled = isOptionsBlocked();
+  if (isOptionsBlocked()) closeOptions(false);
 }
 
 async function waitForYakuFeedbackBeat(): Promise<void> {
@@ -913,7 +975,27 @@ window.advanceTime = (milliseconds: number) => {
   updateControls();
 };
 
-fullscreenButton.addEventListener("click", () => void toggleFullscreen());
+optionsTrigger.addEventListener("click", openOptions);
+optionsClose.addEventListener("click", () => closeOptions());
+optionsDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeOptions();
+});
+optionsDialog.addEventListener("close", () => {
+  optionsTrigger.setAttribute("aria-expanded", "false");
+});
+for (const option of themeOptions) {
+  option.addEventListener("change", () => {
+    if (!option.checked || isOptionsBlocked()) return;
+    void themeStore.set(option.value).then((theme) => {
+      optionsAnnouncement.textContent = `${theme.name} theme applied. The game state and card selection are unchanged.`;
+    });
+  });
+}
+fullscreenButton.addEventListener("click", () => {
+  closeOptions(false);
+  void toggleFullscreen();
+});
 deckSelect.addEventListener("change", () => void switchDeck(deckSelect.value));
 modeSelect.addEventListener("change", () => {
   if (isRoundResultOpen()) return;
@@ -928,6 +1010,7 @@ finishButton.addEventListener("click", () => void animationDirector?.finishImmed
 inputModeSelect.addEventListener("change", () => {
   if (isRoundResultOpen()) return;
   interactionController?.setConfirmationMode(readInputConfirmationMode(inputModeSelect.value));
+  status.textContent = "Play style changed. Choose a card again.";
   refreshInteractionSurface();
 });
 inputConfirmButton.addEventListener("click", () => {
@@ -956,11 +1039,18 @@ yakuKoiKoiButton.addEventListener("click", () => {
   interactionController?.chooseYakuDecision("koiKoi");
   refreshInteractionSurface();
 });
-newRoundButton.addEventListener("click", () => void resetLocalRound());
+newRoundButton.addEventListener("click", () => {
+  closeOptions(false);
+  void resetLocalRound();
+});
 roundResultAction.addEventListener("click", () => void resetLocalRound(true));
 handoffReady.addEventListener("click", () => void acceptHandoff());
 document.addEventListener("fullscreenchange", updateFullscreenLabel);
 window.addEventListener("keydown", (event) => {
+  if (optionsDialog.open) {
+    if (event.key.toLowerCase() === "f") event.preventDefault();
+    return;
+  }
   if (isRoundResultOpen() && !processingIntent) {
     if (event.key === "Tab") {
       event.preventDefault();
@@ -1006,6 +1096,7 @@ window.addEventListener("keydown", (event) => {
 });
 
 async function start(): Promise<void> {
+  applyActiveTheme(await themeStore.hydrate());
   const app = new Application();
   await app.init({
     antialias: true,
@@ -1030,7 +1121,7 @@ async function start(): Promise<void> {
   if (initialActivation.status !== "activated" || !initialActivation.bundle) {
     throw new Error("The approved primary deck activation was superseded.");
   }
-  tableScene = createTableScene(app, initialActivation.bundle);
+  tableScene = createTableScene(app, initialActivation.bundle, activeTheme);
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const initialMode: AnimationMode = prefersReducedMotion ? "reducedMotion" : "normal";
   modeSelect.value = initialMode;

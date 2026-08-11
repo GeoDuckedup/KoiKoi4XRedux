@@ -1,10 +1,10 @@
 # Phase 3D-A — Visual Direction Review
 
-**Status:** direction family owner-approved; production integration pending
+**Status:** direction family owner-approved and integrated by Phase 3D-C
 
 **Evidence maturity:** local browser review
 
-**Production default:** unchanged until Phase 3D-C integration
+**Production default:** Ink & Parchment
 
 Phase 3D-A answers one question before the interaction and dense-field work begins: what visual
 hierarchy and palette should the playable table use? It deliberately does not rewrite game rules,
@@ -22,14 +22,10 @@ All three review builds collapse the always-visible advanced toolbar, reduce Yak
 compact line per player, retain only the latest recap item, reserve red for escalation/selection,
 and render the ordinary `1×` multiplier as neutral rather than dangerous.
 
-These are visual-composition review builds, not playable staging builds. The old toolbar is
-deliberately hidden before its replacement interaction cues exist, so completing a full round is
-not a Phase 3D-A acceptance goal. Normal production play remains on the accepted Phase 3C shell.
-
-The production Phase 3D options menu will expose A, B, and C as runtime themes. Ink & Parchment is
-the default; theme selection changes presentation tokens only and never card identity, legal
-actions, rules, or authoritative state. Persistence and the accessible menu control are Phase 3D-C
-work rather than a build-time environment switch.
+Phase 3D-C now exposes A, B, and C as runtime themes in the production Options dialog. Ink &
+Parchment is the default; theme selection changes presentation tokens only and never card identity,
+legal actions, rules, or authoritative state. The compact production shell replaces the old
+build-time review-only hiding behavior.
 
 ## Interaction and field findings
 
@@ -39,9 +35,8 @@ must preserve that boundary while improving the presentation cues.
 
 - Exact-two matches already support the desired tap-hand-card, highlight-legal-matches,
   tap-target flow.
-- Unique matches and three-card sweeps currently enter Guided confirmation without highlighting the
-  cards that will be captured. This is a real presentation gap, not a rules gap.
-- A no-match play currently uses the generic Confirm button and does not preview a field placement.
+- Phase 3D-B resolved the identified unique-match, sweep, and no-match presentation gaps with
+  engine-owned public resolution previews and direct Guided field/card activation.
 - Field overflow currently fans cards diagonally above the eight base slots. Phase 3D will replace
   that with an adaptive grid that shrinks cards while keeping every field card individually legible
   and selectable.
@@ -57,10 +52,9 @@ Run:
 npm run validate:phase3da
 ```
 
-The gate executes the focused visual-direction, interaction, and layout tests, builds every review
-direction, and captures ten real-browser screenshots under
-`output/phase-3d-a/visual-directions/`. The required web-game client also captured Direction A at
-`output/phase-3d-a/web-game-client/` with an authoritative text snapshot.
+The gate executes focused visual-direction, interaction, and layout tests, builds production once,
+selects every theme through the real Options dialog, and captures six selected-state mobile/desktop
+screenshots under `output/phase-3d-a/visual-directions/`.
 
 ## Next slices
 

@@ -7,7 +7,7 @@
       name="description"
       content="KoiKoi4x — a modern, newcomer-friendly Hanafuda strategy game."
     />
-    <meta name="theme-color" content="#10271f" />
+    <meta name="theme-color" content="#071511" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>KoiKoi4x</title>
   </head>
@@ -15,23 +15,97 @@
     <main class="app-shell" aria-labelledby="app-title">
       <header class="app-header">
         <div>
-          <p class="eyebrow">Hanafuda strategy · Local round</p>
           <h1 id="app-title">KoiKoi4x</h1>
         </div>
-        <div class="header-actions">
-          <label class="deck-picker">
-            <span>Deck</span>
+        <button
+          class="options-trigger"
+          type="button"
+          data-options-trigger
+          aria-haspopup="dialog"
+          aria-controls="options-dialog"
+          aria-expanded="false"
+        >
+          Options
+        </button>
+      </header>
+
+      <dialog
+        class="options-dialog"
+        id="options-dialog"
+        data-options-dialog
+        aria-labelledby="options-dialog-title"
+      >
+        <div class="options-dialog__header">
+          <div>
+            <p class="eyebrow">Table settings</p>
+            <h2 id="options-dialog-title">Options</h2>
+          </div>
+          <button type="button" class="options-dialog__close" data-options-close>Close</button>
+        </div>
+
+        <fieldset class="options-dialog__group options-dialog__themes">
+          <legend>Theme</legend>
+          <label>
+            <input type="radio" name="theme" value="ink-parchment" data-theme-option checked />
+            <span>Ink &amp; Parchment</span>
+            <small>Warm paper, quiet ink green, mint legal cues.</small>
+          </label>
+          <label>
+            <input type="radio" name="theme" value="moonlit-indigo" data-theme-option />
+            <span>Moonlit Indigo</span>
+            <small>Cool indigo surfaces, brass accents, cyan legal cues.</small>
+          </label>
+          <label>
+            <input type="radio" name="theme" value="warm-ivory" data-theme-option />
+            <span>Warm Ivory</span>
+            <small>Cream canvas, bold brown structure, slate-blue guidance.</small>
+          </label>
+        </fieldset>
+
+        <section class="options-dialog__group" aria-labelledby="options-play-title">
+          <h3 id="options-play-title">Play</h3>
+          <div class="options-dialog__grid">
+            <label>
+              <span>Play style</span>
+              <select data-input-mode>
+                <option value="guided">Guided</option>
+                <option value="fast">Fast</option>
+              </select>
+            </label>
+            <label>
+              <span>Motion</span>
+              <select data-animation-mode>
+                <option value="normal">Normal</option>
+                <option value="fast">Fast</option>
+                <option value="instant">Instant</option>
+                <option value="reducedMotion">Reduced Motion</option>
+              </select>
+            </label>
+          </div>
+          <div class="options-dialog__button-row" aria-label="Animation controls">
+            <button type="button" data-animation-accelerate disabled>Faster</button>
+            <button type="button" data-animation-finish disabled>Finish motion</button>
+          </div>
+        </section>
+
+        <section class="options-dialog__group" aria-labelledby="options-table-title">
+          <h3 id="options-table-title">Table</h3>
+          <label>
+            <span>Deck artwork</span>
             <select data-deck-select disabled>
               <option value="new-primary-deck">Primary Deck</option>
               <option value="technical-sunrise">Technical Sunrise</option>
               <option value="technical-moonlight">Technical Moonlight</option>
             </select>
           </label>
-          <button class="fullscreen-button" type="button" data-fullscreen-button>
-            Enter fullscreen
-          </button>
-        </div>
-      </header>
+          <div class="options-dialog__button-row">
+            <button type="button" data-fullscreen-button>Enter fullscreen</button>
+            <button type="button" class="new-round-button" data-new-round>
+              Start another local round
+            </button>
+          </div>
+        </section>
+      </dialog>
 
       <section
         class="game-frame"
@@ -131,11 +205,18 @@
         </section>
       </section>
 
-      <section class="yaku-progress" data-yaku-progress aria-labelledby="yaku-progress-title">
-        <div class="yaku-progress__heading">
-          <p class="eyebrow">Public yaku</p>
-          <h2 id="yaku-progress-title">Current yaku progress</h2>
+      <section class="turn-context" data-turn-context aria-label="Current turn">
+        <p class="turn-context__status" data-table-status aria-live="polite">
+          Loading the local round…
+        </p>
+        <div class="input-buttons" aria-label="Turn actions">
+          <button type="button" data-input-confirm disabled>Confirm play</button>
+          <button type="button" data-input-cancel disabled>Cancel</button>
         </div>
+      </section>
+
+      <section class="yaku-progress" data-yaku-progress aria-labelledby="yaku-progress-title">
+        <h2 class="visually-hidden" id="yaku-progress-title">Current yaku progress</h2>
         <div class="yaku-progress__players">
           <article class="yaku-progress__player" data-yaku-player="player-a">
             <h3>Player A</h3>
@@ -154,52 +235,22 @@
         </div>
       </section>
 
-      <div class="round-toolbar" aria-label="Local round controls">
-        <label>
-          <span>Confirm</span>
-          <select data-input-mode>
-            <option value="guided">Guided</option>
-            <option value="fast">Fast</option>
-          </select>
-        </label>
-        <label>
-          <span>Motion</span>
-          <select data-animation-mode>
-            <option value="normal">Normal</option>
-            <option value="fast">Fast</option>
-            <option value="instant">Instant</option>
-            <option value="reducedMotion">Reduced Motion</option>
-          </select>
-        </label>
-        <div class="input-buttons" aria-label="Turn actions">
-          <button type="button" data-input-confirm disabled>Confirm play</button>
-          <button type="button" data-input-cancel disabled>Cancel</button>
-        </div>
-        <div class="animation-buttons" aria-label="Animation controls">
-          <button type="button" data-animation-accelerate disabled>Faster</button>
-          <button type="button" data-animation-finish disabled>Finish</button>
-        </div>
-        <button type="button" class="new-round-button" data-new-round>New round</button>
-        <span class="runtime-label">Authoritative local engine</span>
-      </div>
-
       <section class="turn-recap" aria-labelledby="turn-recap-title">
-        <div>
-          <p class="eyebrow">Accessible history</p>
-          <h2 id="turn-recap-title">Turn recap</h2>
-        </div>
-        <ol data-turn-recaps aria-live="polite">
-          <li>Round ready. Player A begins.</li>
-        </ol>
+        <h2 class="visually-hidden" id="turn-recap-title">Turn recap</h2>
+        <p class="turn-recap__latest" data-latest-recap aria-live="polite">
+          Round ready. Player A begins.
+        </p>
+        <details class="turn-recap__history">
+          <summary>History</summary>
+          <ol data-turn-recaps>
+            <li>Round ready. Player A begins.</li>
+          </ol>
+        </details>
       </section>
-
-      <footer class="app-footer">
-        <span id="table-status" data-table-status aria-live="polite">Loading the local round…</span>
-        <span><kbd>F</kbd> fullscreen · <kbd>Esc</kbd> cancel</span>
-      </footer>
       <p class="visually-hidden" id="input-instruction" data-input-instruction aria-live="polite">
         Loading keyboard-accessible card controls.
       </p>
+      <p class="visually-hidden" data-options-announcement aria-live="polite"></p>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

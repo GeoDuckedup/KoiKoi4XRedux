@@ -1,8 +1,9 @@
 # KoiKoi4x Implementation Plan
 
 **Plan version:** 1.1
-**Updated:** August 10, 2026
-**Current gate:** Phase 3D-B locally accepted; Phase 3D-C decluttered shell and theme menu are next
+**Updated:** August 11, 2026
+**Current gate:** Phase 3D-C runtime themes and compact production shell passed local acceptance;
+commit, GitHub Actions deployment, and live verification are pending
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -636,14 +637,13 @@ Architecture is recorded in [`ADR 0014`](./adr/0014-phase-3c-round-result-presen
 
 ### Phase 3D — Table clarity and direct interaction
 
-Status: **Phase 3D-A owner-approved and Phase 3D-B locally accepted; production-shell integration pending**.
+Status: **Phase 3D-A/B accepted; Phase 3D-C passed local acceptance and is ready to deploy**.
 
 Phase 3D addresses the owner-reported visual clutter, disliked color scheme, direct tap-to-match
 interaction, and field growth beyond eight cards before onboarding teaches the table.
 
 - **3D-A — Visual direction:** approved Ink & Parchment as the default plus Moonlit Indigo and the
-  original-game-inspired Warm Ivory as future runtime-selectable themes. Review builds do not change
-  the deployed default.
+  original-game-inspired Warm Ivory as runtime-selectable themes.
 - **3D-B — Interaction cues:** implemented authoritative frozen resolution previews for no-match,
   unique pair, exact-two choice, and sweep. Guided play highlights and accepts the field/matching
   cards directly; Fast still submits unambiguous moves immediately and retains exact-two choice.
@@ -670,6 +670,22 @@ Phase 3D-B gate:
   root, and Pages gates.
 
 Architecture is recorded in [`ADR 0015`](./adr/0015-phase-3d-b-authoritative-interaction-previews.md).
+
+Phase 3D-C gate:
+
+- fresh profiles use Ink & Parchment; all three approved themes select at runtime and persist only
+  a versioned allowlisted cosmetic record in IndexedDB;
+- DOM and Pixi table/card chrome repaint in place while one canvas, 48 CardView identities, deck,
+  state version, selection, legal targets, Yaku, and result data remain unchanged;
+- Options contains secondary settings and obeys modal focus/critical-state locks; the visible turn
+  bar, active-Yaku names/totals, latest event, and complete disclosed history remain accessible;
+- root and repository-prefixed Pages builds pass all supported viewports, the one-build three-theme
+  gallery, Phase 3D-B interaction traces, Phase 3C scoring/result traces, and zero browser/network
+  errors;
+- `validate:phase3dc` retains the release-deck, Workshop, unit, root, and Pages gates.
+
+Architecture is recorded in
+[`ADR 0016`](./adr/0016-phase-3d-c-runtime-theme-and-options-shell.md).
 
 ## Later phases
 

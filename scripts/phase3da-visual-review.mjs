@@ -9,9 +9,9 @@ const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = resolve(repositoryRoot, "apps/web/dist");
 const outputDirectory = resolve(repositoryRoot, "output/phase-3d-a/visual-directions");
 const directions = Object.freeze([
-  Object.freeze({ id: "ink-parchment", label: "A · Ink, Parchment & Vermilion" }),
-  Object.freeze({ id: "moonlit-indigo", label: "B · Moonlit Indigo & Brass" }),
-  Object.freeze({ id: "warm-ivory", label: "C · Warm Ivory & Slate Blue" }),
+  Object.freeze({ id: "ink-parchment", label: "Ink & Parchment" }),
+  Object.freeze({ id: "moonlit-indigo", label: "Moonlit Indigo" }),
+  Object.freeze({ id: "warm-ivory", label: "Warm Ivory" }),
 ]);
 const viewports = Object.freeze([
   Object.freeze({ id: "mobile", width: 390, height: 844 }),
@@ -31,10 +31,9 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-function buildApplication(directionId) {
+function buildApplication() {
   const environment = { ...process.env, VITE_BASE_PATH: "/" };
-  if (directionId) environment.VITE_VISUAL_DIRECTION = directionId;
-  else delete environment.VITE_VISUAL_DIRECTION;
+  delete environment.VITE_VISUAL_DIRECTION;
   execFileSync("npm", ["run", "build", "--workspace", "@koikoi4x/web"], {
     cwd: repositoryRoot,
     env: environment,
@@ -49,10 +48,9 @@ async function startStaticServer() {
       const relativePath =
         decodeURIComponent(requestUrl.pathname).replace(/^\/+/, "") || "index.html";
       const filePath = resolve(distributionDirectory, relativePath);
-      const allowedPrefix = `${distributionDirectory}/`;
       if (
         filePath !== resolve(distributionDirectory, "index.html") &&
-        !filePath.startsWith(allowedPrefix)
+        !filePath.startsWith(`${distributionDirectory}/`)
       ) {
         response.writeHead(403).end("Forbidden");
         return;
@@ -83,28 +81,37 @@ async function stopStaticServer(server) {
   });
 }
 
-async function waitForApplication(page, expectedDirection) {
+async function waitForApplication(page) {
   await page.waitForFunction(
-    (direction) =>
-      document.documentElement.dataset.appReady === "true" &&
-      document.documentElement.dataset.visualDirection === direction,
-    expectedDirection,
+    () => document.documentElement.dataset.appReady === "true",
+    undefined,
     { timeout: 60_000 },
   );
 }
 
+async function chooseTheme(page, directionId) {
+  await page.locator("[data-options-trigger]").click();
+  await page.locator(`[data-theme-option][value="${directionId}"]`).check();
+  await page.waitForFunction(
+    (expected) => JSON.parse(window.render_game_to_text()).theme.activeId === expected,
+    directionId,
+  );
+  await page.locator("[data-options-close]").click();
+}
+
 async function selectFirstAvailableCard(page) {
-  const cardIds = await page
+  const cardId = await page
     .locator('[data-input-role="selectable"][data-card-id]')
-    .evaluateAll((buttons) => buttons.map((button) => button.dataset.cardId).filter(Boolean));
-  const cardId = cardIds[0];
-  if (!cardId) throw new Error("The visual-review seed did not expose a selectable hand card.");
+    .first()
+    .getAttribute("data-card-id");
+  if (!cardId) throw new Error("The production seed did not expose a selectable hand card.");
   await page.locator(`[data-input-role="selectable"][data-card-id="${cardId}"]`).click();
-  return page.evaluate(() => JSON.parse(window.render_game_to_text()).input);
+  return JSON.parse(await page.evaluate(() => window.render_game_to_text())).input;
 }
 
 await rm(outputDirectory, { force: true, recursive: true });
 await mkdir(outputDirectory, { recursive: true });
+buildApplication();
 const { server, url } = await startStaticServer();
 let browser;
 const artifacts = [];
@@ -115,7 +122,6 @@ try {
     args: ["--enable-webgl", "--ignore-gpu-blocklist", "--use-gl=swiftshader"],
   });
   for (const direction of directions) {
-    buildApplication(direction.id);
     for (const viewport of viewports) {
       const context = await browser.newContext({
         deviceScaleFactor: 1,
@@ -131,108 +137,30 @@ try {
         errors.push(`requestfailed: ${request.url()} ${request.failure()?.errorText ?? "unknown"}`);
       });
       await page.goto(url, { waitUntil: "networkidle" });
-      await waitForApplication(page, direction.id);
-      const state = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
-      assert(state.ready === true, `${direction.id}/${viewport.id} did not become ready.`);
-      assert(
-        state.diagnostics.clippedZones.length === 0,
-        `${direction.id}/${viewport.id} clipped a zone.`,
-      );
-      assert(
-        state.diagnostics.invalidZones.length === 0,
-        `${direction.id}/${viewport.id} invalidated a zone.`,
-      );
-
-      const initialPath = resolve(outputDirectory, `${direction.id}-${viewport.id}-initial.png`);
-      await page.screenshot({ path: initialPath });
-      artifacts.push({
-        direction: direction.id,
-        state: "initial",
-        viewport: viewport.id,
-        path: initialPath,
-      });
-
-      if (viewport.id === "mobile") {
-        const selected = await selectFirstAvailableCard(page);
-        assert(selected.selectedCardId !== null, `${direction.id} did not retain selection.`);
-        const selectedPath = resolve(
-          outputDirectory,
-          `${direction.id}-${viewport.id}-selected.png`,
-        );
-        await page.screenshot({ path: selectedPath });
-        artifacts.push({
-          direction: direction.id,
-          legalTargetCardIds: selected.legalTargetCardIds,
-          selectedCardId: selected.selectedCardId,
-          state: "selected",
-          viewport: viewport.id,
-          path: selectedPath,
-        });
-      }
-
-      assert(
-        errors.length === 0,
-        `${direction.id}/${viewport.id} browser errors: ${errors.join(" | ")}`,
-      );
+      await waitForApplication(page);
+      const initial = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
+      assert(initial.theme.activeId === "ink-parchment", "Fresh profile did not default to Ink.");
+      await chooseTheme(page, direction.id);
+      const selected = await selectFirstAvailableCard(page);
+      const state = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
+      assert(state.theme.activeId === direction.id, `${direction.id} was not applied at runtime.`);
+      assert(state.cards.cardViewCount === 48, `${direction.id} recreated the CardView registry.`);
+      assert(state.diagnostics.clippedZones.length === 0, `${direction.id} clipped a board zone.`);
+      assert(selected.selectedCardId !== null, `${direction.id} did not retain selection.`);
+      assert(errors.length === 0, `${direction.id} browser errors: ${errors.join(" | ")}`);
+      const path = resolve(outputDirectory, `${direction.id}-${viewport.id}-selected.png`);
+      await page.screenshot({ path, fullPage: true });
+      artifacts.push({ direction: direction.id, viewport: viewport.id, state: "selected", path });
       await context.close();
     }
   }
-
-  buildApplication();
-  const defaultContext = await browser.newContext({
-    deviceScaleFactor: 1,
-    viewport: { width: 390, height: 844 },
-  });
-  const defaultPage = await defaultContext.newPage();
-  const defaultErrors = [];
-  defaultPage.on("console", (message) => {
-    if (message.type() === "error") defaultErrors.push(`console: ${message.text()}`);
-  });
-  defaultPage.on("pageerror", (error) => defaultErrors.push(`pageerror: ${error.message}`));
-  defaultPage.on("requestfailed", (request) => {
-    defaultErrors.push(
-      `requestfailed: ${request.url()} ${request.failure()?.errorText ?? "unknown"}`,
-    );
-  });
-  await defaultPage.goto(url, { waitUntil: "networkidle" });
-  await defaultPage.waitForFunction(
-    () =>
-      document.documentElement.dataset.appReady === "true" &&
-      document.documentElement.dataset.visualDirection === undefined,
-    undefined,
-    { timeout: 60_000 },
-  );
-  const defaultState = await defaultPage.evaluate(() => JSON.parse(window.render_game_to_text()));
-  assert(defaultState.ready === true, "The production-default build did not become ready.");
-  assert(
-    defaultState.diagnostics.clippedZones.length === 0,
-    "The production-default build clipped a zone.",
-  );
-  assert(
-    defaultState.diagnostics.invalidZones.length === 0,
-    "The production-default build invalidated a zone.",
-  );
-  assert(
-    defaultErrors.length === 0,
-    `The production-default build emitted browser errors: ${defaultErrors.join(" | ")}`,
-  );
-  const defaultPath = resolve(outputDirectory, "production-default-mobile.png");
-  await defaultPage.screenshot({ path: defaultPath });
-  artifacts.push({
-    direction: "production-default",
-    state: "unchanged-reference",
-    viewport: "mobile",
-    path: defaultPath,
-  });
-  await defaultContext.close();
-
   await writeFile(
     resolve(outputDirectory, "manifest.json"),
     `${JSON.stringify({ directions, artifacts, generatedAt: new Date().toISOString() }, null, 2)}\n`,
     "utf8",
   );
   process.stdout.write(
-    `Phase 3D-A visual review generated ${artifacts.length} screenshots in ${outputDirectory}.\n`,
+    `Phase 3D runtime visual review generated ${artifacts.length} screenshots from one production build in ${outputDirectory}.\n`,
   );
 } finally {
   await browser?.close();

@@ -6,7 +6,7 @@ import { chromium } from "playwright";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-3d-b/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-3d-c/e2e");
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
 const mountedBasePath = smokeBasePath === "/" ? "/" : `${smokeBasePath}/`;
@@ -112,11 +112,45 @@ async function readState(page) {
   return page.evaluate(() => JSON.parse(window.render_game_to_text()));
 }
 
+async function openOptions(page) {
+  if (!(await page.locator("[data-options-dialog]").evaluate((dialog) => dialog.open))) {
+    await page.locator("[data-options-trigger]").click();
+  }
+  await page.locator("[data-options-dialog]").waitFor({ state: "visible" });
+}
+
+async function closeOptions(page) {
+  if (await page.locator("[data-options-dialog]").evaluate((dialog) => dialog.open)) {
+    await page.locator("[data-options-close]").click();
+  }
+}
+
+async function configureSecondaryOptions(page, options) {
+  await openOptions(page);
+  if (options.animationMode) {
+    await page.locator("[data-animation-mode]").selectOption(options.animationMode);
+  }
+  if (options.inputMode) {
+    await page.locator("[data-input-mode]").selectOption(options.inputMode);
+  }
+  await closeOptions(page);
+}
+
+async function selectTheme(page, themeId) {
+  await openOptions(page);
+  await page.locator(`[data-theme-option][value="${themeId}"]`).check();
+  await page.waitForFunction(
+    (expectedThemeId) =>
+      JSON.parse(window.render_game_to_text()).theme.activeId === expectedThemeId,
+    themeId,
+  );
+  await closeOptions(page);
+}
+
 async function resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors) {
   await page.goto(pageUrl, { waitUntil: "networkidle" });
   await waitForApplicationReady(page, browserErrors, networkErrors);
-  await page.locator("[data-animation-mode]").selectOption("instant");
-  await page.locator("[data-input-mode]").selectOption("guided");
+  await configureSecondaryOptions(page, { animationMode: "instant", inputMode: "guided" });
 }
 
 async function waitForAcceptedHandIntent(page, previousVersion) {
@@ -425,6 +459,10 @@ try {
         state.input.selectableCardIds.length === 8,
         "The opening hand is not fully interactive.",
       );
+      assert(
+        state.theme.activeId === "ink-parchment" && state.theme.optionsOpen === false,
+        `The fresh production shell did not use its default Ink theme: ${JSON.stringify(state.theme)}.`,
+      );
       assert(state.cards.cardViewCount === 48, "The persistent 48-card registry changed.");
       assert(
         state.cards.visibleViews.every(({ faceUp }) => faceUp),
@@ -442,6 +480,11 @@ try {
         state.diagnostics.clippedZones.length === 0,
         `A supported viewport clips a board zone: ${JSON.stringify({ viewport, diagnostics: state.diagnostics })}`,
       );
+      if (viewport.width === 844 && viewport.height === 390) {
+        for (const selector of ["[data-turn-context]", "[data-yaku-progress]", ".turn-recap"]) {
+          assert(await page.locator(selector).isVisible(), `${selector} disappeared in landscape.`);
+        }
+      }
       await page.screenshot({
         path: resolve(
           outputDirectory,
@@ -458,8 +501,103 @@ try {
   }
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.locator("[data-animation-mode]").selectOption("instant");
-  await page.locator("[data-input-mode]").selectOption("guided");
+  await configureSecondaryOptions(page, { animationMode: "instant", inputMode: "guided" });
+
+  await openOptions(page);
+  assert(
+    await page.locator('[data-theme-option][value="ink-parchment"]').isChecked(),
+    "Options did not identify the selected Ink theme.",
+  );
+  assert(
+    await page
+      .locator('[data-theme-option][value="ink-parchment"]')
+      .evaluate((option) => document.activeElement === option),
+    "Options did not focus the selected theme.",
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `options-ink-parchment-mobile${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await page.keyboard.press("Escape");
+  assert(
+    !(await page.locator("[data-options-dialog]").evaluate((dialog) => dialog.open)) &&
+      (await page
+        .locator("[data-options-trigger]")
+        .evaluate((trigger) => document.activeElement === trigger)),
+    "Escape did not close Options and return focus to its trigger.",
+  );
+
+  await page.locator('[data-input-role="selectable"][data-card-id="november-red-scroll"]').click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).input.selectedCardId === "november-red-scroll",
+  );
+  const beforeThemeSwitch = await readState(page);
+  const persistentTokens = beforeThemeSwitch.cards.visibleViews.map(({ cardId, token }) => [
+    cardId,
+    token,
+  ]);
+  for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
+    await selectTheme(page, themeId);
+    const themed = await readState(page);
+    assert(
+      themed.theme.activeId === themeId &&
+        themed.theme.optionsOpen === false &&
+        themed.canvasCount === 1 &&
+        themed.cards.cardViewCount === 48 &&
+        themed.deck.activeDeckId === beforeThemeSwitch.deck.activeDeckId &&
+        themed.localRound.stateVersion === beforeThemeSwitch.localRound.stateVersion &&
+        themed.localRound.commandCount === beforeThemeSwitch.localRound.commandCount &&
+        themed.input.selectedCardId === beforeThemeSwitch.input.selectedCardId &&
+        JSON.stringify(themed.input.legalTargetCardIds) ===
+          JSON.stringify(beforeThemeSwitch.input.legalTargetCardIds) &&
+        JSON.stringify(themed.cards.visibleViews.map(({ cardId, token }) => [cardId, token])) ===
+          JSON.stringify(persistentTokens),
+      `${themeId} changed gameplay state or persistent CardView identity.`,
+    );
+    assert(
+      (await page.locator("[data-table-status]").textContent())?.includes("highlighted field"),
+      `${themeId} replaced the selected-card turn instruction.`,
+    );
+    for (const viewport of [
+      { id: "mobile", width: 390, height: 844 },
+      { id: "desktop", width: 1366, height: 768 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.waitForFunction(
+        (width) => JSON.parse(window.render_game_to_text()).viewport.width === width,
+        viewport.width,
+      );
+      await page.screenshot({
+        path: resolve(
+          outputDirectory,
+          `theme-${themeId}-${viewport.id}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+        ),
+        fullPage: true,
+      });
+    }
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await selectTheme(page, "moonlit-indigo");
+  await page.reload({ waitUntil: "networkidle" });
+  await waitForApplicationReady(page, browserErrors, networkErrors);
+  const restoredTheme = await readState(page);
+  assert(
+    restoredTheme.theme.activeId === "moonlit-indigo" &&
+      (await page.locator('meta[name="theme-color"]').getAttribute("content")) === "#080f1b",
+    "The IndexedDB theme preference did not restore after reload.",
+  );
+  await selectTheme(page, "ink-parchment");
+  await configureSecondaryOptions(page, { animationMode: "instant", inputMode: "guided" });
+  await page.locator(".turn-recap__history > summary").click();
+  assert(
+    await page.locator("[data-turn-recaps]").isVisible(),
+    "The complete ordered History disclosure is not reachable.",
+  );
+  await page.locator(".turn-recap__history > summary").click();
+  process.stdout.write("Phase 3D-C runtime theme, persistence, and Options focus trace passed.\n");
 
   const placementBefore = await readState(page);
   await page.locator('[data-input-role="selectable"][data-card-id="november-red-scroll"]').click();
@@ -533,7 +671,7 @@ try {
   process.stdout.write("Phase 3D-B Guided placement and unique-match trace passed.\n");
 
   await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
-  await page.locator("[data-input-mode]").selectOption("fast");
+  await configureSecondaryOptions(page, { inputMode: "fast" });
 
   await playLockedHandSequence(page, PHASE_3B_HAND_DECISION_SEQUENCE.slice(0, -1));
   const lastHandDecisionCard = PHASE_3B_HAND_DECISION_SEQUENCE.at(-1);
@@ -566,6 +704,7 @@ try {
     "[data-input-mode]",
     "[data-animation-mode]",
     "[data-new-round]",
+    "[data-options-trigger]",
   ]) {
     assert(
       await page.locator(selector).isDisabled(),
@@ -681,8 +820,7 @@ try {
 
   await page.goto(pageUrl, { waitUntil: "networkidle" });
   await waitForApplicationReady(page, browserErrors, networkErrors);
-  await page.locator("[data-animation-mode]").selectOption("instant");
-  await page.locator("[data-input-mode]").selectOption("fast");
+  await configureSecondaryOptions(page, { animationMode: "instant", inputMode: "fast" });
   const freshHandAnimals = await playLockedHandSequence(page, PHASE_3B_HAND_DECISION_SEQUENCE);
   assert(
     freshHandAnimals.localRound.phase === "awaitingYakuDecision" &&
@@ -742,6 +880,7 @@ try {
     "[data-input-mode]",
     "[data-animation-mode]",
     "[data-new-round]",
+    "[data-options-trigger]",
   ]) {
     assert(await page.locator(selector).isDisabled(), `${selector} escaped the result modal lock.`);
   }
@@ -750,6 +889,14 @@ try {
       (await page.evaluate(() => document.activeElement?.matches("[data-round-result-action]"))) ===
         true,
     "The committed result did not lock card input and focus its sole action.",
+  );
+  assert(
+    (await page.locator("[data-latest-recap]").textContent())?.includes("banked 3 × 1× = 3 points"),
+    "The compact shell did not retain the latest authoritative event.",
+  );
+  assert(
+    (await page.locator("[data-turn-recaps]").textContent())?.includes("banked 3 × 1× = 3 points"),
+    "The compact History disclosure did not retain the complete ordered recap data.",
   );
   for (const viewport of viewports) {
     await page.setViewportSize(viewport);

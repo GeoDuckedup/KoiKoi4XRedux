@@ -12,6 +12,7 @@ import type { CardRuntimeInspection } from "../presentation/cards/types";
 import type { InputInteractionInspectionV1 } from "../presentation/input/types";
 import type { YakuPresentationStateV1 } from "../game/yaku-presentation";
 import type { RoundResultPresentationV1 } from "../game/round-result-presentation";
+import type { Phase3DVisualDirectionId } from "../presentation/theme/visual-directions";
 
 export const TABLE_SCREEN_ID = "localRound" as const;
 export const TABLE_PRESENTATION_MODE = "authoritativeLocalRound" as const;
@@ -65,6 +66,10 @@ export interface TablePreviewSnapshot {
   readonly scene: BoardSceneInspection;
   readonly screen: typeof TABLE_SCREEN_ID;
   readonly simulationTimeMs: number;
+  readonly theme: {
+    readonly activeId: Phase3DVisualDirectionId;
+    readonly optionsOpen: boolean;
+  };
   readonly viewport: BoardViewport;
   readonly yaku: YakuPresentationStateV1;
   readonly result: RoundResultPresentationV1 | null;
@@ -95,6 +100,7 @@ export function createTablePreviewSnapshot(input: {
   readonly scene: BoardSceneInspection & { readonly cards: CardRuntimeInspection };
   readonly semanticControlCount: number;
   readonly simulationTimeMs: number;
+  readonly theme: TablePreviewSnapshot["theme"];
   readonly viewport: BoardViewport;
   readonly yaku: YakuPresentationStateV1;
   readonly result: RoundResultPresentationV1 | null;
@@ -136,6 +142,7 @@ export function createTablePreviewSnapshot(input: {
     }),
     localRound: Object.freeze({ ...input.localRound }),
     simulationTimeMs: input.simulationTimeMs,
+    theme: Object.freeze({ ...input.theme }),
     animation: Object.freeze({
       ...input.animation,
       activeClip: input.animation.activeClip

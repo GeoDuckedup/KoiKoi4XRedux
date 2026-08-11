@@ -6,6 +6,8 @@ export const PHASE_3D_VISUAL_DIRECTION_IDS = [
 
 export type Phase3DVisualDirectionId = (typeof PHASE_3D_VISUAL_DIRECTION_IDS)[number];
 
+export const DEFAULT_PHASE_3D_VISUAL_DIRECTION_ID: Phase3DVisualDirectionId = "ink-parchment";
+
 export interface TableSceneColorsV1 {
   readonly backdrop: number;
   readonly black: number;
@@ -187,18 +189,32 @@ export const PHASE_3D_VISUAL_DIRECTIONS: readonly Phase3DVisualDirectionV1[] = O
   }),
 ]);
 
-export function findPhase3DVisualDirection(
+export function getPhase3DVisualDirection(
   value: string | undefined,
 ): Phase3DVisualDirectionV1 | null {
   if (value === undefined || value.length === 0) return null;
-  const direction = PHASE_3D_VISUAL_DIRECTIONS.find(({ id }) => id === value);
+  return PHASE_3D_VISUAL_DIRECTIONS.find(({ id }) => id === value) ?? null;
+}
+
+export const DEFAULT_PHASE_3D_VISUAL_DIRECTION = (() => {
+  const direction = getPhase3DVisualDirection(DEFAULT_PHASE_3D_VISUAL_DIRECTION_ID);
+  if (!direction) throw new Error("The default Phase 3D visual direction is not installed.");
+  return direction;
+})();
+
+export function findPhase3DVisualDirection(
+  value: string | undefined,
+): Phase3DVisualDirectionV1 | null {
+  const direction = getPhase3DVisualDirection(value);
+  if (value === undefined || value.length === 0) return null;
   if (!direction) throw new Error(`Unknown Phase 3D visual direction: ${value}.`);
   return direction;
 }
 
-export const ACTIVE_PHASE_3D_VISUAL_DIRECTION = findPhase3DVisualDirection(
-  import.meta.env.VITE_VISUAL_DIRECTION,
-);
+// Build-time selection remains an internal review convenience. Production and runtime callers use
+// DEFAULT_PHASE_3D_VISUAL_DIRECTION plus the local cosmetic preference store instead.
+export const ACTIVE_PHASE_3D_VISUAL_DIRECTION =
+  findPhase3DVisualDirection(import.meta.env.VITE_VISUAL_DIRECTION) ??
+  DEFAULT_PHASE_3D_VISUAL_DIRECTION;
 
-export const ACTIVE_TABLE_SCENE_COLORS =
-  ACTIVE_PHASE_3D_VISUAL_DIRECTION?.table ?? LEGACY_TABLE_SCENE_COLORS;
+export const ACTIVE_TABLE_SCENE_COLORS = ACTIVE_PHASE_3D_VISUAL_DIRECTION.table;

@@ -1,7 +1,8 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository
-has completed **Phase 3C: round-end presentation** with an owner-approved primary deck. It
+has completed local acceptance for **Phase 3D-C: runtime themes and compact production shell** with
+an owner-approved primary deck. It
 contains the canonical rules authority, all 48 artwork-independent card records, the complete
 deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
@@ -43,6 +44,7 @@ npm run validate:phase3b
 npm run validate:phase3c
 npm run validate:phase3da
 npm run validate:phase3db
+npm run validate:phase3dc
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -110,15 +112,19 @@ and terminal winner/tie outcomes. Root and Pages traces prove the feedback-to-re
 Bank and final-Draw Koi-Koi arithmetic, result focus/input locking, truthful local restart, and
 responsive result containment. Artifacts are written under `output/phase-3c/e2e/`.
 
-`npm run validate:phase3da` is a review-only gate for the three Phase 3D-A palette/hierarchy
-directions. It runs focused visual, interaction, and layout tests, then captures mobile and desktop
-comparison screenshots under `output/phase-3d-a/visual-directions/`. The normal production build
-keeps the accepted Phase 3C appearance until Phase 3D-C installs the approved theme menu.
+`npm run validate:phase3da` retains the three approved visual directions as a one-production-build
+runtime gallery. It selects each theme through the real Options dialog and captures mobile and
+desktop comparison screenshots under `output/phase-3d-a/visual-directions/`.
 
 `npm run validate:phase3db` retains the approved visual-direction, release-deck, Workshop, root,
 Pages, and prior gameplay gates. It adds the authoritative no-match, unique-pair, exact-two, and
 four-card-sweep interaction previews plus real Guided placement/pair browser traces under
 `output/phase-3d-b/e2e/`.
+
+`npm run validate:phase3dc` makes Ink & Parchment the production default and verifies Moonlit
+Indigo/Warm Ivory runtime selection, IndexedDB reload persistence, in-place Pixi/CardView repaint,
+the accessible compact Options/turn/Yaku/history shell, all prior interaction/result traces, and
+both root and Pages builds. Artifacts are written under `output/phase-3d-c/e2e/`.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot
@@ -148,9 +154,10 @@ Pages workflow. Set **Settings → Pages → Build and deployment → Source** t
 workflow derives the correct Vite base path from the repository name and deploys `apps/web/dist` only
 after checks pass.
 
-No Firebase project, credentials, database migration, or production domain is needed for Phase 3C.
+No Firebase project, credentials, database migration, or production domain is needed for Phase 3D-C.
 The live page plays one authoritative browser-local round with the approved Primary Deck, Guided or
 Fast input, public-event animation, private Player A/Player B handoff, and an accessible recap. New
 round restarts the deterministic first-round slice; multi-round persistence is deferred. The Deck
-Workshop remains local-only. Additional independent or inherited deck packages can be added without
-changing engine rules.
+Workshop remains local-only. Ink & Parchment is the default; Moonlit Indigo and Warm Ivory are
+runtime-selectable in Options and persist locally. Additional independent or inherited deck
+packages can be added without changing engine rules.

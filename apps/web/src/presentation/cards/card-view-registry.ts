@@ -5,11 +5,17 @@ import { CARD_ZONES, type BoardLayerName, type CardZone } from "../board/types";
 import type { ActiveDeckTextures } from "../deck/card-asset-manager";
 import type { CardDisplayPlacement, CardRuntimeInspection, CardViewInspection } from "./types";
 
+export interface CardFrameColorsV1 {
+  readonly black: number;
+  readonly cream: number;
+}
+
 interface CardView {
   readonly cardId: CardId;
   readonly container: Container;
   readonly token: string;
   applyDeck: (textures: ActiveDeckTextures<Texture>) => void;
+  applyFrameColors: (colors: CardFrameColorsV1) => void;
   applyPlacement: (placement: CardDisplayPlacement) => void;
   destroy: () => void;
   inspect: () => CardViewInspection;
@@ -23,7 +29,11 @@ function createCardViewToken(): string {
   return token;
 }
 
-function createCardView(cardId: CardId, initialDeck: ActiveDeckTextures<Texture>): CardView {
+function createCardView(
+  cardId: CardId,
+  initialDeck: ActiveDeckTextures<Texture>,
+  initialFrameColors: CardFrameColorsV1,
+): CardView {
   const container = new Container({ label: `CardView:${cardId}` });
   const token = createCardViewToken();
   const shadow = new Graphics();
@@ -37,6 +47,8 @@ function createCardView(cardId: CardId, initialDeck: ActiveDeckTextures<Texture>
   let placement: CardDisplayPlacement | null = null;
   let renderedWidth = -1;
   let renderedHeight = -1;
+  let frameColors = initialFrameColors;
+  let renderedFrameColors: CardFrameColorsV1 | null = null;
 
   const applyTexture = (): void => {
     sprite.texture = placement?.faceUp === false ? deck.back : deck.faces[cardId];
@@ -49,6 +61,9 @@ function createCardView(cardId: CardId, initialDeck: ActiveDeckTextures<Texture>
     applyDeck: (textures) => {
       deck = textures;
       applyTexture();
+    },
+    applyFrameColors: (colors) => {
+      frameColors = colors;
     },
     applyPlacement: (nextPlacement) => {
       if (nextPlacement.cardId !== cardId) {
@@ -69,15 +84,21 @@ function createCardView(cardId: CardId, initialDeck: ActiveDeckTextures<Texture>
 
       const width = nextPlacement.bounds.width;
       const height = nextPlacement.bounds.height;
-      if (width !== renderedWidth || height !== renderedHeight) {
+      if (
+        width !== renderedWidth ||
+        height !== renderedHeight ||
+        renderedFrameColors?.black !== frameColors.black ||
+        renderedFrameColors?.cream !== frameColors.cream
+      ) {
         renderedWidth = width;
         renderedHeight = height;
+        renderedFrameColors = frameColors;
         const radius = Math.max(2, width * 0.1);
         const frameWidth = Math.max(1, width * 0.03);
         shadow
           .clear()
           .roundRect(Math.max(1, width * 0.035), Math.max(1, height * 0.025), width, height, radius)
-          .fill({ color: 0x020805, alpha: 0.32 });
+          .fill({ color: frameColors.black, alpha: 0.32 });
         sprite.position.set(0, 0);
         sprite.width = width;
         sprite.height = height;
@@ -85,7 +106,7 @@ function createCardView(cardId: CardId, initialDeck: ActiveDeckTextures<Texture>
         frame
           .clear()
           .roundRect(0, 0, width, height, radius)
-          .stroke({ color: 0xfff3cf, alpha: 0.9, width: frameWidth });
+          .stroke({ color: frameColors.cream, alpha: 0.9, width: frameWidth });
       }
     },
     inspect: () => {
@@ -110,6 +131,7 @@ function createCardView(cardId: CardId, initialDeck: ActiveDeckTextures<Texture>
 
 export interface CardViewRegistry {
   applyDeck: (textures: ActiveDeckTextures<Texture>) => void;
+  applyFrameColors: (colors: CardFrameColorsV1) => void;
   applyPlacements: (
     placements: readonly CardDisplayPlacement[],
     cardLayers: ReadonlyMap<BoardLayerName, Container>,
@@ -118,9 +140,12 @@ export interface CardViewRegistry {
   inspect: () => CardRuntimeInspection;
 }
 
-export function createCardViewRegistry(initialDeck: ActiveDeckTextures<Texture>): CardViewRegistry {
+export function createCardViewRegistry(
+  initialDeck: ActiveDeckTextures<Texture>,
+  initialFrameColors: CardFrameColorsV1 = Object.freeze({ black: 0x020805, cream: 0xfff3cf }),
+): CardViewRegistry {
   const views = new Map<CardId, CardView>(
-    CARD_IDS.map((cardId) => [cardId, createCardView(cardId, initialDeck)]),
+    CARD_IDS.map((cardId) => [cardId, createCardView(cardId, initialDeck, initialFrameColors)]),
   );
   let activeDeckId = initialDeck.manifest.packageId;
 
@@ -128,6 +153,9 @@ export function createCardViewRegistry(initialDeck: ActiveDeckTextures<Texture>)
     applyDeck: (textures) => {
       for (const view of views.values()) view.applyDeck(textures);
       activeDeckId = textures.manifest.packageId;
+    },
+    applyFrameColors: (colors) => {
+      for (const view of views.values()) view.applyFrameColors(colors);
     },
     applyPlacements: (placements, cardLayers) => {
       const byCardId = new Map<CardId, CardDisplayPlacement>();

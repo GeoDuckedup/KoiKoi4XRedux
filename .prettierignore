@@ -6,6 +6,7 @@ package-lock.json
 packages/deck-format/schemas/
 apps/web/public/decks/technical-*/
 *.zip
+KoiKoi4x_Rewrite_Design_and_AI_Prompt_v1_6/
 AGENTS.md
 progress.md
 docs/

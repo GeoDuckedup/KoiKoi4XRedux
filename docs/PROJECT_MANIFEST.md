@@ -21,6 +21,7 @@
 | Current implementation status | `docs/STATUS.md` |
 | Phase 3D-A visual direction review | `docs/phase-3d-a-visual-direction.md` |
 | Phase 3D-B interaction authority | `docs/adr/0015-phase-3d-b-authoritative-interaction-previews.md` |
+| Phase 3D-C themes/options shell | `docs/adr/0016-phase-3d-c-runtime-theme-and-options-shell.md` |
 | Architectural decisions | `docs/adr/` |
 | Agent operating instructions | `AGENTS.md` |
 

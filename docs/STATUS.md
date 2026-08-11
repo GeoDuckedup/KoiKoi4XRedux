@@ -1,9 +1,9 @@
 # KoiKoi4x Project Status
 
-**Updated:** August 10, 2026
+**Updated:** August 11, 2026
 
-**Overall state:** Greenfield rewrite through Phase 3C deployed, live, and accepted; Phase 3D-A is
-owner-approved and Phase 3D-B interaction cues are locally accepted
+**Overall state:** Greenfield rewrite through Phase 3D-B deployed and accepted; Phase 3D-C runtime
+themes and compact shell passed local acceptance and are ready to deploy
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -12,12 +12,17 @@ and the retained local-only deterministic deck Workshop/raster review pipeline
 
 ## Current result
 
-Phase 3D-A now provides three review-only builds over the real approved deck: Ink & Parchment,
-Moonlit Indigo, and Warm Ivory. The owner approved Ink & Parchment as the recommended default and
-the other two as future options-menu themes. Warm Ivory carries forward the original game's calm
-cream canvas, bold dark outlines, restrained orange selection, and blue guidance without copying
-its crowded organization. The deployed default remains unchanged until Phase 3D-C integrates the
-new shell and runtime selector.
+Phase 3D-C promotes all three owner-approved directions into one production build. Ink & Parchment
+is the safe default; Moonlit Indigo and the original-game-inspired Warm Ivory select through the
+accessible Options dialog and persist as a versioned allowlisted cosmetic preference in IndexedDB.
+Theme changes repaint DOM, Pixi table chrome, and game-controlled card frames in place without
+changing the engine, deck, card identities, state version, selection, legal targets, Yaku, or
+result data.
+
+The production shell now keeps one concise turn instruction plus conditional Confirm/Cancel near
+the table, compact active-Yaku names/totals for both players, and the latest event with full history
+behind a native disclosure. Deck, play style, motion, animation utilities, fullscreen, and local
+restart remain accessible in Options instead of occupying permanent table space.
 
 Phase 3D-B now completes the desired direct interaction flow. Selecting a no-match card highlights
 the field placement surface; selecting a unique match highlights its one matching card; exact-two
@@ -385,21 +390,20 @@ projection, recap, and handoff are recorded in
 
 1. No hosting configuration, Firebase project, secret, or migration is required. Pushing `main`
    triggers CI and GitHub Pages.
-2. After deployment, open the live URL and play the deterministic local round. At each Yaku
-   decision, verify the public Yaku list, Bank award, Koi-Koi multiplier, and combined decision text;
-   unrelated controls must remain locked until Bank or Koi-Koi is chosen. Bank to inspect the result
-   screen, exact arithmetic, updated scores, and authoritative February starter/privilege plan.
-3. Use `Start another local round` on the result screen to restore Player A/state version 1. It is a
-   local practice restart, not February advancement. Deck switching remains texture-only, and the
-   approved Primary Deck should be selected by default.
-4. Additional decks may still be added as complete or inherited packages; each receives separate
-   evidence and approval.
+2. After deployment, open **Options** and verify Ink & Parchment is the fresh-profile default. Select
+   Moonlit Indigo or Warm Ivory, close Options, and reload once to verify the cosmetic preference
+   persists without restarting the round.
+3. Select a hand card and verify changing the theme preserves the active selection, highlighted
+   field target, and turn instruction. Play through Yaku/Bank/Koi and confirm unrelated Options
+   controls remain locked during critical decisions.
+4. Expand **History** to inspect the complete disclosed recap. `Start another local round` remains a
+   local practice restart, not February advancement. Additional deck packages remain supported.
 
 The deployed baseline is
 [`https://geoduckedup.github.io/KoiKoi4XRedux/`](https://geoduckedup.github.io/KoiKoi4XRedux/).
 
 ## Next subphase
 
-**Phase 3D-C — Decluttered production shell and theme menu:** make Ink & Parchment the default,
-offer Moonlit Indigo and Warm Ivory through an accessible persistent options menu, and collapse the
-advanced controls/history without hiding authoritative turn, Yaku, or result information.
+**Phase 3D-D — Adaptive dense field:** replace the current post-eight-card overflow fan with a
+deterministic shrink-to-fit layout through the derived 17-card legal field bound, retaining readable
+cards, direct matching targets, animation settlement, and keyboard/touch accessibility.

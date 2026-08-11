@@ -412,7 +412,34 @@ Phase 3D-B binding:
 - field position is automatic presentation only. Adaptive 9–17-card field sizing belongs to Phase
   3D-D and cannot change action legality.
 
-## 16. Approved-decision coverage matrix
+## 16. Phase 3D-C runtime-theme and compact-shell vectors
+
+These vectors are presentation-only. A theme identifier may affect DOM/Pixi colors and local
+cosmetic persistence, but it may not enter gameplay authority or change any projected card state.
+
+| ID | Required expectation |
+|---|---|
+| `TABLE-THEME-001-DEFAULT-INK` | With no valid stored preference, Ink & Parchment is applied before readiness to both DOM and Pixi. |
+| `TABLE-THEME-002-RUNTIME-SWITCH` | Selecting each approved theme updates DOM, metadata, card frames, and table chrome in place while retaining one canvas and all 48 CardView tokens. |
+| `TABLE-THEME-003-PERSIST-RELOAD` | A valid version-1 IndexedDB preference restores after reload; missing, malformed, unknown, unsupported, or failed persistence falls back safely to Ink. |
+| `TABLE-THEME-004-AUTHORITY-NEUTRAL` | Theme switching leaves match/state version, active deck, projection, selection, legal targets, Yaku, result, and command count unchanged. |
+| `TABLE-SHELL-001-OPTIONS-A11Y` | Options is a labelled modal dialog; opening focuses the selected theme, Escape closes and returns focus, and gameplay/fullscreen shortcuts do not execute beneath it. |
+| `TABLE-SHELL-002-CRITICAL-LOCK` | Options cannot open during handoff, Yaku decision, or round-result focus ownership; all valid decision/result controls remain usable. |
+| `TABLE-SHELL-003-COMPACT-TURN` | The current instruction and conditional Confirm/Cancel remain visible next to the table; secondary controls remain reachable only through Options. |
+| `TABLE-SHELL-004-YAKU-HISTORY` | Both players' public active-Yaku names/totals and latest event remain visible; the complete ordered recap remains reachable through native disclosure. |
+| `TABLE-SHELL-005-RESPONSIVE` | Root and repository-prefixed builds contain the compact shell at all supported viewports and emit no browser/network errors. |
+
+Phase 3D-C binding:
+
+- preference/store tests execute exact decoder, IndexedDB, failure, and in-memory fallback cases;
+- scene tests prove runtime color invalidation preserves persistent card identity and deck bindings;
+- root and `/KoiKoi4XRedux/` browser traces select every theme from one production build, reload a
+  stored preference, exercise Options focus/locks, and retain the Phase 3D-B interaction and Phase
+  3C Yaku/result traces;
+- adaptive field-card density remains Phase 3D-D and cannot be introduced as part of a theme or
+  shell change.
+
+## 17. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|
@@ -431,7 +458,7 @@ Phase 3D-B binding:
 | R-013 | All `FINAL-MONTH-*` fixtures |
 | R-014 | Scroll fixed, incremental, seven-Scroll, and no-combined-bonus fixtures |
 
-## 17. Binding gates
+## 18. Binding gates
 
 Phase 0C completed:
 

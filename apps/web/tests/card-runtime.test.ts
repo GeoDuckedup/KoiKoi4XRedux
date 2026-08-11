@@ -159,4 +159,26 @@ describe("Phase 2B CardView runtime", () => {
     expect(after.uniqueCardIdCount).toBe(48);
     registry.destroy();
   });
+
+  it("CARDVIEW-003 preserves CardView identity when only presentation frame colors change", () => {
+    const registry = createCardViewRegistry(deckTextures("technical-sunrise"));
+    const layers = new Map(BOARD_LAYER_ORDER.map((layer) => [layer, new Container()]));
+    const layout = computeBoardLayout({ width: 390, height: 720 });
+    const placements = computeCardPlacements(layout, CARD_SHOWCASE_ASSIGNMENTS);
+    registry.applyPlacements(placements, layers);
+    const before = registry.inspect();
+
+    registry.applyFrameColors({ black: 0x050912, cream: 0xfff5d8 });
+    registry.applyPlacements(placements, layers);
+    const after = registry.inspect();
+
+    expect(after.views.map(({ cardId, token }) => ({ cardId, token }))).toEqual(
+      before.views.map(({ cardId, token }) => ({ cardId, token })),
+    );
+    expect(after.activeDeckId).toBe(before.activeDeckId);
+    expect(after.views.map(({ textureBinding }) => textureBinding)).toEqual(
+      before.views.map(({ textureBinding }) => textureBinding),
+    );
+    registry.destroy();
+  });
 });

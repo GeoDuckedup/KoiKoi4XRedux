@@ -117,6 +117,12 @@ resulting public hash. Future Firebase transaction storage/publication remains P
   preview distinguishes field placement, unique pair, exact-two choice, and four-card sweep and
   names only public field cards. Web input validates/renders that preview but still emits only one
   existing legal action; Pixi positions never create targets or choose a command.
+- Phase 3D-C owns a presentation-only runtime theme store. It persists only a versioned allowlisted
+  theme ID in IndexedDB and repaints existing DOM/Pixi/card chrome; it cannot recreate or modify the
+  canvas, CardViews, deck, projection, interaction controller, observation, command, Yaku, or result.
+- The compact Options shell owns secondary browser controls. Critical turn instruction/actions,
+  public Yaku names/totals, and latest history remain visible, while Yaku/result/handoff modals keep
+  focus priority and prevent unrelated option changes.
 - The browser asset manager validates and preloads every candidate face/back before atomically
   switching local textures. Candidate failure leaves the active deck unchanged.
 - `window.render_game_to_text()` returns stable JSON describing responsive layout, scene/CardView

@@ -107,6 +107,7 @@ describe("Phase 2B table diagnostics", () => {
         },
       },
       simulationTimeMs: 500,
+      theme: { activeId: "ink-parchment", optionsOpen: false },
       viewport: { width: 390, height: 844 },
       yaku: createYakuPresentationState({
         observation: getTechnicalInputFixture("handPlay").source.observation,
@@ -137,6 +138,7 @@ describe("Phase 2B table diagnostics", () => {
         handoffPending: false,
       },
       simulationTimeMs: 500,
+      theme: { activeId: "ink-parchment", optionsOpen: false },
       animation: {
         status: "completed",
         mode: "normal",

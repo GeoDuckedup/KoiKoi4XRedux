@@ -805,3 +805,37 @@ Original prompt: read the package and understand it, then let me know when we ar
 - Phase 3D-C is next: integrate Ink & Parchment as the default, add Moonlit Indigo and Warm Ivory to
   the persistent options menu, and collapse advanced controls/history. Adaptive 9–17 card field
   sizing remains Phase 3D-D.
+
+## 2026-08-11 — Phase 3D-C production integration started
+
+- Locked Ink & Parchment as the safe/default production theme, with Moonlit Indigo and Warm Ivory
+  as runtime-selectable alternatives. Cosmetic preference persistence uses the Design §22.1
+  IndexedDB boundary and never enters engine commands, observations, events, or replay data.
+- Locked the compact production hierarchy: one Options dialog for secondary settings, one visible
+  turn bar with conditional Confirm/Cancel, compact public Yaku names/totals, and a visible latest
+  event with full history behind a native disclosure.
+- Theme changes must repaint DOM and Pixi card/table chrome in place while preserving the one
+  canvas, all 48 CardView identities, active deck, authoritative local-round version, current
+  selection, legal targets, Yaku state, and result state.
+- Parallel implementation is split between the theme/Pixi seam and shell markup/CSS; the primary
+  agent owns main-runtime integration, browser acceptance, documentation, release, and final
+  judgment. Adaptive 9–17-card field sizing remains strictly deferred to Phase 3D-D.
+
+## 2026-08-11 — Phase 3D-C local acceptance complete
+
+- Integrated Ink & Parchment, Moonlit Indigo, and Warm Ivory into one production build. The
+  accessible Options dialog changes DOM and Pixi chrome in place and persists only a versioned,
+  allowlisted cosmetic preference in IndexedDB.
+- Replaced the permanent advanced toolbar with a compact turn bar, conditional Confirm/Cancel,
+  concise public Yaku progress, latest-event recap, and native History disclosure. Short landscape
+  retains those semantic surfaces instead of hiding them.
+- Root and repository-prefixed browser gates pass all seven supported viewports, all three themes,
+  actual reload persistence, Guided placement/matching, Yaku/Bank/Koi, result/modality locks, one
+  canvas, stable 48 CardView identities, and zero browser/network errors.
+- Closed review findings so cosmetic confirmation cannot overwrite the current turn instruction and
+  the 844x390 layout keeps turn, Yaku, and recap facts visible. Independent review reports no
+  blocker, high, or medium finding.
+- `npm run check` passes formatting, zero-warning lint, all five workspace typechecks, deck
+  validation, 43 files/415 ordinary tests, the 10,002-match deterministic generated gate, and the
+  769-module production build. The final Pages-path smoke also passes every gameplay and viewport
+  trace. Phase 3D-C is ready to commit and deploy; adaptive 9–17-card field sizing is Phase 3D-D.

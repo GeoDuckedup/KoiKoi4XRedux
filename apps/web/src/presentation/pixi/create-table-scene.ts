@@ -14,7 +14,11 @@ import type {
 } from "../animation/types";
 import type { ActiveDeckTextures } from "../deck/card-asset-manager";
 import type { InteractionVisualStateV1 } from "../input/types";
-import { ACTIVE_TABLE_SCENE_COLORS } from "../theme/visual-directions";
+import {
+  ACTIVE_PHASE_3D_VISUAL_DIRECTION,
+  type Phase3DVisualDirectionV1,
+  type TableSceneColorsV1,
+} from "../theme/visual-directions";
 import type { BoardLayout, BoardRect, BoardSceneInspection, CardZone } from "../board/types";
 import { BOARD_LAYER_ORDER } from "../board/types";
 
@@ -41,6 +45,7 @@ export interface TableScene {
   inspect: () => BoardSceneInspection & { readonly cards: CardRuntimeInspection };
   renderClip: (clip: AnimationClipV1, progress: number, mode: AnimationMode) => void;
   redraw: (frame: TableSceneFrame) => void;
+  setTheme: (theme: Phase3DVisualDirectionV1) => void;
   setInteractionState: (state: InteractionVisualStateV1) => void;
   setStatus: (status: TableSceneStatusV1) => void;
   snapTo: (projection: PresentationBoardProjection) => void;
@@ -54,13 +59,11 @@ function createSceneObjectToken(kind: "layer" | "root"): string {
   return token;
 }
 
-const COLORS = ACTIVE_TABLE_SCENE_COLORS;
-
-function multiplierColor(multiplier: number): number {
-  if (multiplier <= 1) return COLORS.multiplier1;
-  if (multiplier === 2) return COLORS.multiplier2;
-  if (multiplier === 3) return COLORS.multiplier3;
-  return COLORS.multiplier4;
+function multiplierColor(colors: TableSceneColorsV1, multiplier: number): number {
+  if (multiplier <= 1) return colors.multiplier1;
+  if (multiplier === 2) return colors.multiplier2;
+  if (multiplier === 3) return colors.multiplier3;
+  return colors.multiplier4;
 }
 
 const CAPTURE_ZONE_GROUPS = {
@@ -129,7 +132,7 @@ function label(
     text: value,
     style: {
       align: options.align ?? "left",
-      fill: options.color ?? COLORS.cream,
+      fill: options.color ?? 0xffffff,
       fontFamily: options.fontFamily ?? "Inter, system-ui, sans-serif",
       fontSize: options.fontSize,
       fontWeight: options.fontWeight ?? "600",
@@ -147,10 +150,11 @@ function renderHand(
   handLabel: string,
   handCount: number,
   scale: number,
+  colors: TableSceneColorsV1,
 ): void {
   layer.addChild(
     label(`${handLabel.toUpperCase()} · ${handCount}`, bounds.x, bounds.y, {
-      color: COLORS.creamMuted,
+      color: colors.creamMuted,
       fontSize: Math.max(8, 9 * scale),
       fontWeight: "700",
       letterSpacing: Math.max(0.5, scale),
@@ -163,6 +167,7 @@ function renderCaptureSummary(
   layout: BoardLayout,
   owner: "opponent" | "player",
   zoneCounts: CardRuntimeInspection["zoneCounts"],
+  colors: TableSceneColorsV1,
 ): void {
   const entries = CAPTURE_ZONE_GROUPS[owner];
   for (const [zone, title] of entries) {
@@ -170,10 +175,10 @@ function renderCaptureSummary(
     const compact = bounds.width < 105 || bounds.height < 42;
     layer.addChild(
       panel(bounds, {
-        fill: COLORS.ink,
+        fill: colors.ink,
         fillAlpha: 0.76,
         radius: Math.min(10, bounds.height * 0.28),
-        stroke: COLORS.cream,
+        stroke: colors.cream,
         strokeAlpha: 0.12,
       }),
       label(
@@ -182,7 +187,7 @@ function renderCaptureSummary(
         bounds.y + bounds.height / 2,
         {
           anchorY: 0.5,
-          color: COLORS.creamMuted,
+          color: colors.creamMuted,
           fontSize: Math.max(7, Math.min(11 * layout.scale, bounds.height * 0.25)),
           fontWeight: "700",
           letterSpacing: compact ? 0.25 : 0.8,
@@ -196,7 +201,7 @@ function renderCaptureSummary(
           align: "right",
           anchorX: 1,
           anchorY: 0.5,
-          color: COLORS.gold,
+          color: colors.gold,
           fontSize: Math.max(9, Math.min(15 * layout.scale, bounds.height * 0.38)),
           fontWeight: "700",
         },
@@ -205,14 +210,14 @@ function renderCaptureSummary(
   }
 }
 
-function renderField(layer: Container, layout: BoardLayout): void {
+function renderField(layer: Container, layout: BoardLayout, colors: TableSceneColorsV1): void {
   const bounds = layout.cardZones.field;
   layer.addChild(
     panel(bounds, {
-      fill: COLORS.black,
+      fill: colors.black,
       fillAlpha: 0.13,
       radius: Math.max(10, 14 * layout.scale),
-      stroke: COLORS.gold,
+      stroke: colors.gold,
       strokeAlpha: 0.16,
     }),
     label(
@@ -220,7 +225,7 @@ function renderField(layer: Container, layout: BoardLayout): void {
       bounds.x + Math.max(8, 10 * layout.scale),
       bounds.y + Math.max(4, 6 * layout.scale),
       {
-        color: COLORS.creamMuted,
+        color: colors.creamMuted,
         fontSize: Math.max(8, 9.5 * layout.scale),
         fontWeight: "700",
         letterSpacing: Math.max(0.5, layout.scale),
@@ -232,12 +237,12 @@ function renderField(layer: Container, layout: BoardLayout): void {
     layer.addChild(
       new Graphics()
         .roundRect(slot.x, slot.y, slot.width, slot.height, layout.cardMetrics.cornerRadius)
-        .fill({ color: COLORS.cream, alpha: 0.025 })
-        .stroke({ color: COLORS.cream, alpha: 0.2, width: Math.max(1, layout.scale) }),
+        .fill({ color: colors.cream, alpha: 0.025 })
+        .stroke({ color: colors.cream, alpha: 0.2, width: Math.max(1, layout.scale) }),
       label(String(index + 1), slot.x + slot.width / 2, slot.y + slot.height / 2, {
         anchorX: 0.5,
         anchorY: 0.5,
-        color: COLORS.cream,
+        color: colors.cream,
         fontSize: Math.max(8, 10 * layout.scale),
         fontWeight: "600",
       }),
@@ -245,12 +250,12 @@ function renderField(layer: Container, layout: BoardLayout): void {
   }
 }
 
-function renderDrawPile(layer: Container, layout: BoardLayout): void {
+function renderDrawPile(layer: Container, layout: BoardLayout, colors: TableSceneColorsV1): void {
   const zone = layout.cardZones.drawPile;
   layer.addChild(
     label("DRAW", zone.x + zone.width / 2, zone.y + 3, {
       anchorX: 0.5,
-      color: COLORS.creamMuted,
+      color: colors.creamMuted,
       fontSize: Math.max(7, 8.5 * layout.scale),
       fontWeight: "700",
       letterSpacing: 0.8,
@@ -258,21 +263,21 @@ function renderDrawPile(layer: Container, layout: BoardLayout): void {
   );
 }
 
-function renderReveal(layer: Container, layout: BoardLayout): void {
+function renderReveal(layer: Container, layout: BoardLayout, colors: TableSceneColorsV1): void {
   const zone = layout.cardZones.reveal;
   const slot = layout.slots.reveal;
   layer.addChild(
     label("REVEAL", zone.x + zone.width / 2, zone.y + 3, {
       anchorX: 0.5,
-      color: COLORS.creamMuted,
+      color: colors.creamMuted,
       fontSize: Math.max(7, 8.5 * layout.scale),
       fontWeight: "700",
       letterSpacing: 0.8,
     }),
     new Graphics()
       .roundRect(slot.x, slot.y, slot.width, slot.height, Math.max(3, slot.width * 0.1))
-      .fill({ color: COLORS.cream, alpha: 0.02 })
-      .stroke({ color: COLORS.gold, alpha: 0.3, width: Math.max(1, layout.scale) }),
+      .fill({ color: colors.cream, alpha: 0.02 })
+      .stroke({ color: colors.gold, alpha: 0.3, width: Math.max(1, layout.scale) }),
   );
 }
 
@@ -281,6 +286,7 @@ function renderStatus(
   layout: BoardLayout,
   fullscreen: boolean,
   tableStatus: TableSceneStatusV1,
+  colors: TableSceneColorsV1,
 ): void {
   const identity = layout.uiZones.opponentIdentity;
   const status = layout.uiZones.roundStatus;
@@ -290,10 +296,10 @@ function renderStatus(
 
   layer.addChild(
     panel(identity, {
-      fill: COLORS.ink,
+      fill: colors.ink,
       fillAlpha: 0.88,
       radius: Math.min(12, identity.height * 0.32),
-      stroke: COLORS.cream,
+      stroke: colors.cream,
       strokeAlpha: 0.14,
     }),
     label(
@@ -302,7 +308,7 @@ function renderStatus(
       identity.y + identity.height / 2,
       {
         anchorY: 0.5,
-        color: COLORS.creamMuted,
+        color: colors.creamMuted,
         fontSize: Math.max(8, 10 * layout.scale),
         fontWeight: "700",
         letterSpacing: 0.8,
@@ -315,16 +321,16 @@ function renderStatus(
       {
         anchorX: 1,
         anchorY: 0.5,
-        color: COLORS.cream,
+        color: colors.cream,
         fontSize: Math.max(9, 12 * layout.scale),
         fontWeight: "700",
       },
     ),
     panel(status, {
-      fill: COLORS.ink,
+      fill: colors.ink,
       fillAlpha: 0.88,
       radius: Math.min(12, status.height * 0.32),
-      stroke: COLORS.cream,
+      stroke: colors.cream,
       strokeAlpha: 0.14,
     }),
     label(
@@ -333,7 +339,7 @@ function renderStatus(
       status.y + status.height / 2,
       {
         anchorY: 0.5,
-        color: COLORS.cream,
+        color: colors.cream,
         fontSize: Math.max(8, 11 * layout.scale),
         fontWeight: "700",
         letterSpacing: 0.6,
@@ -346,7 +352,7 @@ function renderStatus(
         width: Math.max(34, 42 * layout.scale),
         height: status.height - Math.max(8, status.height * 0.26),
       },
-      { fill: multiplierColor(tableStatus.multiplier), radius: 999 },
+      { fill: multiplierColor(colors, tableStatus.multiplier), radius: 999 },
     ),
     label(
       `${tableStatus.multiplier}×`,
@@ -355,23 +361,23 @@ function renderStatus(
       {
         anchorX: 0.5,
         anchorY: 0.5,
-        color: COLORS.white,
+        color: colors.white,
         fontSize: Math.max(10, 13 * layout.scale),
         fontWeight: "700",
       },
     ),
     panel(action, {
-      fill: COLORS.gold,
+      fill: colors.gold,
       fillAlpha: 0.11,
       radius: Math.min(16, action.height * 0.36),
-      stroke: COLORS.gold,
+      stroke: colors.gold,
       strokeAlpha: 0.52,
       strokeWidth: Math.max(1, layout.scale),
     }),
     label(actionLabel, action.x + action.width / 2, action.y + action.height / 2, {
       anchorX: 0.5,
       anchorY: 0.5,
-      color: COLORS.gold,
+      color: colors.gold,
       fontSize: Math.max(8, 10.5 * layout.scale),
       fontWeight: "700",
       letterSpacing: compact ? 0.35 : 1,
@@ -383,7 +389,7 @@ function renderStatus(
       {
         anchorX: 1,
         anchorY: 1,
-        color: COLORS.creamMuted,
+        color: colors.creamMuted,
         fontSize: Math.max(6, 7 * layout.scale),
         fontWeight: "600",
         letterSpacing: 0.45,
@@ -397,23 +403,24 @@ function renderInteractionHighlights(
   layout: BoardLayout,
   projection: PresentationBoardProjection,
   state: InteractionVisualStateV1,
+  colors: TableSceneColorsV1,
 ): void {
   if (state.locked) return;
   if (state.fieldPlacementAvailable) {
     const field = layout.cardZones.field;
     layer.addChild(
       panel(field, {
-        fill: COLORS.legal,
+        fill: colors.legal,
         fillAlpha: 0.055,
         radius: Math.max(8, 14 * layout.scale),
-        stroke: COLORS.legal,
+        stroke: colors.legal,
         strokeAlpha: 0.92,
         strokeWidth: Math.max(2, 2.5 * layout.scale),
       }),
       label("TAP FIELD TO PLACE", field.x + field.width / 2, field.y + field.height / 2, {
         anchorX: 0.5,
         anchorY: 0.5,
-        color: COLORS.legal,
+        color: colors.legal,
         fontSize: Math.max(8, 10 * layout.scale),
         fontWeight: "700",
         letterSpacing: 0.8,
@@ -440,13 +447,13 @@ function renderInteractionHighlights(
       width: placement.bounds.width + padding * 2,
       height: placement.bounds.height + padding * 2,
     };
-    const color = target ? COLORS.legal : selected ? COLORS.cream : COLORS.creamMuted;
+    const color = target ? colors.legal : selected ? colors.cream : colors.creamMuted;
     const alpha = target || selected ? 0.95 : selectable.has(cardId) ? 0.3 : 0;
     layer.addChild(
       new Graphics()
         .roundRect(bounds.x, bounds.y, bounds.width, bounds.height, Math.max(4, 8 * layout.scale))
         .stroke({
-          color: focused ? COLORS.white : color,
+          color: focused ? colors.white : color,
           alpha,
           width: focused || selected || target ? Math.max(2, 2.5 * layout.scale) : 1,
         }),
@@ -462,7 +469,7 @@ function renderInteractionHighlights(
         label(cueLabel, bounds.x + bounds.width / 2, Math.max(layout.safeBounds.y, bounds.y - 2), {
           anchorX: 0.5,
           anchorY: 1,
-          color: COLORS.legal,
+          color: colors.legal,
           fontSize: Math.max(7, 8.5 * layout.scale),
           fontWeight: "700",
           letterSpacing: 0.7,
@@ -498,6 +505,7 @@ function applyInteractionPlacement(
 export function createTableScene(
   app: Application,
   initialDeck: ActiveDeckTextures<Texture>,
+  initialTheme: Phase3DVisualDirectionV1 = ACTIVE_PHASE_3D_VISUAL_DIRECTION,
 ): TableScene {
   const root = new Container({ label: "TableScene" });
   const rootToken = createSceneObjectToken("root");
@@ -524,7 +532,8 @@ export function createTableScene(
     cardLayers.set(name, cards);
     layerTokens.set(layer, createSceneObjectToken("layer"));
   }
-  const cardRegistry = createCardViewRegistry(initialDeck);
+  const cardRegistry = createCardViewRegistry(initialDeck, initialTheme.table);
+  let theme = initialTheme;
   let currentLayout: BoardLayout | null = null;
   let currentFullscreen = false;
   let displayProjection = createPresentationProjection(CARD_SHOWCASE_ASSIGNMENTS);
@@ -594,11 +603,11 @@ export function createTableScene(
     background.addChild(
       new Graphics()
         .rect(0, 0, layout.viewport.width, layout.viewport.height)
-        .fill({ color: COLORS.backdrop }),
+        .fill({ color: theme.table.backdrop }),
       panel(layout.safeBounds, {
-        fill: COLORS.table,
+        fill: theme.table.table,
         radius: Math.max(14, 22 * layout.scale),
-        stroke: COLORS.gold,
+        stroke: theme.table.gold,
         strokeAlpha: 0.3,
         strokeWidth: Math.max(1, 1.5 * layout.scale),
       }),
@@ -608,7 +617,7 @@ export function createTableScene(
           layout.safeBounds.y + layout.safeBounds.height / 2,
           Math.min(layout.safeBounds.width, layout.safeBounds.height) * 0.32,
         )
-        .fill({ color: COLORS.gold, alpha: 0.025 }),
+        .fill({ color: theme.table.gold, alpha: 0.025 }),
     );
 
     renderHand(
@@ -617,6 +626,7 @@ export function createTableScene(
       `${tableStatus.opponentLabel} hand`,
       tableStatus.opponentHandCount,
       layout.scale,
+      theme.table,
     );
     const currentCards = cardRegistry.inspect();
     renderCaptureSummary(
@@ -624,15 +634,17 @@ export function createTableScene(
       layout,
       "opponent",
       currentCards.zoneCounts,
+      theme.table,
     );
-    renderField(requiredChrome("FieldLayer"), layout);
-    renderDrawPile(requiredChrome("DrawPileLayer"), layout);
-    renderReveal(requiredChrome("RevealLayer"), layout);
+    renderField(requiredChrome("FieldLayer"), layout, theme.table);
+    renderDrawPile(requiredChrome("DrawPileLayer"), layout, theme.table);
+    renderReveal(requiredChrome("RevealLayer"), layout, theme.table);
     renderCaptureSummary(
       requiredChrome("PlayerCaptureLayer"),
       layout,
       "player",
       currentCards.zoneCounts,
+      theme.table,
     );
     renderHand(
       requiredChrome("PlayerHandLayer"),
@@ -640,13 +652,21 @@ export function createTableScene(
       `${tableStatus.playerLabel} hand · ${tableStatus.playerScore} pts`,
       tableStatus.playerHandCount,
       layout.scale,
+      theme.table,
     );
-    renderStatus(requiredChrome("InteractionOverlayLayer"), layout, fullscreen, tableStatus);
+    renderStatus(
+      requiredChrome("InteractionOverlayLayer"),
+      layout,
+      fullscreen,
+      tableStatus,
+      theme.table,
+    );
     renderInteractionHighlights(
       requiredChrome("InteractionOverlayLayer"),
       layout,
       displayProjection,
       interactionState,
+      theme.table,
     );
   };
 
@@ -655,6 +675,11 @@ export function createTableScene(
       cardRegistry.applyDeck(textures);
     },
     redraw,
+    setTheme: (nextTheme) => {
+      theme = nextTheme;
+      cardRegistry.applyFrameColors(theme.table);
+      if (currentLayout) redraw({ fullscreen: currentFullscreen, layout: currentLayout });
+    },
     setInteractionState: (state) => {
       interactionState = Object.freeze({
         ...state,
