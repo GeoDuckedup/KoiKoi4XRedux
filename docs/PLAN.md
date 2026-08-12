@@ -2,8 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 11, 2026
-**Current gate:** Phase 3E-A table clarity and decision surfaces passed local acceptance and are
-ready for release
+**Current gate:** Phase 3E-A table clarity and decision surfaces are deployed and accepted; Phase
+3E-B authoritative interactive Draw resolution is ready to begin
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -707,7 +707,7 @@ Architecture is recorded in
 
 ### Phase 3E — Playability corrections
 
-Status: **Phase 3E-A locally accepted; release pending**.
+Status: **Phase 3E-A deployed and accepted; Phase 3E-B ready**.
 
 - **3E-A — Table clarity and decision surfaces:** remove empty field-slot chrome, anchor Options at
   the bottom, add public capture inspection, keep the field visible during Koi-Koi decisions, and

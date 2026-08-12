@@ -910,3 +910,14 @@ Original prompt: read the package and understand it, then let me know when we ar
   771-module production build.
 - Owner direction moves the full tutorial after interaction, full-match, and product polish work.
   Phase 3E-B authoritative interactive Draw resolution is next after 3E-A acceptance.
+
+## 2026-08-11 — Phase 3E-A deployed and accepted
+
+- Pushed implementation commit `0b6937a` and CI-stability commit `818936a`. CI run `31554760462`
+  and Pages run `31554760390` passed; the Pages deployment completed successfully.
+- The first Pages attempt exposed a pre-existing 5-second timeout on a raster-builder test under
+  shared-runner load. The test performs the same contact-sheet work as neighboring 60-second tests;
+  applying that established timeout policy closed the flake without changing product code.
+- The live URL returned HTTP 200. A cache-busted real-browser check reached ready state with the
+  approved Primary Deck, one canvas, 48 persistent CardViews, eight legal hand controls, zero
+  empty-field placeholders, and no layout diagnostics. Phase 3E-A evidence maturity is `live`.

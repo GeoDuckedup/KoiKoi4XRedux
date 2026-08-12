@@ -2,8 +2,8 @@
 
 **Updated:** August 11, 2026
 
-**Overall state:** Greenfield rewrite through Phase 3D-D deployed and accepted; Phase 3E-A table
-clarity passed local acceptance and is ready for release
+**Overall state:** Greenfield rewrite through Phase 3E-A deployed and accepted; Phase 3E-B
+authoritative interactive Draw resolution is ready to begin
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -17,6 +17,12 @@ adaptive geometry remains; Options moves to the bottom safe area; nonempty publi
 open exact card galleries; the Koi-Koi choice becomes a field-visible tray; and Round Result leads
 with outcome, points, totals, and its action while secondary facts begin collapsed. This slice does
 not change engine rules, scoring, draw resolution, or round progression.
+
+Release commits `0b6937a` and `818936a` passed CI run `31554760462` and Pages run `31554760390`.
+The latter contains the CI timing stabilization for the retained raster-builder test. The live page
+returned HTTP 200, and a cache-busted browser check reached ready state with the approved Primary
+Deck, one canvas, 48 persistent CardViews, eight legal hand controls, zero empty-field placeholders,
+and no layout diagnostics.
 
 Phase 3D-C promotes all three owner-approved directions into one production build. Ink & Parchment
 is the safe default; Moonlit Indigo and the original-game-inspired Warm Ivory select through the
