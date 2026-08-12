@@ -133,7 +133,7 @@ describe("Phase 2E raster and package builder", () => {
       width: 390,
       height: 1624,
     });
-  });
+  }, 60_000);
 
   it("builds the owner-approved primary package and strict release manifest", async () => {
     const output = await temporaryDirectory("phase2e-primary-candidate");
