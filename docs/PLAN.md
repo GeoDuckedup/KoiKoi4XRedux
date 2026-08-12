@@ -2,8 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 11, 2026
-**Current gate:** Phase 3D-D adaptive dense field is deployed and accepted; Phase 4A tutorial
-director is the next recommended subphase
+**Current gate:** Phase 3E-A table clarity and decision surfaces passed local acceptance and are
+ready for release
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -705,14 +705,43 @@ Phase 3D-D gate:
 Architecture is recorded in
 [`ADR 0017`](./adr/0017-phase-3d-d-adaptive-dense-field.md).
 
+### Phase 3E — Playability corrections
+
+Status: **Phase 3E-A locally accepted; release pending**.
+
+- **3E-A — Table clarity and decision surfaces:** remove empty field-slot chrome, anchor Options at
+  the bottom, add public capture inspection, keep the field visible during Koi-Koi decisions, and
+  stage result details behind disclosure.
+- **3E-B — Authoritative interactive Draw resolution:** introduce an explicit legal Draw-resolution
+  action for no-match, unique-pair, exact-two, and sweep outcomes without duplicating rules in the
+  browser.
+- **3E-C — Draw animation and browser integration:** animate the physical top card into Reveal,
+  connect the shared Hand/Draw interaction language, and validate accessibility/replay.
+
+Phase 3E-A gate:
+
+- permanent field slot outlines/numbers are absent while adaptive placement geometry remains;
+- Options stays at the bottom safe area without covering active play;
+- each nonempty public capture rail opens an exact category/card inspector and changes no game
+  state or private projection;
+- the Koi-Koi tray does not overlap the game frame, retains capture inspection, and leaves only
+  authoritative Bank/Koi actions executable;
+- Round Result initially shows outcome, points, totals, and one action; secondary scoring,
+  evidence, transition, and history begin collapsed;
+- root and Pages real-game traces pass required responsive/focus/privacy/card-identity checks with
+  no browser or network errors.
+
+Architecture is recorded in [`ADR 0018`](./adr/0018-phase-3e-a-table-clarity.md).
+
 ## Later phases
 
-1. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook,
-   built over the owner-approved Phase 3D table and interaction model.
-2. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, and pass-and-play.
-3. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
-4. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
-5. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
-6. **Phase 9 — Production polish:** content, accessibility, performance, telemetry/reliability, and release.
+1. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, and pass-and-play.
+2. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
+3. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
+4. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
+5. **Phase 9A — Product polish:** final interface, accessibility, performance, and reliability pass.
+6. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook,
+   deliberately executed after the final interaction and progression model stabilizes.
+7. **Phase 9B — Release acceptance:** final content, telemetry, cross-platform, and release checks.
 
 No later phase may bypass the acceptance gate of the preceding phase.

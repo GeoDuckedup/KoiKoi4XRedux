@@ -2,8 +2,8 @@
 
 **Updated:** August 11, 2026
 
-**Overall state:** Greenfield rewrite through Phase 3D-D deployed and accepted; Phase 4A tutorial
-director is next
+**Overall state:** Greenfield rewrite through Phase 3D-D deployed and accepted; Phase 3E-A table
+clarity passed local acceptance and is ready for release
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -11,6 +11,12 @@ cards, deterministic public-event animation, private pass-the-device handoff, ac
 and the retained local-only deterministic deck Workshop/raster review pipeline
 
 ## Current result
+
+Phase 3E-A responds directly to owner playtesting. Permanent numbered field slots are removed while
+adaptive geometry remains; Options moves to the bottom safe area; nonempty public capture rails
+open exact card galleries; the Koi-Koi choice becomes a field-visible tray; and Round Result leads
+with outcome, points, totals, and its action while secondary facts begin collapsed. This slice does
+not change engine rules, scoring, draw resolution, or round progression.
 
 Phase 3D-C promotes all three owner-approved directions into one production build. Ink & Parchment
 is the safe default; Moonlit Indigo and the original-game-inspired Warm Ivory select through the
@@ -447,6 +453,6 @@ The deployed baseline is
 
 ## Next subphase
 
-**Phase 3D-D — Adaptive dense field:** replace the current post-eight-card overflow fan with a
-deterministic shrink-to-fit layout through the derived 17-card legal field bound, retaining readable
-cards, direct matching targets, animation settlement, and keyboard/touch accessibility.
+**Phase 3E-B — Authoritative interactive Draw resolution:** make the revealed top-deck card an
+explicit legal player action for no-match placement, unique capture, exact-two choice, and sweep,
+using engine-owned legality rather than browser-derived matching rules.

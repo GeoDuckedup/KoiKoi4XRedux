@@ -886,3 +886,27 @@ Original prompt: read the package and understand it, then let me know when we ar
   controls, and no layout diagnostics.
 - The deliberately non-shipping `field-density-review.html` route returned HTTP 404 on the live
   site. Phase 3D-D evidence maturity is `live`; Phase 4A tutorial director is next.
+
+## 2026-08-11 — Phase 3E-A table clarity integrated
+
+- Removed permanent empty-card slot outlines and numbers while retaining the field region,
+  adaptive geometry, and temporary legal placement highlight.
+- Moved Options to a bottom-safe utility. Added exact public capture galleries over the active deck
+  art without creating cards, commands, or hidden-state projections.
+- Moved the Yaku Decision outside the game frame so the field stays visible and capture galleries
+  remain available. Gameplay and unrelated settings remain locked.
+- Reduced Round Result to outcome, award, totals, and one primary action; scoring, evidence,
+  transition, and history begin collapsed under native Details.
+- Focused capture/result/Yaku/snapshot tests pass 4 files / 27 tests. Root and Pages browser traces
+  pass all seven viewports, themes, direct interactions, Koi inspection, End-of-Play, Bank, result
+  disclosure, one-canvas/48-CardView, and zero-error checks. The retained 17-card stress harness
+  also passes all 14 root/Pages viewports after excluding its non-shipping shell from the new
+  production bottom-utility reserve.
+- The complete Phase 3E-A gate passes 3 Phase 3D-A files / 23 tests, 27 web/deck/fixture files / 190
+  tests, Workshop, root and Pages gameplay, and the 14-viewport dense-field review. Independent
+  release review reports no blocker, high, or medium finding. Deployment remains.
+- `npm run check` passes formatting, zero-warning lint, all five workspace typechecks, deck
+  validation, 45 files / 424 ordinary tests, the 10,002-match deterministic generated gate, and the
+  771-module production build.
+- Owner direction moves the full tutorial after interaction, full-match, and product polish work.
+  Phase 3E-B authoritative interactive Draw resolution is next after 3E-A acceptance.

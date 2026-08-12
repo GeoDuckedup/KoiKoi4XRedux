@@ -49,6 +49,7 @@ describe("Phase 2B table diagnostics", () => {
       canvasCount: 1,
       diagnostics: inspectBoardLayout(layout),
       fullscreen: false,
+      captureInspection: { open: false, owner: null, totalCards: 0 },
       input: {
         status: "idle",
         confirmationMode: "guided",
@@ -93,6 +94,7 @@ describe("Phase 2B table diagnostics", () => {
         status: "ready",
       },
       scene: {
+        emptyFieldPlaceholderCount: 0,
         root: { label: "TableScene", token: "root-1" },
         layers: BOARD_LAYER_ORDER.map((label, index) => ({ label, token: `layer-${index + 2}` })),
         cards: {
@@ -130,6 +132,7 @@ describe("Phase 2B table diagnostics", () => {
       viewport: { width: 390, height: 844 },
       boardViewport: { width: 390, height: 720 },
       fullscreen: false,
+      captureInspection: { open: false, owner: null, totalCards: 0 },
       input: {
         status: "idle",
         confirmationMode: "guided",
@@ -152,6 +155,7 @@ describe("Phase 2B table diagnostics", () => {
       coordinateSystem: COORDINATE_SYSTEM,
       layerOrder: BOARD_LAYER_ORDER,
       scene: {
+        emptyFieldPlaceholderCount: 0,
         root: { label: "TableScene", token: "root-1" },
       },
       deck: {

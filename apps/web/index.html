@@ -17,16 +17,6 @@
         <div>
           <h1 id="app-title">KoiKoi4x</h1>
         </div>
-        <button
-          class="options-trigger"
-          type="button"
-          data-options-trigger
-          aria-haspopup="dialog"
-          aria-controls="options-dialog"
-          aria-expanded="false"
-        >
-          Options
-        </button>
       </header>
 
       <dialog
@@ -128,6 +118,22 @@
           >
             Place selected card on field
           </button>
+          <button
+            class="capture-inspect-control capture-inspect-control--opponent"
+            type="button"
+            data-capture-inspect="opponent"
+            aria-haspopup="dialog"
+          >
+            View opponent captures
+          </button>
+          <button
+            class="capture-inspect-control capture-inspect-control--player"
+            type="button"
+            data-capture-inspect="player"
+            aria-haspopup="dialog"
+          >
+            View your captures
+          </button>
         </div>
         <div class="handoff" data-handoff hidden role="dialog" aria-modal="true">
           <div class="handoff-card">
@@ -140,28 +146,6 @@
         <section class="yaku-feedback" data-yaku-feedback hidden role="status" aria-live="polite">
           <p class="eyebrow">Table update</p>
           <p data-yaku-feedback-message></p>
-        </section>
-        <section
-          class="yaku-decision"
-          data-yaku-decision
-          hidden
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="yaku-decision-title"
-          aria-describedby="yaku-decision-summary yaku-decision-total yaku-decision-resume"
-        >
-          <p class="eyebrow">Yaku decision</p>
-          <h2 id="yaku-decision-title" data-yaku-decision-title>Choose your next move</h2>
-          <p data-yaku-decision-summary></p>
-          <p class="yaku-decision__total" data-yaku-decision-total></p>
-          <p class="yaku-decision__resume" data-yaku-decision-resume></p>
-          <p class="yaku-decision__unavailable" data-yaku-bank-unavailable hidden>
-            Bank is unavailable for this decision.
-          </p>
-          <div class="yaku-decision__actions">
-            <button type="button" data-yaku-bank hidden>Bank</button>
-            <button type="button" data-yaku-koi-koi hidden>Call Koi-Koi</button>
-          </div>
         </section>
         <section
           class="round-result"
@@ -180,29 +164,62 @@
             </div>
             <div class="round-result__score" data-round-result-score>
               <p class="round-result__arithmetic" data-round-result-arithmetic></p>
-              <p class="round-result__multipliers" data-round-result-multipliers></p>
-              <ul class="round-result__yaku" data-round-result-yaku></ul>
             </div>
             <div class="round-result__totals" aria-label="Match scores after this round">
               <p><span>Player A</span><strong data-round-result-score-a>0</strong></p>
               <p><span>Player B</span><strong data-round-result-score-b>0</strong></p>
             </div>
-            <section class="round-result__evidence" data-round-result-evidence hidden>
-              <h3>Committed evidence</h3>
-              <ul data-round-result-evidence-list></ul>
-            </section>
-            <section class="round-result__transition" data-round-result-transition>
-              <h3 data-round-result-transition-title>Next-round plan</h3>
-              <p data-round-result-transition-copy></p>
-              <p class="round-result__privilege" data-round-result-privilege hidden></p>
-            </section>
-            <section class="round-result__history" data-round-result-history hidden>
-              <h3>Match history</h3>
-              <ol data-round-result-history-list></ol>
-            </section>
             <button type="button" data-round-result-action>Start another local round</button>
+            <details class="round-result__details" data-round-result-details>
+              <summary>See scoring and round details</summary>
+              <div class="round-result__details-body">
+                <section class="round-result__scoring-details" data-round-result-scoring-details>
+                  <h3>Scoring details</h3>
+                  <p class="round-result__multipliers" data-round-result-multipliers></p>
+                  <ul class="round-result__yaku" data-round-result-yaku></ul>
+                </section>
+                <section class="round-result__evidence" data-round-result-evidence hidden>
+                  <h3>Committed evidence</h3>
+                  <ul data-round-result-evidence-list></ul>
+                </section>
+                <section class="round-result__transition" data-round-result-transition>
+                  <h3 data-round-result-transition-title>Next-round plan</h3>
+                  <p data-round-result-transition-copy></p>
+                  <p class="round-result__privilege" data-round-result-privilege hidden></p>
+                </section>
+                <section class="round-result__history" data-round-result-history hidden>
+                  <h3>Match history</h3>
+                  <ol data-round-result-history-list></ol>
+                </section>
+              </div>
+            </details>
           </article>
         </section>
+      </section>
+
+      <section
+        class="yaku-decision"
+        data-yaku-decision
+        hidden
+        role="dialog"
+        aria-modal="false"
+        aria-labelledby="yaku-decision-title"
+        aria-describedby="yaku-decision-summary yaku-decision-total yaku-decision-resume"
+      >
+        <div class="yaku-decision__copy">
+          <p class="eyebrow">Yaku decision</p>
+          <h2 id="yaku-decision-title" data-yaku-decision-title>Choose your next move</h2>
+          <p data-yaku-decision-summary></p>
+          <p class="yaku-decision__total" data-yaku-decision-total></p>
+          <p class="yaku-decision__resume" data-yaku-decision-resume></p>
+          <p class="yaku-decision__unavailable" data-yaku-bank-unavailable hidden>
+            Bank is unavailable for this decision.
+          </p>
+        </div>
+        <div class="yaku-decision__actions">
+          <button type="button" data-yaku-bank hidden>Bank</button>
+          <button type="button" data-yaku-koi-koi hidden>Call Koi-Koi</button>
+        </div>
       </section>
 
       <section class="turn-context" data-turn-context aria-label="Current turn">
@@ -247,6 +264,33 @@
           </ol>
         </details>
       </section>
+      <div class="bottom-utilities">
+        <button
+          class="options-trigger"
+          type="button"
+          data-options-trigger
+          aria-haspopup="dialog"
+          aria-controls="options-dialog"
+          aria-expanded="false"
+        >
+          Options
+        </button>
+      </div>
+
+      <dialog
+        class="capture-inspector"
+        data-capture-inspector
+        aria-labelledby="capture-inspector-title"
+      >
+        <header class="capture-inspector__header">
+          <div>
+            <p class="eyebrow">Public captures</p>
+            <h2 id="capture-inspector-title" data-capture-inspector-title>Captured cards</h2>
+          </div>
+          <button type="button" data-capture-inspector-close>Close</button>
+        </header>
+        <div class="capture-inspector__groups" data-capture-inspector-groups></div>
+      </dialog>
       <p class="visually-hidden" id="input-instruction" data-input-instruction aria-live="polite">
         Loading keyboard-accessible card controls.
       </p>

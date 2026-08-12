@@ -3586,7 +3586,34 @@ Phase 3 acceptance:
 - all card movements are physical and legible;
 - no full-board DOM rebuild for card motion.
 
+## Phase 3E — Playability corrections
+
+### Phase 3E-A — Table clarity and decision surfaces
+
+- remove permanent empty field-slot chrome;
+- bottom-safe Options access;
+- public captured-card inspection;
+- field-visible Koi-Koi decision tray;
+- concise result summary with disclosed secondary details.
+
+### Phase 3E-B — Authoritative interactive Draw resolution
+
+- every revealed Draw card pauses for an authoritative player resolution action;
+- no-match placement, unique pair, exact-two choice, and sweep reuse the same public interaction
+  language as Hand play;
+- browser presentation never reconstructs capture legality.
+
+### Phase 3E-C — Physical Draw integration
+
+- the top card visibly leaves the draw-pile top and enters Reveal;
+- resolution input, animation, recap, replay, and accessibility remain aligned;
+- root/Pages and deterministic replay gates cover every Draw-resolution family.
+
 ## Phase 4 — Onboarding
+
+Phase 4 retains its numeric identity but is intentionally executed after full-match progression,
+final interaction work, and the product-polish pass. The tutorial must teach the settled game rather
+than encode temporary table behavior.
 
 ### Phase 4A — Tutorial director
 

@@ -466,7 +466,27 @@ Phase 3D-D binding:
 - the normal application contains no fixture selector, query parameter, global state injector, or
   deployed density-review HTML entry. Evidence is written under `output/phase-3d-d/e2e/`.
 
-## 18. Approved-decision coverage matrix
+## 18. Phase 3E-A table-clarity vectors
+
+| ID | Required expectation |
+|---|---|
+| `TABLE-CLARITY-001-EMPTY-FIELD` | No numbered or outlined unused slots render; adaptive geometry and temporary legal placement cues remain. |
+| `TABLE-CLARITY-002-OPTIONS-BOTTOM` | Options remains inside the bottom safe area at every supported viewport and preserves focus/locks. |
+| `TABLE-CLARITY-003-CAPTURE-INSPECT` | Either nonempty public capture rail opens exactly that player's category-grouped captured cards; Close/Escape restores focus and changes no authority. |
+| `TABLE-CLARITY-004-KOI-VISIBLE-TABLE` | A real Yaku Decision tray does not overlap the game frame; public capture inspection remains available while gameplay and Options stay locked. |
+| `TABLE-CLARITY-005-CONCISE-RESULT` | Bank and End-of-Play results initially show outcome, award/totals, and one action; scoring/evidence/transition/history are collapsed until requested. |
+| `TABLE-CLARITY-006-RESPONSIVE-A11Y` | Root/Pages mobile, landscape, and desktop traces preserve keyboard focus, one canvas, 48 CardViews, privacy, containment, and zero errors. |
+
+Phase 3E-A binding:
+
+- a pure capture presenter proves exact public category grouping, immutability, and no private-state
+  fields;
+- scene/text inspection reports zero permanent empty-field placeholders;
+- the existing deterministic production round supplies real Koi-Koi, capture-inspection, Bank, and
+  End-of-Play traces without a production state injector;
+- browser artifacts are written under `output/phase-3e-a/e2e/`.
+
+## 19. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|
@@ -485,7 +505,7 @@ Phase 3D-D binding:
 | R-013 | All `FINAL-MONTH-*` fixtures |
 | R-014 | Scroll fixed, incremental, seven-Scroll, and no-combined-bonus fixtures |
 
-## 18. Binding gates
+## 20. Binding gates
 
 Phase 0C completed:
 

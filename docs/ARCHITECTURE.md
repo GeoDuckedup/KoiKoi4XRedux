@@ -16,6 +16,11 @@ cannot import either package or any presentation/authoring system. The web app a
 may consume domain/protocol packages; domain packages may not import presentation, browser, or
 backend systems. ESLint restrictions and executable architecture tests enforce these boundaries.
 
+Phase 3E-A capture inspection and result/decision disclosure are recipient-only presentation state
+inside `apps/web`. They consume public captures, public Yaku/legal actions, public results, and active
+deck-manifest image paths. They may not create commands, infer gameplay outcomes, access hidden
+allocation, or enter authoritative replay/protocol records.
+
 The deck-format core is browser-portable and performs schema validation, inheritance, provenance,
 transform math, and complete runtime-manifest validation without filesystem access. Node-only source
 inspection, hashing, technical-pilot seeding, generated artifacts, and the CLI live below

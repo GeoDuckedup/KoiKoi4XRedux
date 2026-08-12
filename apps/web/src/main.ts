@@ -13,6 +13,10 @@ import {
   serializeTablePreviewSnapshot,
 } from "./app/table-preview-state";
 import {
+  createCaptureInspectionPresentation,
+  type CaptureInspectionOwnerV1,
+} from "./game/capture-inspection";
+import {
   createLocalRoundRuntime,
   PHASE_3A_MATCH_ID,
   type LocalRoundRuntimeV1,
@@ -43,7 +47,7 @@ import {
 } from "./presentation/animation/types";
 import { computeBoardLayout, inspectBoardLayout } from "./presentation/board/board-layout";
 import { computeAdaptiveFieldLayout } from "./presentation/board/adaptive-field-layout";
-import { CARD_ZONES, type BoardLayout } from "./presentation/board/types";
+import { CARD_ZONES, type BoardLayout, type BoardRect } from "./presentation/board/types";
 import type { CardRuntimeInspection } from "./presentation/cards/types";
 import {
   createPixiCardAssetManager,
@@ -105,6 +109,13 @@ const accelerateButton = queryRequired<HTMLButtonElement>("[data-animation-accel
 const finishButton = queryRequired<HTMLButtonElement>("[data-animation-finish]");
 const cardInputOverlay = queryRequired<HTMLElement>("[data-card-input-overlay]");
 const fieldPlacementControl = queryRequired<HTMLButtonElement>("[data-input-field-placement]");
+const captureInspectControls = Object.freeze([
+  ...document.querySelectorAll<HTMLButtonElement>("[data-capture-inspect]"),
+]);
+const captureInspector = queryRequired<HTMLDialogElement>("[data-capture-inspector]");
+const captureInspectorTitle = queryRequired<HTMLElement>("[data-capture-inspector-title]");
+const captureInspectorGroups = queryRequired<HTMLElement>("[data-capture-inspector-groups]");
+const captureInspectorClose = queryRequired<HTMLButtonElement>("[data-capture-inspector-close]");
 const inputModeSelect = queryRequired<HTMLSelectElement>("[data-input-mode]");
 const inputConfirmButton = queryRequired<HTMLButtonElement>("[data-input-confirm]");
 const inputCancelButton = queryRequired<HTMLButtonElement>("[data-input-cancel]");
@@ -132,6 +143,7 @@ const roundResultContext = queryRequired<HTMLElement>("[data-round-result-contex
 const roundResultTitle = queryRequired<HTMLElement>("[data-round-result-title]");
 const roundResultOutcome = queryRequired<HTMLElement>("[data-round-result-outcome]");
 const roundResultScore = queryRequired<HTMLElement>("[data-round-result-score]");
+const roundResultScoringDetails = queryRequired<HTMLElement>("[data-round-result-scoring-details]");
 const roundResultArithmetic = queryRequired<HTMLElement>("[data-round-result-arithmetic]");
 const roundResultMultipliers = queryRequired<HTMLElement>("[data-round-result-multipliers]");
 const roundResultYaku = queryRequired<HTMLUListElement>("[data-round-result-yaku]");
@@ -149,6 +161,10 @@ const roundResultTransitionCopy = queryRequired<HTMLElement>("[data-round-result
 const roundResultPrivilege = queryRequired<HTMLElement>("[data-round-result-privilege]");
 const roundResultHistory = queryRequired<HTMLElement>("[data-round-result-history]");
 const roundResultHistoryList = queryRequired<HTMLOListElement>("[data-round-result-history-list]");
+const roundResultDetails = queryRequired<HTMLDetailsElement>("[data-round-result-details]");
+const roundResultDetailsSummary = queryRequired<HTMLElement>(
+  "[data-round-result-details] > summary",
+);
 const roundResultAction = queryRequired<HTMLButtonElement>("[data-round-result-action]");
 
 let application: Application | undefined;
@@ -180,6 +196,8 @@ let manualAnimationClock = false;
 let pendingTurnEvents: LocalRoundTransitionV1["events"][number][] = [];
 let focusedYakuDecisionKey: string | null = null;
 let focusedRoundResultKey: string | null = null;
+let captureInspectionOwner: CaptureInspectionOwnerV1 | null = null;
+let captureInspectionTrigger: HTMLButtonElement | null = null;
 const recaps: string[] = ["Round ready. Player A begins."];
 
 function syncThemeControls(): void {
@@ -286,12 +304,16 @@ function snapshot() {
   };
   const layout = currentLayout ?? computeBoardLayout(boardViewport);
   const scene = tableScene?.inspect() ?? {
+    emptyFieldPlaceholderCount: 0,
     root: { label: "TableScene" as const, token: "unavailable" },
     layers: [],
     cards: unavailableCards,
   };
   const activeManifest = cardAssetManager?.active?.manifest ?? null;
   const phase = observation.publicState.phase;
+  const activeCaptureInspection = captureInspectionOwner
+    ? createCaptureInspectionPresentation({ observation, owner: captureInspectionOwner })
+    : null;
   return createTablePreviewSnapshot({
     animation: animationDirector?.inspect() ?? unavailableAnimation,
     ready,
@@ -299,6 +321,11 @@ function snapshot() {
     viewport: { width: window.innerWidth, height: window.innerHeight },
     boardViewport,
     fullscreen: document.fullscreenElement !== null,
+    captureInspection: {
+      open: captureInspector.open,
+      owner: captureInspectionOwner,
+      totalCards: activeCaptureInspection?.totalCards ?? 0,
+    },
     input: interactionController?.inspect() ?? unavailableInput,
     semanticControlCount,
     localRound: {
@@ -354,6 +381,7 @@ function currentInputLock(): InputLockReason | null {
   if (deckStatus === "loading") return "deckLoading";
   if (animationDirector?.isBusy()) return "animation";
   if (processingIntent) return "awaitingObservation";
+  if (captureInspector.open) return "remoteReplay";
   if (handoffPlayerId !== null) return "remoteReplay";
   return null;
 }
@@ -366,10 +394,112 @@ function isRoundResultOpen(): boolean {
   return resultPresentation !== null;
 }
 
+function isCaptureInspectionOpen(): boolean {
+  return captureInspector.open;
+}
+
 function isOptionsBlocked(): boolean {
   return (
-    processingIntent || handoffPlayerId !== null || isYakuDecisionOpen() || isRoundResultOpen()
+    processingIntent ||
+    handoffPlayerId !== null ||
+    isYakuDecisionOpen() ||
+    isRoundResultOpen() ||
+    isCaptureInspectionOpen()
   );
+}
+
+function captureOwnerFromControl(control: HTMLButtonElement): CaptureInspectionOwnerV1 {
+  const owner = control.dataset.captureInspect;
+  if (owner !== "player" && owner !== "opponent") {
+    throw new Error(`CAPTURE_INSPECTION_OWNER_INVALID: ${owner ?? "missing"}`);
+  }
+  return owner;
+}
+
+function captureZoneBounds(owner: CaptureInspectionOwnerV1, layout: BoardLayout): BoardRect {
+  const zones =
+    owner === "player"
+      ? (["playerBrights", "playerAnimals", "playerScrolls", "playerPlains"] as const)
+      : (["opponentBrights", "opponentAnimals", "opponentScrolls", "opponentPlains"] as const);
+  const bounds = zones.map((zone) => layout.cardZones[zone]);
+  const left = Math.min(...bounds.map(({ x }) => x));
+  const top = Math.min(...bounds.map(({ y }) => y));
+  const right = Math.max(...bounds.map(({ x, width }) => x + width));
+  const bottom = Math.max(...bounds.map(({ y, height }) => y + height));
+  return Object.freeze({ x: left, y: top, width: right - left, height: bottom - top });
+}
+
+function activeCardFaceUrl(cardId: Parameters<typeof getCardDefinition>[0]): string {
+  const bundle = cardAssetManager?.active;
+  if (!bundle) throw new Error("CAPTURE_INSPECTION_DECK_UNAVAILABLE");
+  const descriptor = INSTALLED_DECKS.find(({ id }) => id === bundle.manifest.packageId);
+  if (!descriptor) throw new Error(`CAPTURE_INSPECTION_DECK_UNKNOWN: ${bundle.manifest.packageId}`);
+  const baseUrl = new URL(import.meta.env.BASE_URL, window.location.origin);
+  const manifestUrl = new URL(descriptor.manifestPath, baseUrl);
+  return new URL(bundle.manifest.cardFaces[cardId].path, manifestUrl).href;
+}
+
+function closeCaptureInspection(restoreFocus = true): void {
+  if (!captureInspector.open) return;
+  const trigger = captureInspectionTrigger;
+  captureInspector.close();
+  captureInspectionOwner = null;
+  captureInspectionTrigger = null;
+  refreshInteractionSurface();
+  if (restoreFocus && trigger) {
+    queueMicrotask(() => {
+      if (!trigger.disabled && !trigger.hidden) trigger.focus();
+    });
+  }
+}
+
+function openCaptureInspection(control: HTMLButtonElement): void {
+  if (
+    captureInspector.open ||
+    processingIntent ||
+    handoffPlayerId !== null ||
+    isRoundResultOpen() ||
+    animationDirector?.isBusy()
+  ) {
+    return;
+  }
+  const owner = captureOwnerFromControl(control);
+  const presentation = createCaptureInspectionPresentation({ observation, owner });
+  if (presentation.totalCards === 0) return;
+  captureInspectionOwner = owner;
+  captureInspectionTrigger = control;
+  captureInspectorTitle.textContent = `${playerName(presentation.playerId)} captures · ${presentation.totalCards}`;
+  captureInspectorGroups.replaceChildren(
+    ...presentation.groups.map((group) => {
+      const section = document.createElement("section");
+      section.className = "capture-inspector__group";
+      const heading = document.createElement("h3");
+      heading.textContent = `${group.label} · ${group.cards.length}`;
+      const cards = document.createElement("div");
+      cards.className = "capture-inspector__cards";
+      cards.replaceChildren(
+        ...(group.cards.length > 0
+          ? group.cards.map((card) => {
+              const figure = document.createElement("figure");
+              const image = document.createElement("img");
+              image.src = activeCardFaceUrl(card.cardId);
+              image.alt = card.label;
+              image.width = 96;
+              image.height = 154;
+              const caption = document.createElement("figcaption");
+              caption.textContent = card.label;
+              figure.append(image, caption);
+              return figure;
+            })
+          : [Object.assign(document.createElement("p"), { textContent: "None yet." })]),
+      );
+      section.append(heading, cards);
+      return section;
+    }),
+  );
+  captureInspector.showModal();
+  queueMicrotask(() => captureInspectorClose.focus());
+  refreshInteractionSurface();
 }
 
 function closeOptions(restoreFocus = true): void {
@@ -454,6 +584,31 @@ function renderSemanticCardBridge(): void {
     fieldPlacementControl.style.top = `${bounds.y}px`;
     fieldPlacementControl.style.width = `${bounds.width}px`;
     fieldPlacementControl.style.height = `${bounds.height}px`;
+  }
+  renderCaptureInspectionControls();
+}
+
+function renderCaptureInspectionControls(): void {
+  if (!currentLayout) return;
+  const blocked =
+    processingIntent ||
+    handoffPlayerId !== null ||
+    isRoundResultOpen() ||
+    (animationDirector?.isBusy() ?? false);
+  for (const control of captureInspectControls) {
+    const owner = captureOwnerFromControl(control);
+    const presentation = createCaptureInspectionPresentation({ observation, owner });
+    const bounds = captureZoneBounds(owner, currentLayout);
+    control.hidden = presentation.totalCards === 0;
+    control.disabled = blocked || captureInspector.open;
+    control.setAttribute(
+      "aria-label",
+      `${owner === "player" ? "View your" : "View opponent"} ${presentation.totalCards} captured ${presentation.totalCards === 1 ? "card" : "cards"}.`,
+    );
+    control.style.left = `${bounds.x}px`;
+    control.style.top = `${bounds.y}px`;
+    control.style.width = `${bounds.width}px`;
+    control.style.height = `${bounds.height}px`;
   }
 }
 
@@ -631,6 +786,7 @@ function renderRoundResult(): void {
       : [Object.assign(document.createElement("li"), { textContent: "No scoring yaku." })]),
   );
   roundResultScore.hidden = presentation.scoring === null;
+  roundResultScoringDetails.hidden = presentation.scoring === null;
 
   const evidence = evidenceItems(presentation);
   roundResultEvidence.hidden = evidence.length === 0;
@@ -670,6 +826,7 @@ function renderRoundResult(): void {
   const key = `${observation.publicState.matchId}:${observation.publicState.stateVersion}:${presentation.kind}`;
   if (focusedRoundResultKey === key) return;
   focusedRoundResultKey = key;
+  roundResultDetails.open = false;
   queueMicrotask(() => {
     if (!roundResult.hidden && !processingIntent) roundResultAction.focus();
   });
@@ -737,6 +894,7 @@ function updateControls(): void {
   optionsTrigger.disabled = isOptionsBlocked();
   for (const option of themeOptions) option.disabled = isOptionsBlocked();
   if (isOptionsBlocked()) closeOptions(false);
+  renderCaptureInspectionControls();
 }
 
 async function waitForYakuFeedbackBeat(): Promise<void> {
@@ -989,6 +1147,17 @@ optionsDialog.addEventListener("cancel", (event) => {
 optionsDialog.addEventListener("close", () => {
   optionsTrigger.setAttribute("aria-expanded", "false");
 });
+for (const control of captureInspectControls) {
+  control.addEventListener("click", () => openCaptureInspection(control));
+}
+captureInspectorClose.addEventListener("click", () => closeCaptureInspection());
+captureInspector.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeCaptureInspection();
+});
+captureInspector.addEventListener("close", () => {
+  captureInspectionOwner = null;
+});
 for (const option of themeOptions) {
   option.addEventListener("change", () => {
     if (!option.checked || isOptionsBlocked()) return;
@@ -1052,6 +1221,7 @@ roundResultAction.addEventListener("click", () => void resetLocalRound(true));
 handoffReady.addEventListener("click", () => void acceptHandoff());
 document.addEventListener("fullscreenchange", updateFullscreenLabel);
 window.addEventListener("keydown", (event) => {
+  if (captureInspector.open) return;
   if (optionsDialog.open) {
     if (event.key.toLowerCase() === "f") event.preventDefault();
     return;
@@ -1059,7 +1229,10 @@ window.addEventListener("keydown", (event) => {
   if (isRoundResultOpen() && !processingIntent) {
     if (event.key === "Tab") {
       event.preventDefault();
-      roundResultAction.focus();
+      const actions = [roundResultAction, roundResultDetailsSummary];
+      const currentIndex = actions.indexOf(document.activeElement as HTMLElement);
+      const delta = event.shiftKey ? -1 : 1;
+      actions[(currentIndex + delta + actions.length) % actions.length]?.focus();
     } else if (event.key === "Escape" || event.key.toLowerCase() === "f") {
       event.preventDefault();
     }
@@ -1067,7 +1240,7 @@ window.addEventListener("keydown", (event) => {
   }
   if (isYakuDecisionOpen()) {
     if (event.key === "Tab") {
-      const actions = [yakuBankButton, yakuKoiKoiButton].filter(
+      const actions = [...captureInspectControls, yakuBankButton, yakuKoiKoiButton].filter(
         (button) => !button.hidden && !button.disabled,
       );
       if (actions.length > 0) {

@@ -40,6 +40,11 @@ export interface TablePreviewSnapshot {
     readonly visibleViews: readonly CardRuntimeInspection["views"][number][];
   };
   readonly coordinateSystem: typeof COORDINATE_SYSTEM;
+  readonly captureInspection: {
+    readonly open: boolean;
+    readonly owner: "opponent" | "player" | null;
+    readonly totalCards: number;
+  };
   readonly deck: {
     readonly activeDeckId: string | null;
     readonly approvalStatus: RuntimeDeckApprovalStatus | null;
@@ -113,8 +118,10 @@ export function createTablePreviewSnapshot(input: {
   readonly viewport: BoardViewport;
   readonly yaku: YakuPresentationStateV1;
   readonly result: RoundResultPresentationV1 | null;
+  readonly captureInspection: TablePreviewSnapshot["captureInspection"];
 }): TablePreviewSnapshot {
   const scene = Object.freeze({
+    emptyFieldPlaceholderCount: input.scene.emptyFieldPlaceholderCount,
     root: Object.freeze({ ...input.scene.root }),
     layers: Object.freeze(input.scene.layers.map((layer) => Object.freeze({ ...layer }))),
   });
@@ -160,6 +167,7 @@ export function createTablePreviewSnapshot(input: {
       transitCardCount: input.scene.cards.zoneCounts.transit,
     }),
     coordinateSystem: COORDINATE_SYSTEM,
+    captureInspection: Object.freeze({ ...input.captureInspection }),
     deck: Object.freeze({
       ...input.deck,
       availableDeckIds: Object.freeze([...input.deck.availableDeckIds]),

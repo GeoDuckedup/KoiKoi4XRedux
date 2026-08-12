@@ -1,8 +1,8 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository
-has deployed and accepted **Phase 3D-C: runtime themes and compact production shell** with an
-owner-approved primary deck. It
+has deployed and accepted **Phase 3D-D: adaptive dense field** with an owner-approved primary deck,
+and **Phase 3E-A: table clarity and decision surfaces** is release-ready. It
 contains the canonical rules authority, all 48 artwork-independent card records, the complete
 deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
@@ -46,6 +46,7 @@ npm run validate:phase3da
 npm run validate:phase3db
 npm run validate:phase3dc
 npm run validate:phase3dd
+npm run validate:phase3ea
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -132,6 +133,11 @@ adds deterministic 8/9/12/17-card adaptive-field geometry, public field-order pr
 non-overlapping dense target territories, and separated direct-motion/reflow checks. Its isolated
 non-shipping Pixi harness exercises 17 cards plus pointer/keyboard targets across all seven root and
 Pages viewports. Representative artifacts are written under `output/phase-3d-d/e2e/`.
+
+`npm run validate:phase3ea` retains that complete gate and removes empty numbered field chrome,
+keeps Options in a bottom-safe utility, adds state-preserving public capture galleries, presents
+Bank/Koi-Koi without obscuring the table, and keeps secondary result evidence collapsed until
+requested. Root and Pages evidence is written under `output/phase-3e-a/e2e/`.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

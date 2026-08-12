@@ -6,7 +6,7 @@ import { chromium } from "playwright";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-3d-c/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-3e-a/e2e");
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
 const mountedBasePath = smokeBasePath === "/" ? "/" : `${smokeBasePath}/`;
@@ -470,6 +470,10 @@ try {
       );
       assert(state.cards.cardViewCount === 48, "The persistent 48-card registry changed.");
       assert(
+        state.scene.emptyFieldPlaceholderCount === 0,
+        "The table rendered numbered or outlined empty field-card placeholders.",
+      );
+      assert(
         state.cards.visibleViews.every(({ faceUp }) => faceUp),
         "Text projection exposed a face-down card identity.",
       );
@@ -490,6 +494,13 @@ try {
           assert(await page.locator(selector).isVisible(), `${selector} disappeared in landscape.`);
         }
       }
+      const optionsBox = await page.locator("[data-options-trigger]").boundingBox();
+      assert(
+        optionsBox !== null &&
+          optionsBox.y >= viewport.height / 2 &&
+          optionsBox.y + optionsBox.height <= viewport.height + 1,
+        `Options is not anchored to the viewport bottom at ${viewport.width}×${viewport.height}: ${JSON.stringify(optionsBox)}.`,
+      );
       await page.screenshot({
         path: resolve(
           outputDirectory,
@@ -699,9 +710,12 @@ try {
     handAnimals.input.semanticControlCount === 0,
     "Hand-card semantic controls remained active during the decision.",
   );
+  assert(await page.locator("[data-yaku-decision]").isVisible(), "Yaku decision tray is missing.");
+  const decisionBox = await page.locator("[data-yaku-decision]").boundingBox();
+  const gameBox = await page.locator(".game-frame").boundingBox();
   assert(
-    await page.locator("[data-yaku-decision]").isVisible(),
-    "Yaku decision dialog is missing.",
+    decisionBox !== null && gameBox !== null && decisionBox.y >= gameBox.y + gameBox.height - 1,
+    `The Yaku decision surface obscures the table: ${JSON.stringify({ decisionBox, gameBox })}.`,
   );
   for (const selector of [
     "[data-deck-select]",
@@ -723,6 +737,52 @@ try {
   assert(
     (await page.locator("[data-yaku-koi-koi]").textContent())?.includes("2×"),
     "Hand Koi-Koi button omitted the 2× consequence.",
+  );
+  const captureCount =
+    handAnimals.cards.zoneCounts.playerBrights +
+    handAnimals.cards.zoneCounts.playerAnimals +
+    handAnimals.cards.zoneCounts.playerScrolls +
+    handAnimals.cards.zoneCounts.playerPlains;
+  const stateBeforeCaptureInspection = handAnimals.localRound.stateVersion;
+  await page.locator('[data-capture-inspect="player"]').click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).captureInspection.open === true,
+  );
+  assert(
+    (await page.locator("[data-capture-inspector] img").count()) === captureCount &&
+      (await page.locator("[data-capture-inspector-title]").textContent())?.includes(
+        String(captureCount),
+      ),
+    "Capture inspection did not show exactly the current player's public captured cards.",
+  );
+  const captureInspectionState = await readState(page);
+  assert(
+    captureInspectionState.localRound.stateVersion === stateBeforeCaptureInspection &&
+      captureInspectionState.cards.cardViewCount === 48 &&
+      !JSON.stringify(captureInspectionState).includes("drawPileOrdered") &&
+      !JSON.stringify(captureInspectionState).includes("commandId"),
+    "Capture inspection changed authoritative state, CardView identity, or exposed private data.",
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `capture-inspection-koi-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).captureInspection.open === false,
+  );
+  assert(
+    await page.locator("[data-yaku-decision]").isVisible(),
+    "Closing capture inspection lost the unresolved Yaku decision.",
+  );
+  assert(
+    await page
+      .locator('[data-capture-inspect="player"]')
+      .evaluate((element) => document.activeElement === element),
+    "Closing capture inspection did not restore focus to its public capture trigger.",
   );
   await page.screenshot({
     path: resolve(
@@ -814,6 +874,12 @@ try {
       ),
     "End-of-Play result copy omitted the authoritative caller/arithmetic.",
   );
+  assert(
+    !(await page.locator("[data-round-result-details]").evaluate((details) => details.open)) &&
+      !(await page.locator("[data-round-result-transition]").isVisible()) &&
+      (await page.locator("[data-round-result-action]").isVisible()),
+    "End-of-Play did not open as a concise outcome/points/action summary.",
+  );
   await page.screenshot({
     path: resolve(
       outputDirectory,
@@ -875,6 +941,20 @@ try {
     "The result modal omitted its month context or next-round plan.",
   );
   assert(
+    !(await page.locator("[data-round-result-details]").evaluate((details) => details.open)) &&
+      !(await page.locator("[data-round-result-transition]").isVisible()) &&
+      (await page.evaluate(() => document.activeElement?.matches("[data-round-result-action]"))) ===
+        true,
+    "The Bank result exposed secondary scoring/transition details before request.",
+  );
+  await page.locator("[data-round-result-details] > summary").click();
+  assert(
+    (await page.locator("[data-round-result-transition]").isVisible()) &&
+      (await page.locator("[data-round-result-multipliers]").isVisible()),
+    "The result Details disclosure did not reveal authoritative scoring and transition facts.",
+  );
+  await page.locator("[data-round-result-details] > summary").click();
+  assert(
     (await page.locator("[data-round-result-action]").textContent()) ===
       "Start another local round",
     "The local result acknowledgement overclaims authoritative next-round advancement.",
@@ -889,12 +969,7 @@ try {
   ]) {
     assert(await page.locator(selector).isDisabled(), `${selector} escaped the result modal lock.`);
   }
-  assert(
-    banked.input.semanticControlCount === 0 &&
-      (await page.evaluate(() => document.activeElement?.matches("[data-round-result-action]"))) ===
-        true,
-    "The committed result did not lock card input and focus its sole action.",
-  );
+  assert(banked.input.semanticControlCount === 0, "The committed result did not lock card input.");
   assert(
     (await page.locator("[data-latest-recap]").textContent())?.includes("banked 3 × 1× = 3 points"),
     "The compact shell did not retain the latest authoritative event.",

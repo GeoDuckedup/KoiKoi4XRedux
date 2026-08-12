@@ -86,6 +86,7 @@ export interface BoardLayoutDiagnostics {
 }
 
 export interface BoardSceneInspection {
+  emptyFieldPlaceholderCount: number;
   layers: readonly {
     label: BoardLayerName;
     token: string;
