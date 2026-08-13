@@ -983,3 +983,11 @@ Original prompt: read the package and understand it, then let me know when we ar
   the result overlay and card in separate layout reads. The assertion now samples both DOMRects in
   one browser evaluation; the repository-prefixed Pages suite passes after that test-only repair.
 - Phase 3F-B unified tap-only interaction is next; no engine or protocol behavior changed here.
+
+## 2026-08-13 — Phase 3F-A hosted timeout repair
+
+- Release commit `7cf5c44` triggered the new hosted gate. The CI run completed `npm run check`
+  successfully, then was cancelled by the workflow's former 15-minute job ceiling while the
+  inherited `validate:phase3fa` chain was still running; no test reported a failure.
+- Raised only the CI job ceiling to 30 minutes so the deliberately comprehensive inherited browser,
+  Workshop, replay, and generated-game gate can complete. Pages already had no 15-minute limit.
