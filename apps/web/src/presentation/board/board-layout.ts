@@ -109,22 +109,26 @@ function fitHandSlots(
 ): readonly BoardRect[] {
   const labelSpace = Math.min(16, bounds.height * 0.2);
   const availableHeight = Math.max(1, bounds.height - labelSpace - gap);
-  const cardHeight = Math.min(availableHeight, maximumCardHeight);
-  const cardWidth = cardHeight * CARD_ASPECT_RATIO;
-  const fullWidth = cardWidth * count + gap * (count - 1);
-  const step =
-    fullWidth <= bounds.width
-      ? cardWidth + gap
-      : count > 1
-        ? Math.max(cardWidth * 0.28, (bounds.width - cardWidth) / (count - 1))
-        : 0;
-  const occupiedWidth = cardWidth + step * (count - 1);
+  // Hands are a single, readable row. Earlier visual sizing used the full available
+  // height then compressed cards horizontally, which made an eight-card phone hand
+  // overlap. Width is the hard constraint: every card keeps its complete tap and
+  // selection silhouette.
+  const cardWidth = Math.max(
+    1,
+    Math.min(
+      availableHeight * CARD_ASPECT_RATIO,
+      maximumCardHeight * CARD_ASPECT_RATIO,
+      (bounds.width - gap * Math.max(0, count - 1)) / count,
+    ),
+  );
+  const cardHeight = cardWidth / CARD_ASPECT_RATIO;
+  const occupiedWidth = cardWidth * count + gap * Math.max(0, count - 1);
   const startX = bounds.x + (bounds.width - occupiedWidth) / 2;
   const startY = bounds.y + labelSpace + (availableHeight - cardHeight) / 2;
 
   return Object.freeze(
     Array.from({ length: count }, (_, index) =>
-      rect(startX + index * step, startY, cardWidth, cardHeight),
+      rect(startX + index * (cardWidth + gap), startY, cardWidth, cardHeight),
     ),
   );
 }

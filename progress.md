@@ -1009,3 +1009,14 @@ Original prompt: read the package and understand it, then let me know when we ar
   state with the approved Primary Deck, one canvas, 48 persistent CardViews, eight enlarged active
   hand cards, no initial recap/routine confirmation strip, and zero layout diagnostics.
 - Phase 3F-A evidence maturity is `live`. Phase 3F-B unified tap-only interaction is next.
+
+## 2026-08-13 — Mobile hand-layout regression repaired
+
+- The enlarged single-row hand had incorrectly used its vertical space first and then fanned eight
+  cards into the available width. Hands now size from available width, so all eight cards remain
+  separate and tappable at every supported viewport.
+- Selection is now a single in-canvas frame confined to the selected card; the duplicate DOM ring,
+  hand-card scale, and outward selection padding were removed. The no-match field cue remains a
+  quiet outline without text over the field cards.
+- Focused layout/input/interaction/animation/runtime tests pass 5 files / 71 tests. Formatter,
+  lint, workspace typechecks, and the Root browser smoke pass; mobile screenshots were inspected.

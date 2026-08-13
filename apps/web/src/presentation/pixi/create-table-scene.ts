@@ -362,19 +362,11 @@ function renderInteractionHighlights(
     layer.addChild(
       panel(field, {
         fill: colors.legal,
-        fillAlpha: 0.055,
+        fillAlpha: 0.035,
         radius: Math.max(8, 14 * layout.scale),
         stroke: colors.legal,
-        strokeAlpha: 0.92,
-        strokeWidth: Math.max(2, 2.5 * layout.scale),
-      }),
-      label("TAP FIELD TO PLACE", field.x + field.width / 2, field.y + field.height / 2, {
-        anchorX: 0.5,
-        anchorY: 0.5,
-        color: colors.legal,
-        fontSize: Math.max(8, 10 * layout.scale),
-        fontWeight: "700",
-        letterSpacing: 0.8,
+        strokeAlpha: 0.7,
+        strokeWidth: Math.max(1.5, 2 * layout.scale),
       }),
     );
   }
@@ -390,8 +382,15 @@ function renderInteractionHighlights(
     const selected = state.selectedCardId === cardId;
     const focused = state.focusedCardId === cardId;
     const target = legalTargets.has(cardId);
-    const lift = selected ? Math.max(4, 7 * layout.scale) : 0;
-    const padding = focused ? Math.max(4, 5 * layout.scale) : Math.max(2, 3 * layout.scale);
+    const handCard = placement.zone === "playerHand";
+    const lift = selected && !handCard ? Math.max(4, 7 * layout.scale) : 0;
+    // Hand cards are deliberately adjacent on compact screens. Keep their selection
+    // treatment inside the card instead of spilling a ring across a neighbour.
+    const padding = handCard
+      ? 0
+      : focused
+        ? Math.max(4, 5 * layout.scale)
+        : Math.max(2, 3 * layout.scale);
     const bounds = {
       x: placement.bounds.x - padding,
       y: placement.bounds.y - lift - padding,
@@ -442,10 +441,13 @@ function applyInteractionPlacement(
             ...placement,
             bounds: Object.freeze({
               ...placement.bounds,
-              y: placement.bounds.y - Math.max(4, placement.bounds.height * 0.045),
+              y:
+                placement.zone === "playerHand"
+                  ? placement.bounds.y
+                  : placement.bounds.y - Math.max(4, placement.bounds.height * 0.045),
             }),
-            scaleX: 1.04,
-            scaleY: 1.04,
+            scaleX: placement.zone === "playerHand" ? 1 : 1.04,
+            scaleY: placement.zone === "playerHand" ? 1 : 1.04,
             zIndex: placement.zIndex + 1000,
           })
         : placement,

@@ -9,7 +9,7 @@ const layoutVectors = [
     viewport: { width: 320, height: 568 },
     then: {
       mode: "compactPortrait",
-      layoutFingerprint: "5ebad1b9",
+      layoutFingerprint: "0b4b3e0b",
     },
   },
   {
@@ -17,7 +17,7 @@ const layoutVectors = [
     viewport: { width: 360, height: 640 },
     then: {
       mode: "compactPortrait",
-      layoutFingerprint: "bcd00888",
+      layoutFingerprint: "3e841637",
     },
   },
   {
@@ -25,7 +25,7 @@ const layoutVectors = [
     viewport: { width: 390, height: 844 },
     then: {
       mode: "portrait",
-      layoutFingerprint: "31017911",
+      layoutFingerprint: "ed50d365",
     },
   },
   {
@@ -33,7 +33,7 @@ const layoutVectors = [
     viewport: { width: 768, height: 1024 },
     then: {
       mode: "portrait",
-      layoutFingerprint: "dcd60fbf",
+      layoutFingerprint: "0f59bb47",
     },
   },
   {
@@ -132,19 +132,29 @@ describe("Phase 2A responsive board layout", () => {
   });
 
   it.each([
-    { viewport: { width: 320, height: 568 }, minimumHeight: 88 },
-    { viewport: { width: 390, height: 844 }, minimumHeight: 118 },
-    { viewport: { width: 844, height: 390 }, minimumHeight: 67 },
+    { viewport: { width: 320, height: 568 }, minimumHeight: 56 },
+    { viewport: { width: 390, height: 844 }, minimumHeight: 68 },
+    { viewport: { width: 844, height: 390 }, minimumHeight: 60 },
     { viewport: { width: 1366, height: 768 }, minimumHeight: 100 },
   ])(
-    "gives the player hand the reclaimed action-bar space at $viewport",
+    "keeps the eight-card player hand readable and non-overlapping at $viewport",
     ({ viewport, minimumHeight }) => {
       const layout = computeBoardLayout(viewport);
-      const first = layout.slots.playerHand[0];
+      const [first, ...remaining] = layout.slots.playerHand;
       expect(first).toBeDefined();
       if (!first) throw new Error("Player hand layout is missing its first card slot.");
       expect(first.height).toBeGreaterThanOrEqual(minimumHeight);
       expect(first.width / first.height).toBeCloseTo(5 / 8, 3);
+      for (const [index, slot] of remaining.entries()) {
+        const previous = layout.slots.playerHand[index];
+        expect(previous).toBeDefined();
+        if (!previous) throw new Error("Player hand layout is missing a prior card slot.");
+        expect(previous.x + previous.width).toBeLessThanOrEqual(slot.x + 0.001);
+        expect(slot.y).toBeGreaterThanOrEqual(layout.cardZones.playerHand.y);
+        expect(slot.y + slot.height).toBeLessThanOrEqual(
+          layout.cardZones.playerHand.y + layout.cardZones.playerHand.height + 0.001,
+        );
+      }
     },
   );
 

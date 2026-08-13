@@ -1790,10 +1790,11 @@ summary:focus-visible {
 }
 
 .card-input-control--selected {
-  border-color: var(--theme-text);
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--theme-escalation) 78%, transparent),
-    0 8px 18px rgb(0 0 0 / 30%);
+  /* The Pixi scene owns the one visual selection frame. Keeping a second DOM
+     ring here made a tapped hand card look offset and doubled its border. */
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
 }
 
 .card-input-control--target {
