@@ -14,6 +14,7 @@ import {
 } from "../src/presentation/animation/technical-scenarios";
 import { ANIMATION_MODES, type AnimationSurfaceV1 } from "../src/presentation/animation/types";
 import { computeBoardLayout } from "../src/presentation/board/board-layout";
+import { computeDrawPileTopBounds } from "../src/presentation/cards/card-layout";
 
 function requiredProjection<T>(items: readonly T[], index: number): T {
   const item = index < 0 ? items.at(index) : items[index];
@@ -184,6 +185,59 @@ describe("Phase 2C event planner", () => {
     expect(flip?.from.find(({ cardId }) => cardId === "august-pampas-plain-a")?.faceUp).toBe(false);
     expect(flip?.to.find(({ cardId }) => cardId === "august-pampas-plain-a")?.faceUp).toBe(true);
     expect(flip?.affectedCardIds).toEqual(["august-pampas-plain-a"]);
+  });
+
+  it("DRAW-PHYSICAL-001/002 makes a card-back leave the pile top, arc into Reveal, then flip", () => {
+    const scenario = getTechnicalAnimationScenario("drawReveal");
+    const plan = planPublicEvents(scenario.events, { projections: scenario.projections });
+    const draw = plan.clips.find(({ kind }) => kind === "draw");
+    const flip = plan.clips.find(({ kind }) => kind === "flip");
+    const pause = plan.clips.find(({ kind }) => kind === "revealPause");
+    if (!draw || !flip || !pause) throw new Error("Draw choreography clips are missing.");
+
+    const drawnCardId = draw.affectedCardIds[0];
+    if (!drawnCardId) throw new Error("Draw choreography card is missing.");
+    const layout = computeBoardLayout({ width: 390, height: 844 });
+    const sourceState = draw.from.find(({ cardId }) => cardId === drawnCardId);
+    if (!sourceState) throw new Error("Draw choreography source card is missing.");
+    const topBounds = computeDrawPileTopBounds(layout, draw.from);
+    const start = computeAnimatedCardPlacements(layout, draw, 0, "normal").find(
+      ({ cardId }) => cardId === drawnCardId,
+    );
+    const middle = computeAnimatedCardPlacements(layout, draw, 0.5, "normal").find(
+      ({ cardId }) => cardId === drawnCardId,
+    );
+    const end = computeAnimatedCardPlacements(layout, draw, 1, "normal").find(
+      ({ cardId }) => cardId === drawnCardId,
+    );
+    const flipStart = computeAnimatedCardPlacements(layout, flip, 0.49, "normal").find(
+      ({ cardId }) => cardId === drawnCardId,
+    );
+    const flipFinish = computeAnimatedCardPlacements(layout, flip, 0.5, "normal").find(
+      ({ cardId }) => cardId === drawnCardId,
+    );
+    const settled = computeAnimatedCardPlacements(layout, pause, 1, "normal").find(
+      ({ cardId }) => cardId === drawnCardId,
+    );
+
+    expect(sourceState.zone).toBe("drawPile");
+    expect(sourceState.faceUp).toBe(false);
+    expect(draw.affectedCardIds).toEqual([drawnCardId]);
+    expect(start).toMatchObject({
+      bounds: topBounds,
+      faceUp: false,
+      layer: "EffectsLayer",
+      zone: "transit",
+    });
+    expect(middle?.bounds.y).toBeLessThan(Math.max(topBounds.y, end?.bounds.y ?? topBounds.y));
+    expect(flipStart?.faceUp).toBe(false);
+    expect(flipFinish?.faceUp).toBe(true);
+    expect(settled).toMatchObject({
+      bounds: layout.slots.reveal,
+      faceUp: true,
+      layer: "RevealLayer",
+      zone: "reveal",
+    });
   });
 
   it("ANIM-012 rejects incomplete, duplicate, or mismatched immutable inputs", () => {

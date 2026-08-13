@@ -502,7 +502,22 @@ families through the production engine API, with the existing state-machine, yak
 and web interaction suites retaining the phase transition. Browser choreography from the top card of
 the deck is deliberately deferred to Phase 3E-C.
 
-## 20. Approved-decision coverage matrix
+## 20. Phase 3E-C physical Draw vectors
+
+| ID | Required expectation |
+|---|---|
+| `DRAW-PHYSICAL-001-TOP-SOURCE` | One face-down CardView starts at the geometry-only foremost draw-pile bounds and travels to Reveal; all other hidden pile backs remain stable. |
+| `DRAW-PHYSICAL-002-FACE-DOWN-FLIP` | The moving card remains face-down during travel, flips only in Reveal, and no face-down CardId or future draw order reaches text/semantic output. |
+| `DRAW-PHYSICAL-003-PAUSE-THEN-INPUT` | Draw, flip, and identify-pause frames expose no semantic Draw control; after settlement exactly one keyboard-accessible Reveal control appears and reuses the authoritative 3E-B interaction flow. |
+| `DRAW-PHYSICAL-004-MODES-REPLAY` | Normal, Fast, Instant, and reduced-motion modes settle to the same authoritative pending Draw state; the four 3E-B resolution families and replay contract remain unchanged. |
+| `DRAW-PHYSICAL-005-ROOT-PAGES` | Root and repository-prefixed browser traces capture travel, pause, and actionable Reveal checkpoints with one canvas, 48 persistent CardViews, and zero browser/network errors. |
+
+Phase 3E-C binding: `animation-runtime.test.ts` and `local-round-runtime.test.ts` bind the exact
+geometry/identity/face contract; the root and Pages browser smoke traces inspect travel, pause, and
+keyboard activation artifacts under `output/phase-3e-c/e2e/`. ADR 0020 records the presentation-only
+boundary.
+
+## 21. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

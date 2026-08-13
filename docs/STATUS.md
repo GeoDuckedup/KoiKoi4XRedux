@@ -1,9 +1,9 @@
 # KoiKoi4x Project Status
 
-**Updated:** August 11, 2026
+**Updated:** August 12, 2026
 
-**Overall state:** Greenfield rewrite through Phase 3E-A deployed and accepted; Phase 3E-B
-authoritative interactive Draw resolution is in implementation and local validation
+**Overall state:** Greenfield rewrite through Phase 3E-A deployed; Phase 3E-B and 3E-C are locally
+accepted with a repaired hosted browser gate pending commit, CI, and Pages deployment
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -19,8 +19,10 @@ with outcome, points, totals, and its action while secondary facts begin collaps
 not change scoring or round progression. Phase 3E-B now separates every Draw reveal from its
 resolution: the engine exposes the revealed card and canonical public 0/1/2/3 outcome, then only
 the active player can resolve it. The browser makes the Reveal card selectable and reuses the
-Guided/Fast field cues without deriving matching rules. Top-of-deck source choreography remains
-Phase 3E-C.
+Guided/Fast field cues without deriving matching rules. Phase 3E-C now makes that same
+authoritative reveal visibly leave from the top of the draw pile as a face-down card, flip only in
+Reveal, pause, and then unlock the existing Reveal action. It is presentation-only: it does not add
+an engine command or disclose draw order.
 
 Release commits `0b6937a` and `818936a` passed CI run `31554760462` and Pages run `31554760390`.
 The latter contains the CI timing stabilization for the retained raster-builder test. The live page
@@ -449,13 +451,16 @@ projection, recap, and handoff are recorded in
 
 1. No hosting configuration, Firebase project, secret, or migration is required. Pushing `main`
    triggers CI and GitHub Pages.
-2. After deployment, open **Options** and verify Ink & Parchment is the fresh-profile default. Select
+2. After deployment, play a hand card and watch the next Draw: one face-down card must leave the
+   visible top of the deck, flip only in **Reveal**, pause briefly, then become the only actionable
+   Reveal card. Activate it with the keyboard or tap and follow the engine-provided field cue.
+3. Open **Options** and verify Ink & Parchment is the fresh-profile default. Select
    Moonlit Indigo or Warm Ivory, close Options, and reload once to verify the cosmetic preference
    persists without restarting the round.
-3. Select a hand card and verify changing the theme preserves the active selection, highlighted
+4. Select a hand card and verify changing the theme preserves the active selection, highlighted
    field target, and turn instruction. Play through Yaku/Bank/Koi and confirm unrelated Options
    controls remain locked during critical decisions.
-4. Expand **History** to inspect the complete disclosed recap. `Start another local round` remains a
+5. Expand **History** to inspect the complete disclosed recap. `Start another local round` remains a
    local practice restart, not February advancement. Additional deck packages remain supported.
 
 The deployed baseline is
@@ -463,6 +468,6 @@ The deployed baseline is
 
 ## Next subphase
 
-**Phase 3E-B — Authoritative interactive Draw resolution:** make the revealed top-deck card an
-explicit legal player action for no-match placement, unique capture, exact-two choice, and sweep,
-using engine-owned legality rather than browser-derived matching rules.
+**Phase 5A — Full local multi-round progression:** turn the current first-round local practice
+slice into a real 3/6/12-round local match, preserving the authoritative round-transition/checkpoint
+boundary. Tutorial work remains deferred until that play loop and remaining polish are complete.

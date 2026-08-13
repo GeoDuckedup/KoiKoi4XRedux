@@ -1,7 +1,7 @@
 import { CARD_IDS, type CardId } from "@koikoi4x/engine";
 
 import type { BoardLayout, BoardRect } from "../board/types";
-import { computeCardPlacements } from "../cards/card-layout";
+import { computeCardPlacements, computeDrawPileTopBounds } from "../cards/card-layout";
 import type { CardDisplayPlacement, CardPlacement } from "../cards/types";
 import type { AnimationClipV1, AnimationMode } from "./types";
 
@@ -29,6 +29,12 @@ function lerpRect(from: BoardRect, to: BoardRect, progress: number): BoardRect {
   });
 }
 
+function drawTravelRect(from: BoardRect, to: BoardRect, progress: number): BoardRect {
+  const linear = lerpRect(from, to, progress);
+  const lift = Math.min(from.height * 0.16, 16) * Math.sin(Math.PI * progress);
+  return Object.freeze({ ...linear, y: linear.y - lift });
+}
+
 function byCardId(placements: readonly CardPlacement[]): ReadonlyMap<CardId, CardPlacement> {
   return new Map(placements.map((placement) => [placement.cardId, placement]));
 }
@@ -43,6 +49,7 @@ export function computeAnimatedCardPlacements(
   const eased = easeOutCubic(progress);
   const fromById = byCardId(computeCardPlacements(layout, clip.from));
   const toById = byCardId(computeCardPlacements(layout, clip.to));
+  const drawPileTop = clip.kind === "draw" ? computeDrawPileTopBounds(layout, clip.from) : null;
   const affected = new Set(clip.affectedCardIds);
 
   return Object.freeze(
@@ -64,9 +71,13 @@ export function computeAnimatedCardPlacements(
       }
 
       if (MOVEMENT_CLIPS.has(clip.kind)) {
+        const movementFrom = clip.kind === "draw" && drawPileTop ? drawPileTop : from.bounds;
         return Object.freeze({
           ...to,
-          bounds: lerpRect(from.bounds, to.bounds, eased),
+          bounds:
+            clip.kind === "draw"
+              ? drawTravelRect(movementFrom, to.bounds, eased)
+              : lerpRect(movementFrom, to.bounds, eased),
           faceUp: clip.kind === "draw" ? from.faceUp : progress < 0.5 ? from.faceUp : to.faceUp,
           layer: "EffectsLayer" as const,
           zone: "transit" as const,

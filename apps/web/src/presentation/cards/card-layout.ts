@@ -55,6 +55,32 @@ function captureBounds(
   });
 }
 
+function drawPileBounds(layout: BoardLayout, slotIndex: number): BoardRect {
+  const offset = Math.min(slotIndex, 3) * Math.max(0.8, 1.4 * layout.scale);
+  return freezeRect({
+    ...layout.slots.drawPile,
+    x: layout.slots.drawPile.x - offset,
+    y: layout.slots.drawPile.y + offset,
+  });
+}
+
+/**
+ * Returns the foremost visible card-back position for a recipient-safe draw pile.
+ *
+ * The projection may use stable synthetic identities for face-down cards, so this is
+ * intentionally geometry-only: it never identifies the next authoritative draw.
+ */
+export function computeDrawPileTopBounds(
+  layout: BoardLayout,
+  states: readonly CardPresentationState[],
+): BoardRect {
+  const topSlotIndex = Math.max(
+    0,
+    ...states.filter(({ zone }) => zone === "drawPile").map(({ slotIndex }) => slotIndex),
+  );
+  return drawPileBounds(layout, topSlotIndex);
+}
+
 function boundsFor(
   state: CardPresentationState,
   zoneCounts: ReadonlyMap<CardZone, number>,
@@ -73,12 +99,7 @@ function boundsFor(
     return freezeRect(slot);
   }
   if (state.zone === "drawPile") {
-    const offset = Math.min(state.slotIndex, 3) * Math.max(0.8, 1.4 * layout.scale);
-    return freezeRect({
-      ...layout.slots.drawPile,
-      x: layout.slots.drawPile.x - offset,
-      y: layout.slots.drawPile.y + offset,
-    });
+    return drawPileBounds(layout, state.slotIndex);
   }
   if (state.zone === "reveal") return freezeRect(layout.slots.reveal);
   if (CAPTURE_ZONES.has(state.zone)) {

@@ -6,7 +6,7 @@ import { chromium } from "playwright";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-3e-b/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-3e-c/e2e");
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
 const mountedBasePath = smokeBasePath === "/" ? "/" : `${smokeBasePath}/`;
@@ -297,12 +297,18 @@ async function resolvePendingDrawIfNeeded(page) {
   );
   await reveal.click();
   await page.waitForFunction(
-    () => JSON.parse(window.render_game_to_text()).input.status !== "idle",
-    null,
+    (version) => {
+      const state = JSON.parse(window.render_game_to_text());
+      return state.localRound.stateVersion > version || state.input.status !== "idle";
+    },
+    beforeVersion,
     { timeout: 30_000 },
   );
   const afterReveal = await readState(page);
-  if (afterReveal.input.status === "intentPending") {
+  if (
+    afterReveal.localRound.stateVersion > beforeVersion ||
+    afterReveal.input.status === "intentPending"
+  ) {
     await page.waitForFunction(
       (version) => {
         const state = JSON.parse(window.render_game_to_text());
@@ -355,9 +361,122 @@ async function resolvePendingDrawIfNeeded(page) {
   return readState(page);
 }
 
+async function advanceUntilAnimationClip(page, kind) {
+  for (let step = 0; step < 40; step += 1) {
+    const state = await readState(page);
+    if (state.animation.activeClip?.kind === kind) return state;
+    await page.evaluate(() => window.advanceTime(60));
+  }
+  throw new Error(`Timed out waiting for ${kind} animation clip.`);
+}
+
+async function submitOpeningHandForPhysicalDraw(page) {
+  const hand = page.locator('[data-input-role="selectable"][data-card-id="november-red-scroll"]');
+  assert(await hand.isVisible(), "The physical Draw trace needs a selectable opening hand card.");
+  await hand.click();
+  const selected = await readState(page);
+  if (selected.input.status === "targeting") {
+    const target = page.locator('[data-input-role="target"]').first();
+    assert((await target.count()) === 1, "A target-selection hand play exposed no legal target.");
+    await target.click();
+  } else if (selected.input.status === "confirming") {
+    const target = page.locator('[data-input-role="target"]').first();
+    if ((await target.count()) === 1) await target.click();
+    else await page.locator("[data-input-confirm]").click();
+  }
+  await page.waitForTimeout(0);
+}
+
+async function runPhysicalDrawTrace(page) {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await configureSecondaryOptions(page, { animationMode: "normal", inputMode: "guided" });
+  await page.evaluate(() => window.advanceTime(0));
+  await submitOpeningHandForPhysicalDraw(page);
+
+  const drawTravel = await advanceUntilAnimationClip(page, "draw");
+  assert(
+    drawTravel.animation.transitCardCount === 1,
+    `Draw travel did not use one transient CardView: ${JSON.stringify(drawTravel.animation)}.`,
+  );
+  assert(
+    drawTravel.cards.visibleViews.every(({ faceUp }) => faceUp),
+    "A face-down Draw card identity entered the recipient-visible text surface.",
+  );
+  assert(
+    drawTravel.input.semanticControlCount === 0,
+    "Draw input became actionable before the face-down card reached Reveal.",
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `draw-top-travel-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+
+  const flip = await advanceUntilAnimationClip(page, "flip");
+  assert(
+    flip.input.semanticControlCount === 0,
+    "Draw input became actionable before the revealed card pause completed.",
+  );
+  await page.evaluate(() => window.advanceTime(140));
+  const revealPause = await advanceUntilAnimationClip(page, "revealPause");
+  assert(
+    revealPause.cards.visibleViews.some(({ zone }) => zone === "reveal"),
+    "The revealed card did not become visible in the Reveal zone after the flip.",
+  );
+  assert(
+    revealPause.input.semanticControlCount === 0,
+    "Reveal controls appeared before the identify pause completed.",
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `draw-reveal-pause-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+
+  await page.evaluate(() => window.advanceTime(1_000));
+  await page.waitForFunction(
+    () => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
+        state.localRound.phase === "awaitingDrawResolution" &&
+        state.animation.status !== "playing" &&
+        state.input.status === "idle" &&
+        state.input.selectableCardIds.length === 1
+      );
+    },
+    null,
+    { timeout: 30_000 },
+  );
+  const settled = await readState(page);
+  assert(
+    settled.cards.visibleViews.filter(({ zone }) => zone === "reveal").length === 1,
+    "The settled Draw state did not expose exactly one revealed card.",
+  );
+  const revealControl = page.locator('[data-input-role="selectable"]').first();
+  await revealControl.focus();
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).input.status !== "idle",
+    null,
+    { timeout: 30_000 },
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `draw-reveal-actionable-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+}
+
 async function playHandCardById(page, cardId) {
   await acceptHandoffIfPending(page);
   await resolvePendingDrawIfNeeded(page);
+  await acceptHandoffIfPending(page);
   const before = await readState(page);
   assert(
     before.localRound.phase === "awaitingHandPlay",
@@ -387,6 +506,8 @@ async function playLockedHandSequence(page, cardIds) {
 }
 
 async function playHandCardThroughFeedbackBeat(page, cardId) {
+  await acceptHandoffIfPending(page);
+  await resolvePendingDrawIfNeeded(page);
   await acceptHandoffIfPending(page);
   const before = await readState(page);
   const button = page.locator(`[data-input-role="selectable"][data-card-id="${cardId}"]`);
@@ -587,6 +708,8 @@ try {
   }
 
   await page.setViewportSize({ width: 390, height: 844 });
+  await runPhysicalDrawTrace(page);
+  await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
   await configureSecondaryOptions(page, { animationMode: "instant", inputMode: "guided" });
 
   await openOptions(page);
@@ -884,7 +1007,8 @@ try {
   });
   process.stdout.write("Phase 3B Hand Koi-Koi Draw continuation passed.\n");
 
-  const finalDraw = await playLockedHandSequence(page, PHASE_3B_FINAL_DRAW_SEQUENCE);
+  await playLockedHandSequence(page, PHASE_3B_FINAL_DRAW_SEQUENCE);
+  const finalDraw = await resolvePendingDrawIfNeeded(page);
   assert(
     finalDraw.localRound.phase === "awaitingYakuDecision" &&
       finalDraw.yaku?.decision?.phase === "draw" &&

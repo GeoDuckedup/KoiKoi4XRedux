@@ -1,9 +1,9 @@
 # KoiKoi4x Implementation Plan
 
 **Plan version:** 1.1
-**Updated:** August 11, 2026
-**Current gate:** Phase 3E-A table clarity and decision surfaces are deployed and accepted; Phase
-3E-B authoritative interactive Draw resolution is ready to begin
+**Updated:** August 12, 2026
+**Current gate:** Phase 3E-C physical Draw choreography is locally accepted; commit, hosted CI, and
+Pages deployment verification are pending
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -707,7 +707,8 @@ Architecture is recorded in
 
 ### Phase 3E — Playability corrections
 
-Status: **Phase 3E-A deployed and accepted; Phase 3E-B in implementation**.
+Status: **Phase 3E-A deployed and accepted; Phase 3E-B and 3E-C are locally accepted together and
+await the repaired hosted gate/deployment**.
 
 - **3E-A — Table clarity and decision surfaces:** remove empty field-slot chrome, anchor Options at
   the bottom, add public capture inspection, keep the field visible during Koi-Koi decisions, and
@@ -747,6 +748,20 @@ Phase 3E-B gate:
   choreography remains Phase 3E-C.
 
 Architecture is recorded in [`ADR 0019`](./adr/0019-phase-3e-b-authoritative-draw-resolution.md).
+
+Phase 3E-C gate:
+
+- exactly one face-down CardView visibly departs from the geometry-only top of the draw pile after
+  the authoritative `drawCardRevealed` event, while every remaining hidden back stays in place;
+- it travels to Reveal, flips there, pauses for identification, and only then exposes the existing
+  single Reveal control and 3E-B Guided/Fast resolution cues;
+- engine state, commands, legal actions, replay payloads, and public projections remain unchanged;
+- root and repository-prefixed Pages traces capture travel, pause, and keyboard-actionable Reveal
+  checkpoints with one canvas, 48 stable CardViews, no hidden identity leak, and zero errors;
+- `npm run validate:phase3ec` retains the complete 3E-B engine/protocol/replay gate plus focused
+  physical-draw tests and root/Pages browser evidence.
+
+Architecture is recorded in [`ADR 0020`](./adr/0020-phase-3e-c-physical-draw-choreography.md).
 
 ## Later phases
 

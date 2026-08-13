@@ -25,6 +25,7 @@
 | Phase 3D-D adaptive dense field | `docs/adr/0017-phase-3d-d-adaptive-dense-field.md` |
 | Phase 3E-A table clarity and decision surfaces | `docs/adr/0018-phase-3e-a-table-clarity.md` |
 | Phase 3E-B authoritative Draw resolution | `docs/adr/0019-phase-3e-b-authoritative-draw-resolution.md` |
+| Phase 3E-C physical Draw choreography | `docs/adr/0020-phase-3e-c-physical-draw-choreography.md` |
 | Architectural decisions | `docs/adr/` |
 | Agent operating instructions | `AGENTS.md` |
 

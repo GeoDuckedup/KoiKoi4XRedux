@@ -196,7 +196,10 @@ export function planPublicEvents(
       );
       clips.push(
         makeClip({
-          affectedCardIds: affected,
+          // Hidden card allocation may be normalized when the now-public card is swapped
+          // into the synthetic pile source. Only the authoritative revealed card should
+          // visibly leave the deck; the remaining card backs stay visually stable.
+          affectedCardIds: directEventCardIds,
           event,
           eventIndex,
           from: before,

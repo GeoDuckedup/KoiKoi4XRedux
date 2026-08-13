@@ -1,8 +1,10 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository
-has deployed and accepted **Phase 3E-A: table clarity and decision surfaces** and is implementing
-**Phase 3E-B: authoritative interactive Draw resolution** with an owner-approved primary deck. It
+has deployed and accepted **Phase 3E-A: table clarity and decision surfaces** and has locally
+accepted **Phase 3E-B: authoritative interactive Draw resolution** plus **Phase 3E-C: physical Draw
+choreography**; their repaired hosted gate/deployment is pending with an owner-approved primary
+deck. It
 contains the canonical rules authority, all 48 artwork-independent card records, the complete
 deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
@@ -47,6 +49,8 @@ npm run validate:phase3db
 npm run validate:phase3dc
 npm run validate:phase3dd
 npm run validate:phase3ea
+npm run validate:phase3eb
+npm run validate:phase3ec
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -137,8 +141,16 @@ Pages viewports. Representative artifacts are written under `output/phase-3d-d/e
 `npm run validate:phase3ea` retains that complete gate and removes empty numbered field chrome,
 keeps Options in a bottom-safe utility, adds state-preserving public capture galleries, presents
 Bank/Koi-Koi without obscuring the table, and keeps secondary result evidence collapsed until
-requested. Root and Pages evidence for the current Draw-resolution work is written under
-`output/phase-3e-b/e2e/`.
+requested. Root and Pages evidence is written under `output/phase-3e-a/e2e/`.
+
+`npm run validate:phase3eb` retains the complete 3E-A gate and validates the authoritative
+Draw-resolution pause: each Draw remains pending until the player explicitly resolves the revealed
+card through engine-provided legal actions. Artifacts are written under `output/phase-3e-b/e2e/`.
+
+`npm run validate:phase3ec` retains the authoritative Draw-resolution gate and adds privacy-safe
+physical choreography: one face-down card leaves the visible deck top, flips in Reveal, pauses, then
+becomes the existing keyboard-accessible Reveal action. Root and Pages artifacts are written under
+`output/phase-3e-c/e2e/`.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

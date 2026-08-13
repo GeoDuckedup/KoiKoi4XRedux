@@ -8,6 +8,10 @@ import {
   projectTransitionForPlayer,
 } from "../src/game/observation-presentation";
 import { formatTurnRecap } from "../src/game/turn-recap";
+import { computeBoardLayout } from "../src/presentation/board/board-layout";
+import { computeDrawPileTopBounds } from "../src/presentation/cards/card-layout";
+import { computeAnimatedCardPlacements } from "../src/presentation/animation/card-animation-frame";
+import { planPublicEvents } from "../src/presentation/animation/event-planner";
 import { INSTALLED_DECKS } from "../src/presentation/deck/installed-decks";
 import type { InputCommandIntentV1 } from "../src/presentation/input/types";
 
@@ -110,6 +114,36 @@ describe("Phase 3A local authoritative round", () => {
     expect(transition.after.publicState.stateVersion).toBe(before.publicState.stateVersion + 1);
     expect(transition.events.some(({ type }) => type === "handCardPlayed")).toBe(true);
     expect(transition.events.some(({ type }) => type === "drawCardRevealed")).toBe(true);
+    const draw = transition.events.find(
+      (
+        event,
+      ): event is Extract<
+        (typeof transition.events)[number],
+        { readonly type: "drawCardRevealed" }
+      > => event.type === "drawCardRevealed",
+    );
+    if (!draw) throw new Error("The Hand transition did not reveal a Draw card.");
+    const drawSource = presentation.source.find(({ cardId }) => cardId === draw.cardId);
+    if (!drawSource) throw new Error("The Draw card is absent from the source projection.");
+    const highestDrawSlot = Math.max(
+      ...presentation.source
+        .filter(({ zone }) => zone === "drawPile")
+        .map(({ slotIndex }) => slotIndex),
+    );
+    expect(drawSource).toMatchObject({ zone: "drawPile", faceUp: false });
+    expect(drawSource.slotIndex).toBeLessThanOrEqual(highestDrawSlot);
+    const drawLayout = computeBoardLayout({ width: 390, height: 844 });
+    const drawPlan = planPublicEvents(transition.events, { projections: presentation.projections });
+    const drawClip = drawPlan.clips.find(({ kind }) => kind === "draw");
+    if (!drawClip) throw new Error("The Draw transition did not create a draw clip.");
+    const drawFrame = computeAnimatedCardPlacements(drawLayout, drawClip, 0, "normal").find(
+      ({ cardId }) => cardId === draw.cardId,
+    );
+    expect(drawFrame).toMatchObject({
+      bounds: computeDrawPileTopBounds(drawLayout, presentation.source),
+      faceUp: false,
+      zone: "transit",
+    });
     expect(presentation.projections).toHaveLength(transition.events.length + 1);
     expect(presentation.projections[0]).toBe(presentation.source);
     expect(presentation.projections.at(-1)).toBe(presentation.target);

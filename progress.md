@@ -930,5 +930,31 @@ Original prompt: read the package and understand it, then let me know when we ar
   requires an explicit Reveal-card tap, then follows the existing Guided/Fast interaction language
   without recomputing capture rules.
 - Engine, protocol, fixture, replay, and web tests pass 31 files / 269 tests; formatter, lint, all
-  workspace typechecks, root smoke, and Pages-base smoke pass. Independent review found no
-  blocker, high, or medium issue. Deployment remains pending commit and CI/Pages completion.
+  workspace typechecks, root smoke, and Pages-base smoke passed locally. The first hosted
+  validation exposed a browser-test timing race around a fast Draw resolution; Phase 3E-C now
+  repairs that trace before the next combined CI/Pages deployment.
+
+## 2026-08-12 — Phase 3E-C physical Draw choreography integrated
+
+- Kept the Phase 3E-B authoritative pause untouched. The presentation now derives a geometry-only
+  foremost draw-pile position, moves exactly one face-down CardView from that top position into
+  Reveal with a small lift, flips it there, pauses, then unlocks the existing engine-owned Reveal
+  interaction.
+- Hidden allocation churn is no longer animated: the remaining face-down backs stay in the draw
+  pile. No engine state, command, legal action, replay payload, or recipient projection changed.
+- Focused runtime tests pass 2 files / 26 tests. Root and Pages focused Playwright traces passed;
+  inspected artifacts under `output/phase-3e-c/e2e/` show travel, Reveal pause, and keyboard-actionable
+  Reveal with one canvas, 48 CardViews, and no browser/network errors.
+- Next: run the complete Phase 3E-C gate, independent review, then commit/push and verify CI/Pages.
+
+## 2026-08-12 — Phase 3E-C accepted locally; hosted gate repaired
+
+- The complete `npm run validate:phase3ec` gate passed, including the inherited 3E-A/3E-B engine,
+  protocol, replay, deck, Workshop, Root, Pages, responsive, and density checks. Root and
+  repository-prefixed Pages browser suites both passed independently after the combined gate.
+- The initial 3E-B GitHub Actions failure was a smoke-test race: a fast/instant explicit Draw could
+  settle before the test observed its transient pending status. The trace now accepts either an
+  active interaction state or an increased authoritative state version, then handles the new
+  Draw-to-handoff boundary before continuing its deterministic Yaku path.
+- Independent review reports no blocker, high, or medium issue. The next action is commit/push,
+  followed by CI/Pages verification; it is not yet a hosted/live claim.
