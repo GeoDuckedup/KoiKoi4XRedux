@@ -53,7 +53,6 @@ export interface BoardCardMetrics {
 }
 
 export interface BoardUiZones {
-  actionBar: BoardRect;
   opponentIdentity: BoardRect;
   roundStatus: BoardRect;
 }

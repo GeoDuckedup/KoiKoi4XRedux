@@ -9,7 +9,7 @@ const layoutVectors = [
     viewport: { width: 320, height: 568 },
     then: {
       mode: "compactPortrait",
-      layoutFingerprint: "2273b3e8",
+      layoutFingerprint: "5ebad1b9",
     },
   },
   {
@@ -17,7 +17,7 @@ const layoutVectors = [
     viewport: { width: 360, height: 640 },
     then: {
       mode: "compactPortrait",
-      layoutFingerprint: "e0507cad",
+      layoutFingerprint: "bcd00888",
     },
   },
   {
@@ -25,7 +25,7 @@ const layoutVectors = [
     viewport: { width: 390, height: 844 },
     then: {
       mode: "portrait",
-      layoutFingerprint: "82e826f5",
+      layoutFingerprint: "31017911",
     },
   },
   {
@@ -33,7 +33,7 @@ const layoutVectors = [
     viewport: { width: 768, height: 1024 },
     then: {
       mode: "portrait",
-      layoutFingerprint: "fa77d97a",
+      layoutFingerprint: "dcd60fbf",
     },
   },
   {
@@ -41,7 +41,7 @@ const layoutVectors = [
     viewport: { width: 1366, height: 768 },
     then: {
       mode: "desktop",
-      layoutFingerprint: "e6666e0a",
+      layoutFingerprint: "8d23e787",
     },
   },
   {
@@ -49,7 +49,7 @@ const layoutVectors = [
     viewport: { width: 1920, height: 1080 },
     then: {
       mode: "desktop",
-      layoutFingerprint: "5e7a5290",
+      layoutFingerprint: "fab74c74",
     },
   },
   {
@@ -57,7 +57,7 @@ const layoutVectors = [
     viewport: { width: 844, height: 390 },
     then: {
       mode: "landscape",
-      layoutFingerprint: "ae86a182",
+      layoutFingerprint: "99c62c16",
     },
   },
 ] as const;
@@ -88,7 +88,6 @@ describe("Phase 2A responsive board layout", () => {
       expect(first.slots.field).toHaveLength(8);
       expect(first.slots.opponentHand).toHaveLength(8);
       expect(first.slots.playerHand).toHaveLength(8);
-      expect(first.uiZones.actionBar.height).toBeGreaterThanOrEqual(44);
       expect(inspectBoardLayout(first)).toEqual({
         clippedZones: [],
         invalidZones: [],
@@ -120,7 +119,9 @@ describe("Phase 2A responsive board layout", () => {
     expect(portrait.uiZones.roundStatus.y).toBeLessThan(portrait.cardZones.field.y);
     expect(portrait.cardZones.field.y).toBeLessThan(portrait.cardZones.playerBrights.y);
     expect(portrait.cardZones.playerBrights.y).toBeLessThan(portrait.cardZones.playerHand.y);
-    expect(portrait.cardZones.playerHand.y).toBeLessThan(portrait.uiZones.actionBar.y);
+    expect(
+      portrait.cardZones.playerHand.y + portrait.cardZones.playerHand.height,
+    ).toBeLessThanOrEqual(portrait.safeBounds.y + portrait.safeBounds.height);
 
     const desktop = computeBoardLayout({ width: 1366, height: 768 });
     expect(desktop.cardZones.opponentHand.y).toBeLessThan(desktop.cardZones.field.y);
@@ -129,6 +130,23 @@ describe("Phase 2A responsive board layout", () => {
     expect(desktop.cardZones.field.x).toBeLessThan(desktop.cardZones.playerBrights.x);
     expect(desktop.cardZones.drawPile.x).toBeGreaterThan(desktop.cardZones.field.x);
   });
+
+  it.each([
+    { viewport: { width: 320, height: 568 }, minimumHeight: 88 },
+    { viewport: { width: 390, height: 844 }, minimumHeight: 118 },
+    { viewport: { width: 844, height: 390 }, minimumHeight: 67 },
+    { viewport: { width: 1366, height: 768 }, minimumHeight: 100 },
+  ])(
+    "gives the player hand the reclaimed action-bar space at $viewport",
+    ({ viewport, minimumHeight }) => {
+      const layout = computeBoardLayout(viewport);
+      const first = layout.slots.playerHand[0];
+      expect(first).toBeDefined();
+      if (!first) throw new Error("Player hand layout is missing its first card slot.");
+      expect(first.height).toBeGreaterThanOrEqual(minimumHeight);
+      expect(first.width / first.height).toBeCloseTo(5 / 8, 3);
+    },
+  );
 
   it("rejects unusable or non-finite viewports", () => {
     expect(() => computeBoardLayout({ width: 239, height: 844 })).toThrow(RangeError);

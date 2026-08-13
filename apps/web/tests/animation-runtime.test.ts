@@ -373,6 +373,28 @@ describe("Phase 2C deterministic AnimationDirector", () => {
     expect(director.inspect()).toMatchObject({ status: "finished", queuedClipCount: 0 });
   });
 
+  it("SHELL-3FA-004 defers an operating-system motion preference change until active motion settles", async () => {
+    const scenario = getTechnicalAnimationScenario("drawReveal");
+    const recording = recordingSurface(requiredProjection(scenario.projections, 0));
+    const director = createAnimationDirector({
+      initialProjection: requiredProjection(scenario.projections, 0),
+      mode: "normal",
+      surface: recording.surface,
+    });
+    const completion = director.play(scenario.events, { projections: scenario.projections });
+    director.advanceBy(100);
+
+    expect(() => director.setMode("reducedMotion")).not.toThrow();
+    expect(director.inspect().mode).toBe("normal");
+
+    director.advanceBy(20_000);
+    expect(await completion).toBe("completed");
+    expect(director.inspect()).toMatchObject({ mode: "reducedMotion", queuedPlanCount: 0 });
+    expect(fingerprintProjection(recording.current())).toBe(
+      fingerprintProjection(requiredProjection(scenario.projections, -1)),
+    );
+  });
+
   it("ANIM-009 cancel snaps synchronously, clears the queue, and prevents stale writes", async () => {
     const scenario = getTechnicalAnimationScenario("fourCardSweep");
     const source = requiredProjection(scenario.projections, 0);

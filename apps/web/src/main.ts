@@ -38,12 +38,11 @@ import {
 } from "./game/yaku-presentation";
 import { createAnimationDirector } from "./presentation/animation/animation-director";
 import { projectionsEqual } from "./presentation/animation/projection";
-import {
-  ANIMATION_MODES,
-  type AnimationDirectorV1,
-  type AnimationInspectionV1,
-  type AnimationMode,
-  type PresentationBoardProjection,
+import type {
+  AnimationDirectorV1,
+  AnimationInspectionV1,
+  AnimationMode,
+  PresentationBoardProjection,
 } from "./presentation/animation/types";
 import { computeBoardLayout, inspectBoardLayout } from "./presentation/board/board-layout";
 import { computeAdaptiveFieldLayout } from "./presentation/board/adaptive-field-layout";
@@ -57,13 +56,11 @@ import { INSTALLED_DECKS, isInstalledDeckId } from "./presentation/deck/installe
 import { createDomCardBridge, type DomCardBridgeV1 } from "./presentation/input/dom-card-bridge";
 import { buildSemanticCardControls } from "./presentation/input/hit-areas";
 import { createInteractionController } from "./presentation/input/input-controller";
-import {
-  INPUT_CONFIRMATION_MODES,
-  type InputCommandIntentV1,
-  type InputConfirmationMode,
-  type InputInteractionInspectionV1,
-  type InputLockReason,
-  type InteractionControllerV1,
+import type {
+  InputCommandIntentV1,
+  InputInteractionInspectionV1,
+  InputLockReason,
+  InteractionControllerV1,
 } from "./presentation/input/types";
 import {
   createTableScene,
@@ -104,9 +101,6 @@ const themeOptions = Object.freeze([
 ]);
 const fullscreenButton = queryRequired<HTMLButtonElement>("[data-fullscreen-button]");
 const deckSelect = queryRequired<HTMLSelectElement>("[data-deck-select]");
-const modeSelect = queryRequired<HTMLSelectElement>("[data-animation-mode]");
-const accelerateButton = queryRequired<HTMLButtonElement>("[data-animation-accelerate]");
-const finishButton = queryRequired<HTMLButtonElement>("[data-animation-finish]");
 const cardInputOverlay = queryRequired<HTMLElement>("[data-card-input-overlay]");
 const fieldPlacementControl = queryRequired<HTMLButtonElement>("[data-input-field-placement]");
 const captureInspectControls = Object.freeze([
@@ -116,9 +110,6 @@ const captureInspector = queryRequired<HTMLDialogElement>("[data-capture-inspect
 const captureInspectorTitle = queryRequired<HTMLElement>("[data-capture-inspector-title]");
 const captureInspectorGroups = queryRequired<HTMLElement>("[data-capture-inspector-groups]");
 const captureInspectorClose = queryRequired<HTMLButtonElement>("[data-capture-inspector-close]");
-const inputModeSelect = queryRequired<HTMLSelectElement>("[data-input-mode]");
-const inputConfirmButton = queryRequired<HTMLButtonElement>("[data-input-confirm]");
-const inputCancelButton = queryRequired<HTMLButtonElement>("[data-input-cancel]");
 const inputInstruction = queryRequired<HTMLElement>("[data-input-instruction]");
 const newRoundButton = queryRequired<HTMLButtonElement>("[data-new-round]");
 const handoff = queryRequired<HTMLElement>("[data-handoff]");
@@ -198,7 +189,7 @@ let focusedYakuDecisionKey: string | null = null;
 let focusedRoundResultKey: string | null = null;
 let captureInspectionOwner: CaptureInspectionOwnerV1 | null = null;
 let captureInspectionTrigger: HTMLButtonElement | null = null;
-const recaps: string[] = ["Round ready. Player A begins."];
+const recaps: string[] = [];
 
 function syncThemeControls(): void {
   for (const option of themeOptions) option.checked = option.value === activeTheme.id;
@@ -268,16 +259,6 @@ function otherPlayer(playerId: PlayerId): PlayerId {
   return playerId === "player-a" ? "player-b" : "player-a";
 }
 
-function phaseActionLabel(phase: PublicPhaseV1): string {
-  if (handoffPlayerId) return `Pass to ${playerName(handoffPlayerId)}`;
-  if (phase.kind === "awaitingHandPlay") return `${playerName(phase.playerId)} · Play a hand card`;
-  if (phase.kind === "awaitingDrawResolution")
-    return `${playerName(phase.playerId)} · Resolve Draw`;
-  if (phase.kind === "awaitingYakuDecision")
-    return `${playerName(phase.playerId)} · Bank or Koi-Koi`;
-  return phase.kind === "roundComplete" ? "Round complete" : "Match complete";
-}
-
 function tableStatusModel(): TableSceneStatusV1 {
   const own = observation.publicState.players.find(({ id }) => id === observation.playerId);
   const opponent = observation.publicState.players.find(
@@ -286,7 +267,6 @@ function tableStatusModel(): TableSceneStatusV1 {
   if (!own || !opponent) throw new Error("LOCAL_OBSERVATION_PLAYERS_INVALID");
   const month = getMonthDefinition(observation.publicState.round.scheduledMonth);
   return Object.freeze({
-    actionLabel: phaseActionLabel(observation.publicState.phase),
     multiplier: observation.publicState.round.tableMultiplier,
     opponentHandCount: opponent.handCount,
     opponentLabel: playerName(opponent.id),
@@ -362,20 +342,6 @@ function snapshot() {
     yaku: yakuPresentation,
     result: resultPresentation,
   });
-}
-
-function readAnimationMode(value: string): AnimationMode {
-  if (!ANIMATION_MODES.includes(value as AnimationMode)) {
-    throw new Error(`Unknown animation mode: ${value}.`);
-  }
-  return value as AnimationMode;
-}
-
-function readInputConfirmationMode(value: string): InputConfirmationMode {
-  if (!INPUT_CONFIRMATION_MODES.includes(value as InputConfirmationMode)) {
-    throw new Error(`Unknown input confirmation mode: ${value}.`);
-  }
-  return value as InputConfirmationMode;
 }
 
 function currentInputLock(): InputLockReason | null {
@@ -537,19 +503,17 @@ function inputMessage(inspection: InputInteractionInspectionV1): string {
   }
   if (inspection.status === "confirming") {
     if (inspection.handResolutionKind === "placeOnField") {
-      return "Tap the highlighted field to place this card, or use Confirm play.";
+      return "Tap the highlighted field to place this card.";
     }
     if (inspection.handResolutionKind === "capturePair") {
-      return "Tap the highlighted matching card to capture it, or use Confirm play.";
+      return "Tap the highlighted matching card to capture it.";
     }
     if (inspection.handResolutionKind === "fourCardSweep") {
-      return "Three matching cards highlighted. Tap any one or confirm the four-card sweep.";
+      return "Three matching cards highlighted. Tap any one to complete the four-card sweep.";
     }
-    return "Review the highlighted capture, then confirm.";
+    return "Tap a highlighted card to complete the capture.";
   }
-  return inspection.confirmationMode === "guided"
-    ? "Select a hand card, review the result, then confirm."
-    : "Select a hand card. Unambiguous plays happen immediately.";
+  return "Select a hand card to play.";
 }
 
 function renderRecaps(): void {
@@ -560,8 +524,9 @@ function renderRecaps(): void {
       return item;
     }),
   );
-  latestRecap.textContent = recaps.at(-1) ?? "No events yet.";
+  latestRecap.textContent = recaps.at(-1) ?? "";
   const recapRegion = recapList.closest<HTMLElement>(".turn-recap");
+  if (recapRegion) recapRegion.hidden = recaps.length === 0;
   const history = recapRegion?.querySelector<HTMLElement>(".turn-recap__history");
   if (history?.hasAttribute("open")) recapList.scrollTop = recapList.scrollHeight;
 }
@@ -866,20 +831,6 @@ function refreshInteractionSurface(): void {
       inspection.status === "decision",
   });
   renderSemanticCardBridge();
-  inputModeSelect.disabled =
-    processingIntent || handoffPlayerId !== null || isYakuDecisionOpen() || isRoundResultOpen();
-  inputConfirmButton.disabled = !inspection.confirmAvailable;
-  inputConfirmButton.hidden = !inspection.confirmAvailable;
-  inputConfirmButton.textContent =
-    inspection.handResolutionKind === "placeOnField"
-      ? "Confirm placement"
-      : inspection.handResolutionKind === "capturePair"
-        ? "Confirm capture"
-        : inspection.handResolutionKind === "fourCardSweep"
-          ? "Confirm sweep"
-          : "Confirm play";
-  inputCancelButton.disabled = !inspection.cancelAvailable;
-  inputCancelButton.hidden = !inspection.cancelAvailable;
   renderYakuPresentation(inspection);
   renderRoundResult();
   inputInstruction.textContent = inputMessage(inspection);
@@ -891,10 +842,7 @@ function updateControls(): void {
   const busy = animationDirector?.isBusy() ?? false;
   const decisionOpen = isYakuDecisionOpen();
   const resultOpen = isRoundResultOpen();
-  accelerateButton.disabled = !busy;
-  finishButton.disabled = !busy;
   deckSelect.disabled = deckStatus === "loading" || processingIntent || decisionOpen || resultOpen;
-  modeSelect.disabled = processingIntent || decisionOpen || resultOpen;
   fullscreenButton.disabled = processingIntent || decisionOpen || resultOpen;
   newRoundButton.disabled =
     busy || processingIntent || handoffPlayerId !== null || decisionOpen || resultOpen;
@@ -1029,7 +977,7 @@ async function executeIntent(intent: InputCommandIntentV1): Promise<void> {
 function createController(): InteractionControllerV1 {
   return createInteractionController({
     source: createInteractionSourceFromObservation(observation),
-    confirmationMode: readInputConfirmationMode(inputModeSelect.value),
+    confirmationMode: "guided",
     onIntent: (intent) => void executeIntent(intent),
   });
 }
@@ -1066,14 +1014,14 @@ async function resetLocalRound(fromResultAction = false): Promise<void> {
   refreshYakuPresentation();
   refreshRoundResultPresentation();
   pendingTurnEvents = [];
-  recaps.splice(0, recaps.length, "Round ready. Player A begins.");
+  recaps.splice(0, recaps.length);
   commandCount = 0;
   handoffPlayerId = null;
   handoff.hidden = true;
   await animationDirector.cancelAndSnapTo(projection);
   interactionController = createController();
   renderRecaps();
-  status.textContent = "New local round ready. Player A begins.";
+  status.textContent = "Player A may select a hand card.";
   refreshInteractionSurface();
 }
 
@@ -1178,26 +1126,6 @@ fullscreenButton.addEventListener("click", () => {
   void toggleFullscreen();
 });
 deckSelect.addEventListener("change", () => void switchDeck(deckSelect.value));
-modeSelect.addEventListener("change", () => {
-  if (isRoundResultOpen()) return;
-  animationDirector?.setMode(readAnimationMode(modeSelect.value));
-});
-accelerateButton.addEventListener("click", () => {
-  animationDirector?.accelerate();
-  status.textContent = "Animation accelerated. Press Faster again to finish.";
-  ensureAnimationLoop();
-});
-finishButton.addEventListener("click", () => void animationDirector?.finishImmediately());
-inputModeSelect.addEventListener("change", () => {
-  if (isRoundResultOpen()) return;
-  interactionController?.setConfirmationMode(readInputConfirmationMode(inputModeSelect.value));
-  status.textContent = "Play style changed. Choose a card again.";
-  refreshInteractionSurface();
-});
-inputConfirmButton.addEventListener("click", () => {
-  interactionController?.confirm();
-  refreshInteractionSurface();
-});
 fieldPlacementControl.addEventListener("click", () => {
   interactionController?.confirm();
   refreshInteractionSurface();
@@ -1205,10 +1133,6 @@ fieldPlacementControl.addEventListener("click", () => {
 fieldPlacementControl.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
   event.preventDefault();
-  if (interactionController?.cancel()) status.textContent = "Card selection cancelled.";
-  refreshInteractionSurface();
-});
-inputCancelButton.addEventListener("click", () => {
   if (interactionController?.cancel()) status.textContent = "Card selection cancelled.";
   refreshInteractionSurface();
 });
@@ -1307,15 +1231,16 @@ async function start(): Promise<void> {
     throw new Error("The approved primary deck activation was superseded.");
   }
   tableScene = createTableScene(app, initialActivation.bundle, activeTheme);
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const initialMode: AnimationMode = prefersReducedMotion ? "reducedMotion" : "normal";
-  modeSelect.value = initialMode;
+  const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const initialMode: AnimationMode = motionPreference.matches ? "reducedMotion" : "normal";
   animationDirector = createAnimationDirector({
     initialProjection: projection,
     mode: initialMode,
     surface: tableScene,
   });
-  inputModeSelect.value = "guided";
+  motionPreference.addEventListener("change", ({ matches }) => {
+    animationDirector?.setMode(matches ? "reducedMotion" : "normal");
+  });
   interactionController = createController();
   domCardBridge = createDomCardBridge({
     root: cardInputOverlay,
@@ -1340,7 +1265,7 @@ async function start(): Promise<void> {
   deckSelect.value = initialActivation.bundle.manifest.packageId;
   window.__KOIKOI4X_READY__ = true;
   document.documentElement.dataset.appReady = "true";
-  status.textContent = "Phase 3A local round ready. Player A begins.";
+  status.textContent = "Player A may select a hand card.";
   renderRecaps();
   redraw();
   refreshInteractionSurface();

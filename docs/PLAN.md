@@ -1,9 +1,9 @@
 # KoiKoi4x Implementation Plan
 
 **Plan version:** 1.1
-**Updated:** August 12, 2026
-**Current gate:** Phase 3E-C physical Draw choreography is locally accepted; commit, hosted CI, and
-Pages deployment verification are pending
+**Updated:** August 13, 2026
+**Current gate:** Phase 3F-A simplified table shell is integrated and undergoing final local,
+hosted, and Pages acceptance
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -707,8 +707,7 @@ Architecture is recorded in
 
 ### Phase 3E — Playability corrections
 
-Status: **Phase 3E-A deployed and accepted; Phase 3E-B and 3E-C are locally accepted together and
-await the repaired hosted gate/deployment**.
+Status: **deployed and accepted**.
 
 - **3E-A — Table clarity and decision surfaces:** remove empty field-slot chrome, anchor Options at
   the bottom, add public capture inspection, keep the field visible during Koi-Koi decisions, and
@@ -762,6 +761,30 @@ Phase 3E-C gate:
   physical-draw tests and root/Pages browser evidence.
 
 Architecture is recorded in [`ADR 0020`](./adr/0020-phase-3e-c-physical-draw-choreography.md).
+
+### Phase 3F — Focused playtesting polish
+
+Status: **Phase 3F-A integrated; Phase 3F-B follows after owner playtesting**.
+
+- **3F-A — Simplified table and larger hand:** remove routine phase/status and confirmation chrome,
+  give the former canvas action-strip height to Player Hand, and reduce Options to essential
+  cosmetic/table controls.
+- **3F-B — Unified tap-only interaction:** remove the temporary Guided confirmation state so legal
+  card/field taps are the only ordinary play language; explicit Bank/Koi-Koi remains.
+
+Phase 3F-A gate:
+
+- the table has no visible routine phase/status, initial-ready recap, or Confirm/Cancel strip;
+- the player-hand zone receives the removed action-strip reserve and materially enlarges all eight
+  cards without reducing field, Draw, Reveal, capture, or opponent geometry;
+- Options contains Theme, deck, fullscreen, restart, and close, with no Play style, Motion, Faster,
+  or Finish controls;
+- normal presentation automatically honors the operating-system reduced-motion preference;
+- authoritative legal actions, Draw resolution, Bank/Koi-Koi, handoff/result/capture inspection,
+  one canvas, 48 CardViews, and the 8–17-card field remain intact;
+- `npm run validate:phase3fa` and root/Pages seven-viewport browser evidence pass with no errors.
+
+Architecture is recorded in [`ADR 0021`](./adr/0021-phase-3f-a-simplified-table-shell.md).
 
 ## Later phases
 

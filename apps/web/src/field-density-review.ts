@@ -190,7 +190,6 @@ async function start(): Promise<void> {
   }
   scene = createTableScene(app, activation.bundle, DEFAULT_PHASE_3D_VISUAL_DIRECTION);
   scene.setStatus({
-    actionLabel: "Choose a highlighted dense-field target",
     multiplier: 1,
     opponentHandCount: 0,
     opponentLabel: "Opponent",

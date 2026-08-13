@@ -1964,15 +1964,11 @@ summary:focus-visible {
 
 /* Phase 3E-A table-clarity surfaces. */
 .app-shell:not(.density-review) {
-  grid-template-rows: auto minmax(420px, 1fr) auto auto auto auto auto;
-  padding-bottom: calc(58px + env(safe-area-inset-bottom));
+  grid-template-rows: auto minmax(420px, 1fr) auto auto auto;
+  padding-bottom: max(clamp(6px, 1.4vw, 18px), env(safe-area-inset-bottom));
 }
 
 .bottom-utilities {
-  position: fixed;
-  z-index: 8;
-  right: max(clamp(6px, 1.4vw, 18px), env(safe-area-inset-right));
-  bottom: max(6px, env(safe-area-inset-bottom));
   display: flex;
   justify-content: flex-end;
   padding: 0;

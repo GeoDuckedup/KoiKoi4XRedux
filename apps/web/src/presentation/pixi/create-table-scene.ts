@@ -28,7 +28,6 @@ interface TableSceneFrame {
 }
 
 export interface TableSceneStatusV1 {
-  readonly actionLabel: string;
   readonly multiplier: number;
   readonly opponentHandCount: number;
   readonly opponentLabel: string;
@@ -268,15 +267,12 @@ function renderReveal(layer: Container, layout: BoardLayout, colors: TableSceneC
 function renderStatus(
   layer: Container,
   layout: BoardLayout,
-  fullscreen: boolean,
   tableStatus: TableSceneStatusV1,
   colors: TableSceneColorsV1,
 ): void {
   const identity = layout.uiZones.opponentIdentity;
   const status = layout.uiZones.roundStatus;
-  const action = layout.uiZones.actionBar;
   const compact = layout.mode === "compactPortrait" || layout.mode === "landscape";
-  const actionLabel = tableStatus.actionLabel.toUpperCase();
 
   layer.addChild(
     panel(identity, {
@@ -348,35 +344,6 @@ function renderStatus(
         color: colors.white,
         fontSize: Math.max(10, 13 * layout.scale),
         fontWeight: "700",
-      },
-    ),
-    panel(action, {
-      fill: colors.gold,
-      fillAlpha: 0.11,
-      radius: Math.min(16, action.height * 0.36),
-      stroke: colors.gold,
-      strokeAlpha: 0.52,
-      strokeWidth: Math.max(1, layout.scale),
-    }),
-    label(actionLabel, action.x + action.width / 2, action.y + action.height / 2, {
-      anchorX: 0.5,
-      anchorY: 0.5,
-      color: colors.gold,
-      fontSize: Math.max(8, 10.5 * layout.scale),
-      fontWeight: "700",
-      letterSpacing: compact ? 0.35 : 1,
-    }),
-    label(
-      `${layout.mode.replace(/([A-Z])/g, " $1").toUpperCase()}${fullscreen ? " · FULLSCREEN" : ""}`,
-      action.x + action.width - Math.max(6, 9 * layout.scale),
-      action.y + action.height - Math.max(3, 5 * layout.scale),
-      {
-        anchorX: 1,
-        anchorY: 1,
-        color: colors.creamMuted,
-        fontSize: Math.max(6, 7 * layout.scale),
-        fontWeight: "600",
-        letterSpacing: 0.45,
       },
     ),
   );
@@ -531,7 +498,6 @@ export function createTableScene(
     locked: true,
   });
   let tableStatus: TableSceneStatusV1 = Object.freeze({
-    actionLabel: "Loading local round",
     multiplier: 1,
     opponentHandCount: 0,
     opponentLabel: "Opponent",
@@ -638,13 +604,7 @@ export function createTableScene(
       layout.scale,
       theme.table,
     );
-    renderStatus(
-      requiredChrome("InteractionOverlayLayer"),
-      layout,
-      fullscreen,
-      tableStatus,
-      theme.table,
-    );
+    renderStatus(requiredChrome("InteractionOverlayLayer"), layout, tableStatus, theme.table);
     renderInteractionHighlights(
       requiredChrome("InteractionOverlayLayer"),
       layout,

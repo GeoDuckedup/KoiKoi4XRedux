@@ -1,10 +1,8 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository
-has deployed and accepted **Phase 3E-A: table clarity and decision surfaces** and has locally
-accepted **Phase 3E-B: authoritative interactive Draw resolution** plus **Phase 3E-C: physical Draw
-choreography**; their repaired hosted gate/deployment is pending with an owner-approved primary
-deck. It
+has deployed and accepted **Phase 3E: playability corrections** and has integrated **Phase 3F-A:
+simplified table and larger hand** with an owner-approved primary deck. It
 contains the canonical rules authority, all 48 artwork-independent card records, the complete
 deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
@@ -51,6 +49,7 @@ npm run validate:phase3dd
 npm run validate:phase3ea
 npm run validate:phase3eb
 npm run validate:phase3ec
+npm run validate:phase3fa
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -151,6 +150,11 @@ card through engine-provided legal actions. Artifacts are written under `output/
 physical choreography: one face-down card leaves the visible deck top, flips in Reveal, pauses, then
 becomes the existing keyboard-accessible Reveal action. Root and Pages artifacts are written under
 `output/phase-3e-c/e2e/`.
+
+`npm run validate:phase3fa` retains the complete physical-Draw/replay/deck/Workshop gate and removes
+routine phase/confirmation chrome, enlarges the eight-card player hand using the former canvas
+action-strip reserve, simplifies Options to essential table controls, and verifies automatic
+reduced-motion behavior. Root and Pages artifacts are written under `output/phase-3f-a/e2e/`.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

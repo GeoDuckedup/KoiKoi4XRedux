@@ -101,10 +101,15 @@ function fitFieldSlots(bounds: BoardRect, gap: number): readonly BoardRect[] {
   );
 }
 
-function fitHandSlots(bounds: BoardRect, count: number, gap: number): readonly BoardRect[] {
+function fitHandSlots(
+  bounds: BoardRect,
+  count: number,
+  gap: number,
+  maximumCardHeight: number,
+): readonly BoardRect[] {
   const labelSpace = Math.min(16, bounds.height * 0.2);
   const availableHeight = Math.max(1, bounds.height - labelSpace - gap);
-  const cardHeight = Math.min(availableHeight, 102);
+  const cardHeight = Math.min(availableHeight, maximumCardHeight);
   const cardWidth = cardHeight * CARD_ASPECT_RATIO;
   const fullWidth = cardWidth * count + gap * (count - 1);
   const step =
@@ -164,15 +169,11 @@ function computePortraitLayout(viewport: BoardViewport, mode: BoardLayoutMode): 
   const opponentHandHeight = compact ? 42 : clamp(safe.height * 0.085, 48, 78);
   const captureHeight = compact ? 32 : clamp(safe.height * 0.064, 38, 58);
   const statusHeight = compact ? 32 : clamp(safe.height * 0.052, 36, 48);
-  const playerHandHeight = compact ? 64 : clamp(safe.height * 0.13, 76, 118);
-  const actionHeight = clamp(safe.height * 0.075, MIN_INTERACTION_SIZE, 60);
+  const reclaimedActionHeight = clamp(safe.height * 0.075, MIN_INTERACTION_SIZE, 60);
+  const playerHandHeight =
+    (compact ? 64 : clamp(safe.height * 0.13, 76, 118)) + reclaimedActionHeight;
   const fixedHeight =
-    identityHeight +
-    opponentHandHeight +
-    captureHeight * 2 +
-    statusHeight +
-    playerHandHeight +
-    actionHeight;
+    identityHeight + opponentHandHeight + captureHeight * 2 + statusHeight + playerHandHeight;
   const centerHeight = Math.max(110, safe.height - fixedHeight - gap * 6);
   let y = safe.y;
 
@@ -201,7 +202,6 @@ function computePortraitLayout(viewport: BoardViewport, mode: BoardLayoutMode): 
   const playerCapture = rect(safe.x, y, safe.width, captureHeight);
   y += captureHeight + gap;
   const playerHand = rect(safe.x, y, safe.width, playerHandHeight);
-  const actionBar = rect(safe.x, safe.y + safe.height - actionHeight, safe.width, actionHeight);
 
   const cardZones: Partial<Record<CardZone, BoardRect>> = {
     drawPile,
@@ -220,7 +220,6 @@ function computePortraitLayout(viewport: BoardViewport, mode: BoardLayoutMode): 
     safe,
     cardZones,
     {
-      actionBar,
       opponentIdentity,
       roundStatus,
     },
@@ -236,11 +235,12 @@ function computeWideLayout(viewport: BoardViewport, mode: BoardLayoutMode): Boar
   const compact = mode === "landscape";
   const headerHeight = compact ? 32 : clamp(safe.height * 0.068, 42, 60);
   const opponentHandHeight = compact ? 38 : clamp(safe.height * 0.105, 62, 92);
-  const playerHandHeight = compact ? 44 : clamp(safe.height * 0.13, 76, 112);
-  const actionHeight = clamp(safe.height * 0.07, MIN_INTERACTION_SIZE, 58);
+  const reclaimedActionHeight = clamp(safe.height * 0.07, MIN_INTERACTION_SIZE, 58);
+  const playerHandHeight =
+    (compact ? 44 : clamp(safe.height * 0.13, 76, 112)) + reclaimedActionHeight;
   const centerHeight = Math.max(
     100,
-    safe.height - headerHeight - opponentHandHeight - playerHandHeight - actionHeight - gap * 4,
+    safe.height - headerHeight - opponentHandHeight - playerHandHeight - gap * 4,
   );
   const identityWidth = clamp(safe.width * 0.24, 116, 320);
   const opponentIdentity = rect(safe.x, safe.y, identityWidth, headerHeight);
@@ -256,7 +256,6 @@ function computeWideLayout(viewport: BoardViewport, mode: BoardLayoutMode): Boar
   const center = rect(safe.x, y, safe.width, centerHeight);
   y += centerHeight + gap;
   const playerHand = rect(safe.x, y, safe.width, playerHandHeight);
-  const actionBar = rect(safe.x, safe.y + safe.height - actionHeight, safe.width, actionHeight);
 
   const captureWidth = clamp(center.width * (compact ? 0.16 : 0.18), 72, 240);
   const railWidth = clamp(center.width * (compact ? 0.12 : 0.1), 58, 128);
@@ -294,7 +293,6 @@ function computeWideLayout(viewport: BoardViewport, mode: BoardLayoutMode): Boar
     safe,
     cardZones,
     {
-      actionBar,
       opponentIdentity,
       roundStatus,
     },
@@ -320,8 +318,8 @@ function finishLayout(
   }
   const cardZones = Object.freeze(orderedCardZones) as Readonly<Record<CardZone, BoardRect>>;
   const fieldSlots = fitFieldSlots(cardZones.field, gap);
-  const playerHandSlots = fitHandSlots(cardZones.playerHand, 8, gap * 0.65);
-  const opponentHandSlots = fitHandSlots(cardZones.opponentHand, 8, gap * 0.65);
+  const playerHandSlots = fitHandSlots(cardZones.playerHand, 8, gap * 0.65, 142);
+  const opponentHandSlots = fitHandSlots(cardZones.opponentHand, 8, gap * 0.65, 102);
   const referenceSlot = fieldSlots[0];
   if (!referenceSlot) {
     throw new Error("Board layout must contain a field slot.");
@@ -424,17 +422,12 @@ export function inspectBoardLayout(layout: BoardLayout): BoardLayoutDiagnostics 
     ["field", layout.cardZones.field, "drawPile", layout.cardZones.drawPile],
     ["field", layout.cardZones.field, "reveal", layout.cardZones.reveal],
     ["drawPile", layout.cardZones.drawPile, "reveal", layout.cardZones.reveal],
-    ["playerHand", layout.cardZones.playerHand, "actionBar", layout.uiZones.actionBar],
     ["opponentHand", layout.cardZones.opponentHand, "field", layout.cardZones.field],
   ];
   for (const [firstName, first, secondName, second] of pairs) {
     if (overlaps(first, second)) {
       overlapViolations.push(`${firstName}:${secondName}`);
     }
-  }
-
-  if (layout.uiZones.actionBar.height < MIN_INTERACTION_SIZE) {
-    invalidZones.push("actionBar:minInteractionSize");
   }
 
   return Object.freeze({

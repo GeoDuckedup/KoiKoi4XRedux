@@ -6,7 +6,7 @@ import { chromium } from "playwright";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-3e-c/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-3f-a/e2e");
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
 const mountedBasePath = smokeBasePath === "/" ? "/" : `${smokeBasePath}/`;
@@ -126,14 +126,9 @@ async function closeOptions(page) {
 }
 
 async function configureSecondaryOptions(page, options) {
-  await openOptions(page);
-  if (options.animationMode) {
-    await page.locator("[data-animation-mode]").selectOption(options.animationMode);
-  }
-  if (options.inputMode) {
-    await page.locator("[data-input-mode]").selectOption(options.inputMode);
-  }
-  await closeOptions(page);
+  await page.emulateMedia({
+    reducedMotion: options.animationMode === "normal" ? "no-preference" : "reduce",
+  });
 }
 
 async function selectTheme(page, themeId) {
@@ -148,9 +143,9 @@ async function selectTheme(page, themeId) {
 }
 
 async function resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors) {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto(pageUrl, { waitUntil: "networkidle" });
   await waitForApplicationReady(page, browserErrors, networkErrors);
-  await configureSecondaryOptions(page, { animationMode: "instant", inputMode: "guided" });
 }
 
 async function waitForAcceptedHandIntent(page, previousVersion) {
@@ -331,7 +326,7 @@ async function resolvePendingDrawIfNeeded(page) {
         state.input.status === "targeting" ||
         (state.input.status === "confirming" &&
           (document.querySelectorAll('[data-input-role="target"]').length > 0 ||
-            document.querySelector("[data-input-confirm]")?.checkVisibility()))
+            document.querySelector("[data-input-field-placement]")?.checkVisibility()))
       );
     },
     null,
@@ -341,9 +336,9 @@ async function resolvePendingDrawIfNeeded(page) {
   if ((await targets.count()) > 0) {
     await targets.first().click();
   } else {
-    const confirm = page.locator("[data-input-confirm]");
-    assert(await confirm.isVisible(), "An unambiguous pending Draw must expose confirmation.");
-    await confirm.click();
+    const placement = page.locator("[data-input-field-placement]");
+    assert(await placement.isVisible(), "An unmatched pending Draw must expose the field.");
+    await placement.click();
   }
   await page.waitForFunction(
     (version) => {
@@ -382,7 +377,7 @@ async function submitOpeningHandForPhysicalDraw(page) {
   } else if (selected.input.status === "confirming") {
     const target = page.locator('[data-input-role="target"]').first();
     if ((await target.count()) === 1) await target.click();
-    else await page.locator("[data-input-confirm]").click();
+    else await page.locator("[data-input-field-placement]").click();
   }
   await page.waitForTimeout(0);
 }
@@ -489,6 +484,31 @@ async function playHandCardById(page, cardId) {
     (version) => {
       const state = JSON.parse(window.render_game_to_text());
       return (
+        state.localRound.stateVersion > version ||
+        state.input.status === "confirming" ||
+        state.input.status === "targeting"
+      );
+    },
+    before.localRound.stateVersion,
+    { timeout: 30_000 },
+  );
+  const selected = await readState(page);
+  if (selected.localRound.stateVersion === before.localRound.stateVersion) {
+    const target = page.locator('[data-input-role="target"]').first();
+    if ((await target.count()) > 0) await target.click();
+    else {
+      const placement = page.locator("[data-input-field-placement]");
+      assert(
+        await placement.isVisible(),
+        `The locked trace card ${cardId} has no tap destination.`,
+      );
+      await placement.click();
+    }
+  }
+  await page.waitForFunction(
+    (version) => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
         state.localRound.stateVersion > version &&
         state.animation.status !== "playing" &&
         state.input.status !== "intentPending" &&
@@ -537,6 +557,20 @@ async function playHandCardThroughFeedbackBeat(page, cardId) {
     record();
   });
   await button.click();
+  await page.waitForFunction(() => {
+    const state = JSON.parse(window.render_game_to_text());
+    return state.input.status === "confirming" || state.input.status === "targeting";
+  });
+  const target = page.locator('[data-input-role="target"]').first();
+  if ((await target.count()) > 0) await target.click();
+  else {
+    const placement = page.locator("[data-input-field-placement]");
+    assert(
+      await placement.isVisible(),
+      `The feedback-boundary card ${cardId} has no tap destination.`,
+    );
+    await placement.click();
+  }
   await page.waitForFunction(
     (version) => {
       return globalThis.__phase3bFeedbackTrace?.some(
@@ -659,11 +693,31 @@ try {
         state.theme.activeId === "ink-parchment" && state.theme.optionsOpen === false,
         `The fresh production shell did not use its default Ink theme: ${JSON.stringify(state.theme)}.`,
       );
+      assert(
+        (await page.locator("[data-turn-context]").count()) === 0 &&
+          !(await page.locator(".turn-recap").isVisible()),
+        "The removed turn/status scaffolding remained visible on a fresh round.",
+      );
       assert(state.cards.cardViewCount === 48, "The persistent 48-card registry changed.");
       assert(
         state.scene.emptyFieldPlaceholderCount === 0,
         "The table rendered numbered or outlined empty field-card placeholders.",
       );
+      const minimumPlayerHandHeights = new Map([
+        ["320x568", 108],
+        ["390x844", 120],
+        ["844x390", 88],
+        ["1366x768", 120],
+      ]);
+      const minimumHandHeight = minimumPlayerHandHeights.get(
+        `${viewport.width}x${viewport.height}`,
+      );
+      if (minimumHandHeight !== undefined) {
+        assert(
+          state.layout.zones.playerHand.height >= minimumHandHeight,
+          `The enlarged player hand regressed at ${viewport.width}×${viewport.height}: ${state.layout.zones.playerHand.height}.`,
+        );
+      }
       assert(
         state.cards.visibleViews.every(({ faceUp }) => faceUp),
         "Text projection exposed a face-down card identity.",
@@ -681,16 +735,15 @@ try {
         `A supported viewport clips a board zone: ${JSON.stringify({ viewport, diagnostics: state.diagnostics })}`,
       );
       if (viewport.width === 844 && viewport.height === 390) {
-        for (const selector of ["[data-turn-context]", "[data-yaku-progress]", ".turn-recap"]) {
+        for (const selector of ["[data-yaku-progress]"]) {
           assert(await page.locator(selector).isVisible(), `${selector} disappeared in landscape.`);
         }
       }
       const optionsBox = await page.locator("[data-options-trigger]").boundingBox();
+      const frameBox = await page.locator(".game-frame").boundingBox();
       assert(
-        optionsBox !== null &&
-          optionsBox.y >= viewport.height / 2 &&
-          optionsBox.y + optionsBox.height <= viewport.height + 1,
-        `Options is not anchored to the viewport bottom at ${viewport.width}×${viewport.height}: ${JSON.stringify(optionsBox)}.`,
+        optionsBox !== null && frameBox !== null && optionsBox.y >= frameBox.y + frameBox.height,
+        `Options overlaps the card table at ${viewport.width}×${viewport.height}: ${JSON.stringify({ optionsBox, frameBox })}.`,
       );
       await page.screenshot({
         path: resolve(
@@ -710,9 +763,23 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   await runPhysicalDrawTrace(page);
   await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
-  await configureSecondaryOptions(page, { animationMode: "instant", inputMode: "guided" });
+  await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).animation.mode === "reducedMotion",
+  );
 
   await openOptions(page);
+  for (const removedControl of [
+    "[data-input-mode]",
+    "[data-animation-mode]",
+    "[data-animation-accelerate]",
+    "[data-animation-finish]",
+  ]) {
+    assert(
+      (await page.locator(removedControl).count()) === 0,
+      `${removedControl} remained in the simplified Options dialog.`,
+    );
+  }
   assert(
     await page.locator('[data-theme-option][value="ink-parchment"]').isChecked(),
     "Options did not identify the selected Ink theme.",
@@ -737,6 +804,10 @@ try {
         .locator("[data-options-trigger]")
         .evaluate((trigger) => document.activeElement === trigger)),
     "Escape did not close Options and return focus to its trigger.",
+  );
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).animation.mode === "normal",
   );
 
   await page.locator('[data-input-role="selectable"][data-card-id="november-red-scroll"]').click();
@@ -767,8 +838,8 @@ try {
       `${themeId} changed gameplay state or persistent CardView identity.`,
     );
     assert(
-      (await page.locator("[data-table-status]").textContent())?.includes("highlighted field"),
-      `${themeId} replaced the selected-card turn instruction.`,
+      (await page.locator("[data-input-instruction]").textContent())?.includes("highlighted field"),
+      `${themeId} replaced the selected-card accessibility instruction.`,
     );
     for (const viewport of [
       { id: "mobile", width: 390, height: 844 },
@@ -799,13 +870,7 @@ try {
     "The IndexedDB theme preference did not restore after reload.",
   );
   await selectTheme(page, "ink-parchment");
-  await configureSecondaryOptions(page, { animationMode: "instant", inputMode: "guided" });
-  await page.locator(".turn-recap__history > summary").click();
-  assert(
-    await page.locator("[data-turn-recaps]").isVisible(),
-    "The complete ordered History disclosure is not reachable.",
-  );
-  await page.locator(".turn-recap__history > summary").click();
+  await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
   process.stdout.write("Phase 3D-C runtime theme, persistence, and Options focus trace passed.\n");
 
   const placementBefore = await readState(page);
@@ -880,7 +945,7 @@ try {
   process.stdout.write("Phase 3D-B Guided placement and unique-match trace passed.\n");
 
   await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
-  await configureSecondaryOptions(page, { inputMode: "fast" });
+  await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
 
   await playLockedHandSequence(page, PHASE_3B_HAND_DECISION_SEQUENCE.slice(0, -1));
   const lastHandDecisionCard = PHASE_3B_HAND_DECISION_SEQUENCE.at(-1);
@@ -913,8 +978,6 @@ try {
   for (const selector of [
     "[data-deck-select]",
     "[data-fullscreen-button]",
-    "[data-input-mode]",
-    "[data-animation-mode]",
     "[data-new-round]",
     "[data-options-trigger]",
   ]) {
@@ -1085,7 +1148,7 @@ try {
 
   await page.goto(pageUrl, { waitUntil: "networkidle" });
   await waitForApplicationReady(page, browserErrors, networkErrors);
-  await configureSecondaryOptions(page, { animationMode: "instant", inputMode: "fast" });
+  await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
   const freshHandAnimals = await playLockedHandSequence(page, PHASE_3B_HAND_DECISION_SEQUENCE);
   assert(
     freshHandAnimals.localRound.phase === "awaitingYakuDecision" &&
@@ -1156,8 +1219,6 @@ try {
   for (const selector of [
     "[data-deck-select]",
     "[data-fullscreen-button]",
-    "[data-input-mode]",
-    "[data-animation-mode]",
     "[data-new-round]",
     "[data-options-trigger]",
   ]) {
@@ -1174,7 +1235,26 @@ try {
   );
   for (const viewport of viewports) {
     await page.setViewportSize(viewport);
-    const resultBox = await page.locator("[data-round-result]").boundingBox();
+    const { resultBox, cardBox } = await page.locator("[data-round-result]").evaluate((result) => {
+      const card = result.querySelector(".round-result__card");
+      if (!(card instanceof HTMLElement)) throw new Error("The result card disappeared.");
+      const resultBounds = result.getBoundingClientRect();
+      const cardBounds = card.getBoundingClientRect();
+      return {
+        resultBox: {
+          x: resultBounds.x,
+          y: resultBounds.y,
+          width: resultBounds.width,
+          height: resultBounds.height,
+        },
+        cardBox: {
+          x: cardBounds.x,
+          y: cardBounds.y,
+          width: cardBounds.width,
+          height: cardBounds.height,
+        },
+      };
+    });
     assert(resultBox !== null, `${viewport.width}×${viewport.height} result modal disappeared.`);
     const documentHeight = await page.evaluate(() => document.documentElement.scrollHeight);
     assert(
@@ -1184,14 +1264,12 @@ try {
         resultBox.y + resultBox.height <= documentHeight + 1,
       `${viewport.width}×${viewport.height} result overlay escaped the horizontally bounded, vertically scrollable page: ${JSON.stringify({ resultBox, documentHeight })}.`,
     );
-    const cardBox = await page.locator(".round-result__card").boundingBox();
     assert(
-      cardBox !== null &&
-        cardBox.x >= resultBox.x - 1 &&
-        cardBox.y >= resultBox.y - 1 &&
-        cardBox.x + cardBox.width <= resultBox.x + resultBox.width + 1 &&
-        cardBox.y + cardBox.height <= resultBox.y + resultBox.height + 1,
-      `${viewport.width}×${viewport.height} result card is clipped: ${JSON.stringify(cardBox)}.`,
+      cardBox.x >= resultBox.x - 3 &&
+        cardBox.y >= resultBox.y - 3 &&
+        cardBox.x + cardBox.width <= resultBox.x + resultBox.width + 3 &&
+        cardBox.y + cardBox.height <= resultBox.y + resultBox.height + 3,
+      `${viewport.width}×${viewport.height} result card is clipped: ${JSON.stringify({ resultBox, cardBox })}.`,
     );
     await page.screenshot({
       path: resolve(

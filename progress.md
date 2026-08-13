@@ -958,3 +958,28 @@ Original prompt: read the package and understand it, then let me know when we ar
   Draw-to-handoff boundary before continuing its deterministic Yaku path.
 - Independent review reports no blocker, high, or medium issue. The next action is commit/push,
   followed by CI/Pages verification; it is not yet a hosted/live claim.
+
+## 2026-08-13 — Phase 3F-A simplified table integrated
+
+- Removed the visible routine phase/instruction/Confirm/Cancel strip and empty initial-ready recap.
+  The hidden accessible live instruction remains, as do Bank/Koi-Koi, result, handoff, and capture
+  inspection controls.
+- Removed the noninteractive in-canvas action bar and reassigned its complete responsive reserve to
+  Player Hand. Supported 320×568, 390×844, 844×390, and desktop layouts show materially larger
+  eight-card hands while field, captures, Draw, Reveal, opponent hand, and 8–17-card capacity remain
+  contained.
+- Options now contains only Theme, deck, fullscreen, local restart, and close. Production uses
+  normal animation and follows operating-system reduced-motion changes; changes during active
+  motion are deferred until the plan settles.
+- Focused layout/input/animation/runtime validation passes 5 files / 71 tests, including the added
+  reduced-motion preference regression. Full
+  `npm run check` passes 46 files / 435 ordinary tests, the deterministic 10,002-match gate, deck
+  validation, all workspace typechecks, lint/format, and the 771-module production build.
+- Root and repository-prefixed Pages smoke suites pass all seven viewports, themes, direct Hand and
+  Draw interaction, Yaku/Bank/Koi/result/handoff/capture flows, automatic reduced motion, one canvas,
+  48 persistent CardViews, and zero browser/network errors. Inspected evidence is under
+  `output/phase-3f-a/e2e/`. Hosted CI/Pages/live evidence remains pending commit and push.
+- The inherited combined release wrapper exposed a subpixel timing race because Playwright sampled
+  the result overlay and card in separate layout reads. The assertion now samples both DOMRects in
+  one browser evaluation; the repository-prefixed Pages suite passes after that test-only repair.
+- Phase 3F-B unified tap-only interaction is next; no engine or protocol behavior changed here.

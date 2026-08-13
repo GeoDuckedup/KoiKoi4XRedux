@@ -47,6 +47,7 @@ export function createAnimationDirector(input: {
 }): AnimationDirectorV1 {
   assertMode(input.mode);
   let mode = input.mode;
+  let pendingMode: AnimationMode | null = null;
   let displayProjection = createPresentationProjection(input.initialProjection);
   let targetProjection = displayProjection;
   let status: AnimationInspectionV1["status"] = "idle";
@@ -92,6 +93,10 @@ export function createAnimationDirector(input: {
       targetProjection = queue.at(-1)?.plan.target ?? next.plan.target;
     } else {
       targetProjection = displayProjection;
+      if (pendingMode !== null) {
+        mode = pendingMode;
+        pendingMode = null;
+      }
     }
   };
 
@@ -186,11 +191,15 @@ export function createAnimationDirector(input: {
       speedMultiplier = 1;
       lastCompletion = "cancelled";
       status = "cancelled";
+      if (pendingMode !== null) {
+        mode = pendingMode;
+        pendingMode = null;
+      }
     },
     setMode: (nextMode) => {
       assertMode(nextMode);
-      if (activeEntry()) throw new Error("Animation mode can only change while the queue is idle.");
-      mode = nextMode;
+      if (activeEntry()) pendingMode = nextMode;
+      else mode = nextMode;
     },
     isBusy: () => activeEntry() !== undefined,
     inspect: () => {

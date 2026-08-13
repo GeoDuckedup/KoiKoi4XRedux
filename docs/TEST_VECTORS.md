@@ -517,7 +517,23 @@ geometry/identity/face contract; the root and Pages browser smoke traces inspect
 keyboard activation artifacts under `output/phase-3e-c/e2e/`. ADR 0020 records the presentation-only
 boundary.
 
-## 21. Approved-decision coverage matrix
+## 21. Phase 3F-A simplified-table vectors
+
+| ID | Required expectation |
+|---|---|
+| `SHELL-3FA-001-DECLUTTER` | No visible routine phase/status, initial-ready recap, or Confirm/Cancel strip remains; hidden accessible turn feedback and Bank/Koi-Koi controls remain. |
+| `SHELL-3FA-002-HAND-PROMINENCE` | The removed canvas action strip is reassigned to Player Hand, materially enlarging all eight cards while field, Draw, Reveal, captures, and opponent geometry remain contained. |
+| `SHELL-3FA-003-OPTIONS-ESSENTIALS` | Options contains themes, deck, fullscreen, restart, and close; Play style, Motion, Faster, and Finish are absent and unfocusable. |
+| `SHELL-3FA-004-AUTO-REDUCED-MOTION` | Production uses normal animation with no manual motion chooser and automatically follows `prefers-reduced-motion` without changing game state. |
+| `SHELL-3FA-005-AUTHORITY-PRESERVED` | Legal card/field targets, Draw resolution, Escape cancellation, Bank/Koi-Koi, one canvas, and 48 persistent CardViews retain their established authority and identity contracts. |
+| `SHELL-3FA-006-ROOT-PAGES` | Root and repository-prefixed seven-viewport traces show contained enlarged hands, bottom Options, unchanged dense field capacity, and zero browser/network errors. |
+
+Phase 3F-A binding: `board-layout.test.ts`, `input-runtime.test.ts`, and
+`phase3db-interaction.test.ts` bind geometry and interaction regressions. The root and Pages browser
+gate binds the shell, automatic reduced-motion behavior, real Hand/Draw play, and artifacts under
+`output/phase-3f-a/e2e/`. ADR 0021 records the presentation-only scope.
+
+## 22. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

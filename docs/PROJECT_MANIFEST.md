@@ -26,6 +26,7 @@
 | Phase 3E-A table clarity and decision surfaces | `docs/adr/0018-phase-3e-a-table-clarity.md` |
 | Phase 3E-B authoritative Draw resolution | `docs/adr/0019-phase-3e-b-authoritative-draw-resolution.md` |
 | Phase 3E-C physical Draw choreography | `docs/adr/0020-phase-3e-c-physical-draw-choreography.md` |
+| Phase 3F-A simplified table shell | `docs/adr/0021-phase-3f-a-simplified-table-shell.md` |
 | Architectural decisions | `docs/adr/` |
 | Agent operating instructions | `AGENTS.md` |
 

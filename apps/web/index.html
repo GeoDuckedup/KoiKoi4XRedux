@@ -52,32 +52,6 @@
           </label>
         </fieldset>
 
-        <section class="options-dialog__group" aria-labelledby="options-play-title">
-          <h3 id="options-play-title">Play</h3>
-          <div class="options-dialog__grid">
-            <label>
-              <span>Play style</span>
-              <select data-input-mode>
-                <option value="guided">Guided</option>
-                <option value="fast">Fast</option>
-              </select>
-            </label>
-            <label>
-              <span>Motion</span>
-              <select data-animation-mode>
-                <option value="normal">Normal</option>
-                <option value="fast">Fast</option>
-                <option value="instant">Instant</option>
-                <option value="reducedMotion">Reduced Motion</option>
-              </select>
-            </label>
-          </div>
-          <div class="options-dialog__button-row" aria-label="Animation controls">
-            <button type="button" data-animation-accelerate disabled>Faster</button>
-            <button type="button" data-animation-finish disabled>Finish motion</button>
-          </div>
-        </section>
-
         <section class="options-dialog__group" aria-labelledby="options-table-title">
           <h3 id="options-table-title">Table</h3>
           <label>
@@ -100,7 +74,7 @@
       <section
         class="game-frame"
         aria-label="Playable local KoiKoi4x Hanafuda round"
-        aria-describedby="table-status input-instruction"
+        aria-describedby="input-instruction"
       >
         <div class="game-host" data-game-host></div>
         <div
@@ -222,16 +196,6 @@
         </div>
       </section>
 
-      <section class="turn-context" data-turn-context aria-label="Current turn">
-        <p class="turn-context__status" data-table-status aria-live="polite">
-          Loading the local round…
-        </p>
-        <div class="input-buttons" aria-label="Turn actions">
-          <button type="button" data-input-confirm disabled>Confirm play</button>
-          <button type="button" data-input-cancel disabled>Cancel</button>
-        </div>
-      </section>
-
       <section class="yaku-progress" data-yaku-progress aria-labelledby="yaku-progress-title">
         <h2 class="visually-hidden" id="yaku-progress-title">Current yaku progress</h2>
         <div class="yaku-progress__players">
@@ -254,14 +218,10 @@
 
       <section class="turn-recap" aria-labelledby="turn-recap-title">
         <h2 class="visually-hidden" id="turn-recap-title">Turn recap</h2>
-        <p class="turn-recap__latest" data-latest-recap aria-live="polite">
-          Round ready. Player A begins.
-        </p>
+        <p class="turn-recap__latest" data-latest-recap aria-live="polite"></p>
         <details class="turn-recap__history">
           <summary>History</summary>
-          <ol data-turn-recaps>
-            <li>Round ready. Player A begins.</li>
-          </ol>
+          <ol data-turn-recaps></ol>
         </details>
       </section>
       <div class="bottom-utilities">
@@ -294,6 +254,7 @@
       <p class="visually-hidden" id="input-instruction" data-input-instruction aria-live="polite">
         Loading keyboard-accessible card controls.
       </p>
+      <p class="visually-hidden" data-table-status aria-live="polite">Loading the local round.</p>
       <p class="visually-hidden" data-options-announcement aria-live="polite"></p>
     </main>
     <script type="module" src="/src/main.ts"></script>

@@ -3613,6 +3613,23 @@ Phase 3 acceptance:
 - resolution input, animation, recap, replay, and accessibility remain aligned;
 - root/Pages and deterministic replay gates cover every Draw-resolution family.
 
+## Phase 3F — Focused playtesting polish
+
+### Phase 3F-A — Simplified table and larger hand
+
+- remove routine phase/status scaffolding and visible Confirm/Cancel controls from the table shell;
+- reclaim the noninteractive canvas action strip for a materially larger active hand;
+- reduce Options to themes, deck, fullscreen, and local restart;
+- use one production animation presentation while automatically honoring reduced-motion settings;
+- preserve Bank/Koi-Koi, result, handoff, capture inspection, legal-action authority, and the
+  adaptive 8–17-card field.
+
+### Phase 3F-B — Unified tap-only interaction
+
+- make legal card and field taps the only ordinary Hand/Draw confirmation language;
+- retain explicit Bank/Koi-Koi decisions and keyboard-equivalent semantic controls;
+- remove the temporary Guided confirmation state without moving capture legality into the browser.
+
 ## Phase 4 — Onboarding
 
 Phase 4 retains its numeric identity but is intentionally executed after full-match progression,
