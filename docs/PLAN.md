@@ -782,7 +782,9 @@ Phase 3F-A gate:
 - normal presentation automatically honors the operating-system reduced-motion preference;
 - authoritative legal actions, Draw resolution, Bank/Koi-Koi, handoff/result/capture inspection,
   one canvas, 48 CardViews, and the 8–17-card field remain intact;
-- `npm run validate:phase3fa` and root/Pages seven-viewport browser evidence pass with no errors.
+- CI/Pages run the full repository `check` once, then `npm run validate:phase3fa` runs one copy each
+  of the release deck, technical decks, focused shell/input/animation/runtime tests, Workshop,
+  dense-field review, and root/Pages seven-viewport browser evidence with no errors.
 
 Architecture is recorded in [`ADR 0021`](./adr/0021-phase-3f-a-simplified-table-shell.md).
 

@@ -995,3 +995,8 @@ Original prompt: read the package and understand it, then let me know when we ar
   overlay's full internally scrollable content height to fit the document height. That contradicts
   the accepted horizontal-containment/vertical-scroll contract and failed despite a correct visible
   screenshot. The gate now asserts horizontal bounds and computed `overflow-y` scrolling directly.
+- The replacement CI run proved the recursive phase-script chain still repeated prior root/Pages
+  gates until the 30-minute ceiling. Flattened `validate:phase3fa` to one pass of each phase-specific
+  release deck, technical deck, focused test, Workshop, dense-field, root, and Pages gate. CI and
+  Pages continue to run the full repository `check` immediately before it, so coverage is unchanged
+  while redundant browser work is removed.

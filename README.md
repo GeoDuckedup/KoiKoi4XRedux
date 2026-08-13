@@ -151,10 +151,12 @@ physical choreography: one face-down card leaves the visible deck top, flips in 
 becomes the existing keyboard-accessible Reveal action. Root and Pages artifacts are written under
 `output/phase-3e-c/e2e/`.
 
-`npm run validate:phase3fa` retains the complete physical-Draw/replay/deck/Workshop gate and removes
-routine phase/confirmation chrome, enlarges the eight-card player hand using the former canvas
-action-strip reserve, simplifies Options to essential table controls, and verifies automatic
-reduced-motion behavior. Root and Pages artifacts are written under `output/phase-3f-a/e2e/`.
+After the repository-wide `npm run check`, `npm run validate:phase3fa` runs one copy each of the
+release/technical deck checks, focused shell/input/animation/runtime tests, Workshop, dense-field
+review, and root/Pages browser suites. It removes routine phase/confirmation chrome, enlarges the
+eight-card player hand using the former canvas action-strip reserve, simplifies Options to essential
+table controls, and verifies automatic reduced-motion behavior. Root and Pages artifacts are written
+under `output/phase-3f-a/e2e/`.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot
