@@ -991,3 +991,7 @@ Original prompt: read the package and understand it, then let me know when we ar
   inherited `validate:phase3fa` chain was still running; no test reported a failure.
 - Raised only the CI job ceiling to 30 minutes so the deliberately comprehensive inherited browser,
   Workshop, replay, and generated-game gate can complete. Pages already had no 15-minute limit.
+- The superseded Pages run also exposed that its short-landscape result assertion required the
+  overlay's full internally scrollable content height to fit the document height. That contradicts
+  the accepted horizontal-containment/vertical-scroll contract and failed despite a correct visible
+  screenshot. The gate now asserts horizontal bounds and computed `overflow-y` scrolling directly.

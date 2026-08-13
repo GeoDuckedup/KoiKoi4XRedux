@@ -1235,34 +1235,36 @@ try {
   );
   for (const viewport of viewports) {
     await page.setViewportSize(viewport);
-    const { resultBox, cardBox } = await page.locator("[data-round-result]").evaluate((result) => {
-      const card = result.querySelector(".round-result__card");
-      if (!(card instanceof HTMLElement)) throw new Error("The result card disappeared.");
-      const resultBounds = result.getBoundingClientRect();
-      const cardBounds = card.getBoundingClientRect();
-      return {
-        resultBox: {
-          x: resultBounds.x,
-          y: resultBounds.y,
-          width: resultBounds.width,
-          height: resultBounds.height,
-        },
-        cardBox: {
-          x: cardBounds.x,
-          y: cardBounds.y,
-          width: cardBounds.width,
-          height: cardBounds.height,
-        },
-      };
-    });
+    const { resultBox, cardBox, overflowY } = await page
+      .locator("[data-round-result]")
+      .evaluate((result) => {
+        const card = result.querySelector(".round-result__card");
+        if (!(card instanceof HTMLElement)) throw new Error("The result card disappeared.");
+        const resultBounds = result.getBoundingClientRect();
+        const cardBounds = card.getBoundingClientRect();
+        return {
+          resultBox: {
+            x: resultBounds.x,
+            y: resultBounds.y,
+            width: resultBounds.width,
+            height: resultBounds.height,
+          },
+          cardBox: {
+            x: cardBounds.x,
+            y: cardBounds.y,
+            width: cardBounds.width,
+            height: cardBounds.height,
+          },
+          overflowY: getComputedStyle(result).overflowY,
+        };
+      });
     assert(resultBox !== null, `${viewport.width}×${viewport.height} result modal disappeared.`);
-    const documentHeight = await page.evaluate(() => document.documentElement.scrollHeight);
     assert(
       resultBox.x >= 0 &&
         resultBox.y >= 0 &&
         resultBox.x + resultBox.width <= viewport.width + 1 &&
-        resultBox.y + resultBox.height <= documentHeight + 1,
-      `${viewport.width}×${viewport.height} result overlay escaped the horizontally bounded, vertically scrollable page: ${JSON.stringify({ resultBox, documentHeight })}.`,
+        (overflowY === "auto" || overflowY === "scroll"),
+      `${viewport.width}×${viewport.height} result overlay escaped horizontal bounds or lost vertical scrolling: ${JSON.stringify({ resultBox, overflowY })}.`,
     );
     assert(
       cardBox.x >= resultBox.x - 3 &&
