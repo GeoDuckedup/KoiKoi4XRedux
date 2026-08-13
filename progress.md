@@ -1000,3 +1000,12 @@ Original prompt: read the package and understand it, then let me know when we ar
   release deck, technical deck, focused test, Workshop, dense-field, root, and Pages gate. CI and
   Pages continue to run the full repository `check` immediately before it, so coverage is unchanged
   while redundant browser work is removed.
+
+## 2026-08-13 — Phase 3F-A deployed and accepted
+
+- Release commit `51a1821` passed CI run `31742306302` in 13m28s and Pages run `31742306314`; the
+  Pages deployment completed successfully.
+- The cache-busted live URL returned HTTP 200. A real-browser state/screenshot check reached ready
+  state with the approved Primary Deck, one canvas, 48 persistent CardViews, eight enlarged active
+  hand cards, no initial recap/routine confirmation strip, and zero layout diagnostics.
+- Phase 3F-A evidence maturity is `live`. Phase 3F-B unified tap-only interaction is next.

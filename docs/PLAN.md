@@ -2,8 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 13, 2026
-**Current gate:** Phase 3F-A simplified table shell is integrated and undergoing final local,
-hosted, and Pages acceptance
+**Current gate:** Phase 3F-A simplified table shell is deployed and accepted; Phase 3F-B unified
+tap-only interaction is next
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -764,7 +764,7 @@ Architecture is recorded in [`ADR 0020`](./adr/0020-phase-3e-c-physical-draw-cho
 
 ### Phase 3F — Focused playtesting polish
 
-Status: **Phase 3F-A integrated; Phase 3F-B follows after owner playtesting**.
+Status: **Phase 3F-A deployed and accepted; Phase 3F-B follows after owner playtesting**.
 
 - **3F-A — Simplified table and larger hand:** remove routine phase/status and confirmation chrome,
   give the former canvas action-strip height to Player Hand, and reduce Options to essential

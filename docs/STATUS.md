@@ -2,8 +2,8 @@
 
 **Updated:** August 13, 2026
 
-**Overall state:** Greenfield rewrite through Phase 3E-C deployed; Phase 3F-A simplified table and
-larger-hand integration is in final acceptance
+**Overall state:** Greenfield rewrite through Phase 3F-A simplified table and larger hand deployed
+and accepted
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -30,6 +30,11 @@ controls. Its entire canvas reserve now belongs to Player Hand, making all eight
 materially larger while leaving the adaptive field, captures, Draw, Reveal, and opponent geometry
 unchanged. Options stays below the table and retains Theme, deck, fullscreen, restart, and critical
 locks. Production uses normal animation and automatically honors operating-system reduced motion.
+
+Release commit `51a1821` passed CI run `31742306302` and Pages run `31742306314`; the Pages deploy
+job completed successfully. A cache-busted live browser check reached ready state with the approved
+Primary Deck, one canvas, 48 persistent CardViews, eight enlarged hand cards, no initial recap or
+routine confirmation strip, and no clipped/invalid/overlapping board zones.
 
 Release commits `0b6937a` and `818936a` passed CI run `31554760462` and Pages run `31554760390`.
 The latter contains the CI timing stabilization for the retained raster-builder test. The live page

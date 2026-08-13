@@ -1,8 +1,8 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository
-has deployed and accepted **Phase 3E: playability corrections** and has integrated **Phase 3F-A:
-simplified table and larger hand** with an owner-approved primary deck. It
+has deployed and accepted **Phase 3E: playability corrections** plus **Phase 3F-A: simplified table
+and larger hand** with an owner-approved primary deck. It
 contains the canonical rules authority, all 48 artwork-independent card records, the complete
 deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
