@@ -6,7 +6,7 @@ import { chromium } from "playwright";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-3e-a/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-3e-b/e2e");
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
 const mountedBasePath = smokeBasePath === "/" ? "/" : `${smokeBasePath}/`;
@@ -286,8 +286,78 @@ async function acceptHandoffIfPending(page) {
   return readState(page);
 }
 
+async function resolvePendingDrawIfNeeded(page) {
+  const pending = await readState(page);
+  if (pending.localRound.phase !== "awaitingDrawResolution") return pending;
+  const beforeVersion = pending.localRound.stateVersion;
+  const reveal = page.locator('[data-input-role="selectable"]');
+  assert(
+    (await reveal.count()) === 1,
+    "A pending Draw must expose exactly one selectable Reveal card.",
+  );
+  await reveal.click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).input.status !== "idle",
+    null,
+    { timeout: 30_000 },
+  );
+  const afterReveal = await readState(page);
+  if (afterReveal.input.status === "intentPending") {
+    await page.waitForFunction(
+      (version) => {
+        const state = JSON.parse(window.render_game_to_text());
+        return (
+          state.localRound.stateVersion > version &&
+          state.animation.status !== "playing" &&
+          state.input.status !== "intentPending" &&
+          state.input.lockReason !== "awaitingObservation"
+        );
+      },
+      beforeVersion,
+      { timeout: 30_000 },
+    );
+    return readState(page);
+  }
+  await page.waitForFunction(
+    () => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
+        state.input.status === "targeting" ||
+        (state.input.status === "confirming" &&
+          (document.querySelectorAll('[data-input-role="target"]').length > 0 ||
+            document.querySelector("[data-input-confirm]")?.checkVisibility()))
+      );
+    },
+    null,
+    { timeout: 30_000 },
+  );
+  const targets = page.locator('[data-input-role="target"]');
+  if ((await targets.count()) > 0) {
+    await targets.first().click();
+  } else {
+    const confirm = page.locator("[data-input-confirm]");
+    assert(await confirm.isVisible(), "An unambiguous pending Draw must expose confirmation.");
+    await confirm.click();
+  }
+  await page.waitForFunction(
+    (version) => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
+        state.localRound.stateVersion > version &&
+        state.animation.status !== "playing" &&
+        state.input.status !== "intentPending" &&
+        state.input.lockReason !== "awaitingObservation"
+      );
+    },
+    beforeVersion,
+    { timeout: 30_000 },
+  );
+  return readState(page);
+}
+
 async function playHandCardById(page, cardId) {
   await acceptHandoffIfPending(page);
+  await resolvePendingDrawIfNeeded(page);
   const before = await readState(page);
   assert(
     before.localRound.phase === "awaitingHandPlay",

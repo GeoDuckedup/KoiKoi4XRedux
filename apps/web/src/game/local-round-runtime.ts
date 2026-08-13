@@ -58,11 +58,13 @@ function commandFromIntent(intent: InputCommandIntentV1, commandId: string): Gam
         : { targetFieldCardId: intent.action.targetFieldCardId }),
     });
   }
-  if (intent.action.type === "chooseDrawCapture") {
+  if (intent.action.type === "resolveDrawCard") {
     return deepFreeze({
       ...base,
-      type: "chooseDrawCapture" as const,
-      targetFieldCardId: intent.action.targetFieldCardId,
+      type: "resolveDrawCard" as const,
+      ...(intent.action.targetFieldCardId === undefined
+        ? {}
+        : { targetFieldCardId: intent.action.targetFieldCardId }),
     });
   }
   return deepFreeze({

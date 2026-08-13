@@ -51,7 +51,7 @@ Phases 1A through 1E establish deterministic gameplay and verification wholly in
 - `rules/round-advance.ts` owns validated checkpoint restoration, next-month setup, round-local
   resets, automatic-result continuation, and private/server-only deal events;
 - `rules/turn.ts` owns command validation, legal-action generation, hand resolution, ordered draw
-  reveal/resolution, pending draw choices, per-phase yaku checks, Bank/Koi-Koi execution, turn and
+  reveal/resolution, pending draw decisions, per-phase yaku checks, Bank/Koi-Koi execution, turn and
   End-of-Play completion, and atomic round-result commitment;
 - `state/projection.ts` owns exact public/player state views and audience-filtered projected events;
 - `serialization/canonical-json.ts` owns canonical JSON v1 and portable SHA-256 integrity hashes;
@@ -63,10 +63,11 @@ setup uses the random source; authored ordered decks are available only as a det
 fixture/practice input. Generated states and transitions are recursively frozen.
 
 An accepted gameplay command advances `stateVersion` exactly once and records its command ID. A
-two-match hand choice is part of the atomic `playHandCard` command. A two-match draw instead commits
-`awaitingDrawCapture`, where the revealed card is its own authoritative card zone and the two legal
-targets remain ordered field references; `chooseDrawCapture` then completes that turn in a second
-transition. Captures append source first and selected field card(s) in field order. Normal gameplay
+two-match hand choice is part of the atomic `playHandCard` command. Every draw instead commits
+`awaitingDrawResolution`, where the revealed card is its own authoritative card zone and the
+engine-owned 0/1/2/3 capture preview remains public. `resolveDrawCard` completes that Draw in a
+second transition; only an exact-two preview carries a target. Captures append source first and
+selected field card(s) in field order. Normal gameplay
 does not consume randomness, so callers carry the Phase 1A RNG checkpoint forward unchanged.
 
 After every resolved Hand or Draw capture window, active yaku are recomputed from public captures.

@@ -25,11 +25,11 @@ export type InputIntentActionV1 =
   | {
       readonly type: "playHandCard";
       readonly cardId: CardId;
-      readonly targetFieldCardId?: CardId;
+      readonly targetFieldCardId?: CardId | undefined;
     }
   | {
-      readonly type: "chooseDrawCapture";
-      readonly targetFieldCardId: CardId;
+      readonly type: "resolveDrawCard";
+      readonly targetFieldCardId?: CardId | undefined;
     }
   | {
       readonly type: "chooseYakuDecision";

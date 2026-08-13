@@ -111,7 +111,7 @@ function validateSource(source: InteractionSourceV1): void {
       groupedHandActions.set(action.cardId, grouped);
     }
     const targetFieldCardId =
-      action.type === "chooseDrawCapture" || action.type === "playHandCard"
+      action.type === "resolveDrawCard" || action.type === "playHandCard"
         ? action.targetFieldCardId
         : undefined;
     if (targetFieldCardId !== undefined && !publicField.has(targetFieldCardId)) {
@@ -121,11 +121,20 @@ function validateSource(source: InteractionSourceV1): void {
       (phase.kind === "awaitingHandPlay" &&
         phase.playerId === observation.playerId &&
         action.type === "playHandCard") ||
-      (phase.kind === "awaitingDrawCapture" &&
+      (phase.kind === "awaitingDrawResolution" &&
         phase.playerId === observation.playerId &&
-        action.type === "chooseDrawCapture" &&
+        action.type === "resolveDrawCard" &&
         action.drawnCardId === phase.drawnCardId &&
-        phase.targetFieldCardIds.includes(action.targetFieldCardId)) ||
+        action.resolution.kind === phase.resolution.kind &&
+        action.resolution.matchingFieldCardIds.length ===
+          phase.resolution.matchingFieldCardIds.length &&
+        action.resolution.matchingFieldCardIds.every(
+          (cardId, index) => cardId === phase.resolution.matchingFieldCardIds[index],
+        ) &&
+        (phase.resolution.kind !== "captureChoice" ||
+          (action.targetFieldCardId !== undefined &&
+            phase.resolution.matchingFieldCardIds.includes(action.targetFieldCardId))) &&
+        (phase.resolution.kind === "captureChoice" || action.targetFieldCardId === undefined)) ||
       (phase.kind === "awaitingYakuDecision" &&
         phase.playerId === observation.playerId &&
         action.type === "chooseYakuDecision");
@@ -176,10 +185,12 @@ function actionToIntentAction(action: LegalActionV1): InputIntentActionV1 {
         : { targetFieldCardId: action.targetFieldCardId }),
     });
   }
-  if (action.type === "chooseDrawCapture") {
+  if (action.type === "resolveDrawCard") {
     return deepFreeze({
       type: action.type,
-      targetFieldCardId: action.targetFieldCardId,
+      ...(action.targetFieldCardId === undefined
+        ? {}
+        : { targetFieldCardId: action.targetFieldCardId }),
     });
   }
   return deepFreeze({ type: action.type, choice: action.choice });
@@ -196,10 +207,10 @@ function handActions(
 
 function drawActions(
   source: InteractionSourceV1,
-): readonly Extract<LegalActionV1, { readonly type: "chooseDrawCapture" }>[] {
+): readonly Extract<LegalActionV1, { readonly type: "resolveDrawCard" }>[] {
   return source.observation.legalActions.filter(
-    (action): action is Extract<LegalActionV1, { readonly type: "chooseDrawCapture" }> =>
-      action.type === "chooseDrawCapture",
+    (action): action is Extract<LegalActionV1, { readonly type: "resolveDrawCard" }> =>
+      action.type === "resolveDrawCard",
   );
 }
 
@@ -213,7 +224,10 @@ function decisionActions(
 }
 
 function selectableCards(source: InteractionSourceV1): readonly CardId[] {
-  return uniqueCardIds(handActions(source).map(({ cardId }) => cardId));
+  const phase = source.observation.publicState.phase;
+  return phase.kind === "awaitingDrawResolution"
+    ? uniqueCardIds([phase.drawnCardId])
+    : uniqueCardIds(handActions(source).map(({ cardId }) => cardId));
 }
 
 function stateForSource(source: InteractionSourceV1): ControllerState {
@@ -244,17 +258,17 @@ function stateForSource(source: InteractionSourceV1): ControllerState {
       lastIntentType: null,
     };
   }
-  if (phase.kind === "awaitingDrawCapture") {
+  if (phase.kind === "awaitingDrawResolution") {
     const actions = drawActions(source);
     return {
-      status: actions.length > 0 ? "targeting" : "locked",
+      status: actions.length > 0 ? "idle" : "locked",
       lockReason: actions.length > 0 ? null : "opponentTurn",
-      selectedCardId: phase.drawnCardId,
-      legalTargetCardIds: uniqueCardIds(actions.map(({ targetFieldCardId }) => targetFieldCardId)),
-      selectedActions: Object.freeze(actions),
+      selectedCardId: null,
+      legalTargetCardIds: Object.freeze([]),
+      selectedActions: Object.freeze([]),
       handResolutionKind: null,
       fieldPlacementAvailable: false,
-      focusedCardId: actions[0]?.targetFieldCardId ?? null,
+      focusedCardId: phase.drawnCardId,
       lastIntentType: null,
     };
   }
@@ -345,7 +359,6 @@ export function createInteractionController(input: {
 
   const cancel = (): boolean => {
     if (state.status !== "confirming" && state.status !== "targeting") return false;
-    if (source.observation.publicState.phase.kind === "awaitingDrawCapture") return false;
     resetFromSource();
     return true;
   };
@@ -385,12 +398,38 @@ export function createInteractionController(input: {
         return true;
       }
 
-      if (!state.legalTargetCardIds.includes(cardId)) return false;
       const phase = source.observation.publicState.phase;
-      if (phase.kind === "awaitingDrawCapture") {
-        const action = drawActions(source).find(
-          ({ targetFieldCardId }) => targetFieldCardId === cardId,
-        );
+      if (phase.kind === "awaitingDrawResolution" && phase.drawnCardId === cardId) {
+        const actionsForDraw = drawActions(source);
+        const resolution = phase.resolution;
+        if (actionsForDraw.length === 0) return false;
+        if (actionsForDraw.length === 1 && confirmationMode === "fast") {
+          const action = actionsForDraw[0];
+          if (!action) return false;
+          emit(action);
+          return true;
+        }
+        const targetCardIds = resolution.matchingFieldCardIds;
+        state = {
+          ...state,
+          status: resolution.kind === "captureChoice" ? "targeting" : "confirming",
+          lockReason: null,
+          selectedCardId: cardId,
+          legalTargetCardIds: uniqueCardIds(targetCardIds),
+          selectedActions: Object.freeze(actionsForDraw),
+          handResolutionKind: resolution.kind,
+          fieldPlacementAvailable: resolution.kind === "placeOnField",
+          focusedCardId: targetCardIds[0] ?? cardId,
+        };
+        return true;
+      }
+
+      if (!state.legalTargetCardIds.includes(cardId)) return false;
+      if (phase.kind === "awaitingDrawResolution") {
+        const action =
+          phase.resolution.kind === "captureChoice"
+            ? drawActions(source).find(({ targetFieldCardId }) => targetFieldCardId === cardId)
+            : drawActions(source)[0];
         if (!action) return false;
         emit(action);
         return true;
@@ -444,7 +483,7 @@ export function createInteractionController(input: {
         confirmAvailable: state.status === "confirming" && state.selectedActions.length === 1,
         cancelAvailable:
           (state.status === "confirming" || state.status === "targeting") &&
-          source.observation.publicState.phase.kind !== "awaitingDrawCapture",
+          source.observation.publicState.phase.kind !== "awaitingYakuDecision",
         focusedCardId: state.focusedCardId,
         matchId: source.observation.publicState.matchId,
         observationStateVersion: source.observation.publicState.stateVersion,

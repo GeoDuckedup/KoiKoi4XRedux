@@ -116,6 +116,24 @@ function playHandCard(
   });
 }
 
+function resolveDraw(state: AuthoritativeGameStateV1, actorId: PlayerId) {
+  if (state.phase.kind !== "awaitingDrawResolution") {
+    throw new Error(`DRAW_RESOLUTION_MISSING: ${state.phase.kind}`);
+  }
+  const targetFieldCardId =
+    state.phase.resolution.kind === "captureChoice"
+      ? state.phase.resolution.matchingFieldCardIds[0]
+      : undefined;
+  return applyGameplayCommand(state, {
+    type: "resolveDrawCard",
+    commandId: `resolve-${state.stateVersion}`,
+    matchId: state.matchId,
+    actorId,
+    expectedStateVersion: state.stateVersion,
+    ...(targetFieldCardId === undefined ? {} : { targetFieldCardId }),
+  });
+}
+
 const MULTI_HAND = [
   "september-sake-cup",
   "january-crane",
@@ -418,7 +436,8 @@ describe("Phase 1C yaku state-machine integration", () => {
     expect(validateAuthoritativeState(state)).toEqual([]);
     expect(state.players[0].activeYaku).toEqual([]);
 
-    const transition = playHandCard(state, "player-a", "january-crane", "january-pine-plain-a");
+    const revealed = playHandCard(state, "player-a", "january-crane", "january-pine-plain-a");
+    const transition = resolveDraw(revealed.state, "player-a");
 
     expect(transition.state.players[0].captured).toEqual([
       "january-crane",
@@ -434,11 +453,14 @@ describe("Phase 1C yaku state-machine integration", () => {
         resume: { kind: "completeTurn", lastActorId: "player-a" },
       },
     });
-    expect(transition.events.map((event) => event.type)).toEqual([
+    expect(revealed.events.map((event) => event.type)).toEqual([
       "handCardPlayed",
       "captureStarted",
       "cardsCaptured",
       "drawCardRevealed",
+      "drawResolutionRequired",
+    ]);
+    expect(transition.events.map((event) => event.type)).toEqual([
       "captureStarted",
       "cardsCaptured",
       "yakuCompleted",
@@ -450,7 +472,8 @@ describe("Phase 1C yaku state-machine integration", () => {
     const state = directDrawFixture();
     expect(validateAuthoritativeState(state)).toEqual([]);
 
-    const transition = playHandCard(state, "player-a", "december-phoenix");
+    const revealed = playHandCard(state, "player-a", "december-phoenix");
+    const transition = resolveDraw(revealed.state, "player-a");
 
     expect(transition.state.phase).toMatchObject({
       kind: "awaitingYakuDecision",
@@ -462,10 +485,13 @@ describe("Phase 1C yaku state-machine integration", () => {
         resume: { kind: "completeTurn", lastActorId: "player-a" },
       },
     });
-    expect(transition.events.map((event) => event.type)).toEqual([
+    expect(revealed.events.map((event) => event.type)).toEqual([
       "handCardPlayed",
       "cardPlacedOnField",
       "drawCardRevealed",
+      "drawResolutionRequired",
+    ]);
+    expect(transition.events.map((event) => event.type)).toEqual([
       "captureStarted",
       "cardsCaptured",
       "yakuCompleted",
@@ -495,16 +521,19 @@ describe("Phase 1C yaku state-machine integration", () => {
 
     const pending = playHandCard(state, "player-a", "december-phoenix");
     expect(pending.state.phase).toEqual({
-      kind: "awaitingDrawCapture",
+      kind: "awaitingDrawResolution",
       playerId: "player-a",
       drawnCardId: "september-sake-cup",
-      targetFieldCardIds: ["september-blue-scroll", "september-chrysanthemum-plain-a"],
+      resolution: {
+        kind: "captureChoice",
+        matchingFieldCardIds: ["september-blue-scroll", "september-chrysanthemum-plain-a"],
+      },
     });
     expect(pending.state.players[0].seenYakuKeys).toEqual([]);
     expect(pending.events.some((event) => event.type.startsWith("yaku"))).toBe(false);
 
     const transition = applyGameplayCommand(pending.state, {
-      type: "chooseDrawCapture",
+      type: "resolveDrawCard",
       commandId: "choose-pending-yaku",
       matchId: pending.state.matchId,
       actorId: "player-a",
@@ -574,23 +603,27 @@ describe("Phase 1C yaku state-machine integration", () => {
     expect(validateAuthoritativeState(state)).toEqual([]);
     expect(state.players[0].currentYakuTotal).toBe(4);
 
-    const transition = playHandCard(state, "player-a", "august-geese");
+    const revealed = playHandCard(state, "player-a", "august-geese");
+    const transition = resolveDraw(revealed.state, "player-a");
 
     expect(transition.state.phase).toEqual({ kind: "awaitingHandPlay", playerId: "player-b" });
     expect(transition.state.players[0].seenYakuKeys).toEqual(["animals"]);
     expect(transition.state.players[0].activeYaku).toEqual([
       { key: "animals", name: "Animals", points: 5 },
     ]);
-    expect(transition.events.map((event) => event.type)).toEqual([
+    expect(revealed.events.map((event) => event.type)).toEqual([
       "handCardPlayed",
       "captureStarted",
       "cardsCaptured",
       "yakuValueChanged",
       "drawCardRevealed",
+      "drawResolutionRequired",
+    ]);
+    expect(transition.events.map((event) => event.type)).toEqual([
       "cardPlacedOnField",
       "turnCompleted",
     ]);
-    expect(transition.events).toContainEqual({
+    expect(revealed.events).toContainEqual({
       type: "yakuValueChanged",
       audience: { kind: "public" },
       actorId: "player-a",
@@ -626,7 +659,8 @@ describe("Phase 1C yaku state-machine integration", () => {
   it("preserves End-of-Play and pauses a final Draw trigger for Player B", () => {
     const noTriggerState = finalTurnFixture("october-blue-scroll");
     expect(validateAuthoritativeState(noTriggerState)).toEqual([]);
-    const completed = playHandCard(noTriggerState, "player-b", "december-phoenix");
+    const noTriggerRevealed = playHandCard(noTriggerState, "player-b", "december-phoenix");
+    const completed = resolveDraw(noTriggerRevealed.state, "player-b");
     expect(completed.state.phase).toMatchObject({
       kind: "roundComplete",
       result: { kind: "endOfPlayNoScore", reasonCode: "END_OF_PLAY_NO_SCORE" },
@@ -642,7 +676,8 @@ describe("Phase 1C yaku state-machine integration", () => {
     const triggerState = finalTurnFixture("september-sake-cup");
     expect(validateAuthoritativeState(triggerState)).toEqual([]);
     expect(triggerState.players[0].seenYakuKeys).toEqual(["animalTrio", "animals", "scrolls"]);
-    const transition = playHandCard(triggerState, "player-b", "december-phoenix");
+    const triggerRevealed = playHandCard(triggerState, "player-b", "december-phoenix");
+    const transition = resolveDraw(triggerRevealed.state, "player-b");
 
     expect(transition.state.phase).toMatchObject({
       kind: "awaitingYakuDecision",

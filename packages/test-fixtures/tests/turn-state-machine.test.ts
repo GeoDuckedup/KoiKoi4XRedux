@@ -120,16 +120,24 @@ describe("Phase 1B legal actions and command state machine", () => {
     expect(getLegalActions(pending, "player-b")).toEqual([]);
     expect(getLegalActions(pending, "player-a")).toEqual([
       {
-        type: "chooseDrawCapture",
+        type: "resolveDrawCard",
         actorId: "player-a",
         drawnCardId: "january-pine-plain-b",
         targetFieldCardId: "january-pine-plain-a",
+        resolution: {
+          kind: "captureChoice",
+          matchingFieldCardIds: ["january-pine-plain-a", "january-red-text-scroll"],
+        },
       },
       {
-        type: "chooseDrawCapture",
+        type: "resolveDrawCard",
         actorId: "player-a",
         drawnCardId: "january-pine-plain-b",
         targetFieldCardId: "january-red-text-scroll",
+        resolution: {
+          kind: "captureChoice",
+          matchingFieldCardIds: ["january-pine-plain-a", "january-red-text-scroll"],
+        },
       },
     ]);
     expect(validateCardOwnership(pending)).toEqual([]);
@@ -139,11 +147,11 @@ describe("Phase 1B legal actions and command state machine", () => {
     const definition = fixture("CAP-DRAW-002");
     const pending = applyGameplayCommand(setup("CAP-DRAW-002"), firstCommand("CAP-DRAW-002")).state;
     const transition = applyGameplayCommand(pending, {
-      type: "chooseDrawCapture",
+      type: "resolveDrawCard",
       commandId: "choose-draw-second-target",
       matchId: definition.matchId,
       actorId: "player-a",
-      expectedStateVersion: 2,
+      expectedStateVersion: pending.stateVersion,
       targetFieldCardId: "january-red-text-scroll",
     });
     expect(transition.state.players[0].captured).toEqual([
@@ -156,18 +164,33 @@ describe("Phase 1B legal actions and command state machine", () => {
   });
 
   it("supports player B as the active actor without changing starter identity", () => {
-    const state = applyGameplayCommand(setup("CAP-000"), firstCommand("CAP-000")).state;
+    const revealed = applyGameplayCommand(setup("CAP-000"), firstCommand("CAP-000")).state;
+    const state = applyGameplayCommand(revealed, {
+      type: "resolveDrawCard",
+      commandId: "resolve-player-a-draw",
+      matchId: revealed.matchId,
+      actorId: "player-a",
+      expectedStateVersion: revealed.stateVersion,
+    }).state;
     expect(state.phase).toEqual({ kind: "awaitingHandPlay", playerId: "player-b" });
     const transition = applyGameplayCommand(state, {
       type: "playHandCard",
       commandId: "player-b-turn",
       matchId: state.matchId,
       actorId: "player-b",
-      expectedStateVersion: 2,
+      expectedStateVersion: state.stateVersion,
       cardId: "september-sake-cup",
     });
     expect(transition.state.round.starterId).toBe("player-a");
-    expect(transition.state.phase).toEqual({ kind: "awaitingHandPlay", playerId: "player-a" });
+    expect(transition.state.phase.kind).toBe("awaitingDrawResolution");
+    const resolved = applyGameplayCommand(transition.state, {
+      type: "resolveDrawCard",
+      commandId: "resolve-player-b-draw",
+      matchId: transition.state.matchId,
+      actorId: "player-b",
+      expectedStateVersion: transition.state.stateVersion,
+    });
+    expect(resolved.state.phase).toEqual({ kind: "awaitingHandPlay", playerId: "player-a" });
     expect(transition.events[0]).toMatchObject({ type: "handCardPlayed", actorId: "player-b" });
   });
 
@@ -222,7 +245,7 @@ describe("Phase 1B legal actions and command state machine", () => {
     expectRejected(
       handState,
       {
-        type: "chooseDrawCapture",
+        type: "resolveDrawCard",
         commandId: "choose-too-early",
         matchId: handState.matchId,
         actorId: "player-a",
@@ -246,7 +269,7 @@ describe("Phase 1B legal actions and command state machine", () => {
     expectRejected(
       pending,
       {
-        type: "chooseDrawCapture",
+        type: "resolveDrawCard",
         commandId: "illegal-draw-target",
         matchId: pending.matchId,
         actorId: "player-a",
@@ -284,10 +307,18 @@ describe("Phase 1B legal actions and command state machine", () => {
     );
 
     const pending = applyGameplayCommand(setup("CAP-DRAW-002"), firstCommand("CAP-DRAW-002")).state;
-    if (pending.phase.kind !== "awaitingDrawCapture") throw new Error("Pending phase missing.");
+    if (pending.phase.kind !== "awaitingDrawResolution") throw new Error("Pending phase missing.");
+    if (pending.phase.resolution.kind !== "captureChoice") {
+      throw new Error("Expected exact-two pending Draw.");
+    }
+    const firstTarget = pending.phase.resolution.matchingFieldCardIds[0];
+    if (firstTarget === undefined) throw new Error("Expected first pending Draw target.");
     const invalidOwnership: AuthoritativeGameStateV1 = {
       ...pending,
-      phase: { ...pending.phase, drawnCardId: pending.phase.targetFieldCardIds[0] },
+      phase: {
+        ...pending.phase,
+        drawnCardId: firstTarget,
+      },
     };
     expect(validateAuthoritativeState(invalidOwnership).map((entry) => entry.code)).toEqual(
       expect.arrayContaining(["CARD_ZONE_DUPLICATE", "CARD_ZONE_MISSING"]),
@@ -296,11 +327,14 @@ describe("Phase 1B legal actions and command state machine", () => {
       ...pending,
       phase: {
         ...pending.phase,
-        targetFieldCardIds: [pending.phase.targetFieldCardIds[0], "march-cherry-plain-a"],
+        resolution: {
+          kind: "captureChoice",
+          matchingFieldCardIds: [firstTarget, "march-cherry-plain-a"],
+        },
       },
     };
     expect(validateAuthoritativeState(invalidTargets).map((entry) => entry.code)).toContain(
-      "DRAW_CAPTURE_TARGETS_INVALID",
+      "DRAW_RESOLUTION_INVALID",
     );
 
     const invalidActor: AuthoritativeGameStateV1 = {
@@ -315,7 +349,10 @@ describe("Phase 1B legal actions and command state machine", () => {
   it("advances deterministically until the Phase 1C decision boundary", () => {
     let state = setup("CAP-000");
     let commandNumber = 0;
-    while (state.phase.kind === "awaitingHandPlay" || state.phase.kind === "awaitingDrawCapture") {
+    while (
+      state.phase.kind === "awaitingHandPlay" ||
+      state.phase.kind === "awaitingDrawResolution"
+    ) {
       const actorId: PlayerId = state.phase.playerId;
       const action = getLegalActions(state, actorId)[0];
       if (action === undefined) throw new Error(`No legal action at state ${state.stateVersion}.`);
@@ -337,7 +374,7 @@ describe("Phase 1B legal actions and command state machine", () => {
                 : { targetFieldCardId: action.targetFieldCardId }),
             }
           : {
-              type: "chooseDrawCapture",
+              type: "resolveDrawCard",
               commandId: `generated-${commandNumber}`,
               matchId: state.matchId,
               actorId,

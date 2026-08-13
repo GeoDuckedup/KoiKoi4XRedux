@@ -459,7 +459,7 @@ export const PHASE_1B_CAPTURE_FIXTURES: readonly Phase1BCaptureFixture[] = Objec
     [
       playCommand("CAP-DRAW-002", "december-phoenix"),
       {
-        type: "chooseDrawCapture",
+        type: "resolveDrawCard",
         commandId: "choose-cap-draw-002",
         matchId: "fixture-cap-draw-002",
         actorId: "player-a",
@@ -471,10 +471,13 @@ export const PHASE_1B_CAPTURE_FIXTURES: readonly Phase1BCaptureFixture[] = Objec
       {
         stateVersion: 2,
         phase: {
-          kind: "awaitingDrawCapture",
+          kind: "awaitingDrawResolution",
           playerId: "player-a",
           drawnCardId: "january-pine-plain-b",
-          targetFieldCardIds: ["january-pine-plain-a", "january-red-text-scroll"],
+          resolution: {
+            kind: "captureChoice",
+            matchingFieldCardIds: ["january-pine-plain-a", "january-red-text-scroll"],
+          },
         },
         field: [...DRAW_TWO_FIELD, "december-phoenix"],
         playerACaptured: [],
@@ -484,7 +487,7 @@ export const PHASE_1B_CAPTURE_FIXTURES: readonly Phase1BCaptureFixture[] = Objec
           "handCardPlayed",
           "cardPlacedOnField",
           "drawCardRevealed",
-          "drawCaptureChoiceRequired",
+          "drawResolutionRequired",
         ],
       },
       {

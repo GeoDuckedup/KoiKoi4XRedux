@@ -57,15 +57,34 @@ describe("Phase 1B capture fixture contract", () => {
         before,
       );
       state = transition.state;
+      const expectedPending = expected.phase.kind === "awaitingDrawResolution";
+      const resolved =
+        state.phase.kind === "awaitingDrawResolution" && !expectedPending
+          ? applyGameplayCommand(state, {
+              type: "resolveDrawCard",
+              commandId: `fixture-resolve-${fixture.id}-${index}`,
+              matchId: state.matchId,
+              actorId: state.phase.playerId,
+              expectedStateVersion: state.stateVersion,
+              ...(state.phase.resolution.kind === "captureChoice"
+                ? { targetFieldCardId: state.phase.resolution.matchingFieldCardIds[0] }
+                : {}),
+            })
+          : null;
+      if (resolved !== null) state = resolved.state;
 
-      expect(state.stateVersion, fixture.id).toBe(expected.stateVersion);
+      expect(state.stateVersion, fixture.id).toBe(
+        expected.stateVersion + (resolved === null ? 0 : 1),
+      );
       expect(state.phase, fixture.id).toEqual(expected.phase);
       expect(state.round.field, fixture.id).toEqual(expected.field);
       expect(state.players[0].captured, fixture.id).toEqual(expected.playerACaptured);
       expect(state.players[1].captured, fixture.id).toEqual(expected.playerBCaptured);
       expect(state.round.drawPile, fixture.id).toHaveLength(expected.drawPileCount);
       expect(
-        transition.events.map((event) => event.type),
+        (resolved === null ? transition.events : [...transition.events, ...resolved.events])
+          .filter((event) => resolved === null || event.type !== "drawResolutionRequired")
+          .map((event) => event.type),
         fixture.id,
       ).toEqual(expected.eventTypes);
       expect(
@@ -80,7 +99,9 @@ describe("Phase 1B capture fixture contract", () => {
       expect(Object.isFrozen(expected), fixture.id).toBe(true);
       expect(Object.isFrozen(expected.field), fixture.id).toBe(true);
 
-      const serializedEvents = JSON.stringify(transition.events);
+      const serializedEvents = JSON.stringify(
+        resolved === null ? transition.events : [...transition.events, ...resolved.events],
+      );
       const stillHidden = [
         ...state.players[0].hand,
         ...state.players[1].hand,
@@ -100,8 +121,18 @@ describe("Phase 1B capture fixture contract", () => {
       const command = fixture.commands[0];
       if (command === undefined) throw new Error(`${fixtureId} command missing.`);
       const transition = applyGameplayCommand(initialState(fixture), command);
+      const resolved =
+        transition.state.phase.kind === "awaitingDrawResolution"
+          ? applyGameplayCommand(transition.state, {
+              type: "resolveDrawCard",
+              commandId: `fixture-sweep-resolve-${fixtureId}`,
+              matchId: transition.state.matchId,
+              actorId: transition.state.phase.playerId,
+              expectedStateVersion: transition.state.stateVersion,
+            })
+          : null;
       expect(
-        transition.events.filter(
+        [...transition.events, ...(resolved?.events ?? [])].filter(
           (event) => event.type === "cardsCaptured" && event.captureKind === "fourCardSweep",
         ),
       ).toHaveLength(1);

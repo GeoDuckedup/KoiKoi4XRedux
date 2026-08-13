@@ -26,11 +26,11 @@ function intentFromAction(
       }),
     });
   }
-  if (action.type === "chooseDrawCapture") {
+  if (action.type === "resolveDrawCard") {
     return Object.freeze({
       ...base,
       action: Object.freeze({
-        type: "chooseDrawCapture" as const,
+        type: "resolveDrawCard" as const,
         targetFieldCardId: action.targetFieldCardId,
       }),
     });
@@ -107,10 +107,13 @@ describe("Phase 3B deterministic local yaku decision seam", () => {
     expect(handKoiEventTypes).toEqual(
       expect.arrayContaining(["yakuDecisionChosen", "koiKoiCalled", "drawCardRevealed"]),
     );
-    expect(handKoiEventTypes.indexOf("drawCardRevealed")).toBeLessThan(
-      handKoiEventTypes.indexOf("turnCompleted"),
-    );
-    const handKoiHandoffPlayerId = handKoi.handoffPlayerId;
+    expect(handKoiEventTypes).toContain("drawResolutionRequired");
+    expect(handKoiEventTypes).not.toContain("turnCompleted");
+    const pendingDraw = runtime.observe();
+    const pendingDrawAction = pendingDraw.legalActions[0];
+    if (!pendingDrawAction) throw new Error("PRES_HAND_KOI_DRAW_RESOLUTION_MISSING");
+    const resolvedDraw = runtime.submit(intentFromAction(pendingDraw, pendingDrawAction));
+    const handKoiHandoffPlayerId = resolvedDraw.handoffPlayerId;
     expect(handKoiHandoffPlayerId).toBe("player-a");
     if (!handKoiHandoffPlayerId) throw new Error("PRES_HAND_KOI_HANDOFF_MISSING");
     runtime.switchViewer(handKoiHandoffPlayerId);

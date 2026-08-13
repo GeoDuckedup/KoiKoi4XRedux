@@ -271,7 +271,8 @@ function otherPlayer(playerId: PlayerId): PlayerId {
 function phaseActionLabel(phase: PublicPhaseV1): string {
   if (handoffPlayerId) return `Pass to ${playerName(handoffPlayerId)}`;
   if (phase.kind === "awaitingHandPlay") return `${playerName(phase.playerId)} · Play a hand card`;
-  if (phase.kind === "awaitingDrawCapture") return `${playerName(phase.playerId)} · Choose capture`;
+  if (phase.kind === "awaitingDrawResolution")
+    return `${playerName(phase.playerId)} · Resolve Draw`;
   if (phase.kind === "awaitingYakuDecision")
     return `${playerName(phase.playerId)} · Bank or Koi-Koi`;
   return phase.kind === "roundComplete" ? "Round complete" : "Match complete";
@@ -525,6 +526,12 @@ function inputMessage(inspection: InputInteractionInspectionV1): string {
     return "Card input is temporarily locked.";
   }
   if (inspection.status === "decision") return "Yaku complete. Choose Bank or Koi-Koi.";
+  if (
+    inspection.status === "idle" &&
+    observation.publicState.phase.kind === "awaitingDrawResolution"
+  ) {
+    return "Tap the revealed Draw card to resolve it before this turn continues.";
+  }
   if (inspection.status === "targeting") {
     return `Choose one of ${inspection.legalTargetCardIds.length} highlighted capture targets.`;
   }

@@ -24,6 +24,7 @@
 | Phase 3D-C themes/options shell | `docs/adr/0016-phase-3d-c-runtime-theme-and-options-shell.md` |
 | Phase 3D-D adaptive dense field | `docs/adr/0017-phase-3d-d-adaptive-dense-field.md` |
 | Phase 3E-A table clarity and decision surfaces | `docs/adr/0018-phase-3e-a-table-clarity.md` |
+| Phase 3E-B authoritative Draw resolution | `docs/adr/0019-phase-3e-b-authoritative-draw-resolution.md` |
 | Architectural decisions | `docs/adr/` |
 | Agent operating instructions | `AGENTS.md` |
 

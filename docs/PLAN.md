@@ -161,9 +161,9 @@ Result:
 
 - pure capture resolution preserves field order, appends zero-match placements, captures source
   first, and distinguishes selected pairs from Four-Card Sweeps;
-- `playHandCard` resolves hand placement/capture and the top ordered draw atomically unless the draw
-  has exactly two targets, in which case `awaitingDrawCapture` preserves the revealed card and legal
-  targets for `chooseDrawCapture`;
+- `playHandCard` resolves the hand and reveals the top ordered Draw card, then always enters
+  `awaitingDrawResolution`; the engine provides the public 0/1/2/3 preview and only
+  `resolveDrawCard` completes the Draw in a second accepted transition;
 - player-scoped legal actions preserve hand and field order, including both legal two-match targets;
 - public semantic events describe played/revealed cards, placements, capture movement, choice
   windows, completed turns, and End of Play without including still-hidden cards;
@@ -707,7 +707,7 @@ Architecture is recorded in
 
 ### Phase 3E — Playability corrections
 
-Status: **Phase 3E-A deployed and accepted; Phase 3E-B ready**.
+Status: **Phase 3E-A deployed and accepted; Phase 3E-B in implementation**.
 
 - **3E-A — Table clarity and decision surfaces:** remove empty field-slot chrome, anchor Options at
   the bottom, add public capture inspection, keep the field visible during Koi-Koi decisions, and
@@ -732,6 +732,21 @@ Phase 3E-A gate:
   no browser or network errors.
 
 Architecture is recorded in [`ADR 0018`](./adr/0018-phase-3e-a-table-clarity.md).
+
+Phase 3E-B gate:
+
+- each Hand command reveals exactly one Draw card into `awaitingDrawResolution`, without resolving
+  it or checking Draw yaku early;
+- engine-owned public previews and player-scoped legal actions cover no-match placement, unique
+  pair, exact-two target choice, and four-card sweep; stale/illegal resolution commands are inert;
+- `resolveDrawCard` is the only Draw completion command; replay/projection/protocol validation retain
+  the revealed card but never opponent hands, deck order, RNG, checkpoints, or command metadata;
+- Guided and Fast interaction require an explicit tap of Reveal, then expose only the authoritative
+  field cues/confirmation for that preview;
+- focused engine, protocol, fixture, web, and Root/Pages browser traces pass. Physical top-of-deck
+  choreography remains Phase 3E-C.
+
+Architecture is recorded in [`ADR 0019`](./adr/0019-phase-3e-b-authoritative-draw-resolution.md).
 
 ## Later phases
 

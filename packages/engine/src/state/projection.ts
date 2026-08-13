@@ -10,6 +10,7 @@ import type {
   ActiveYakuV1,
   AuthoritativeGameStateV1,
   EventAudience,
+  DrawResolutionPreviewV1,
   GameplayEventV1,
   LegalActionV1,
   MatchResultV1,
@@ -57,10 +58,10 @@ export interface PublicRoundStateV1 {
 export type PublicPhaseV1 =
   | { readonly kind: "awaitingHandPlay"; readonly playerId: PlayerId }
   | {
-      readonly kind: "awaitingDrawCapture";
+      readonly kind: "awaitingDrawResolution";
       readonly playerId: PlayerId;
       readonly drawnCardId: CardId;
-      readonly targetFieldCardIds: readonly [CardId, CardId];
+      readonly resolution: DrawResolutionPreviewV1;
     }
   | {
       readonly kind: "awaitingYakuDecision";
@@ -119,7 +120,7 @@ const PUBLIC_PROJECTABLE_EVENT_TYPES = new Set<string>([
   "captureStarted",
   "cardsCaptured",
   "drawCardRevealed",
-  "drawCaptureChoiceRequired",
+  "drawResolutionRequired",
   "yakuCompleted",
   "yakuValueChanged",
   "yakuDecisionRequired",

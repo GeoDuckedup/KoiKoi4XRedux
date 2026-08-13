@@ -1,5 +1,6 @@
-import { CARD_IDS, getCardDefinition, isCardId, type CardId } from "../cards/catalog";
+import { CARD_IDS, isCardId, type CardId } from "../cards/catalog";
 import { evaluateOpeningOutcome } from "../rules/opening-outcomes";
+import { getHandPlayResolutionPreview } from "../rules/capture";
 import {
   createAutomaticRoundResult,
   createMatchResult,
@@ -30,7 +31,7 @@ function otherPlayerId(playerId: (typeof PLAYER_IDS)[number]): (typeof PLAYER_ID
 
 function expectedActivePlayer(
   state: AuthoritativeGameStateV1,
-  phaseKind: "awaitingHandPlay" | "awaitingDrawCapture",
+  phaseKind: "awaitingHandPlay" | "awaitingDrawResolution",
 ): (typeof PLAYER_IDS)[number] | null {
   if (!PLAYER_IDS.includes(state.round.starterId)) return null;
   const starterId = state.round.starterId;
@@ -58,7 +59,7 @@ function authoritativeCardZones(state: AuthoritativeGameStateV1): readonly {
     { path: "$.players[0].captured", cards: state.players[0].captured },
     { path: "$.players[1].captured", cards: state.players[1].captured },
   ];
-  return state.phase.kind === "awaitingDrawCapture"
+  return state.phase.kind === "awaitingDrawResolution"
     ? [
         ...zones,
         { path: "$.phase.drawnCardId", cards: [state.phase.drawnCardId] as readonly CardId[] },
@@ -525,7 +526,7 @@ export function validateAuthoritativeState(
   const handCardsPlayed = 16 - totalHandCards;
   const drawCardsRevealed = 24 - state.round.drawPile.length;
   if (
-    (state.phase.kind === "awaitingHandPlay" || state.phase.kind === "awaitingDrawCapture") &&
+    (state.phase.kind === "awaitingHandPlay" || state.phase.kind === "awaitingDrawResolution") &&
     (handCardsPlayed < 0 || handCardsPlayed > 16 || handCardsPlayed !== drawCardsRevealed)
   ) {
     issues.push(
@@ -593,12 +594,12 @@ export function validateAuthoritativeState(
         ),
       );
     }
-  } else if (state.phase.kind === "awaitingDrawCapture") {
-    const targets = state.phase.targetFieldCardIds;
+  } else if (state.phase.kind === "awaitingDrawResolution") {
+    const resolution = state.phase.resolution;
     if (!PLAYER_IDS.includes(state.phase.playerId)) {
       issues.push(issue("PHASE_PLAYER_INVALID", "$.phase.playerId", "Active player is invalid."));
     }
-    if (state.phase.playerId !== expectedActivePlayer(state, "awaitingDrawCapture")) {
+    if (state.phase.playerId !== expectedActivePlayer(state, "awaitingDrawResolution")) {
       issues.push(
         issue(
           "TURN_PLAYER_ORDER_INVALID",
@@ -607,39 +608,34 @@ export function validateAuthoritativeState(
         ),
       );
     }
-    if (
-      targets.length !== 2 ||
-      targets[0] === targets[1] ||
-      !isCardId(state.phase.drawnCardId) ||
-      !targets.every(isCardId)
-    ) {
+    if (!isCardId(state.phase.drawnCardId)) {
       issues.push(
         issue(
-          "DRAW_CAPTURE_PHASE_INVALID",
+          "DRAW_RESOLUTION_PHASE_INVALID",
           "$.phase",
-          "Pending draw choice must contain one known draw and two unique known targets.",
+          "Pending draw resolution must contain one known draw card.",
         ),
       );
     } else if (state.round.field.every(isCardId)) {
-      const drawMonth = getCardDefinition(state.phase.drawnCardId).month;
-      const expectedTargets = state.round.field.filter(
-        (cardId) => getCardDefinition(cardId).month === drawMonth,
+      const expectedResolution = getHandPlayResolutionPreview(
+        state.round.field,
+        state.phase.drawnCardId,
       );
-      if (JSON.stringify(targets) !== JSON.stringify(expectedTargets)) {
+      if (JSON.stringify(resolution) !== JSON.stringify(expectedResolution)) {
         issues.push(
           issue(
-            "DRAW_CAPTURE_TARGETS_INVALID",
-            "$.phase.targetFieldCardIds",
-            "Pending targets must be the exact two same-month field cards in field order.",
+            "DRAW_RESOLUTION_INVALID",
+            "$.phase.resolution",
+            "Pending draw resolution must exactly match the canonical field classification.",
           ),
         );
       }
     } else {
       issues.push(
         issue(
-          "DRAW_CAPTURE_PHASE_INVALID",
+          "DRAW_RESOLUTION_PHASE_INVALID",
           "$.phase",
-          "Pending draw choice cannot reference a malformed field.",
+          "Pending draw resolution cannot reference a malformed field.",
         ),
       );
     }
@@ -649,7 +645,7 @@ export function validateAuthoritativeState(
     const context = state.phase.context;
     if (
       !PLAYER_IDS.includes(decisionPlayerId) ||
-      decisionPlayerId !== expectedActivePlayer(state, "awaitingDrawCapture") ||
+      decisionPlayerId !== expectedActivePlayer(state, "awaitingDrawResolution") ||
       actor === undefined
     ) {
       issues.push(

@@ -140,7 +140,9 @@ Hand Phase
 
 - Banking after the Hand Phase ends the round immediately; no Draw Phase occurs.
 - Calling Koi-Koi after the Hand Phase resumes the Draw Phase.
-- The draw reveal acknowledgement is presentation behavior, not a separate gameplay rule.
+- Every Draw reveal creates one explicit, authoritative Draw-resolution step. The revealed card and
+  its legal public outcome are shown before placement or capture; the player must resolve it before
+  Yaku Check or turn handoff. This does not add a new capture rule or let the client decide legality.
 
 For a played or drawn card:
 

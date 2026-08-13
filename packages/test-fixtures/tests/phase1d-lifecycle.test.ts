@@ -272,13 +272,28 @@ function finalFirstTriggerSource(): AuthoritativeGameStateV1 {
 }
 
 function playFinalTurn(state: AuthoritativeGameStateV1): GameplayTransitionV1 {
-  return applyGameplayCommand(state, {
+  const revealed = applyGameplayCommand(state, {
     type: "playHandCard",
     commandId: `final-play-${state.stateVersion}`,
     matchId: state.matchId,
     actorId: "player-b",
     expectedStateVersion: state.stateVersion,
     cardId: "december-phoenix",
+  });
+  if (revealed.state.phase.kind !== "awaitingDrawResolution") {
+    throw new Error("FINAL_DRAW_RESOLUTION_MISSING");
+  }
+  const targetFieldCardId =
+    revealed.state.phase.resolution.kind === "captureChoice"
+      ? revealed.state.phase.resolution.matchingFieldCardIds[0]
+      : undefined;
+  return applyGameplayCommand(revealed.state, {
+    type: "resolveDrawCard",
+    commandId: `final-resolve-${revealed.state.stateVersion}`,
+    matchId: revealed.state.matchId,
+    actorId: "player-b",
+    expectedStateVersion: revealed.state.stateVersion,
+    ...(targetFieldCardId === undefined ? {} : { targetFieldCardId }),
   });
 }
 
@@ -467,7 +482,22 @@ describe("Phase 1D Bank and Koi-Koi integration", () => {
       context: { phase: "hand" },
     });
     const draw = decide(hand.state, "koiKoi", "two-window-koi");
-    expect(draw.state.phase).toMatchObject({
+    expect(draw.state.phase.kind).toBe("awaitingDrawResolution");
+    const resolutionAction = getLegalActions(draw.state, "player-a")[0];
+    if (!resolutionAction || resolutionAction.type !== "resolveDrawCard") {
+      throw new Error("KOI-009 draw resolution missing.");
+    }
+    const resolved = applyGameplayCommand(draw.state, {
+      type: "resolveDrawCard",
+      commandId: "two-window-draw-resolution",
+      matchId: draw.state.matchId,
+      actorId: "player-a",
+      expectedStateVersion: draw.state.stateVersion,
+      ...(resolutionAction.targetFieldCardId === undefined
+        ? {}
+        : { targetFieldCardId: resolutionAction.targetFieldCardId }),
+    });
+    expect(resolved.state.phase).toMatchObject({
       kind: "awaitingYakuDecision",
       context: {
         phase: "draw",
@@ -475,7 +505,7 @@ describe("Phase 1D Bank and Koi-Koi integration", () => {
       },
     });
     expect(draw.events.map((event) => event.type)).toEqual(
-      expect.arrayContaining(["koiKoiCalled", "drawCardRevealed", "yakuDecisionRequired"]),
+      expect.arrayContaining(["koiKoiCalled", "drawCardRevealed", "drawResolutionRequired"]),
     );
     expectVector("KOI-009", { decisions: 2, phases: "hand,draw" });
   });
@@ -1474,7 +1504,7 @@ describe("Phase 1D round advancement", () => {
       if (state.phase.kind === "matchComplete") break;
       const actorId =
         state.phase.kind === "awaitingHandPlay" ||
-        state.phase.kind === "awaitingDrawCapture" ||
+        state.phase.kind === "awaitingDrawResolution" ||
         state.phase.kind === "awaitingYakuDecision"
           ? state.phase.playerId
           : null;
@@ -1499,9 +1529,9 @@ describe("Phase 1D round advancement", () => {
                 ? {}
                 : { targetFieldCardId: action.targetFieldCardId }),
             })
-          : action.type === "chooseDrawCapture"
+          : action.type === "resolveDrawCard"
             ? applyGameplayCommand(state, {
-                type: "chooseDrawCapture",
+                type: "resolveDrawCard",
                 commandId,
                 matchId: state.matchId,
                 actorId,

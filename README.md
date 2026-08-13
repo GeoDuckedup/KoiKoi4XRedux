@@ -1,8 +1,8 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository
-has deployed and accepted **Phase 3E-A: table clarity and decision surfaces** with an
-owner-approved primary deck. It
+has deployed and accepted **Phase 3E-A: table clarity and decision surfaces** and is implementing
+**Phase 3E-B: authoritative interactive Draw resolution** with an owner-approved primary deck. It
 contains the canonical rules authority, all 48 artwork-independent card records, the complete
 deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
@@ -137,7 +137,8 @@ Pages viewports. Representative artifacts are written under `output/phase-3d-d/e
 `npm run validate:phase3ea` retains that complete gate and removes empty numbered field chrome,
 keeps Options in a bottom-safe utility, adds state-preserving public capture galleries, presents
 Bank/Koi-Koi without obscuring the table, and keeps secondary result evidence collapsed until
-requested. Root and Pages evidence is written under `output/phase-3e-a/e2e/`.
+requested. Root and Pages evidence for the current Draw-resolution work is written under
+`output/phase-3e-b/e2e/`.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

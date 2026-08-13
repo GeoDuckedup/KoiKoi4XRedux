@@ -309,16 +309,23 @@ function buildFixture(id: TechnicalInputFixtureId, stateVersion: number): Techni
         observation: observation({
           projection: drawProjection,
           phase: {
-            kind: "awaitingDrawCapture",
+            kind: "awaitingDrawResolution",
             playerId: "player-a",
             drawnCardId: "august-pampas-plain-a",
-            targetFieldCardIds: targets,
+            resolution: {
+              kind: "captureChoice",
+              matchingFieldCardIds: targets,
+            },
           },
           legalActions: targets.map((targetFieldCardId) => ({
-            type: "chooseDrawCapture" as const,
+            type: "resolveDrawCard" as const,
             actorId: "player-a" as const,
             drawnCardId: "august-pampas-plain-a" as const,
             targetFieldCardId,
+            resolution: {
+              kind: "captureChoice" as const,
+              matchingFieldCardIds: targets,
+            },
           })),
           stateVersion,
         }),

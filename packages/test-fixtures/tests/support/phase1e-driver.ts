@@ -30,7 +30,7 @@ export interface DirectMatchTrace {
 function activePlayer(state: AuthoritativeGameStateV1): PlayerId {
   if (
     state.phase.kind !== "awaitingHandPlay" &&
-    state.phase.kind !== "awaitingDrawCapture" &&
+    state.phase.kind !== "awaitingDrawResolution" &&
     state.phase.kind !== "awaitingYakuDecision"
   ) {
     throw new Error(`No active player in ${state.phase.kind}.`);
@@ -56,14 +56,16 @@ function actionToCommand(
         : { targetFieldCardId: action.targetFieldCardId }),
     };
   }
-  if (action.type === "chooseDrawCapture") {
+  if (action.type === "resolveDrawCard") {
     return {
-      type: "chooseDrawCapture",
+      type: "resolveDrawCard",
       commandId,
       matchId: state.matchId,
       actorId: action.actorId,
       expectedStateVersion: state.stateVersion,
-      targetFieldCardId: action.targetFieldCardId,
+      ...(action.targetFieldCardId === undefined
+        ? {}
+        : { targetFieldCardId: action.targetFieldCardId }),
     };
   }
   return {

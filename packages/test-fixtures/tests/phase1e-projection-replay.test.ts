@@ -90,7 +90,7 @@ function expectLiteral(id: Phase1EVectorId, actual: Readonly<Record<string, unkn
 }
 
 function authoritativeCardCount(state: AuthoritativeGameStateV1): number {
-  const pendingDraw = state.phase.kind === "awaitingDrawCapture" ? 1 : 0;
+  const pendingDraw = state.phase.kind === "awaitingDrawResolution" ? 1 : 0;
   return (
     state.players.reduce(
       (total, player) => total + player.hand.length + player.captured.length,
@@ -293,7 +293,7 @@ describe("Phase 1E literal projection and invariant fixtures", () => {
     const drawCommand = fixture.commands[0];
     if (drawCommand === undefined) throw new Error("CAP-DRAW-002 command missing.");
     const pendingDraw = applyGameplayCommand(state, drawCommand).state;
-    if (pendingDraw.phase.kind !== "awaitingDrawCapture") {
+    if (pendingDraw.phase.kind !== "awaitingDrawResolution") {
       throw new Error("Pending Draw fixture did not pause.");
     }
     const publicDraw = projectPublicState(pendingDraw);

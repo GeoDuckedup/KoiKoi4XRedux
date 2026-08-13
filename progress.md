@@ -921,3 +921,14 @@ Original prompt: read the package and understand it, then let me know when we ar
 - The live URL returned HTTP 200. A cache-busted real-browser check reached ready state with the
   approved Primary Deck, one canvas, 48 persistent CardViews, eight legal hand controls, zero
   empty-field placeholders, and no layout diagnostics. Phase 3E-A evidence maturity is `live`.
+
+## 2026-08-12 — Phase 3E-B authoritative Draw resolution integrated
+
+- Every Hand completion now reveals one Draw card into `awaitingDrawResolution`; no Draw placement,
+  capture, Yaku Check, handoff, or End-of-Play result occurs until the player resolves it.
+- The engine owns the frozen 0/1/2/3 public preview and `resolveDrawCard` legality. The web app
+  requires an explicit Reveal-card tap, then follows the existing Guided/Fast interaction language
+  without recomputing capture rules.
+- Engine, protocol, fixture, replay, and web tests pass 31 files / 269 tests; formatter, lint, all
+  workspace typechecks, root smoke, and Pages-base smoke pass. Independent review found no
+  blocker, high, or medium issue. Deployment remains pending commit and CI/Pages completion.

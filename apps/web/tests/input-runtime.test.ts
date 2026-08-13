@@ -140,16 +140,22 @@ describe("Phase 2D pure interaction controller", () => {
   it("INPUT-008 resolves draw choices only through public legal target cards", () => {
     const { controller, intents } = controllerFor("drawCapture");
     expect(controller.inspect()).toMatchObject({
-      status: "targeting",
-      selectedCardId: "august-pampas-plain-a",
-      selectableCardIds: [],
-      legalTargetCardIds: ["august-geese", "august-pampas-plain-b"],
+      status: "idle",
+      selectedCardId: null,
+      selectableCardIds: ["august-pampas-plain-a"],
+      legalTargetCardIds: [],
       cancelAvailable: false,
     });
-    expect(controller.cancel()).toBe(false);
+    expect(controller.activateCard("august-pampas-plain-a")).toBe(true);
+    expect(controller.inspect()).toMatchObject({
+      status: "targeting",
+      selectedCardId: "august-pampas-plain-a",
+      legalTargetCardIds: ["august-geese", "august-pampas-plain-b"],
+      cancelAvailable: true,
+    });
     expect(controller.activateCard("august-geese")).toBe(true);
     expect(intents[0]?.action).toEqual({
-      type: "chooseDrawCapture",
+      type: "resolveDrawCard",
       targetFieldCardId: "august-geese",
     });
   });
@@ -251,7 +257,7 @@ describe("Phase 2D pure interaction controller", () => {
       observation: {
         ...drawFixture.source.observation,
         legalActions: drawFixture.source.observation.legalActions.map((action) =>
-          action.type === "chooseDrawCapture"
+          action.type === "resolveDrawCard"
             ? { ...action, drawnCardId: "january-crane" as const }
             : action,
         ),
@@ -271,10 +277,14 @@ describe("Phase 2D pure interaction controller", () => {
         ...drawFixture.source.observation,
         legalActions: [
           {
-            type: "chooseDrawCapture" as const,
+            type: "resolveDrawCard" as const,
             actorId: "player-a" as const,
             drawnCardId: "august-pampas-plain-a" as const,
             targetFieldCardId: "march-red-text-scroll" as const,
+            resolution: {
+              kind: "captureChoice" as const,
+              matchingFieldCardIds: ["august-geese", "august-pampas-plain-b"] as const,
+            },
           },
         ],
       },

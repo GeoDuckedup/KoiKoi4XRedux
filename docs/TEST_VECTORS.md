@@ -486,7 +486,23 @@ Phase 3E-A binding:
   End-of-Play traces without a production state injector;
 - browser artifacts are written under `output/phase-3e-a/e2e/`.
 
-## 19. Approved-decision coverage matrix
+## 19. Phase 3E-B authoritative Draw-resolution vectors
+
+| ID | Required expectation |
+|---|---|
+| `DRAW-INTERACT-001-PLACE` | A no-match Draw reveals into a public pending state, then only an explicit target-free resolution places it on the field. |
+| `DRAW-INTERACT-002-UNIQUE-PAIR` | A one-match Draw pauses before its sole public matching pair is captured. |
+| `DRAW-INTERACT-003-EXACT-TWO` | An exact-two Draw exposes precisely two ordered legal targets and requires one; neither target is defaulted. |
+| `DRAW-INTERACT-004-SWEEP` | A three-match Draw pauses before one target-free resolution captures all four cards in canonical order. |
+| `DRAW-INTERACT-005-STATE-VERSION-REPLAY` | Each reveal and resolution advances once; stale/missing/illegal resolutions preserve state and replay remains deterministic. |
+| `DRAW-INTERACT-006-PUBLIC-PRIVACY` | Pending Draw projection/event data includes only the revealed card and public preview, never a hand, future Draw order, RNG, checkpoint, or command metadata. |
+
+Phase 3E-B binding: `phase3eb-draw-resolution.test.ts` executes the four canonical CAP draw
+families through the production engine API, with the existing state-machine, yaku, replay, protocol,
+and web interaction suites retaining the phase transition. Browser choreography from the top card of
+the deck is deliberately deferred to Phase 3E-C.
+
+## 20. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

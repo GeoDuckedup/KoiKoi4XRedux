@@ -31,8 +31,8 @@ function eventCardIds(event: PublicGameEventV1): readonly CardId[] {
       return Object.freeze([event.sourceCardId, ...event.targetFieldCardIds]);
     case "cardsCaptured":
       return Object.freeze([...event.cardIds]);
-    case "drawCaptureChoiceRequired":
-      return Object.freeze([event.drawnCardId, ...event.targetFieldCardIds]);
+    case "drawResolutionRequired":
+      return Object.freeze([event.drawnCardId, ...event.resolution.matchingFieldCardIds]);
     case "cardsDealt":
       return Object.freeze([...event.field]);
     case "initialFieldCancellationDetected":
@@ -89,7 +89,7 @@ function clipSpecs(event: PublicGameEventV1, hasProjectionChange: boolean): read
       ]);
     case "drawCardRevealed":
       throw new Error("Draw-reveal clips use the dedicated flip boundary planner.");
-    case "drawCaptureChoiceRequired":
+    case "drawResolutionRequired":
       return Object.freeze([{ kind: "alignment", settlesBoundary: true }]);
     case "cardsDealt":
     case "roundReady":

@@ -158,6 +158,25 @@ function assertCards(
   }
 }
 
+function assertDrawResolution(value: unknown, path: string): void {
+  assertRecord(value, path);
+  if (value.kind === "placeOnField") {
+    assertExactKeys(value, ["kind", "matchingFieldCardIds"], path);
+    assertCards(value.matchingFieldCardIds, `${path}.matchingFieldCardIds`, { length: 0 });
+  } else if (value.kind === "capturePair") {
+    assertExactKeys(value, ["kind", "matchingFieldCardIds"], path);
+    assertCards(value.matchingFieldCardIds, `${path}.matchingFieldCardIds`, { length: 1 });
+  } else if (value.kind === "captureChoice") {
+    assertExactKeys(value, ["kind", "matchingFieldCardIds"], path);
+    assertCards(value.matchingFieldCardIds, `${path}.matchingFieldCardIds`, { length: 2 });
+  } else if (value.kind === "fourCardSweep") {
+    assertExactKeys(value, ["kind", "matchingFieldCardIds"], path);
+    assertCards(value.matchingFieldCardIds, `${path}.matchingFieldCardIds`, { length: 3 });
+  } else {
+    rejectProtocol("PUBLIC_STATE_INVALID", `${path}.kind is not a draw resolution.`);
+  }
+}
+
 function assertPointDeltas(value: unknown, path: string): void {
   assertRecord(value, path);
   assertExactKeys(value, PLAYER_IDS, path);
@@ -471,11 +490,11 @@ function assertPublicPhase(value: unknown, path: string): void {
   if (value.kind === "awaitingHandPlay") {
     assertExactKeys(value, ["kind", "playerId"], path);
     assertPlayer(value.playerId, `${path}.playerId`);
-  } else if (value.kind === "awaitingDrawCapture") {
-    assertExactKeys(value, ["kind", "playerId", "drawnCardId", "targetFieldCardIds"], path);
+  } else if (value.kind === "awaitingDrawResolution") {
+    assertExactKeys(value, ["kind", "playerId", "drawnCardId", "resolution"], path);
     assertPlayer(value.playerId, `${path}.playerId`);
     assertCard(value.drawnCardId, `${path}.drawnCardId`);
-    assertCards(value.targetFieldCardIds, `${path}.targetFieldCardIds`, { length: 2 });
+    assertDrawResolution(value.resolution, `${path}.resolution`);
   } else if (value.kind === "awaitingYakuDecision") {
     assertExactKeys(value, ["kind", "playerId", "context"], path);
     assertPlayer(value.playerId, `${path}.playerId`);
@@ -652,11 +671,11 @@ function assertPublicEvent(event: unknown, path: string): void {
       assertCard(event.cardId, `${path}.cardId`);
       assertNonnegativeInteger(event.remainingDrawPileCount, `${path}.remainingDrawPileCount`);
       break;
-    case "drawCaptureChoiceRequired":
-      assertExactKeys(event, ["type", "actorId", "drawnCardId", "targetFieldCardIds"], path);
+    case "drawResolutionRequired":
+      assertExactKeys(event, ["type", "actorId", "drawnCardId", "resolution"], path);
       assertActor(event, path);
       assertCard(event.drawnCardId, `${path}.drawnCardId`);
-      assertCards(event.targetFieldCardIds, `${path}.targetFieldCardIds`, { length: 2 });
+      assertDrawResolution(event.resolution, `${path}.resolution`);
       break;
     case "yakuCompleted":
       assertExactKeys(event, ["type", "actorId", "phase", "yaku"], path);

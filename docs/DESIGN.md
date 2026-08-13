@@ -564,7 +564,11 @@ A normal turn has two gameplay phases. Each phase ends with its own capture reso
 
 One phase can complete several new yaku, but those yaku share one decision panel. The Hand Phase and Draw Phase are separate resolution windows. Therefore, a player who calls Koi-Koi after a Hand-Phase yaku can receive a second Yaku Decision if the Draw Phase completes another previously unseen yaku.
 
-The draw reveal tap is presentation behavior, not a distinct rule-engine action. The engine may know the revealed card while the renderer waits for a reveal animation or acknowledgement.
+Every draw reveal enters an authoritative pending Draw-resolution state. The engine exposes the
+revealed card and its canonical public 0/1/2/3 capture preview, then accepts one
+`resolveDrawCard` command before placement/capture, Yaku Check, or turn handoff. A renderer may
+still wait for its reveal animation before enabling that interaction, but it may not derive capture
+legality or resolve the Draw locally.
 
 ## 8.6 Capture rules
 
@@ -1891,7 +1895,7 @@ Use a discriminated union.
 ```ts
 type EnginePhase =
   | { kind: "awaitingHandPlay"; playerId: PlayerId }
-  | { kind: "awaitingDrawCapture"; playerId: PlayerId; drawnCardId: CardId; targets: CardId[] }
+  | { kind: "awaitingDrawResolution"; playerId: PlayerId; drawnCardId: CardId; resolution: CapturePreview }
   | { kind: "awaitingYakuDecision"; playerId: PlayerId; context: YakuDecisionContext }
   | { kind: "roundComplete"; result: RoundResult }
   | { kind: "awaitingRoundReady"; nextRoundNumber: number }
@@ -1908,7 +1912,7 @@ Initial command catalog:
 type GameCommand =
   | StartMatchCommand
   | PlayHandCardCommand
-  | ChooseDrawCaptureCommand
+  | ResolveDrawCardCommand
   | ChooseYakuDecisionCommand
   | AcknowledgeRoundCommand
   | StartRematchCommand;
@@ -1926,12 +1930,12 @@ interface PlayHandCardCommand {
   targetFieldCardId?: CardId;
 }
 
-interface ChooseDrawCaptureCommand {
-  type: "chooseDrawCapture";
+interface ResolveDrawCardCommand {
+  type: "resolveDrawCard";
   commandId: string;
   actorId: PlayerId;
   expectedStateVersion: number;
-  targetFieldCardId: CardId;
+  targetFieldCardId?: CardId;
 }
 
 interface ChooseYakuDecisionCommand {

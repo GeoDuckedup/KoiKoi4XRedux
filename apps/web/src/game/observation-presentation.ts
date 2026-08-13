@@ -179,7 +179,7 @@ export function projectObservationToBoard(
     assign(cardId, captureZone(getCardDefinition(cardId).category, "opponent"), true);
   }
   const phase = observation.publicState.phase;
-  if (phase.kind === "awaitingDrawCapture") assign(phase.drawnCardId, "reveal", true);
+  if (phase.kind === "awaitingDrawResolution") assign(phase.drawnCardId, "reveal", true);
 
   const hiddenCardIds = CARD_IDS.filter((cardId) => !known.has(cardId));
   const hidden = preserveHiddenAllocation({

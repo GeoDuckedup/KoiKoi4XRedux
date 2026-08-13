@@ -6,7 +6,6 @@ import {
   type AuthoritativeGameStateV1,
   type ActiveYakuV1,
   type CapturePhase,
-  type ChooseDrawCaptureCommandV1,
   type ChooseYakuDecisionCommandV1,
   type EnginePhaseV1,
   type GameplayEventV1,
@@ -19,6 +18,7 @@ import {
   type PlayerStateV1,
   type RoundStateV1,
   type RoundResultV1,
+  type ResolveDrawCardCommandV1,
   type TableMultiplier,
   type TurnEventV1,
   type YakuDecisionResumeV1,
@@ -48,7 +48,7 @@ function otherPlayer(playerId: PlayerId): PlayerId {
 
 function activePlayerId(state: AuthoritativeGameStateV1): PlayerId | null {
   return state.phase.kind === "awaitingHandPlay" ||
-    state.phase.kind === "awaitingDrawCapture" ||
+    state.phase.kind === "awaitingDrawResolution" ||
     state.phase.kind === "awaitingYakuDecision"
     ? state.phase.playerId
     : null;
@@ -461,67 +461,21 @@ function continueDrawPhase(
       remainingDrawPileCount: drawPile.length,
     },
   ];
-  const drawResolution = resolveCapture(field, drawnCardId);
-  if (drawResolution.kind === "choiceRequired") {
-    const targetFieldCardIds = drawResolution.matchingFieldCardIds;
-    events.push({
-      type: "drawCaptureChoiceRequired",
-      audience: publicAudience(),
-      actorId: command.actorId,
-      drawnCardId,
-      targetFieldCardIds,
-    });
-    return commitTransition(
-      state,
-      command,
-      players,
-      field,
-      drawPile,
-      { kind: "awaitingDrawCapture", playerId: command.actorId, drawnCardId, targetFieldCardIds },
-      deepFreeze(events),
-      roundUpdates,
-    );
-  }
-  const actorBeforeDraw = players.find((player) => player.id === command.actorId);
-  if (actorBeforeDraw === undefined)
-    throw new Error("PLAYER_INVARIANT: active player disappeared.");
-  const actorAfterDraw = updatedPlayerAfterResolution(actorBeforeDraw, drawResolution);
-  const playersAfterDraw = replacePlayer(players, command.actorId, actorAfterDraw);
-  events.push(...eventsForResolution(command.actorId, "draw", drawResolution));
-  const bothHandsEmpty = playersAfterDraw.every((player) => player.hand.length === 0);
-  const yakuState = stateWithRoundUpdates(state, players, field, sourceDrawPile, roundUpdates);
-  const drawYaku = performYakuCheck(
-    yakuState,
-    players,
-    playersAfterDraw,
-    command.actorId,
-    "draw",
-    bothHandsEmpty
-      ? { kind: "endOfPlay", lastActorId: command.actorId }
-      : { kind: "completeTurn", lastActorId: command.actorId },
-  );
-  events.push(...drawYaku.events);
-  if (drawYaku.decisionPhase !== null) {
-    return commitTransition(
-      state,
-      command,
-      drawYaku.players,
-      drawResolution.field,
-      drawPile,
-      drawYaku.decisionPhase,
-      deepFreeze(events),
-      {
-        ...roundUpdates,
-        firstYakuTriggerPlayerId: drawYaku.firstYakuTriggerPlayerId,
-      },
-    );
-  }
-  return completeTurn(
+  const resolution = getHandPlayResolutionPreview(field, drawnCardId);
+  events.push({
+    type: "drawResolutionRequired",
+    audience: publicAudience(),
+    actorId: command.actorId,
+    drawnCardId,
+    resolution,
+  });
+  return commitTransition(
     state,
     command,
-    drawYaku.players,
-    drawResolution.field,
+    players,
+    field,
     drawPile,
+    { kind: "awaitingDrawResolution", playerId: command.actorId, drawnCardId, resolution },
     deepFreeze(events),
     roundUpdates,
   );
@@ -614,20 +568,31 @@ function applyPlayHandCard(
   );
 }
 
-function applyChooseDrawCapture(
+function applyResolveDrawCard(
   state: AuthoritativeGameStateV1,
-  command: ChooseDrawCaptureCommandV1,
+  command: ResolveDrawCardCommandV1,
 ): GameplayTransitionV1 {
-  if (state.phase.kind !== "awaitingDrawCapture") {
+  if (state.phase.kind !== "awaitingDrawResolution") {
     rejectCommand(
       "COMMAND_NOT_ALLOWED_IN_PHASE",
-      "chooseDrawCapture requires awaitingDrawCapture.",
+      "resolveDrawCard requires awaitingDrawResolution.",
     );
   }
-  if (!isCardId(command.targetFieldCardId)) {
+  const requiresTarget = state.phase.resolution.kind === "captureChoice";
+  if (requiresTarget && command.targetFieldCardId === undefined) {
+    rejectCommand("CAPTURE_TARGET_REQUIRED", "An exact two-match draw requires one target.");
+  }
+  if (!requiresTarget && command.targetFieldCardId !== undefined) {
+    rejectCommand("CAPTURE_TARGET_NOT_ALLOWED", "This draw resolution does not accept a target.");
+  }
+  if (command.targetFieldCardId !== undefined && !isCardId(command.targetFieldCardId)) {
     rejectCommand("CARD_ID_INVALID", "Draw-capture target must be canonical.");
   }
-  if (!state.phase.targetFieldCardIds.includes(command.targetFieldCardId)) {
+  if (
+    state.phase.resolution.kind === "captureChoice" &&
+    command.targetFieldCardId !== undefined &&
+    !state.phase.resolution.matchingFieldCardIds.includes(command.targetFieldCardId)
+  ) {
     rejectCommand("DRAW_CAPTURE_TARGET_ILLEGAL", "Selected draw-capture target is not legal.");
   }
   const resolution = resolveCapture(
@@ -635,8 +600,8 @@ function applyChooseDrawCapture(
     state.phase.drawnCardId,
     command.targetFieldCardId,
   );
-  if (resolution.kind !== "captured") {
-    throw new Error("DRAW_CAPTURE_INVARIANT: validated draw target did not resolve.");
+  if (resolution.kind === "choiceRequired") {
+    throw new Error("DRAW_RESOLUTION_INVARIANT: validated draw action did not resolve.");
   }
   const actor = state.players.find((player) => player.id === command.actorId);
   if (actor === undefined) throw new Error("PLAYER_INVARIANT: active player disappeared.");
@@ -801,14 +766,14 @@ export function applyGameplayCommand(
   assertValidAuthoritativeState(state);
   if (
     command.type !== "playHandCard" &&
-    command.type !== "chooseDrawCapture" &&
+    command.type !== "resolveDrawCard" &&
     command.type !== "chooseYakuDecision"
   ) {
     rejectCommand("COMMAND_TYPE_INVALID", "Unsupported gameplay command type.");
   }
   validateCommandBase(state, command);
   if (command.type === "playHandCard") return applyPlayHandCard(state, command);
-  if (command.type === "chooseDrawCapture") return applyChooseDrawCapture(state, command);
+  if (command.type === "resolveDrawCard") return applyResolveDrawCard(state, command);
   return applyChooseYakuDecision(state, command);
 }
 
@@ -837,15 +802,29 @@ export function getLegalActions(
     });
     return deepFreeze(actions);
   }
-  if (state.phase.kind === "awaitingDrawCapture") {
-    const drawnCardId = state.phase.drawnCardId;
+  if (state.phase.kind === "awaitingDrawResolution") {
+    const phase = state.phase;
+    const createAction = (targetFieldCardId?: CardId): LegalActionV1 =>
+      targetFieldCardId === undefined
+        ? {
+            type: "resolveDrawCard",
+            actorId: requestingPlayerId,
+            drawnCardId: phase.drawnCardId,
+            resolution: phase.resolution,
+          }
+        : {
+            type: "resolveDrawCard",
+            actorId: requestingPlayerId,
+            drawnCardId: phase.drawnCardId,
+            targetFieldCardId,
+            resolution: phase.resolution,
+          };
     return deepFreeze(
-      state.phase.targetFieldCardIds.map((targetFieldCardId) => ({
-        type: "chooseDrawCapture" as const,
-        actorId: requestingPlayerId,
-        drawnCardId,
-        targetFieldCardId,
-      })),
+      phase.resolution.kind === "captureChoice"
+        ? phase.resolution.matchingFieldCardIds.map((targetFieldCardId) =>
+            createAction(targetFieldCardId),
+          )
+        : [createAction()],
     );
   }
   if (state.phase.kind === "awaitingYakuDecision") {

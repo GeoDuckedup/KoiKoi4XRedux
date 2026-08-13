@@ -1,5 +1,9 @@
 # ADR 0004: Phase 1B turn and capture state machine
 
+> **Superseded in part by ADR 0019.** Phase 3E-B generalized the former exact-two-only
+> `awaitingDrawCapture` / `chooseDrawCapture` seam into universal `awaitingDrawResolution` /
+> `resolveDrawCard`; this ADR remains historical evidence for the original Phase 1B boundary.
+
 **Status:** Accepted
 
 **Date:** August 8, 2026

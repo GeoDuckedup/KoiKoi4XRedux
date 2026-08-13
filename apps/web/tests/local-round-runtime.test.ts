@@ -33,11 +33,11 @@ function intentFromAction(
       }),
     });
   }
-  if (action.type === "chooseDrawCapture") {
+  if (action.type === "resolveDrawCard") {
     return Object.freeze({
       ...base,
       action: Object.freeze({
-        type: "chooseDrawCapture" as const,
+        type: "resolveDrawCard" as const,
         targetFieldCardId: action.targetFieldCardId,
       }),
     });

@@ -136,6 +136,17 @@ export function computeCardHitAreas(input: {
       }),
     );
   }
+  for (const cardId of input.selectableCardIds) {
+    const placement = byCardId.get(cardId);
+    if (!placement || placement.zone !== "reveal") continue;
+    areas.push(
+      Object.freeze({
+        cardId,
+        role: "selectable",
+        bounds: freezeRect(placement.bounds),
+      }),
+    );
+  }
   for (const cardId of input.legalTargetCardIds) {
     const placement = byCardId.get(cardId);
     if (!placement || placement.zone !== "field") continue;

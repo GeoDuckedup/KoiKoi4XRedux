@@ -229,10 +229,10 @@ export type EnginePhaseV1 =
       readonly playerId: PlayerId;
     }
   | {
-      readonly kind: "awaitingDrawCapture";
+      readonly kind: "awaitingDrawResolution";
       readonly playerId: PlayerId;
       readonly drawnCardId: CardId;
-      readonly targetFieldCardIds: readonly [CardId, CardId];
+      readonly resolution: DrawResolutionPreviewV1;
     }
   | {
       readonly kind: "awaitingYakuDecision";
@@ -362,9 +362,9 @@ export interface PlayHandCardCommandV1 extends GameplayCommandBaseV1 {
   readonly targetFieldCardId?: CardId;
 }
 
-export interface ChooseDrawCaptureCommandV1 extends GameplayCommandBaseV1 {
-  readonly type: "chooseDrawCapture";
-  readonly targetFieldCardId: CardId;
+export interface ResolveDrawCardCommandV1 extends GameplayCommandBaseV1 {
+  readonly type: "resolveDrawCard";
+  readonly targetFieldCardId?: CardId | undefined;
 }
 
 export interface ChooseYakuDecisionCommandV1 extends GameplayCommandBaseV1 {
@@ -373,7 +373,7 @@ export interface ChooseYakuDecisionCommandV1 extends GameplayCommandBaseV1 {
 }
 
 export type GameplayCommandV1 =
-  PlayHandCardCommandV1 | ChooseDrawCaptureCommandV1 | ChooseYakuDecisionCommandV1;
+  PlayHandCardCommandV1 | ResolveDrawCardCommandV1 | ChooseYakuDecisionCommandV1;
 
 export interface AdvanceRoundCommandV1 {
   readonly type: "advanceRound";
@@ -400,19 +400,26 @@ export type HandPlayResolutionPreviewV1 =
       readonly matchingFieldCardIds: readonly [CardId, CardId, CardId];
     };
 
+/**
+ * A Draw uses the same authoritative capture classification as a Hand play.
+ * Keeping this alias makes the phase source explicit without duplicating rules.
+ */
+export type DrawResolutionPreviewV1 = HandPlayResolutionPreviewV1;
+
 export type LegalActionV1 =
   | {
       readonly type: "playHandCard";
       readonly actorId: PlayerId;
       readonly cardId: CardId;
-      readonly targetFieldCardId?: CardId;
+      readonly targetFieldCardId?: CardId | undefined;
       readonly resolution: HandPlayResolutionPreviewV1;
     }
   | {
-      readonly type: "chooseDrawCapture";
+      readonly type: "resolveDrawCard";
       readonly actorId: PlayerId;
       readonly drawnCardId: CardId;
-      readonly targetFieldCardId: CardId;
+      readonly targetFieldCardId?: CardId | undefined;
+      readonly resolution: DrawResolutionPreviewV1;
     }
   | {
       readonly type: "chooseYakuDecision";
@@ -464,9 +471,9 @@ export type TurnEventV1 =
       readonly remainingDrawPileCount: number;
     })
   | (TurnEventBase & {
-      readonly type: "drawCaptureChoiceRequired";
+      readonly type: "drawResolutionRequired";
       readonly drawnCardId: CardId;
-      readonly targetFieldCardIds: readonly [CardId, CardId];
+      readonly resolution: DrawResolutionPreviewV1;
     })
   | (TurnEventBase & {
       readonly type: "yakuCompleted";

@@ -3,7 +3,7 @@
 **Updated:** August 11, 2026
 
 **Overall state:** Greenfield rewrite through Phase 3E-A deployed and accepted; Phase 3E-B
-authoritative interactive Draw resolution is ready to begin
+authoritative interactive Draw resolution is in implementation and local validation
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -16,7 +16,11 @@ Phase 3E-A responds directly to owner playtesting. Permanent numbered field slot
 adaptive geometry remains; Options moves to the bottom safe area; nonempty public capture rails
 open exact card galleries; the Koi-Koi choice becomes a field-visible tray; and Round Result leads
 with outcome, points, totals, and its action while secondary facts begin collapsed. This slice does
-not change engine rules, scoring, draw resolution, or round progression.
+not change scoring or round progression. Phase 3E-B now separates every Draw reveal from its
+resolution: the engine exposes the revealed card and canonical public 0/1/2/3 outcome, then only
+the active player can resolve it. The browser makes the Reveal card selectable and reuses the
+Guided/Fast field cues without deriving matching rules. Top-of-deck source choreography remains
+Phase 3E-C.
 
 Release commits `0b6937a` and `818936a` passed CI run `31554760462` and Pages run `31554760390`.
 The latter contains the CI timing stabilization for the retained raster-builder test. The live page
