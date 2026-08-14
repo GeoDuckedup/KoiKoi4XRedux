@@ -3,8 +3,7 @@
 **Updated:** August 14, 2026
 
 **Overall state:** Greenfield rewrite through Phase 3F-C visual interaction cues deployed and
-accepted; Phase 3F-D placement/capture choreography is locally validated and awaiting commit/push,
-hosted CI/Pages, and live verification
+accepted; Phase 3F-D placement/capture choreography is deployed and accepted
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -60,8 +59,14 @@ build. A final single `npm run validate:phase3fd` passed release deck approval (
 artifacts, focused 5 files / 77 tests, Workshop, the 14-viewport density review, and full root/Pages
 smoke. The bundled game client passed with one canvas, 48 CardViews, clean diagnostics, and inspected
 evidence in `output/phase-3f-d/game-client`; Root/Pages CHOREO screenshots were visually identical.
-Independent Terra review found no blocker, high, or medium issue. This work is not yet committed,
-hosted, or live.
+Independent Terra review found no blocker, high, or medium issue. Release commit `108fb05` passed CI
+run `31844698117` (`verify`, 9m04s) and Pages run `31844698124` (`build`, 11m33s; `deploy`, 9s).
+The cache-busted live URL `https://geoduckedup.github.io/KoiKoi4XRedux/?phase3fd=108fb05` returned
+HTTP/2 200 with `x-cache: MISS`, `Last-Modified: Fri, 14 Aug 2026 22:09:56 GMT`, and bundle
+`assets/index-DjACAdI7.js`. Two bundled live-client iterations reached `ready: true` with approved
+`new-primary-deck`, one canvas, 48/48 CardViews, 8 field / 8 hand / 24 draw, and zero
+clipped/invalid/overlap diagnostics. `output/phase-3f-d/live-ready/shot-1.png` and `state-1.json`
+were inspected. Phase 3F-D is deployed and accepted.
 
 Release commit `51a1821` passed CI run `31742306302` and Pages run `31742306314`; the Pages deploy
 job completed successfully. A cache-busted live browser check reached ready state with the approved
@@ -515,6 +520,7 @@ The deployed baseline is
 
 ## Next subphase
 
-**Phase 5 — Full local product:** implement approved 3/6/12-round formats, persistence, and local
-pass-and-play. Continued owner visual notes may still be handled as bounded polish without reopening
-the accepted interaction architecture. Tutorial work remains deferred.
+**Phase 3F-E — utility dock and capture cleanup:** add the bottom History/Yaku Guide/Options dock,
+remove redundant hand/capture/reveal labels, and preserve regular card proportions in expanded
+captures. Then proceed to **Phase 5A** for approved 3/6/12-round formats and ordered yaku-card
+evidence. Tutorial work remains deferred.

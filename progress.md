@@ -1063,5 +1063,11 @@ Original prompt: read the package and understand it, then let me know when we ar
   48/48 release deck, 100 technical artifacts, focused 5 files / 77 tests, Workshop, 14-viewport
   density review, and root/Pages smoke; the bundled game client and CHOREO screenshots were
   inspected. Independent Terra review found no blocker, high, or medium issue.
-- Next: commit/push, wait for hosted CI/Pages, and verify live behavior. Phase 3F-E utility
-  dock/capture cleanup remains the next visual slice after acceptance.
+- Release commit `108fb05` passed CI run `31844698117` (`verify`, 9m04s) and Pages run
+  `31844698124` (`build`, 11m33s; `deploy`, 9s). The cache-busted live URL returned HTTP/2 200 with
+  `x-cache: MISS`, `Last-Modified: Fri, 14 Aug 2026 22:09:56 GMT`, and `assets/index-DjACAdI7.js`.
+  Two bundled live-client iterations were ready with the approved deck, one canvas, 48/48 CardViews,
+  8 field / 8 hand / 24 draw, and clean diagnostics; `output/phase-3f-d/live-ready/shot-1.png` and
+  `state-1.json` were inspected.
+- Phase 3F-D is deployed and accepted. Next: Phase 3F-E utility dock/capture cleanup, then Phase 5A
+  full local match formats and ordered yaku-card evidence.

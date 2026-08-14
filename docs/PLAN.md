@@ -2,8 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 14, 2026
-**Current gate:** Phase 3F-D placement and capture choreography is locally validated; commit/push,
-hosted CI/Pages, and live verification remain before acceptance
+**Current gate:** Phase 3F-D placement and capture choreography is deployed and accepted; Phase
+3F-E utility dock/capture cleanup is next, then Phase 5A full local match formats
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -815,8 +815,7 @@ or runtime configuration change was required.
 
 ### Phase 3F-D — Placement and capture choreography
 
-Status: **implemented and locally validated; commit/push, hosted CI/Pages, and live verification
-pending**.
+Status: **implemented, deployed, live-verified, and accepted**.
 
 Keep the interaction architecture from 3F-B/C. This presentation-only pass first reflows the
 existing field to prepare a no-match source's final slot, then travels that source directly to it.
@@ -845,19 +844,27 @@ the 17-card density review at 14 root/Pages viewports, and full root/Pages smoke
 web-game client also passed with one canvas, 48 CardViews, clean diagnostics, and inspected
 `output/phase-3f-d/game-client` state/screenshot evidence. Independent Terra review found no
 blocker, high, or medium issue; the Root and Pages CHOREO screenshots were visually inspected and
-matched. This is local evidence only, not a hosted or live claim.
+matched. Release commit `108fb05` passed CI run `31844698117` (`verify`, 9m04s) and Pages run
+`31844698124` (`build`, 11m33s; `deploy`, 9s). The cache-busted live URL
+`https://geoduckedup.github.io/KoiKoi4XRedux/?phase3fd=108fb05` returned HTTP/2 200 with `x-cache:
+MISS`, `Last-Modified: Fri, 14 Aug 2026 22:09:56 GMT`, and `assets/index-DjACAdI7.js`. Two bundled
+live-client iterations reached `ready: true` with the approved `new-primary-deck`, one canvas, 48/48
+CardViews, 8 field / 8 hand / 24 draw, and zero clipped/invalid/overlap diagnostics. The inspected
+live screenshot and state are `output/phase-3f-d/live-ready/shot-1.png` and `state-1.json`.
 
 ## Later phases
 
-1. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, pass-and-play, and
-   ordered yaku-card evidence in expanded end-of-play details.
-2. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
-3. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
-4. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
-5. **Phase 9A — Product polish:** final interface, accessibility, performance, and reliability pass.
-6. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook,
+1. **Phase 3F-E — Utility dock and capture cleanup:** History, Yaku Guide, and Options bottom dock;
+   remove redundant hand/capture/reveal labels; preserve regular card proportions in expanded capture.
+2. **Phase 5A — Full local match formats:** 3/6/12 rounds, full recap/rematch, and ordered
+   yaku-card evidence in expanded end-of-play details.
+3. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
+4. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
+5. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
+6. **Phase 9A — Product polish:** final interface, accessibility, performance, and reliability pass.
+7. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook,
    deliberately executed after the final interaction and progression model stabilizes.
-7. **Phase 9B — Release acceptance:** final content, telemetry, cross-platform, and release checks.
+8. **Phase 9B — Release acceptance:** final content, telemetry, cross-platform, and release checks.
 
 No later phase may bypass the acceptance gate of the preceding phase.
 

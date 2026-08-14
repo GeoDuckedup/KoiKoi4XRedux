@@ -1,6 +1,6 @@
 # ADR 0023 — Phase 3F-D placement and capture choreography
 
-**Status:** Accepted, locally validated; hosted validation and deployment pending
+**Status:** Accepted, deployed, and live-verified
 
 ## Context
 
@@ -33,11 +33,12 @@ an unnecessary movement cue before the player had acted on Reveal.
 
 ## Owner verification and deployment steps
 
-1. Local validation is complete: `npm run check` passed format/lint/typecheck/decks, 46 files / 442
+1. Local validation completed: `npm run check` passed format/lint/typecheck/decks, 46 files / 442
    tests, all 10,002 generated seeds, and the production build. One final `npm run validate:phase3fd`
    invocation passed the approved 48/48 release deck, 100 technical artifacts, 77 focused tests,
-   Workshop, the 14-viewport density review, and root/Pages smoke. No secret, hosting, migration, or
-   asset action is needed; commit and push `main` to run hosted CI and deploy Pages.
+   Workshop, the 14-viewport density review, and root/Pages smoke. Release commit `108fb05` then
+   passed CI run `31844698117` (`verify`, 9m04s) and Pages run `31844698124` (`build`, 11m33s;
+   `deploy`, 9s). No secret, hosting, migration, or asset action was needed.
 2. Play a no-match Hand card: existing field cards should first make room, then the source should go
    straight to that open field position. The temporary `PLACE HERE` cue should disappear after action.
 3. Play a pair from Hand and resolve a pair from Reveal: in both cases the source should briefly sit

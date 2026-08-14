@@ -4,8 +4,7 @@ KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy ga
 has deployed and accepted **Phase 3E: playability corrections**, **Phase 3F-A: simplified table and
 larger hand**, the player-facing **Phase 3F-B: unified tap-only interaction** outcome, and **Phase
 3F-C: visual interaction cues** with an owner-approved primary deck. **Phase 3F-D: placement and
-capture choreography** is locally validated and awaiting commit/push, hosted CI/Pages, and live
-verification. It
+capture choreography** is deployed and accepted. It
 contains the canonical rules authority, all 48 artwork-independent card records, the complete
 deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
@@ -180,8 +179,13 @@ Phase 3F-D local validation is complete: `npm run check` passed format/lint/type
 files / 442 tests, all 10,002 generated seeds, and the production build. The final
 `npm run validate:phase3fd` pass covered the approved 48/48 release deck, 100 technical artifacts,
 focused 5 files / 77 tests, Workshop, the 14-viewport density review, and full root/Pages smoke.
-The bundled game client and Root/Pages CHOREO screenshots were inspected; hosted and live evidence
-remains pending commit and push.
+The bundled game client and Root/Pages CHOREO screenshots were inspected. Release commit `108fb05`
+passed CI run `31844698117` (`verify`, 9m04s) and Pages run `31844698124` (`build`, 11m33s; deploy,
+9s). The cache-busted live URL returned HTTP/2 200 with `x-cache: MISS`, `Last-Modified: Fri, 14 Aug
+2026 22:09:56 GMT`, and bundle `assets/index-DjACAdI7.js`. Two live-client iterations were ready with
+the approved deck, one canvas, 48/48 CardViews, 8 field / 8 hand / 24 draw, and clean diagnostics;
+`output/phase-3f-d/live-ready/shot-1.png` and `state-1.json` were inspected. Next: Phase 3F-E utility
+dock/capture cleanup, then Phase 5A full local match formats.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot
