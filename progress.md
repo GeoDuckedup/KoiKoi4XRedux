@@ -1048,3 +1048,20 @@ Original prompt: read the package and understand it, then let me know when we ar
   `output/phase-3f-c/live-ready/shot-1.png`.
 - Phase 5 full local product is next. Continued owner visual notes may still be handled as bounded
   polish without reopening the accepted interaction architecture.
+
+## 2026-08-14 — Phase 3F-D local implementation
+
+- Implemented presentation-only pre-travel no-match field reflow followed by a direct source path,
+  first-authoritative-target capture overlap/hold/collection, Draw parity after Reveal activation,
+  and no generic pre-tap Draw pulse.
+- Added the compact temporary `PLACE HERE` field badge and stronger destination outline without
+  bringing back empty field placeholders or text over card art.
+- Added CHOREO-3FD vector/ADR/gate documentation and root/Pages screenshot hooks for a direct
+  no-match travel and a Hand pair overlap hold.
+- Local closure is green: `npm run check` passed format/lint/typecheck/decks, 46 files / 442 tests,
+  all 10,002 generated seeds, and the production build. One final `validate:phase3fd` run passed the
+  48/48 release deck, 100 technical artifacts, focused 5 files / 77 tests, Workshop, 14-viewport
+  density review, and root/Pages smoke; the bundled game client and CHOREO screenshots were
+  inspected. Independent Terra review found no blocker, high, or medium issue.
+- Next: commit/push, wait for hosted CI/Pages, and verify live behavior. Phase 3F-E utility
+  dock/capture cleanup remains the next visual slice after acceptance.

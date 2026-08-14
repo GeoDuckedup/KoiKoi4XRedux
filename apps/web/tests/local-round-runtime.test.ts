@@ -9,7 +9,10 @@ import {
 } from "../src/game/observation-presentation";
 import { formatTurnRecap } from "../src/game/turn-recap";
 import { computeBoardLayout } from "../src/presentation/board/board-layout";
-import { computeDrawPileTopBounds } from "../src/presentation/cards/card-layout";
+import {
+  computeCardPlacements,
+  computeDrawPileTopBounds,
+} from "../src/presentation/cards/card-layout";
 import { computeAnimatedCardPlacements } from "../src/presentation/animation/card-animation-frame";
 import { planPublicEvents } from "../src/presentation/animation/event-planner";
 import { INSTALLED_DECKS } from "../src/presentation/deck/installed-decks";
@@ -149,6 +152,56 @@ describe("Phase 3A local authoritative round", () => {
     expect(presentation.projections.at(-1)).toBe(presentation.target);
     expect(formatTurnRecap(transition.events)).toContain("Player A played");
     expect(JSON.stringify(before)).toBe(beforeJson);
+  });
+
+  it("PHASE-3FD-REAL-RUNTIME anchors a Hand capture to its originally highlighted target", () => {
+    const runtime = createLocalRoundRuntime({
+      matchId: "phase3fd-january-pine-anchor",
+      seed: "00000000000000000000000000000253",
+    });
+    const before = runtime.observe();
+    const action = before.legalActions.find(
+      (candidate): candidate is Extract<LegalActionV1, { type: "playHandCard" }> =>
+        candidate.type === "playHandCard" &&
+        candidate.cardId === "january-pine-plain-a" &&
+        candidate.targetFieldCardId === "january-pine-plain-b",
+    );
+    if (!action) throw new Error("Locked opening should offer the January pine pair.");
+    const beforeProjection = projectObservationToBoard(before);
+    const transition = runtime.submit(intentFromAction(before, action));
+    const presentation = projectTransitionForPlayer({
+      before: beforeProjection,
+      events: transition.events,
+      nextObservation: transition.after,
+    });
+    const plan = planPublicEvents(transition.events, { projections: presentation.projections });
+    const hold = plan.clips.find(
+      ({ eventType, kind }) => eventType === "captureStarted" && kind === "alignment",
+    );
+    if (!hold) throw new Error("Hand capture did not create an overlap hold.");
+
+    for (const viewport of [
+      { width: 390, height: 844 },
+      // The 390×844 browser capture has a 376×642 game-host content box after shell chrome.
+      { width: 376, height: 642 },
+    ]) {
+      const layout = computeBoardLayout(viewport);
+      const originalTarget = computeCardPlacements(layout, beforeProjection).find(
+        ({ cardId }) => cardId === "january-pine-plain-b",
+      );
+      const holdFrame = computeAnimatedCardPlacements(layout, hold, 0.5, "normal");
+      const source = holdFrame.find(({ cardId }) => cardId === "january-pine-plain-a");
+      const target = holdFrame.find(({ cardId }) => cardId === "january-pine-plain-b");
+      if (!originalTarget || !source || !target)
+        throw new Error("Pine capture geometry is incomplete.");
+      expect(source.bounds.x).toBeCloseTo(
+        originalTarget.bounds.x + originalTarget.bounds.width * 0.12,
+      );
+      expect(source.bounds.y).toBeCloseTo(
+        originalTarget.bounds.y + originalTarget.bounds.height * 0.1,
+      );
+      expect(target.bounds).toEqual(originalTarget.bounds);
+    }
   });
 
   it("LOCAL-005/006/007/008 plays a complete captured, recapped, private-handoff round", () => {

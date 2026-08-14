@@ -27,6 +27,14 @@ export type AnimationClipKind = (typeof ANIMATION_CLIP_KINDS)[number];
 export type PresentationBoardProjection = readonly CardPresentationState[];
 export type AnimationCompletion = "cancelled" | "completed" | "finished";
 
+/** Presentation-only anchor data from an authoritative captureStarted event. */
+export interface CaptureOverlapV1 {
+  readonly sourceCardId: CardId;
+  readonly targetFieldCardId: CardId;
+  readonly horizontalOffsetRatio: number;
+  readonly verticalOffsetRatio: number;
+}
+
 export interface AnimationPlanningContextV1 {
   /** One trusted recipient-safe projection before every event, plus the final projection. */
   readonly projections: readonly PresentationBoardProjection[];
@@ -34,12 +42,15 @@ export interface AnimationPlanningContextV1 {
 
 export interface AnimationClipV1 {
   readonly affectedCardIds: readonly CardId[];
+  /** Original visible table geometry used by a capture overlap; no rules inference. */
+  readonly captureAnchorProjection?: PresentationBoardProjection | undefined;
   readonly durationMs: number;
   readonly eventIndex: number;
   readonly eventType: PublicGameEventV1["type"];
   readonly from: PresentationBoardProjection;
   readonly id: string;
   readonly kind: AnimationClipKind;
+  readonly captureOverlap?: CaptureOverlapV1 | undefined;
   readonly settlesProjection: boolean;
   readonly to: PresentationBoardProjection;
 }

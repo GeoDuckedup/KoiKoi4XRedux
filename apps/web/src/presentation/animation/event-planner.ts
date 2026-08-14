@@ -5,6 +5,7 @@ import type {
   AnimationClipKind,
   AnimationClipV1,
   AnimationPlanningContextV1,
+  CaptureOverlapV1,
   PresentationAnimationPlanV1,
   PresentationBoardProjection,
 } from "./types";
@@ -20,6 +21,11 @@ const NORMAL_DURATIONS = Object.freeze({
   revealPause: 400,
   feedback: 600,
 } as const satisfies Readonly<Record<AnimationClipKind, number>>);
+
+const CAPTURE_OVERLAP_OFFSET = Object.freeze({
+  horizontalOffsetRatio: 0.12,
+  verticalOffsetRatio: 0.1,
+});
 
 function eventCardIds(event: PublicGameEventV1): readonly CardId[] {
   switch (event.type) {
@@ -48,6 +54,43 @@ interface ClipSpec {
   readonly eventCardsOnly?: boolean;
   readonly kind: AnimationClipKind;
   readonly settlesBoundary: boolean;
+}
+
+function captureOverlap(
+  event: Extract<PublicGameEventV1, { type: "captureStarted" }>,
+): CaptureOverlapV1 | null {
+  const targetFieldCardId = event.targetFieldCardIds[0];
+  if (!targetFieldCardId) return null;
+  return Object.freeze({
+    sourceCardId: event.sourceCardId,
+    targetFieldCardId,
+    ...CAPTURE_OVERLAP_OFFSET,
+  });
+}
+
+function previousCaptureOverlap(
+  events: readonly PublicGameEventV1[],
+  eventIndex: number,
+  event: Extract<PublicGameEventV1, { type: "cardsCaptured" }>,
+): CaptureOverlapV1 | null {
+  const previous = events[eventIndex - 1];
+  if (previous?.type !== "captureStarted" || previous.sourceCardId !== event.cardIds[0])
+    return null;
+  return captureOverlap(previous);
+}
+
+function replaceCardState(
+  projection: PresentationBoardProjection,
+  source: PresentationBoardProjection,
+  cardId: CardId,
+): PresentationBoardProjection {
+  const sourceState = source.find((state) => state.cardId === cardId);
+  if (!sourceState) return projection;
+  return createPresentationProjection(
+    projection.map((state) =>
+      state.cardId === cardId ? Object.freeze({ ...sourceState }) : state,
+    ),
+  );
 }
 
 function isLaterCombinedFeedback(
@@ -81,7 +124,12 @@ function clipSpecs(event: PublicGameEventV1, hasProjectionChange: boolean): read
         { kind: "reflow", settlesBoundary: true },
       ]);
     case "captureStarted":
-      return Object.freeze([{ kind: "alignment", settlesBoundary: true }]);
+      return event.phase === "draw"
+        ? Object.freeze([
+            { kind: "travel", settlesBoundary: false, eventCardsOnly: true },
+            { kind: "alignment", settlesBoundary: false, eventCardsOnly: true },
+          ])
+        : Object.freeze([{ kind: "alignment", settlesBoundary: false, eventCardsOnly: true }]);
     case "cardsCaptured":
       return Object.freeze([
         { kind: "capture", settlesBoundary: true },
@@ -90,7 +138,9 @@ function clipSpecs(event: PublicGameEventV1, hasProjectionChange: boolean): read
     case "drawCardRevealed":
       throw new Error("Draw-reveal clips use the dedicated flip boundary planner.");
     case "drawResolutionRequired":
-      return Object.freeze([{ kind: "alignment", settlesBoundary: true }]);
+      // Matching is communicated by the static input highlight after Reveal is tapped.
+      // Do not manufacture a target pulse or movement from the resolution preview.
+      return Object.freeze([]);
     case "cardsDealt":
     case "roundReady":
       return Object.freeze([
@@ -121,6 +171,8 @@ function makeClip(input: {
   eventIndex: number;
   from: PresentationBoardProjection;
   kind: AnimationClipKind;
+  captureAnchorProjection?: PresentationBoardProjection | undefined;
+  captureOverlap?: CaptureOverlapV1 | null;
   sequence: number;
   settlesProjection?: boolean;
   to: PresentationBoardProjection;
@@ -130,6 +182,10 @@ function makeClip(input: {
     eventIndex: input.eventIndex,
     eventType: input.event.type,
     kind: input.kind,
+    ...(input.captureAnchorProjection
+      ? { captureAnchorProjection: input.captureAnchorProjection }
+      : {}),
+    ...(input.captureOverlap ? { captureOverlap: input.captureOverlap } : {}),
     durationMs: NORMAL_DURATIONS[input.kind],
     settlesProjection: input.settlesProjection ?? true,
     affectedCardIds: Object.freeze([...new Set(input.affectedCardIds)]),
@@ -165,16 +221,52 @@ export function planPublicEvents(
           .map(({ cardId }) => cardId)
           .filter((cardId, index, all) => !direct.has(cardId) && all.indexOf(cardId) === index),
       );
+      const sourceBefore =
+        event.type === "cardPlacedOnField" && event.phase === "hand"
+          ? replaceCardState(
+              before,
+              projections[Math.max(0, eventIndex - 1)] ?? before,
+              event.cardId,
+            )
+          : before;
+      const overlap =
+        event.type === "cardsCaptured" ? previousCaptureOverlap(events, eventIndex, event) : null;
+      if (event.type === "cardPlacedOnField") {
+        clips.push(
+          makeClip({
+            affectedCardIds: reflowCardIds,
+            event,
+            eventIndex,
+            from: sourceBefore,
+            kind: "reflow",
+            sequence: 0,
+            settlesProjection: false,
+            to: after,
+          }),
+          makeClip({
+            affectedCardIds: directEventCardIds,
+            event,
+            eventIndex,
+            from: sourceBefore,
+            kind: "travel",
+            sequence: 1,
+            to: after,
+          }),
+        );
+        continue;
+      }
       clips.push(
         makeClip({
           affectedCardIds: directEventCardIds,
           event,
           eventIndex,
-          from: before,
+          from: sourceBefore,
           kind: event.type === "cardPlacedOnField" ? "travel" : "capture",
           sequence: 0,
           settlesProjection: false,
           to: after,
+          captureOverlap: overlap,
+          captureAnchorProjection: overlap ? projections[0] : undefined,
         }),
         makeClip({
           affectedCardIds: reflowCardIds,
@@ -229,18 +321,48 @@ export function planPublicEvents(
       continue;
     }
     if (isLaterCombinedFeedback(event, events[eventIndex + 1])) continue;
+    const nextEvent = events[eventIndex + 1];
+    const followingCapture =
+      event.type === "handCardPlayed" &&
+      nextEvent?.type === "captureStarted" &&
+      nextEvent.sourceCardId === event.cardId
+        ? captureOverlap(nextEvent)
+        : null;
+    const eventCaptureOverlap = event.type === "captureStarted" ? captureOverlap(event) : null;
+    const noMatchHandPlacement =
+      event.type === "handCardPlayed" &&
+      nextEvent?.type === "cardPlacedOnField" &&
+      nextEvent.cardId === event.cardId;
     let current = before;
-    for (const [sequence, spec] of clipSpecs(event, changed.length > 0).entries()) {
+    for (const [sequence, spec] of clipSpecs(event, changed.length > 0)
+      .filter((spec) => !(noMatchHandPlacement && spec.kind === "travel"))
+      .entries()) {
       const to = spec.settlesBoundary ? after : current;
+      const overlap = followingCapture ?? eventCaptureOverlap;
       clips.push(
         makeClip({
-          affectedCardIds: spec.eventCardsOnly ? directEventCardIds : affected,
+          affectedCardIds:
+            overlap && (spec.kind === "travel" || spec.kind === "alignment")
+              ? [overlap.sourceCardId]
+              : spec.eventCardsOnly
+                ? directEventCardIds
+                : affected,
           event,
           eventIndex,
           from: current,
           kind: spec.kind,
           sequence,
           to,
+          captureOverlap:
+            overlap && (spec.kind === "travel" || spec.kind === "alignment") ? overlap : null,
+          captureAnchorProjection:
+            overlap && (spec.kind === "travel" || spec.kind === "alignment")
+              ? projections[0]
+              : undefined,
+          settlesProjection:
+            overlap && (spec.kind === "travel" || spec.kind === "alignment")
+              ? false
+              : spec.settlesBoundary,
         }),
       );
       current = to;

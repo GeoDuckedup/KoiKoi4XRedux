@@ -3,7 +3,9 @@
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository
 has deployed and accepted **Phase 3E: playability corrections**, **Phase 3F-A: simplified table and
 larger hand**, the player-facing **Phase 3F-B: unified tap-only interaction** outcome, and **Phase
-3F-C: visual interaction cues** with an owner-approved primary deck. It
+3F-C: visual interaction cues** with an owner-approved primary deck. **Phase 3F-D: placement and
+capture choreography** is locally validated and awaiting commit/push, hosted CI/Pages, and live
+verification. It
 contains the canonical rules authority, all 48 artwork-independent card records, the complete
 deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
@@ -52,6 +54,7 @@ npm run validate:phase3eb
 npm run validate:phase3ec
 npm run validate:phase3fa
 npm run validate:phase3fc
+npm run validate:phase3fd
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -172,6 +175,13 @@ cache-busted live check confirmed the approved Primary Deck, one canvas, all 48 
 the expected 8-card hand / 8-card field / 24-card draw allocation, no empty placeholders, and no
 layout diagnostics. Phase 5 full local product work is next; additional owner visual notes may still
 be handled as bounded polish.
+
+Phase 3F-D local validation is complete: `npm run check` passed format/lint/typecheck/decks, 46
+files / 442 tests, all 10,002 generated seeds, and the production build. The final
+`npm run validate:phase3fd` pass covered the approved 48/48 release deck, 100 technical artifacts,
+focused 5 files / 77 tests, Workshop, the 14-viewport density review, and full root/Pages smoke.
+The bundled game client and Root/Pages CHOREO screenshots were inspected; hosted and live evidence
+remains pending commit and push.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

@@ -14,7 +14,10 @@ import {
 } from "../src/presentation/animation/technical-scenarios";
 import { ANIMATION_MODES, type AnimationSurfaceV1 } from "../src/presentation/animation/types";
 import { computeBoardLayout } from "../src/presentation/board/board-layout";
-import { computeDrawPileTopBounds } from "../src/presentation/cards/card-layout";
+import {
+  computeCardPlacements,
+  computeDrawPileTopBounds,
+} from "../src/presentation/cards/card-layout";
 
 function requiredProjection<T>(items: readonly T[], index: number): T {
   const item = index < 0 ? items.at(index) : items[index];
@@ -40,9 +43,9 @@ function recordingSurface(initial = getTechnicalAnimationScenario("handToField")
 describe("Phase 2C event planner", () => {
   it("ANIM-001/002/003/004 maps semantic scenarios to the required ordered clip language", () => {
     const expectations = {
-      handToField: ["selection", "travel", "travel", "reflow"],
+      handToField: ["selection", "reflow", "travel"],
       pairCapture: ["selection", "travel", "alignment", "capture", "reflow"],
-      drawReveal: ["draw", "flip", "revealPause", "travel", "reflow"],
+      drawReveal: ["draw", "flip", "revealPause", "reflow", "travel"],
       fourCardSweep: ["selection", "travel", "alignment", "capture", "reflow"],
       multiplierFeedback: ["feedback"],
     } as const;
@@ -185,6 +188,245 @@ describe("Phase 2C event planner", () => {
     expect(flip?.from.find(({ cardId }) => cardId === "august-pampas-plain-a")?.faceUp).toBe(false);
     expect(flip?.to.find(({ cardId }) => cardId === "august-pampas-plain-a")?.faceUp).toBe(true);
     expect(flip?.affectedCardIds).toEqual(["august-pampas-plain-a"]);
+  });
+
+  it("PHASE-3FD captures use an immutable first-target overlap, hold it, then collect", () => {
+    const scenario = getTechnicalAnimationScenario("pairCapture");
+    const plan = planPublicEvents(scenario.events, { projections: scenario.projections });
+    const travel = plan.clips.find(
+      ({ eventType, kind }) => eventType === "handCardPlayed" && kind === "travel",
+    );
+    const hold = plan.clips.find(
+      ({ eventType, kind }) => eventType === "captureStarted" && kind === "alignment",
+    );
+    const capture = plan.clips.find(({ kind }) => kind === "capture");
+    if (!travel || !hold || !capture) throw new Error("Missing capture choreography clips.");
+    expect(travel.captureOverlap).toEqual({
+      sourceCardId: "april-cuckoo",
+      targetFieldCardId: "april-wisteria-plain-a",
+      horizontalOffsetRatio: 0.12,
+      verticalOffsetRatio: 0.1,
+    });
+    expect(Object.isFrozen(travel.captureOverlap)).toBe(true);
+    expect(hold.durationMs).toBeGreaterThanOrEqual(150);
+    expect(hold.durationMs).toBeLessThanOrEqual(200);
+    expect(hold.affectedCardIds).toEqual(["april-cuckoo"]);
+    expect(capture.captureOverlap).toEqual(travel.captureOverlap);
+
+    const layout = computeBoardLayout({ width: 390, height: 844 });
+    const targetId = "april-wisteria-plain-a";
+    const sourceId = "april-cuckoo";
+    const targetAtHold = computeAnimatedCardPlacements(layout, hold, 0.5, "normal").find(
+      ({ cardId }) => cardId === targetId,
+    );
+    const targetAtStart = computeAnimatedCardPlacements(layout, hold, 0, "normal").find(
+      ({ cardId }) => cardId === targetId,
+    );
+    const sourceAtHold = computeAnimatedCardPlacements(layout, hold, 0.5, "normal").find(
+      ({ cardId }) => cardId === sourceId,
+    );
+    expect(targetAtHold?.bounds).toEqual(targetAtStart?.bounds);
+    expect(sourceAtHold?.bounds.x).toBeGreaterThan(targetAtHold?.bounds.x ?? Infinity);
+    expect(sourceAtHold?.bounds.y).toBeGreaterThan(targetAtHold?.bounds.y ?? Infinity);
+    const reducedHold = computeAnimatedCardPlacements(layout, hold, 0.5, "reducedMotion");
+    const reducedSource = reducedHold.find(({ cardId }) => cardId === sourceId);
+    const reducedTarget = reducedHold.find(({ cardId }) => cardId === targetId);
+    expect(reducedSource?.bounds).toEqual(sourceAtHold?.bounds);
+    expect(reducedTarget?.bounds).toEqual(targetAtHold?.bounds);
+  });
+
+  it("PHASE-3FD sends no-match hand cards directly to their final field slot and adds no draw pulse", () => {
+    const hand = getTechnicalAnimationScenario("handToField");
+    const handPlan = planPublicEvents(hand.events, { projections: hand.projections });
+    const travel = handPlan.clips.find(({ kind }) => kind === "travel");
+    if (!travel) throw new Error("Missing no-match travel clip.");
+    expect(travel.eventType).toBe("cardPlacedOnField");
+    expect(travel.from.find(({ cardId }) => cardId === "march-curtain")?.zone).toBe("playerHand");
+    expect(travel.to.find(({ cardId }) => cardId === "march-curtain")?.zone).toBe("field");
+
+    const draw = getTechnicalAnimationScenario("drawReveal");
+    const revealed = requiredProjection(draw.projections, 1);
+    const resolution: PublicGameEventV1 = {
+      type: "drawResolutionRequired",
+      actorId: "player-a",
+      drawnCardId: "august-pampas-plain-a",
+      resolution: { kind: "capturePair", matchingFieldCardIds: ["august-geese"] },
+    };
+    expect(planPublicEvents([resolution], { projections: [revealed, revealed] }).clips).toEqual([]);
+  });
+
+  it("PHASE-3FD draws from Reveal to the original first target and sweeps preserve first-target authority", () => {
+    const hand = getTechnicalAnimationScenario("pairCapture");
+    const drawBefore = createPresentationProjection(
+      requiredProjection(hand.projections, 0).map((state) =>
+        state.cardId === "april-cuckoo"
+          ? Object.freeze({ ...state, zone: "reveal" as const, slotId: "reveal:0", slotIndex: 0 })
+          : state,
+      ),
+    );
+    const drawTransit = createPresentationProjection(
+      drawBefore.map((state) =>
+        state.cardId === "april-cuckoo"
+          ? Object.freeze({
+              ...state,
+              zone: "transit" as const,
+              slotId: "transit:april-cuckoo",
+              slotIndex: 0,
+            })
+          : state,
+      ),
+    );
+    const drawEvents: readonly PublicGameEventV1[] = [
+      {
+        type: "captureStarted",
+        actorId: "player-a",
+        phase: "draw",
+        sourceCardId: "april-cuckoo",
+        targetFieldCardIds: ["april-wisteria-plain-a"],
+        captureKind: "pair",
+      },
+      {
+        type: "cardsCaptured",
+        actorId: "player-a",
+        phase: "draw",
+        cardIds: ["april-cuckoo", "april-wisteria-plain-a"],
+        captureKind: "pair",
+      },
+    ];
+    const drawPlan = planPublicEvents(drawEvents, {
+      projections: [drawBefore, drawTransit, requiredProjection(hand.projections, -1)],
+    });
+    const drawTravel = drawPlan.clips.find(
+      ({ eventType, kind }) => eventType === "captureStarted" && kind === "travel",
+    );
+    const drawHold = drawPlan.clips.find(
+      ({ eventType, kind }) => eventType === "captureStarted" && kind === "alignment",
+    );
+    if (!drawTravel || !drawHold) throw new Error("Missing draw capture choreography.");
+    expect(drawTravel.from.find(({ cardId }) => cardId === "april-cuckoo")?.zone).toBe("reveal");
+    const layout = computeBoardLayout({ width: 390, height: 844 });
+    const source = computeAnimatedCardPlacements(layout, drawHold, 0.5, "normal").find(
+      ({ cardId }) => cardId === "april-cuckoo",
+    );
+    const anchor = computeCardPlacements(layout, drawBefore).find(
+      ({ cardId }) => cardId === "april-wisteria-plain-a",
+    );
+    expect(source?.bounds.x).toBeCloseTo(
+      (anchor?.bounds.x ?? 0) + (anchor?.bounds.width ?? 0) * 0.12,
+    );
+    expect(source?.bounds.y).toBeCloseTo(
+      (anchor?.bounds.y ?? 0) + (anchor?.bounds.height ?? 0) * 0.1,
+    );
+
+    const sweep = getTechnicalAnimationScenario("fourCardSweep");
+    const sweepPlan = planPublicEvents(sweep.events, { projections: sweep.projections });
+    const sweepCapture = sweepPlan.clips.find(({ kind }) => kind === "capture");
+    if (!sweepCapture) throw new Error("Missing sweep capture clip.");
+    expect(sweepCapture.captureOverlap?.targetFieldCardId).toBe("march-red-text-scroll");
+    expect(sweepCapture.affectedCardIds).toEqual([
+      "march-curtain",
+      "march-red-text-scroll",
+      "march-cherry-plain-a",
+      "march-cherry-plain-b",
+    ]);
+    const reduced = computeAnimatedCardPlacements(layout, sweepCapture, 0.4, "reducedMotion");
+    expect(reduced.find(({ cardId }) => cardId === "march-curtain")?.zone).toBe("playerBrights");
+  });
+
+  it("CHOREO-3FD-003/004 uses the same first-target overlap and collection order for Draw pairs", () => {
+    const draw = getTechnicalAnimationScenario("drawReveal");
+    const revealed = requiredProjection(draw.projections, 1);
+    const sourceCardId = "august-pampas-plain-a";
+    const targetFieldCardId = "may-iris-plain-a";
+    const captured = createPresentationProjection(
+      revealed.map((state) => {
+        if (state.cardId === sourceCardId) {
+          return Object.freeze({
+            ...state,
+            zone: "playerPlains" as const,
+            slotId: "playerPlains:1",
+            slotIndex: 1,
+            zIndex: 1,
+          });
+        }
+        if (state.cardId === targetFieldCardId) {
+          return Object.freeze({
+            ...state,
+            zone: "playerPlains" as const,
+            slotId: "playerPlains:2",
+            slotIndex: 2,
+            zIndex: 2,
+          });
+        }
+        return state;
+      }),
+    );
+    const events: readonly PublicGameEventV1[] = [
+      {
+        type: "captureStarted",
+        actorId: "player-a",
+        phase: "draw",
+        sourceCardId,
+        targetFieldCardIds: [targetFieldCardId],
+        captureKind: "pair",
+      },
+      {
+        type: "cardsCaptured",
+        actorId: "player-a",
+        phase: "draw",
+        cardIds: [sourceCardId, targetFieldCardId],
+        captureKind: "pair",
+      },
+    ];
+    const plan = planPublicEvents(events, { projections: [revealed, revealed, captured] });
+    const travel = plan.clips.find(
+      ({ eventType, kind }) => eventType === "captureStarted" && kind === "travel",
+    );
+    const hold = plan.clips.find(
+      ({ eventType, kind }) => eventType === "captureStarted" && kind === "alignment",
+    );
+    const capture = plan.clips.find(
+      ({ eventType, kind }) => eventType === "cardsCaptured" && kind === "capture",
+    );
+    if (!travel || !hold || !capture) throw new Error("Missing Draw capture choreography clips.");
+    expect(travel.captureOverlap?.targetFieldCardId).toBe(targetFieldCardId);
+    expect(hold.captureOverlap).toEqual(travel.captureOverlap);
+    expect(capture.captureOverlap).toEqual(travel.captureOverlap);
+    const layout = computeBoardLayout({ width: 390, height: 844 });
+    const targetAtStart = computeAnimatedCardPlacements(layout, hold, 0, "normal").find(
+      ({ cardId }) => cardId === targetFieldCardId,
+    );
+    const targetAtHold = computeAnimatedCardPlacements(layout, hold, 0.5, "normal").find(
+      ({ cardId }) => cardId === targetFieldCardId,
+    );
+    const sourceAtHold = computeAnimatedCardPlacements(layout, hold, 0.5, "normal").find(
+      ({ cardId }) => cardId === sourceCardId,
+    );
+    expect(targetAtHold?.bounds).toEqual(targetAtStart?.bounds);
+    expect(sourceAtHold?.bounds.x).toBeGreaterThan(targetAtHold?.bounds.x ?? Infinity);
+    expect(sourceAtHold?.bounds.y).toBeGreaterThan(targetAtHold?.bounds.y ?? Infinity);
+  });
+
+  it("CHOREO-3FD-005 keeps all sweep targets still and anchors on the first authoritative target", () => {
+    const scenario = getTechnicalAnimationScenario("fourCardSweep");
+    const plan = planPublicEvents(scenario.events, { projections: scenario.projections });
+    const hold = plan.clips.find(
+      ({ eventType, kind }) => eventType === "captureStarted" && kind === "alignment",
+    );
+    if (!hold) throw new Error("Missing sweep hold clip.");
+    expect(hold.captureOverlap?.targetFieldCardId).toBe("march-red-text-scroll");
+    const layout = computeBoardLayout({ width: 390, height: 844 });
+    const start = computeAnimatedCardPlacements(layout, hold, 0, "normal");
+    const middle = computeAnimatedCardPlacements(layout, hold, 0.5, "normal");
+    for (const targetCardId of [
+      "march-red-text-scroll",
+      "march-cherry-plain-a",
+      "march-cherry-plain-b",
+    ]) {
+      expect(middle.find(({ cardId }) => cardId === targetCardId)?.bounds).toEqual(
+        start.find(({ cardId }) => cardId === targetCardId)?.bounds,
+      );
+    }
   });
 
   it("DRAW-PHYSICAL-001/002 makes a card-back leave the pile top, arc into Reveal, then flip", () => {

@@ -135,30 +135,38 @@ describe("Phase 3D-D adaptive dense field", () => {
       cardId: addedCardId,
     };
     const plan = planPublicEvents([event], { projections: [transit, after] });
-    const [travel, reflow] = plan.clips;
+    const [reflow, travel] = plan.clips;
     if (!travel || !reflow) throw new Error("Missing density transition clips.");
     expect(plan.clips.map(({ kind, settlesProjection }) => ({ kind, settlesProjection }))).toEqual([
-      { kind: "travel", settlesProjection: false },
-      { kind: "reflow", settlesProjection: true },
+      { kind: "reflow", settlesProjection: false },
+      { kind: "travel", settlesProjection: true },
     ]);
 
-    const existingCardId = CARD_IDS[0];
-    if (!existingCardId) throw new Error("Missing first canonical card.");
     const beforePlacements = computeCardPlacements(layout, transit);
     const afterPlacements = computeCardPlacements(layout, after);
-    const travelEnd = computeAnimatedCardPlacements(layout, travel, 1, "normal");
+    const existingCardId = CARD_IDS.slice(0, 8).find((cardId) => {
+      const from = placementFor(beforePlacements, cardId);
+      const to = placementFor(afterPlacements, cardId);
+      return JSON.stringify(from) !== JSON.stringify(to);
+    });
+    if (!existingCardId) throw new Error("Density change did not produce a reflowing field card.");
     const reflowMiddle = computeAnimatedCardPlacements(layout, reflow, 0.5, "normal");
-    expect(placementFor(travelEnd, existingCardId)).toEqual(
-      placementFor(beforePlacements, existingCardId),
-    );
-    expect(placementFor(travelEnd, addedCardId)).toEqual(
-      placementFor(afterPlacements, addedCardId),
-    );
     expect(placementFor(reflowMiddle, existingCardId)).not.toEqual(
       placementFor(beforePlacements, existingCardId),
     );
     expect(placementFor(reflowMiddle, existingCardId)).not.toEqual(
       placementFor(afterPlacements, existingCardId),
+    );
+    const travelStart = computeAnimatedCardPlacements(layout, travel, 0, "normal");
+    const travelEnd = computeAnimatedCardPlacements(layout, travel, 1, "normal");
+    expect(placementFor(travelStart, existingCardId)).toEqual(
+      placementFor(afterPlacements, existingCardId),
+    );
+    expect(placementFor(travelStart, addedCardId)).toEqual(
+      placementFor(beforePlacements, addedCardId),
+    );
+    expect(placementFor(travelEnd, addedCardId)).toEqual(
+      placementFor(afterPlacements, addedCardId),
     );
 
     const twelve = projectionWithFieldCount(12);

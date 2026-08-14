@@ -6,7 +6,7 @@ import { chromium } from "playwright";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-3f-c/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-3f-d/e2e");
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
 const mountedBasePath = smokeBasePath === "/" ? "/" : `${smokeBasePath}/`;
@@ -225,7 +225,8 @@ async function chooseYakuDecision(page, choice) {
   const button = (await page.locator(yakuSelector).isVisible())
     ? page.locator(yakuSelector)
     : page.locator(fallbackSelector);
-  await button.click();
+  await button.click({ noWaitAfter: true });
+  await finishNonVisualGameplayPlan(page);
   await page.waitForFunction(
     (version) => {
       const state = JSON.parse(window.render_game_to_text());
@@ -268,7 +269,8 @@ async function chooseYakuDecisionThroughResultBeat(page, choice) {
     globalThis.__phase3cResultObserver = observer;
     record();
   });
-  await page.locator(selector).click();
+  await page.locator(selector).click({ noWaitAfter: true });
+  await finishNonVisualGameplayPlan(page);
   await page.waitForFunction(
     (version) =>
       globalThis.__phase3cResultTrace?.some(
@@ -331,6 +333,10 @@ async function acceptHandoffIfPending(page) {
   return readState(page);
 }
 
+async function finishNonVisualGameplayPlan(page) {
+  await page.evaluate(() => window.advanceTime(5_000));
+}
+
 async function resolvePendingDrawIfNeeded(page) {
   const pending = await readState(page);
   if (pending.localRound.phase !== "awaitingDrawResolution") return pending;
@@ -340,7 +346,7 @@ async function resolvePendingDrawIfNeeded(page) {
     (await reveal.count()) === 1,
     "A pending Draw must expose exactly one selectable Reveal card.",
   );
-  await reveal.click();
+  await reveal.click({ noWaitAfter: true });
   await page.waitForFunction(
     (version) => {
       const state = JSON.parse(window.render_game_to_text());
@@ -354,6 +360,7 @@ async function resolvePendingDrawIfNeeded(page) {
     afterReveal.localRound.stateVersion > beforeVersion ||
     afterReveal.input.status === "intentPending"
   ) {
+    await finishNonVisualGameplayPlan(page);
     await page.waitForFunction(
       (version) => {
         const state = JSON.parse(window.render_game_to_text());
@@ -384,12 +391,13 @@ async function resolvePendingDrawIfNeeded(page) {
   );
   const targets = page.locator('[data-input-role="target"]');
   if ((await targets.count()) > 0) {
-    await targets.first().click();
+    await targets.first().click({ noWaitAfter: true });
   } else {
     const placement = page.locator("[data-input-field-placement]");
     assert(await placement.isVisible(), "An unmatched pending Draw must expose the field.");
-    await placement.click();
+    await placement.click({ noWaitAfter: true });
   }
+  await finishNonVisualGameplayPlan(page);
   await page.waitForFunction(
     (version) => {
       const state = JSON.parse(window.render_game_to_text());
@@ -406,13 +414,22 @@ async function resolvePendingDrawIfNeeded(page) {
   return readState(page);
 }
 
-async function advanceUntilAnimationClip(page, kind) {
+async function advanceUntilAnimationClip(page, kind, eventType) {
   for (let step = 0; step < 40; step += 1) {
     const state = await readState(page);
-    if (state.animation.activeClip?.kind === kind) return state;
+    if (
+      state.animation.activeClip?.kind === kind &&
+      state.animation.activeClip?.eventType === eventType
+    ) {
+      if (state.animation.activeClip.progress === 0) {
+        await page.evaluate(() => window.advanceTime(1));
+        continue;
+      }
+      return state;
+    }
     await page.evaluate(() => window.advanceTime(60));
   }
-  throw new Error(`Timed out waiting for ${kind} animation clip.`);
+  throw new Error(`Timed out waiting for ${eventType} ${kind} animation clip.`);
 }
 
 async function submitOpeningHandForPhysicalDraw(page) {
@@ -438,7 +455,7 @@ async function runPhysicalDrawTrace(page) {
   await page.evaluate(() => window.advanceTime(0));
   await submitOpeningHandForPhysicalDraw(page);
 
-  const drawTravel = await advanceUntilAnimationClip(page, "draw");
+  const drawTravel = await advanceUntilAnimationClip(page, "draw", "drawCardRevealed");
   assert(
     drawTravel.animation.transitCardCount === 1,
     `Draw travel did not use one transient CardView: ${JSON.stringify(drawTravel.animation)}.`,
@@ -459,13 +476,13 @@ async function runPhysicalDrawTrace(page) {
     fullPage: true,
   });
 
-  const flip = await advanceUntilAnimationClip(page, "flip");
+  const flip = await advanceUntilAnimationClip(page, "flip", "drawCardRevealed");
   assert(
     flip.input.semanticControlCount === 0,
     "Draw input became actionable before the revealed card pause completed.",
   );
   await page.evaluate(() => window.advanceTime(140));
-  const revealPause = await advanceUntilAnimationClip(page, "revealPause");
+  const revealPause = await advanceUntilAnimationClip(page, "revealPause", "drawCardRevealed");
   assert(
     revealPause.cards.visibleViews.some(({ zone }) => zone === "reveal"),
     "The revealed card did not become visible in the Reveal zone after the flip.",
@@ -501,6 +518,10 @@ async function runPhysicalDrawTrace(page) {
     settled.cards.visibleViews.filter(({ zone }) => zone === "reveal").length === 1,
     "The settled Draw state did not expose exactly one revealed card.",
   );
+  assert(
+    settled.animation.activeClip === null && settled.animation.transitCardCount === 0,
+    "A Draw resolution manufactured movement before the player tapped Reveal.",
+  );
   const revealControl = page.locator('[data-input-role="selectable"]').first();
   await revealControl.focus();
   await page.keyboard.press("Enter");
@@ -533,7 +554,7 @@ async function playHandCardById(page, cardId) {
   );
   const button = page.locator(`[data-input-role="selectable"][data-card-id="${cardId}"]`);
   assert((await button.count()) === 1, `The locked trace card ${cardId} is not selectable.`);
-  await button.click();
+  await button.click({ noWaitAfter: true });
   await page.waitForFunction(
     (version) => {
       const state = JSON.parse(window.render_game_to_text());
@@ -547,18 +568,23 @@ async function playHandCardById(page, cardId) {
     { timeout: 30_000 },
   );
   const selected = await readState(page);
+  let commandEmitted =
+    selected.localRound.stateVersion > before.localRound.stateVersion ||
+    selected.input.status === "intentPending";
   if (selected.localRound.stateVersion === before.localRound.stateVersion) {
     const target = page.locator('[data-input-role="target"]').first();
-    if ((await target.count()) > 0) await target.click();
+    if ((await target.count()) > 0) await target.click({ noWaitAfter: true });
     else {
       const placement = page.locator("[data-input-field-placement]");
       assert(
         await placement.isVisible(),
         `The locked trace card ${cardId} has no tap destination.`,
       );
-      await placement.click();
+      await placement.click({ noWaitAfter: true });
     }
+    commandEmitted = true;
   }
+  if (commandEmitted) await finishNonVisualGameplayPlan(page);
   await page.waitForFunction(
     (version) => {
       const state = JSON.parse(window.render_game_to_text());
@@ -616,15 +642,16 @@ async function playHandCardThroughFeedbackBeat(page, cardId) {
     return state.input.status === "confirming" || state.input.status === "targeting";
   });
   const target = page.locator('[data-input-role="target"]').first();
-  if ((await target.count()) > 0) await target.click();
+  if ((await target.count()) > 0) await target.click({ noWaitAfter: true });
   else {
     const placement = page.locator("[data-input-field-placement]");
     assert(
       await placement.isVisible(),
       `The feedback-boundary card ${cardId} has no tap destination.`,
     );
-    await placement.click();
+    await placement.click({ noWaitAfter: true });
   }
+  await finishNonVisualGameplayPlan(page);
   await page.waitForFunction(
     (version) => {
       return globalThis.__phase3bFeedbackTrace?.some(
@@ -932,6 +959,10 @@ try {
   await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
   process.stdout.write("Phase 3D-C runtime theme, persistence, and Options focus trace passed.\n");
 
+  await configureSecondaryOptions(page, { animationMode: "normal" });
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).animation.mode === "normal",
+  );
   const placementBefore = await readState(page);
   await page.locator('[data-input-role="selectable"][data-card-id="november-red-scroll"]').click();
   await page.waitForFunction(() => {
@@ -969,7 +1000,37 @@ try {
     ),
     fullPage: true,
   });
-  await placementControl.click();
+  await page.evaluate(() => window.advanceTime(0));
+  await placementControl.click({ noWaitAfter: true });
+  const noMatchTravel = await advanceUntilAnimationClip(page, "travel", "cardPlacedOnField");
+  assert(
+    noMatchTravel.animation.activeClip?.kind === "travel" &&
+      noMatchTravel.animation.activeClip?.eventType === "cardPlacedOnField",
+    "No-match placement did not enter its direct field-travel clip.",
+  );
+  const activeNoMatchTravel = noMatchTravel.animation.activeClip;
+  if (!activeNoMatchTravel) throw new Error("No-match travel clip disappeared before evidence.");
+  const remainingNoMatchTravelMs = activeNoMatchTravel.durationMs - activeNoMatchTravel.elapsedMs;
+  const midTravelAdvanceMs = Math.max(1, Math.floor(remainingNoMatchTravelMs / 2));
+  assert(
+    midTravelAdvanceMs < remainingNoMatchTravelMs,
+    `No-match travel has no safe mid-clip evidence interval: ${JSON.stringify(activeNoMatchTravel)}.`,
+  );
+  await page.evaluate((durationMs) => window.advanceTime(durationMs), midTravelAdvanceMs);
+  const noMatchMidTravel = await readState(page);
+  assert(
+    noMatchMidTravel.animation.activeClip?.kind === "travel" &&
+      noMatchMidTravel.animation.activeClip?.eventType === "cardPlacedOnField",
+    "No-match placement settled before its mid-travel evidence frame.",
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `no-match-direct-field-travel-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await page.evaluate(() => window.advanceTime(1_000));
   await waitForAcceptedHandIntent(page, placementBefore.localRound.stateVersion);
 
   await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
@@ -1015,7 +1076,22 @@ try {
     ),
     fullPage: true,
   });
-  await pairTarget.click();
+  await page.evaluate(() => window.advanceTime(0));
+  await pairTarget.click({ noWaitAfter: true });
+  const pairHold = await advanceUntilAnimationClip(page, "alignment", "captureStarted");
+  assert(
+    pairHold.animation.activeClip?.kind === "alignment" &&
+      pairHold.animation.activeClip?.eventType === "captureStarted",
+    "Pair capture did not enter its source-over-target hold.",
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `hand-pair-overlap-hold-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await page.evaluate(() => window.advanceTime(1_000));
   await waitForAcceptedHandIntent(page, pairBefore.localRound.stateVersion);
   process.stdout.write("Phase 3F-C source, target, and no-match field-cue trace passed.\n");
 

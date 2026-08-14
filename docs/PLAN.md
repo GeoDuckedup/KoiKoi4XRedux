@@ -2,8 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 14, 2026
-**Current gate:** Phase 3F-C visual interaction cues are deployed and accepted; Phase 5 full local
-product is next
+**Current gate:** Phase 3F-D placement and capture choreography is locally validated; commit/push,
+hosted CI/Pages, and live verification remain before acceptance
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -813,9 +813,44 @@ expected 8 hand / 8 field / 24 draw allocation, no empty placeholders, no layout
 a clean idle screenshot under `output/phase-3f-c/live-ready/shot-1.png`. No secret, hosting setting,
 or runtime configuration change was required.
 
+### Phase 3F-D — Placement and capture choreography
+
+Status: **implemented and locally validated; commit/push, hosted CI/Pages, and live verification
+pending**.
+
+Keep the interaction architecture from 3F-B/C. This presentation-only pass first reflows the
+existing field to prepare a no-match source's final slot, then travels that source directly to it.
+Hand and Draw capture use source-over-authoritative-target, 180ms hold, then collection.
+`captureStarted` is the only anchor authority; a sweep anchors to its first public target while all
+targets remain still. `drawResolutionRequired` has no generic motion before the Reveal action. A
+selected no-match field gains a stronger temporary cue and header-adjacent `PLACE HERE` badge, never
+idle placeholders or copy over art.
+
+Gate:
+
+- `CHOREO-3FD-001` through `CHOREO-3FD-007` bind Hand/Draw 0/1/2/3 outcomes, frozen first-target
+  metadata, overlap/hold/collection ordering, no pre-tap Draw motion, pre-travel field reflow, and
+  all-mode final parity;
+- root and Pages browser runs capture a real no-match mid-travel and Hand pair overlap hold, and
+  retain the top-card Draw/reveal flow with no movement before Reveal is tapped;
+- one canvas, 48 persistent CardViews, public-projection authority, dense-field containment, and
+  reduced-motion parity remain intact.
+
+Architecture is recorded in [`ADR 0023`](./adr/0023-phase-3f-d-placement-capture-choreography.md).
+
+Local evidence: `npm run check` passed format/lint/typecheck/decks, 46 files / 442 tests, all 10,002
+generated seeds, and the production build. One final `npm run validate:phase3fd` invocation passed
+the approved 48/48 release deck, 100 technical artifacts, focused 5 files / 77 tests, Workshop,
+the 17-card density review at 14 root/Pages viewports, and full root/Pages smoke. The bundled
+web-game client also passed with one canvas, 48 CardViews, clean diagnostics, and inspected
+`output/phase-3f-d/game-client` state/screenshot evidence. Independent Terra review found no
+blocker, high, or medium issue; the Root and Pages CHOREO screenshots were visually inspected and
+matched. This is local evidence only, not a hosted or live claim.
+
 ## Later phases
 
-1. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, and pass-and-play.
+1. **Phase 5 — Full local product:** 3/6/12-round formats, persistence, pass-and-play, and
+   ordered yaku-card evidence in expanded end-of-play details.
 2. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
 3. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
 4. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
@@ -825,3 +860,8 @@ or runtime configuration change was required.
 7. **Phase 9B — Release acceptance:** final content, telemetry, cross-platform, and release checks.
 
 No later phase may bypass the acceptance gate of the preceding phase.
+
+The next deferred presentation slice after 3F-D is **Phase 3F-E utility dock and capture cleanup**:
+History, Yaku Guide, and Options occupy the bottom utility row; hand/capture zero-count labels and
+the Reveal label are removed; expanded captures retain the regular card ratio and white frame. It
+does not reopen 3F-D animation authority.

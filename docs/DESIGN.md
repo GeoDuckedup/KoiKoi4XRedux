@@ -3640,6 +3640,21 @@ Phase 3 acceptance:
 - retain field readability, theme-neutral cue meaning, reduced-motion behavior, and root/Pages
   responsiveness without altering gameplay authority or rules.
 
+### Phase 3F-D — Placement and capture choreography
+
+- A no-match Hand or resolved Draw first reflows existing field cards to prepare the final automatic
+  slot, then travels directly from its source to that slot without crossing another card.
+- A pair or exact-two resolution moves its source onto the first authoritative
+  `captureStarted.targetFieldCardIds` target with a small visible offset, holds there briefly, then
+  sends the source and every captured field card to the capture areas. A three-target sweep uses the
+  first target only as its overlap anchor and leaves every target spatially still during the hold.
+- Draw capture mirrors Hand capture after the player taps Reveal. The browser must not create a
+  pulse or movement when `drawResolutionRequired` arrives before that tap.
+- A selected no-match source makes the field more legible as a destination with a compact
+  header-adjacent `PLACE HERE` badge. No idle placeholders or copy over card art returns.
+- This is a presentation-only choreography pass: capture authority, projections, event semantics,
+  rules, controls, CardView identity, and reduced-motion final parity remain unchanged.
+
 ## Phase 4 — Onboarding
 
 Phase 4 retains its numeric identity but is intentionally executed after full-match progression,
@@ -3678,6 +3693,8 @@ Phase 4 acceptance:
 
 - 3/6/12 rounds;
 - full recap;
+- ordered end-of-play yaku evidence that renders the exact qualifying cards for each yaku (including
+  repeated cards where one card supports more than one yaku);
 - final-round rules;
 - rematch.
 

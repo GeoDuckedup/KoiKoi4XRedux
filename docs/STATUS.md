@@ -3,7 +3,8 @@
 **Updated:** August 14, 2026
 
 **Overall state:** Greenfield rewrite through Phase 3F-C visual interaction cues deployed and
-accepted
+accepted; Phase 3F-D placement/capture choreography is locally validated and awaiting commit/push,
+hosted CI/Pages, and live verification
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -45,6 +46,22 @@ cache MISS and `Last-Modified: Fri, 14 Aug 2026 16:52:20 GMT`. The bundled live 
 8 hand cards, 8 field cards, 24 draw cards, zero empty placeholders, and no diagnostics. The clean
 idle screenshot is `output/phase-3f-c/live-ready/shot-1.png`. No secret, hosting configuration, or
 runtime setting was added.
+
+Phase 3F-D is a bounded presentation correction from playtesting. No-match sources now first reflow
+existing field cards to prepare the final slot, then use a direct source-to-final-field path. Pair,
+exact-two, and sweep captures use an
+immutable first public capture target as their visual anchor: the source overlaps it with a small
+offset, holds, then the capture set collects. Draw capture follows the same sequence only after the
+player taps Reveal; `drawResolutionRequired` itself does not move or pulse field cards. A selected
+no-match source adds a stronger field cue and compact `PLACE HERE` header badge without restoring
+idle slots or card-covering instructions. Local validation is complete: `npm run check` passed
+format/lint/typecheck/decks, 46 files / 442 tests, all 10,002 generated seeds, and the production
+build. A final single `npm run validate:phase3fd` passed release deck approval (48/48), 100 technical
+artifacts, focused 5 files / 77 tests, Workshop, the 14-viewport density review, and full root/Pages
+smoke. The bundled game client passed with one canvas, 48 CardViews, clean diagnostics, and inspected
+evidence in `output/phase-3f-d/game-client`; Root/Pages CHOREO screenshots were visually identical.
+Independent Terra review found no blocker, high, or medium issue. This work is not yet committed,
+hosted, or live.
 
 Release commit `51a1821` passed CI run `31742306302` and Pages run `31742306314`; the Pages deploy
 job completed successfully. A cache-busted live browser check reached ready state with the approved

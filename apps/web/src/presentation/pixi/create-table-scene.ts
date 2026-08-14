@@ -359,14 +359,36 @@ function renderInteractionHighlights(
   if (state.locked) return;
   if (state.fieldPlacementAvailable) {
     const field = layout.cardZones.field;
+    const badge = {
+      x: field.x + Math.max(46, 58 * layout.scale),
+      y: field.y + Math.max(3, 4 * layout.scale),
+      width: Math.max(58, 68 * layout.scale),
+      height: Math.max(14, 17 * layout.scale),
+    };
     layer.addChild(
       panel(field, {
         fill: colors.legal,
-        fillAlpha: 0.02,
+        fillAlpha: 0.045,
         radius: Math.max(8, 14 * layout.scale),
         stroke: colors.legal,
-        strokeAlpha: 0.48,
-        strokeWidth: Math.max(1.25, 1.75 * layout.scale),
+        strokeAlpha: 0.78,
+        strokeWidth: Math.max(1.5, 2.25 * layout.scale),
+      }),
+      panel(badge, {
+        fill: colors.legal,
+        fillAlpha: 0.18,
+        radius: Math.max(5, 6 * layout.scale),
+        stroke: colors.legal,
+        strokeAlpha: 0.78,
+        strokeWidth: Math.max(1, layout.scale),
+      }),
+      label("PLACE HERE", badge.x + badge.width / 2, badge.y + badge.height / 2, {
+        anchorX: 0.5,
+        anchorY: 0.5,
+        color: colors.cream,
+        fontSize: Math.max(6.5, 7.5 * layout.scale),
+        fontWeight: "700",
+        letterSpacing: Math.max(0.25, 0.45 * layout.scale),
       }),
     );
   }

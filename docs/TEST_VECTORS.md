@@ -556,7 +556,26 @@ Artifacts are written under `output/phase-3f-c/e2e/`, including
 `draw-reveal-selected-390x844[-pages].png`, and the existing per-theme mobile/desktop captures.
 ADR 0022 records the presentation-only scope.
 
-## 23. Approved-decision coverage matrix
+## 23. Phase 3F-D placement and capture choreography vectors
+
+| ID | Required expectation |
+|---|---|
+| `CHOREO-3FD-001-NO-MATCH-HAND` | A no-match Hand source travels directly from Hand to its final automatic field slot; it never overlays an unrelated field card. |
+| `CHOREO-3FD-002-NO-MATCH-REFLOW` | Existing field cards first reflow to prepare the final automatic slot, then the no-match source travels directly into that opening without crossing another card. |
+| `CHOREO-3FD-003-PAIR-HAND` | A Hand pair source uses the first authoritative `captureStarted.targetFieldCardIds` card as its offset overlap anchor, holds 150–200ms, then source and target collect. |
+| `CHOREO-3FD-004-PAIR-DRAW` | After Reveal is tapped, a Draw pair uses the same source-over-target hold and collection language as a Hand pair. |
+| `CHOREO-3FD-005-EXACT-TWO` | The chosen exact-two target supplied by `captureStarted` is the only overlap anchor; the browser never recomputes a match. |
+| `CHOREO-3FD-006-SWEEP` | A three-target sweep anchors the source on the first public target; all three targets remain spatially still during the hold and all four cards collect. |
+| `CHOREO-3FD-007-DRAW-PRE-TAP-AND-MOTION` | `drawResolutionRequired` produces no target pulse or movement before the Reveal tap; Normal and Reduced Motion settle to the identical authoritative final projection. |
+
+Phase 3F-D binding: `animation-runtime.test.ts` covers the public planner/frame contracts for
+Hand/Draw 0/1/2/3 resolution families, frozen anchor data, target immobility, and final parity. Root
+and Pages browser traces write `no-match-direct-field-travel-390x844[-pages].png` and
+`hand-pair-overlap-hold-390x844[-pages].png` under `output/phase-3f-d/e2e/`; Draw evidence retains
+the top-card/reveal trace and asserts there is no active movement before the player taps Reveal.
+ADR 0023 records the presentation-only boundary.
+
+## 24. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|
