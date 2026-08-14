@@ -2,8 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 14, 2026
-**Current gate:** Phase 3F-B player-facing unified tap-only interaction is complete; Phase 3F-C
-visual interaction cues are in progress
+**Current gate:** Phase 3F-C visual interaction cues are deployed and accepted; Phase 5 full local
+product is next
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -764,8 +764,8 @@ Architecture is recorded in [`ADR 0020`](./adr/0020-phase-3e-c-physical-draw-cho
 
 ### Phase 3F — Focused playtesting polish
 
-Status: **Phase 3F-A is deployed and accepted; Phase 3F-B's player-facing tap-only outcome is
-complete; Phase 3F-C visual interaction cues are in progress.**
+Status: **Phase 3F-A, the player-facing Phase 3F-B tap-only outcome, and Phase 3F-C visual
+interaction cues are deployed and accepted.**
 
 - **3F-A — Simplified table and larger hand:** remove routine phase/status and confirmation chrome,
   give the former canvas action-strip height to Player Hand, and reduce Options to essential
@@ -804,6 +804,14 @@ Phase 3F-C gate:
   root/Pages gate, and upload `output/phase-3f-c/e2e/` evidence.
 
 Architecture is recorded in [`ADR 0022`](./adr/0022-phase-3f-c-visual-interaction-cues.md).
+
+Release commit `4181375` passed CI run `31820056292` (`verify`, 16m03s) and Pages run
+`31820056288` (`build`, 15m58s; `deploy`, 46s). A cache-busted live request returned HTTP 200 with a
+cache MISS and `Last-Modified: Fri, 14 Aug 2026 16:52:20 GMT`. The live bundled game client reached
+ready state with the approved Primary Deck, one canvas, 48 CardViews / 48 unique identities, the
+expected 8 hand / 8 field / 24 draw allocation, no empty placeholders, no layout diagnostics, and
+a clean idle screenshot under `output/phase-3f-c/live-ready/shot-1.png`. No secret, hosting setting,
+or runtime configuration change was required.
 
 ## Later phases
 

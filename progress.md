@@ -1021,7 +1021,7 @@ Original prompt: read the package and understand it, then let me know when we ar
 - Focused layout/input/interaction/animation/runtime tests pass 5 files / 71 tests. Formatter,
   lint, workspace typechecks, and the Root browser smoke pass; mobile screenshots were inspected.
 
-## 2026-08-14 — Phase 3F-C locally accepted
+## 2026-08-14 — Phase 3F-C deployed and accepted
 
 - Recorded the presentation-only selected-source, legal-target, no-match field, Reveal, declutter,
   theme/responsive, and input-parity contract as `VISUAL-3FC-001` through `VISUAL-3FC-007`.
@@ -1038,4 +1038,13 @@ Original prompt: read the package and understand it, then let me know when we ar
 - The generated-match gate runner was safely sharded only after diagnosing a false host/Vitest
   wall-clock timeout; it preserves the exact seeds and formats and changes no engine or gameplay
   behavior. Independent post-repair review reports no blocker, high, or medium finding.
-- Commit, push, hosted CI/Pages, deployment, and live acceptance remain pending.
+- Release commit `4181375` passed CI run `31820056292` (`verify`, 16m03s) and Pages run
+  `31820056288` (`build`, 15m58s; `deploy`, 46s). No secret or hosting/runtime configuration change
+  was required.
+- A cache-busted live request returned HTTP 200 with a cache MISS and `Last-Modified: Fri, 14 Aug
+  2026 16:52:20 GMT`. The bundled live game client reached `ready: true` with the approved
+  `new-primary-deck`, one canvas, 48 CardViews / 48 unique identities, 8 hand / 8 field / 24 draw,
+  zero empty placeholders, no diagnostics, and a clean idle screenshot at
+  `output/phase-3f-c/live-ready/shot-1.png`.
+- Phase 5 full local product is next. Continued owner visual notes may still be handled as bounded
+  polish without reopening the accepted interaction architecture.

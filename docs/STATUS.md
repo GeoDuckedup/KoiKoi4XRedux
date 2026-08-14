@@ -2,8 +2,8 @@
 
 **Updated:** August 14, 2026
 
-**Overall state:** Greenfield rewrite through the Phase 3F-B player-facing tap-only outcome;
-Phase 3F-C visual interaction cues are in progress
+**Overall state:** Greenfield rewrite through Phase 3F-C visual interaction cues deployed and
+accepted
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -37,6 +37,14 @@ implementation terminology only and is deliberately deferred. Phase 3F-C now pol
 language around that settled interaction: selected sources, legal targets, no-match field
 destinations, and actionable Reveal cards must read clearly without adding routine labels, visible
 confirmation controls, browser-owned legality, or field clutter.
+
+Phase 3F-C release commit `4181375` passed CI run `31820056292` (`verify`, 16m03s) and Pages run
+`31820056288` (`build`, 15m58s; `deploy`, 46s). A cache-busted live request returned HTTP 200 with a
+cache MISS and `Last-Modified: Fri, 14 Aug 2026 16:52:20 GMT`. The bundled live game client reached
+`ready: true` with the approved `new-primary-deck`, one canvas, 48 CardViews / 48 unique identities,
+8 hand cards, 8 field cards, 24 draw cards, zero empty placeholders, and no diagnostics. The clean
+idle screenshot is `output/phase-3f-c/live-ready/shot-1.png`. No secret, hosting configuration, or
+runtime setting was added.
 
 Release commit `51a1821` passed CI run `31742306302` and Pages run `31742306314`; the Pages deploy
 job completed successfully. A cache-busted live browser check reached ready state with the approved
@@ -490,7 +498,6 @@ The deployed baseline is
 
 ## Next subphase
 
-**Phase 3F-C — Visual interaction cues:** polish selected-source, legal-target, no-match field, and
-Reveal actionability cues without changing game rules, authority, or the settled tap-only behavior.
-Phase 5 full multi-round progression follows the interaction-polish sequence; tutorial work remains
-deferred.
+**Phase 5 — Full local product:** implement approved 3/6/12-round formats, persistence, and local
+pass-and-play. Continued owner visual notes may still be handled as bounded polish without reopening
+the accepted interaction architecture. Tutorial work remains deferred.
