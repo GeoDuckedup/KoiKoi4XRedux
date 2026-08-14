@@ -6,7 +6,7 @@ import { chromium } from "playwright";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-3f-a/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-3f-c/e2e");
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
 const mountedBasePath = smokeBasePath === "/" ? "/" : `${smokeBasePath}/`;
@@ -140,6 +140,56 @@ async function selectTheme(page, themeId) {
     themeId,
   );
   await closeOptions(page);
+}
+
+async function assertPointerQuietInteractionControl(page, selector, description) {
+  const control = page.locator(selector);
+  assert(await control.isVisible(), `${description} is missing.`);
+  const readChrome = () =>
+    control.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        backgroundColor: style.backgroundColor,
+        backgroundImage: style.backgroundImage,
+        borderWidths: [
+          style.borderTopWidth,
+          style.borderRightWidth,
+          style.borderBottomWidth,
+          style.borderLeftWidth,
+        ],
+        boxShadow: style.boxShadow,
+        outlineWidth: style.outlineWidth,
+        pointerEvents: style.pointerEvents,
+      };
+    });
+  const assertQuiet = (chrome, state) => {
+    assert(
+      chrome.borderWidths.every((width) => width === "0px") &&
+        chrome.backgroundColor === "rgba(0, 0, 0, 0)" &&
+        chrome.backgroundImage === "none" &&
+        chrome.boxShadow === "none" &&
+        chrome.outlineWidth === "0px" &&
+        chrome.pointerEvents === "auto",
+      `${description} has pointer-visible DOM chrome ${state}: ${JSON.stringify(chrome)}.`,
+    );
+  };
+  assertQuiet(await readChrome(), "at rest");
+  await control.hover();
+  assertQuiet(await readChrome(), "under pointer hover");
+  await control.focus();
+  assert(
+    await control.evaluate((element) => document.activeElement === element),
+    `${description} lost keyboard focus semantics.`,
+  );
+  assert(
+    ((await control.getAttribute("aria-label")) ?? "").trim().length > 0,
+    `${description} lost its accessible name.`,
+  );
+  await control.evaluate((element) => element.blur());
+  assert(
+    await control.evaluate((element) => document.activeElement !== element),
+    `${description} retained focus and would contaminate pointer-state evidence.`,
+  );
 }
 
 async function resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors) {
@@ -459,10 +509,14 @@ async function runPhysicalDrawTrace(page) {
     null,
     { timeout: 30_000 },
   );
+  assert(
+    (await revealControl.getAttribute("aria-pressed")) === "true",
+    "The actionable Reveal card did not retain its selected-source semantics.",
+  );
   await page.screenshot({
     path: resolve(
       outputDirectory,
-      `draw-reveal-actionable-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      `draw-reveal-selected-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
     ),
     fullPage: true,
   });
@@ -841,6 +895,11 @@ try {
       (await page.locator("[data-input-instruction]").textContent())?.includes("highlighted field"),
       `${themeId} replaced the selected-card accessibility instruction.`,
     );
+    await assertPointerQuietInteractionControl(
+      page,
+      "[data-input-field-placement]",
+      `${themeId} no-match field destination`,
+    );
     for (const viewport of [
       { id: "mobile", width: 390, height: 844 },
       { id: "desktop", width: 1366, height: 768 },
@@ -888,20 +947,25 @@ try {
     placementSelected.localRound.stateVersion === placementBefore.localRound.stateVersion &&
       placementSelected.input.selectedCardId === "november-red-scroll" &&
       placementSelected.input.legalTargetCardIds.length === 0,
-    "Guided no-match selection mutated state or invented a capture target.",
+    "No-match source selection mutated state or invented a capture target.",
   );
   const placementControl = page.locator("[data-input-field-placement]");
-  assert(await placementControl.isVisible(), "The Guided field-placement surface is missing.");
+  assert(await placementControl.isVisible(), "The no-match field destination is missing.");
   assert(
     (await placementControl.getAttribute("aria-label"))
       ?.toLowerCase()
       .includes("position is automatic"),
-    "The placement surface does not explain that field position is automatic.",
+    "The field destination does not explain that field position is automatic.",
+  );
+  await assertPointerQuietInteractionControl(
+    page,
+    "[data-input-field-placement]",
+    "No-match field destination",
   );
   await page.screenshot({
     path: resolve(
       outputDirectory,
-      `guided-place-on-field-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      `no-match-field-destination-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
     ),
     fullPage: true,
   });
@@ -923,26 +987,37 @@ try {
   assert(
     pairSelected.localRound.stateVersion === pairBefore.localRound.stateVersion &&
       pairSelected.input.legalTargetCardIds[0] === "january-pine-plain-b",
-    "Guided unique-match selection did not expose exactly its authoritative match.",
+    "Unique-match source selection did not expose exactly its authoritative match.",
   );
   const pairTarget = page.locator(
     '[data-input-role="target"][data-card-id="january-pine-plain-b"]',
   );
-  assert(await pairTarget.isVisible(), "The Guided unique-match target is missing.");
+  assert(await pairTarget.isVisible(), "The unique-match target is missing.");
   assert(
     (await pairTarget.getAttribute("aria-label"))?.includes("confirm matching capture"),
     "The unique-match target does not expose capture-confirmation semantics.",
   );
+  assert(
+    (await page
+      .locator('[data-input-role="selectable"][data-card-id="january-pine-plain-a"]')
+      .getAttribute("aria-pressed")) === "true",
+    "The unique-match hand source did not retain selected-source semantics.",
+  );
+  await assertPointerQuietInteractionControl(
+    page,
+    '[data-input-role="target"][data-card-id="january-pine-plain-b"]',
+    "Unique-match target",
+  );
   await page.screenshot({
     path: resolve(
       outputDirectory,
-      `guided-unique-match-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      `source-selected-pair-target-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
     ),
     fullPage: true,
   });
   await pairTarget.click();
   await waitForAcceptedHandIntent(page, pairBefore.localRound.stateVersion);
-  process.stdout.write("Phase 3D-B Guided placement and unique-match trace passed.\n");
+  process.stdout.write("Phase 3F-C source, target, and no-match field-cue trace passed.\n");
 
   await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
   await configureSecondaryOptions(page, { animationMode: "reducedMotion" });

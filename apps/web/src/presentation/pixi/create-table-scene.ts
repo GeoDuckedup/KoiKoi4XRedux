@@ -362,11 +362,11 @@ function renderInteractionHighlights(
     layer.addChild(
       panel(field, {
         fill: colors.legal,
-        fillAlpha: 0.035,
+        fillAlpha: 0.02,
         radius: Math.max(8, 14 * layout.scale),
         stroke: colors.legal,
-        strokeAlpha: 0.7,
-        strokeWidth: Math.max(1.5, 2 * layout.scale),
+        strokeAlpha: 0.48,
+        strokeWidth: Math.max(1.25, 1.75 * layout.scale),
       }),
     );
   }
@@ -380,79 +380,56 @@ function renderInteractionHighlights(
     const placement = byCardId.get(cardId);
     if (!placement) continue;
     const selected = state.selectedCardId === cardId;
-    const focused = state.focusedCardId === cardId;
     const target = legalTargets.has(cardId);
     const handCard = placement.zone === "playerHand";
-    const lift = selected && !handCard ? Math.max(4, 7 * layout.scale) : 0;
+    const actionableReveal = placement.zone === "reveal" && selectable.has(cardId) && !selected;
     // Hand cards are deliberately adjacent on compact screens. Keep their selection
     // treatment inside the card instead of spilling a ring across a neighbour.
-    const padding = handCard
-      ? 0
-      : focused
-        ? Math.max(4, 5 * layout.scale)
-        : Math.max(2, 3 * layout.scale);
+    const padding = handCard ? 0 : selected || actionableReveal ? 0 : Math.max(2, 3 * layout.scale);
     const bounds = {
       x: placement.bounds.x - padding,
-      y: placement.bounds.y - lift - padding,
+      y: placement.bounds.y - padding,
       width: placement.bounds.width + padding * 2,
       height: placement.bounds.height + padding * 2,
     };
-    const color = target ? colors.legal : selected ? colors.cream : colors.creamMuted;
-    const alpha = target || selected ? 0.95 : selectable.has(cardId) ? 0.3 : 0;
+    const color =
+      target || actionableReveal ? colors.legal : selected ? colors.gold : colors.creamMuted;
+    const alpha =
+      target || selected ? 0.96 : actionableReveal ? 0.68 : selectable.has(cardId) ? 0.3 : 0;
     layer.addChild(
       new Graphics()
         .roundRect(bounds.x, bounds.y, bounds.width, bounds.height, Math.max(4, 8 * layout.scale))
+        .fill({ color, alpha: target ? 0.075 : 0 })
         .stroke({
-          color: focused ? colors.white : color,
+          color,
           alpha,
-          width: focused || selected || target ? Math.max(2, 2.5 * layout.scale) : 1,
+          width:
+            selected || target
+              ? Math.max(2, 2.5 * layout.scale)
+              : actionableReveal
+                ? Math.max(1.5, 2 * layout.scale)
+                : 1,
         }),
     );
-    if (target) {
-      const cueLabel =
-        state.handResolutionKind === "capturePair"
-          ? "MATCH"
-          : state.handResolutionKind === "fourCardSweep"
-            ? "SWEEP"
-            : "CHOOSE";
+    if (selected) {
+      const inset = Math.max(3, Math.min(6 * layout.scale, placement.bounds.width * 0.11));
       layer.addChild(
-        label(cueLabel, bounds.x + bounds.width / 2, Math.max(layout.safeBounds.y, bounds.y - 2), {
-          anchorX: 0.5,
-          anchorY: 1,
-          color: colors.legal,
-          fontSize: Math.max(7, 8.5 * layout.scale),
-          fontWeight: "700",
-          letterSpacing: 0.7,
-        }),
+        new Graphics()
+          .roundRect(
+            placement.bounds.x + inset,
+            placement.bounds.y + inset,
+            Math.max(1, placement.bounds.width - inset * 2),
+            Math.max(1, placement.bounds.height - inset * 2),
+            Math.max(3, 5 * layout.scale),
+          )
+          .stroke({
+            color: colors.gold,
+            alpha: 0.52,
+            width: Math.max(1, 1.25 * layout.scale),
+          }),
       );
     }
   }
-}
-
-function applyInteractionPlacement(
-  placements: readonly ReturnType<typeof computeCardPlacements>[number][],
-  state: InteractionVisualStateV1,
-) {
-  if (state.locked || state.selectedCardId === null) return placements;
-  return Object.freeze(
-    placements.map((placement) =>
-      placement.cardId === state.selectedCardId
-        ? Object.freeze({
-            ...placement,
-            bounds: Object.freeze({
-              ...placement.bounds,
-              y:
-                placement.zone === "playerHand"
-                  ? placement.bounds.y
-                  : placement.bounds.y - Math.max(4, placement.bounds.height * 0.045),
-            }),
-            scaleX: placement.zone === "playerHand" ? 1 : 1.04,
-            scaleY: placement.zone === "playerHand" ? 1 : 1.04,
-            zIndex: placement.zIndex + 1000,
-          })
-        : placement,
-    ),
-  );
 }
 
 export function createTableScene(
@@ -542,10 +519,7 @@ export function createTableScene(
           currentAnimationFrame.progress,
           currentAnimationFrame.mode,
         )
-      : applyInteractionPlacement(
-          computeCardPlacements(layout, displayProjection),
-          interactionState,
-        );
+      : computeCardPlacements(layout, displayProjection);
     cardRegistry.applyPlacements(
       cardPlacements,
       cardLayers as ReadonlyMap<(typeof BOARD_LAYER_ORDER)[number], Container>,

@@ -13,6 +13,7 @@ import { describe, expect, it } from "vitest";
 import { replayDirectTrace, runDirectMatch } from "./support/phase1e-driver";
 
 const DEFAULT_GENERATED_MATCHES = 10_002;
+const DEFAULT_GENERATED_TEST_TIMEOUT_MS = 120_000;
 
 function generatedMatchCount(): number {
   const configured = (
@@ -26,6 +27,34 @@ function generatedMatchCount(): number {
     throw new Error("PHASE1E_GENERATED_MATCHES must be a positive safe integer.");
   }
   return count;
+}
+
+function generatedMatchOffset(): number {
+  const configured = (
+    globalThis as typeof globalThis & {
+      readonly process?: { readonly env?: Readonly<Record<string, string | undefined>> };
+    }
+  ).process?.env?.PHASE1E_GENERATED_OFFSET;
+  if (configured === undefined) return 0;
+  const offset = Number(configured);
+  if (!Number.isSafeInteger(offset) || offset < 0) {
+    throw new Error("PHASE1E_GENERATED_OFFSET must be a non-negative safe integer.");
+  }
+  return offset;
+}
+
+function generatedMatchTimeoutMs(): number {
+  const configured = (
+    globalThis as typeof globalThis & {
+      readonly process?: { readonly env?: Readonly<Record<string, string | undefined>> };
+    }
+  ).process?.env?.PHASE1E_GENERATED_CHILD_TEST_TIMEOUT_MS;
+  if (configured === undefined) return DEFAULT_GENERATED_TEST_TIMEOUT_MS;
+  const timeoutMs = Number(configured);
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1) {
+    throw new Error("PHASE1E_GENERATED_CHILD_TEST_TIMEOUT_MS must be a positive safe integer.");
+  }
+  return timeoutMs;
 }
 
 function seedForIndex(index: number): string {
@@ -64,20 +93,20 @@ function assertProjectionShape(
 
 describe("Phase 1E generated legal-match gate", () => {
   it(
-    "completes 10,002+ seeded matches with invariant/version checks and sampled privacy/replay equality",
-    { timeout: 300_000 },
+    "completes its deterministic seeded-match shard with invariant/version checks and sampled privacy/replay equality",
+    { timeout: generatedMatchTimeoutMs() },
     () => {
       const count = generatedMatchCount();
+      const offset = generatedMatchOffset();
+      if (offset > Number.MAX_SAFE_INTEGER - (count - 1)) {
+        throw new Error("Generated match offset and count exceed the safe integer range.");
+      }
       const lengths = [3, 6, 12] as const satisfies readonly MatchLength[];
-      const formatCounts = new Map<MatchLength, number>([
-        [3, 0],
-        [6, 0],
-        [12, 0],
-      ]);
       let commandCount = 0;
-      for (let index = 0; index < count; index += 1) {
-        const seed = seedForIndex(index);
-        const matchLength = lengths.at(index % lengths.length);
+      for (let localIndex = 0; localIndex < count; localIndex += 1) {
+        const globalIndex = offset + localIndex;
+        const seed = seedForIndex(globalIndex);
+        const matchLength = lengths.at(globalIndex % lengths.length);
         if (matchLength === undefined) throw new Error("Generated format schedule is empty.");
         try {
           const trace = runDirectMatch(seed, matchLength);
@@ -86,7 +115,7 @@ describe("Phase 1E generated legal-match gate", () => {
           if (trace.state.stateVersion !== trace.commands.length) {
             throw new Error("Accepted command/version count diverged.");
           }
-          if (index < lengths.length || index % 97 === 0) {
+          if (globalIndex < lengths.length || globalIndex % 97 === 0) {
             const replay = replayDirectTrace(trace, seed);
             assertProjectionShape(trace.state, trace.checkpoint);
             if (
@@ -104,26 +133,15 @@ describe("Phase 1E generated legal-match gate", () => {
               throw new Error("Deterministic replay hash diverged.");
             }
           }
-          formatCounts.set(matchLength, (formatCounts.get(matchLength) ?? 0) + 1);
           commandCount += trace.commands.length;
         } catch (error) {
           throw new Error(
-            `Generated match failed: index=${index}, seed=${seed}, matchLength=${matchLength}. ${String(error)}`,
+            `Generated match failed: index=${globalIndex}, seed=${seed}, matchLength=${matchLength}. ${String(error)}`,
             { cause: error },
           );
         }
       }
-      expect([...formatCounts.values()].reduce((sum, value) => sum + value, 0)).toBe(count);
       expect(commandCount).toBeGreaterThan(count);
-      if (count === DEFAULT_GENERATED_MATCHES) {
-        expect(formatCounts).toEqual(
-          new Map<MatchLength, number>([
-            [3, 3_334],
-            [6, 3_334],
-            [12, 3_334],
-          ]),
-        );
-      }
     },
   );
 });

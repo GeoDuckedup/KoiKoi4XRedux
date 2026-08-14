@@ -1,9 +1,9 @@
 # KoiKoi4x Implementation Plan
 
 **Plan version:** 1.1
-**Updated:** August 13, 2026
-**Current gate:** Phase 3F-A simplified table shell is deployed and accepted; Phase 3F-B unified
-tap-only interaction is next
+**Updated:** August 14, 2026
+**Current gate:** Phase 3F-B player-facing unified tap-only interaction is complete; Phase 3F-C
+visual interaction cues are in progress
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -764,13 +764,17 @@ Architecture is recorded in [`ADR 0020`](./adr/0020-phase-3e-c-physical-draw-cho
 
 ### Phase 3F — Focused playtesting polish
 
-Status: **Phase 3F-A deployed and accepted; Phase 3F-B follows after owner playtesting**.
+Status: **Phase 3F-A is deployed and accepted; Phase 3F-B's player-facing tap-only outcome is
+complete; Phase 3F-C visual interaction cues are in progress.**
 
 - **3F-A — Simplified table and larger hand:** remove routine phase/status and confirmation chrome,
   give the former canvas action-strip height to Player Hand, and reduce Options to essential
   cosmetic/table controls.
 - **3F-B — Unified tap-only interaction:** remove the temporary Guided confirmation state so legal
-  card/field taps are the only ordinary play language; explicit Bank/Koi-Koi remains.
+  card/field taps are the only ordinary play language; explicit Bank/Koi-Koi remains. The legacy
+  internal Guided naming is deferred because it does not affect player behavior.
+- **3F-C — Visual interaction cues:** clarify selected source, legal targets, no-match field
+  destination, and settled Reveal actionability while keeping the table uncluttered and responsive.
 
 Phase 3F-A gate:
 
@@ -787,6 +791,19 @@ Phase 3F-A gate:
   dense-field review, and root/Pages seven-viewport browser evidence with no errors.
 
 Architecture is recorded in [`ADR 0021`](./adr/0021-phase-3f-a-simplified-table-shell.md).
+
+Phase 3F-C gate:
+
+- selected sources, legal field targets, no-match field destinations, and settled Reveal sources use
+  one readable visual language without restoring visible Confirm/Cancel or routine status chrome;
+- semantic target and field-destination overlays retain pointer and keyboard behavior but do not draw
+  pointer-visible DOM border/background chrome over Pixi cards or the field;
+- all three runtime themes, root and Pages bases, seven supported viewports, one canvas, 48 CardViews,
+  field readability, and current authority boundaries remain intact;
+- CI/Pages run `npm run validate:phase3fc`, a flattened release/deck/focused-test/Workshop/density/
+  root/Pages gate, and upload `output/phase-3f-c/e2e/` evidence.
+
+Architecture is recorded in [`ADR 0022`](./adr/0022-phase-3f-c-visual-interaction-cues.md).
 
 ## Later phases
 

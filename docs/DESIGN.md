@@ -3628,7 +3628,17 @@ Phase 3 acceptance:
 
 - make legal card and field taps the only ordinary Hand/Draw confirmation language;
 - retain explicit Bank/Koi-Koi decisions and keyboard-equivalent semantic controls;
-- remove the temporary Guided confirmation state without moving capture legality into the browser.
+- preserve engine-owned capture legality; player-facing tap-only completion does not require an
+  internal controller naming refactor.
+
+### Phase 3F-C — Visual interaction cues
+
+- make a selected Hand or Reveal source, its legal field targets, and the no-match field destination
+  immediately distinguishable without restoring routine instruction or confirmation chrome;
+- keep DOM semantic overlays pointer-quiet so Pixi owns ordinary visual feedback while keyboard focus
+  and accessible names remain available;
+- retain field readability, theme-neutral cue meaning, reduced-motion behavior, and root/Pages
+  responsiveness without altering gameplay authority or rules.
 
 ## Phase 4 — Onboarding
 

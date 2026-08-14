@@ -193,8 +193,7 @@ select:focus-visible {
     0 0 22px rgb(233 187 90 / 34%);
 }
 
-.card-input-control:focus-visible,
-.card-input-control--focused {
+.card-input-control:focus-visible {
   border-color: #fff;
   outline: 3px solid #fff3cf;
   outline-offset: 3px;
@@ -1792,28 +1791,56 @@ summary:focus-visible {
 .card-input-control--selected {
   /* The Pixi scene owns the one visual selection frame. Keeping a second DOM
      ring here made a tapped hand card look offset and doubled its border. */
-  border-color: transparent;
+  border: 0;
+  outline: 0;
   background: transparent;
   box-shadow: none;
+  transform: none;
 }
 
 .card-input-control--target {
-  border-color: var(--theme-legal);
-  background: color-mix(in srgb, var(--theme-legal) 11%, transparent);
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--theme-legal) 28%, transparent),
-    0 0 22px color-mix(in srgb, var(--theme-legal) 34%, transparent);
+  /* The canvas owns target feedback; this remains only the semantic hit area. */
+  border: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
 }
 
-.field-placement-control {
-  border-color: var(--theme-legal);
-  background: color-mix(in srgb, var(--theme-legal) 5%, transparent);
+.card-input-control--selected:hover,
+.card-input-control--target:hover {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.card-input-control--selected:focus-visible,
+.card-input-control--target:focus-visible {
+  outline: 3px solid var(--theme-focus);
+  outline-offset: 3px;
+}
+
+.field-placement-control,
+:root[data-visual-direction] .field-placement-control {
+  /* The canvas owns the quiet placement perimeter. */
+  border: 0;
+  outline: 0;
+  background: transparent;
 }
 
 .field-placement-control:hover,
-.field-placement-control:focus-visible {
-  border-color: var(--theme-focus);
-  outline-color: var(--theme-focus);
+:root[data-visual-direction] .field-placement-control:hover {
+  border: 0;
+  outline: 0;
+  background: transparent;
+}
+
+.field-placement-control:focus-visible,
+:root[data-visual-direction] .field-placement-control:focus-visible {
+  border: 0;
+  outline: 3px solid var(--theme-focus);
+  outline-offset: 3px;
   background: color-mix(in srgb, var(--theme-legal) 10%, transparent);
 }
 

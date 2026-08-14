@@ -1020,3 +1020,22 @@ Original prompt: read the package and understand it, then let me know when we ar
   quiet outline without text over the field cards.
 - Focused layout/input/interaction/animation/runtime tests pass 5 files / 71 tests. Formatter,
   lint, workspace typechecks, and the Root browser smoke pass; mobile screenshots were inspected.
+
+## 2026-08-14 — Phase 3F-C locally accepted
+
+- Recorded the presentation-only selected-source, legal-target, no-match field, Reveal, declutter,
+  theme/responsive, and input-parity contract as `VISUAL-3FC-001` through `VISUAL-3FC-007`.
+- Advanced browser evidence to `output/phase-3f-c/e2e/` and added root/Pages smoke checkpoints for
+  selected Hand/Reveal sources, pair targets, no-match field destination, and themes. The smoke
+  gate also requires semantic target/field overlays to be pointer-quiet while retaining focus and
+  accessible names.
+- Added flattened `validate:phase3fc` CI/Pages routing. The focused five files / 71 tests pass. Full
+  `npm run check` is green with 46 files / 436 regular tests, all 10,002 generated seeds (exactly
+  3,334 per format), and the production build.
+- `npm run validate:phase3fc` passes the release deck, all 100 technical artifacts, Workshop,
+  17-card density review, and root/Pages browser suites. The post-repair root smoke also passes and
+  its final source/target, field, Reveal, and theme screenshots were inspected.
+- The generated-match gate runner was safely sharded only after diagnosing a false host/Vitest
+  wall-clock timeout; it preserves the exact seeds and formats and changes no engine or gameplay
+  behavior. Independent post-repair review reports no blocker, high, or medium finding.
+- Commit, push, hosted CI/Pages, deployment, and live acceptance remain pending.

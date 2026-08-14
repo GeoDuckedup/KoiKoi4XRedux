@@ -28,7 +28,7 @@ jobs:
       - run: npm run check
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
-      - run: npm run validate:phase3fa
+      - run: npm run validate:phase3fc
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

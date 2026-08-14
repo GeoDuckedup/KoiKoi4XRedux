@@ -1,8 +1,9 @@
 # KoiKoi4x
 
 KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy game. The repository
-has deployed and accepted **Phase 3E: playability corrections** plus **Phase 3F-A: simplified table
-and larger hand** with an owner-approved primary deck. It
+has deployed and accepted **Phase 3E: playability corrections**, **Phase 3F-A: simplified table and
+larger hand**, and the player-facing **Phase 3F-B: unified tap-only interaction** outcome. **Phase
+3F-C: visual interaction cues** is in progress with an owner-approved primary deck. It
 contains the canonical rules authority, all 48 artwork-independent card records, the complete
 deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
@@ -50,6 +51,7 @@ npm run validate:phase3ea
 npm run validate:phase3eb
 npm run validate:phase3ec
 npm run validate:phase3fa
+npm run validate:phase3fc
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -158,6 +160,13 @@ eight-card player hand using the former canvas action-strip reserve, simplifies 
 table controls, and verifies automatic reduced-motion behavior. Root and Pages artifacts are written
 under `output/phase-3f-a/e2e/`.
 
+`npm run validate:phase3fc` is a flattened successor gate: it runs one release/technical-deck,
+focused shell/input/animation/runtime, Workshop, density-review, root-browser, and Pages-browser
+copy. It verifies that selected sources, legal targets, no-match field destinations, and settled
+Reveal sources remain clear but uncluttered; semantic overlays stay keyboard-accessible without
+drawing pointer-visible DOM chrome. Root and Pages artifacts are written under
+`output/phase-3f-c/e2e/`.
+
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot
 contact sheets. `npm run validate:phase2e` runs the technical Workshop/importer/production-exclusion
@@ -186,10 +195,10 @@ Pages workflow. Set **Settings → Pages → Build and deployment → Source** t
 workflow derives the correct Vite base path from the repository name and deploys `apps/web/dist` only
 after checks pass.
 
-No Firebase project, credentials, database migration, or production domain is needed for Phase 3D-C.
-The live page plays one authoritative browser-local round with the approved Primary Deck, Guided or
-Fast input, public-event animation, private Player A/Player B handoff, and an accessible recap. New
-round restarts the deterministic first-round slice; multi-round persistence is deferred. The Deck
-Workshop remains local-only. Ink & Parchment is the default; Moonlit Indigo and Warm Ivory are
-runtime-selectable in Options and persist locally. Additional independent or inherited deck
-packages can be added without changing engine rules.
+No Firebase project, credentials, database migration, or production domain is needed for this
+subphase. The live page plays one authoritative browser-local round with the approved Primary Deck,
+tap-only ordinary Hand/Draw interaction, public-event animation, private Player A/Player B handoff,
+and an accessible recap. New round restarts the deterministic first-round slice; multi-round
+persistence is deferred. The Deck Workshop remains local-only. Ink & Parchment is the default;
+Moonlit Indigo and Warm Ivory are runtime-selectable in Options and persist locally. Additional
+independent or inherited deck packages can be added without changing engine rules.

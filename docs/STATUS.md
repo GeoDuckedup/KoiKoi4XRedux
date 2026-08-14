@@ -1,9 +1,9 @@
 # KoiKoi4x Project Status
 
-**Updated:** August 13, 2026
+**Updated:** August 14, 2026
 
-**Overall state:** Greenfield rewrite through Phase 3F-A simplified table and larger hand deployed
-and accepted
+**Overall state:** Greenfield rewrite through the Phase 3F-B player-facing tap-only outcome;
+Phase 3F-C visual interaction cues are in progress
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -30,6 +30,13 @@ controls. Its entire canvas reserve now belongs to Player Hand, making all eight
 materially larger while leaving the adaptive field, captures, Draw, Reveal, and opponent geometry
 unchanged. Options stays below the table and retains Theme, deck, fullscreen, restart, and critical
 locks. Production uses normal animation and automatically honors operating-system reduced motion.
+
+Phase 3F-B's player-facing outcome is already present: ordinary Hand and Draw completion uses legal
+card and field taps, while Bank/Koi-Koi remains explicit. The remaining internal `Guided` naming is
+implementation terminology only and is deliberately deferred. Phase 3F-C now polishes the visual
+language around that settled interaction: selected sources, legal targets, no-match field
+destinations, and actionable Reveal cards must read clearly without adding routine labels, visible
+confirmation controls, browser-owned legality, or field clutter.
 
 Release commit `51a1821` passed CI run `31742306302` and Pages run `31742306314`; the Pages deploy
 job completed successfully. A cache-busted live browser check reached ready state with the approved
@@ -483,7 +490,7 @@ The deployed baseline is
 
 ## Next subphase
 
-**Phase 3F-B — Unified tap-only interaction:** remove the temporary Guided confirmation state so
-ordinary Hand and Draw play is completed only by legal card/field taps. Bank/Koi-Koi remains an
-explicit decision. Phase 5 full multi-round progression follows the interaction-polish sequence;
-tutorial work remains deferred.
+**Phase 3F-C — Visual interaction cues:** polish selected-source, legal-target, no-match field, and
+Reveal actionability cues without changing game rules, authority, or the settled tap-only behavior.
+Phase 5 full multi-round progression follows the interaction-polish sequence; tutorial work remains
+deferred.

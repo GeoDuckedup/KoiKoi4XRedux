@@ -533,7 +533,30 @@ Phase 3F-A binding: `board-layout.test.ts`, `input-runtime.test.ts`, and
 gate binds the shell, automatic reduced-motion behavior, real Hand/Draw play, and artifacts under
 `output/phase-3f-a/e2e/`. ADR 0021 records the presentation-only scope.
 
-## 22. Approved-decision coverage matrix
+## 22. Phase 3F-C visual-interaction-cue vectors
+
+| ID | Required expectation |
+|---|---|
+| `VISUAL-3FC-001-SOURCE` | Selecting a legal Hand or settled Reveal source gives exactly that source a durable, visibly distinct selected treatment; unrelated cards do not resemble a selected source. |
+| `VISUAL-3FC-002-LEGAL-TARGETS` | A pair exposes one, exact-two exposes two, and a sweep exposes three legal field targets. Legal targets remain visibly distinct from the selected source and every other field card. |
+| `VISUAL-3FC-003-NO-MATCH-FIELD` | A no-match source makes the actual field the clear tap destination without implying strategic field coordinates, restoring empty-slot chrome, or exposing visible Confirm/Cancel controls. |
+| `VISUAL-3FC-004-REVEAL-ACTIONABLE` | Draw remains unavailable through travel, flip, and identify pause; after settlement the visible Reveal card is an actionable selected source and reuses the same authoritative target/field-destination language. |
+| `VISUAL-3FC-005-DECLUTTERED-CUES` | Routine phase/status/instruction/Confirm/Cancel chrome remains absent; cue copy and visual treatment do not cover selected or target cards, and field readability remains intact. |
+| `VISUAL-3FC-006-THEME-RESPONSIVE` | Ink & Parchment, Moonlit Indigo, and Warm Ivory preserve cue meaning at mobile, landscape, and desktop widths without changing theme-neutral selection, legal targets, authority, or CardView identity. |
+| `VISUAL-3FC-007-INPUT-PARITY` | Pointer and keyboard retain equivalent source/target/field activation, Escape cancellation, accessible names, and focus; Bank/Koi-Koi remain the only ordinary explicit decision buttons. |
+
+Phase 3F-C binding: focused interaction semantics retain the trusted public-preview tests. Root and
+repository-prefixed browser traces prove selected source, unique target, no-match field destination,
+settled Reveal source, theme persistence, seven-viewport containment, and zero browser/network
+errors. Semantic target and field-destination overlays must remain keyboard-addressable and named,
+but have no pointer-visible DOM border, background, outline, or shadow; Pixi owns the visible cue.
+Artifacts are written under `output/phase-3f-c/e2e/`, including
+`source-selected-pair-target-390x844[-pages].png`,
+`no-match-field-destination-390x844[-pages].png`,
+`draw-reveal-selected-390x844[-pages].png`, and the existing per-theme mobile/desktop captures.
+ADR 0022 records the presentation-only scope.
+
+## 23. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|
