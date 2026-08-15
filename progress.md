@@ -2,7 +2,7 @@ Original prompt: read the package and understand it, then let me know when we ar
 
 # KoiKoi4x Progress
 
-## 2026-08-15 — Phase 3F-I Reveal start cue locally complete
+## 2026-08-15 — Phase 3F-I deployed, live-verified, and accepted
 
 - Completed a narrow presentation-only addition: after the physical Draw card has completed travel,
   flip, and reveal pause, a restrained white outer-edge cue identifies the public Reveal card as
@@ -27,9 +27,18 @@ Original prompt: read the package and understand it, then let me know when we ar
   clipped/invalid/overlap zones, and an inspected screenshot.
 - Independent Terra review initially found three medium issues—face-up eligibility, `min-height`
   versus exact cue bounds, and indirect family/render/selected-Options evidence. All were repaired;
-  clean re-review found no blocker, high, or medium issue. Commit/push, hosted CI/Pages deployment,
-  and live verification are pending. Phase 5A remains the owner of ordered exact achieved-yaku-card
-  evidence and formation chronology.
+  clean re-review found no blocker, high, or medium issue.
+- Commit `a469b4c` passed hosted CI run `31888143328`: `verify` 13:47:14–14:01:33Z, `check`
+  13:47:58–13:54:09Z, `validate:phase3fi` 13:54:09–14:01:26Z, and artifact upload succeeded. Pages
+  run `31888143474` passed: build 13:47:15–13:59:41Z, `check` 13:47:54–13:53:43Z,
+  `validate:phase3fi` 13:53:43–13:59:35Z, deploy 13:59:46–13:59:54Z.
+- The cache-busted live response was HTTP/2 200 MISS, `Last-Modified: Sat, 15 Aug 2026 13:59:51 GMT`,
+  with `assets/index-Vt-DMjm5.js` / `assets/index-DsY0wC-9.css`. A first two-snapshot live-client
+  trace captured expected texture loading; a longer cache-busted run reached ready in 4/4 snapshots
+  with one canvas, 48 unique CardViews, idle `awaitingHandPlay`, 8/8/24/8 allocation, no
+  clipped/invalid/overlap diagnostics, and an inspected screenshot. Phase 3F-I is deployed,
+  live-verified, and accepted; iOS/WebKit perceived-pulse inspection remains supplemental. Phase 5A
+  is current and retains ordered exact achieved-yaku-card evidence and formation chronology.
 
 ## 2026-08-15 — Phase 3F-H deployed, live-verified, and accepted
 

@@ -6,8 +6,8 @@
 live-verified, and accepted; Phase 3F-F interaction clarity/card inspection is deployed,
 live-verified, and accepted; Phase 3F-G card inspector yaku reference/native gesture polish is
 deployed, live-verified, and accepted; Phase 3F-H active-hand start cue is deployed, live-verified,
-and accepted; Phase 3F-I Reveal start cue is locally complete with commit, hosted, and live evidence
-pending; Phase 5A full local match formats remains the next substantive phase
+and accepted; Phase 3F-I Reveal start cue is deployed, live-verified, and accepted; Phase 5A full
+local match formats is current
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -160,7 +160,7 @@ stable CardViews, and no layout diagnostics. Phase 3F-H is deployed, live-verifi
 physical iPhone/WebKit check of perceived pulse motion and white-outline contrast remains
 supplemental; Phase 5A is the current substantive product phase.
 
-Phase 3F-I is a locally complete presentation-only follow-up. After a physical Draw card completes
+Phase 3F-I is a deployed, live-verified, and accepted presentation-only follow-up. After a physical Draw card completes
 travel, flip, and reveal pause, the unselected public Reveal card will receive a restrained white
 outer-edge start cue. White means the next required interaction; gold remains reserved for the
 selected source and legal field target/no-match destination after the player taps Reveal. The cue
@@ -180,7 +180,16 @@ persistent CardViews, 8/8/24 Hand/opponent/draw allocation, idle input, no diagn
 clipped/invalid/overlap zones, and an inspected screenshot. Independent Terra review initially found
 three medium findings—face-up eligibility, `min-height` exact-bounds expansion, and indirect
 family/render/selected-Options evidence—which were repaired; clean re-review found no blocker, high,
-or medium issue. Commit/push, hosted CI/Pages, and live verification are pending.
+or medium issue. Commit `a469b4c` passed hosted CI run `31888143328`: `verify`
+13:47:14–14:01:33Z, `check` 13:47:58–13:54:09Z, `validate:phase3fi` 13:54:09–14:01:26Z, and artifact
+upload succeeded. Pages run `31888143474` passed: build 13:47:15–13:59:41Z, `check`
+13:47:54–13:53:43Z, `validate:phase3fi` 13:53:43–13:59:35Z, deploy 13:59:46–13:59:54Z. A
+cache-busted live response returned HTTP/2 200 MISS with `Last-Modified: Sat, 15 Aug 2026 13:59:51
+GMT` and bundles `assets/index-Vt-DMjm5.js` / `assets/index-DsY0wC-9.css`. The first short live
+client trace captured expected texture loading in two snapshots; a longer cache-busted run reached
+ready in 4/4 snapshots: one canvas, 48 unique CardViews, idle `awaitingHandPlay`, 8/8/24/8 allocation,
+no clipped/invalid/overlap diagnostics, and an inspected screenshot. Phase 3F-I is deployed,
+live-verified, and accepted. iOS/WebKit perceived-pulse inspection remains supplemental.
 Phase 5A retains ordered exact achieved-yaku cards and formation chronology.
 
 Release commit `51a1821` passed CI run `31742306302` and Pages run `31742306314`; the Pages deploy

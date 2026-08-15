@@ -1,6 +1,6 @@
 # ADR 0028 — Phase 3F-I Reveal start cue
 
-**Status:** Locally complete; commit, hosted, and live evidence pending
+**Status:** Deployed, live-verified, and accepted
 
 ## Context
 
@@ -68,9 +68,17 @@ placement to be face-up; remove a `min-height` that could expand the decorative 
 bounds; and replace indirect Draw-family/render/selected-Options evidence. The repairs add face-up
 gating, exact placement geometry, authoritative four-family test coverage, a direct stable Pixi
 interaction-highlight treatment assertion, and selected-Reveal Options round-trip evidence. Clean
-re-review found no blocker, high, or medium issue. Commit/push, hosted CI/Pages deployment, and live
-browser verification remain pending. A physical iPhone/WebKit check of perceived pulse motion and
-white-outline contrast remains supplemental.
+re-review found no blocker, high, or medium issue. Commit `a469b4c` passed hosted CI run
+`31888143328`: `verify` 13:47:14–14:01:33Z, `check` 13:47:58–13:54:09Z,
+`validate:phase3fi` 13:54:09–14:01:26Z, and artifact upload succeeded. Pages run `31888143474`
+passed: build 13:47:15–13:59:41Z, `check` 13:47:54–13:53:43Z, `validate:phase3fi`
+13:53:43–13:59:35Z, deploy 13:59:46–13:59:54Z. A cache-busted live response returned HTTP/2 200
+MISS with `Last-Modified: Sat, 15 Aug 2026 13:59:51 GMT` and bundles `assets/index-Vt-DMjm5.js` /
+`assets/index-DsY0wC-9.css`. The first short live-client trace captured expected texture loading in
+two snapshots; a longer cache-busted run reached ready in 4/4 snapshots with one canvas, 48 unique
+CardViews, idle `awaitingHandPlay`, 8/8/24/8 allocation, no clipped/invalid/overlap diagnostics, and
+an inspected screenshot. Phase 3F-I is deployed, live-verified, and accepted. A physical
+iPhone/WebKit check of perceived pulse motion and white-outline contrast remains supplemental.
 
 The focused presentation test directly exercises the scene's stable interaction-highlight treatment:
 an unselected actionable Reveal remains muted, while a selected Reveal source and an authoritative

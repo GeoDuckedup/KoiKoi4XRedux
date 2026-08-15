@@ -5,8 +5,8 @@
 **Current gate:** Phase 3F-E utility dock/capture cleanup is deployed and accepted; Phase 3F-F
 interaction clarity/card inspection is deployed and accepted; Phase 3F-G card inspector yaku
 reference/native gesture polish is deployed, live-verified, and accepted; Phase 3F-H active-hand
-start cue is deployed, live-verified, and accepted; Phase 3F-I Reveal start cue is locally complete
-with commit, hosted, and live evidence pending; Phase 5A full local match formats remains the next substantive phase
+start cue is deployed, live-verified, and accepted; Phase 3F-I Reveal start cue is deployed,
+live-verified, and accepted; Phase 5A full local match formats is current
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -1028,7 +1028,7 @@ contrast remains supplemental.
 
 ### Phase 3F-I — Reveal start cue
 
-Status: **locally complete; commit, hosted, and live evidence pending**.
+Status: **deployed, live-verified, and accepted**.
 
 This narrow presentation-only follow-up makes the settled Draw Reveal step visually obvious without
 using the already-reserved gold selection/target language. Once the physical Draw card has completed
@@ -1061,28 +1061,35 @@ production build: ready `state-0`/`state-1`, one canvas, 48 unique persistent Ca
 Hand/opponent/draw allocation, idle input, no diagnostics or clipped/invalid/overlap zones, and an
 inspected screenshot. Independent Terra review initially found three medium issues—face-up Reveal gating, an exact-bounds regression
 from `min-height`, and indirect family/render/selected-Options evidence. All were repaired; clean
-re-review found no blocker, high, or medium issue. Commit/push, hosted CI/Pages, and live
-verification remain pending.
+re-review found no blocker, high, or medium issue. Commit `a469b4c` passed hosted CI run
+`31888143328`: `verify` 13:47:14–14:01:33Z, `check` 13:47:58–13:54:09Z,
+`validate:phase3fi` 13:54:09–14:01:26Z, and artifact upload succeeded. Pages run `31888143474`
+passed: build 13:47:15–13:59:41Z, `check` 13:47:54–13:53:43Z, `validate:phase3fi`
+13:53:43–13:59:35Z, deploy 13:59:46–13:59:54Z. The cache-busted live response was HTTP/2 200 MISS,
+`Last-Modified: Sat, 15 Aug 2026 13:59:51 GMT`, bundle `assets/index-Vt-DMjm5.js` /
+`assets/index-DsY0wC-9.css`. Its initial two-snapshot client trace captured expected texture loading;
+a longer cache-busted run reached ready in 4/4 snapshots with one canvas, 48 unique CardViews, idle
+`awaitingHandPlay`, 8/8/24/8 allocation, no clipped/invalid/overlap diagnostics, and an inspected
+screenshot. Phase 3F-I is deployed, live-verified, and accepted; iOS/WebKit perceived pulse remains
+supplemental.
 
 ## Later phases
 
-1. **Phase 3F-I — Reveal start cue:** complete and accept the narrow post-settle white Reveal
-   affordance and its release evidence.
-2. **Phase 5A — Full local match formats:** 3/6/12 rounds, full recap/rematch, and ordered
+1. **Phase 5A — Full local match formats:** 3/6/12 rounds, full recap/rematch, and ordered
    yaku-card evidence in expanded end-of-play details.
-3. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
-4. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
-5. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
-6. **Phase 9A — Product polish:** final interface, accessibility, performance, and reliability pass.
-7. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook,
+2. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
+3. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
+4. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
+5. **Phase 9A — Product polish:** final interface, accessibility, performance, and reliability pass.
+6. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook,
    deliberately executed after the final interaction and progression model stabilizes.
-8. **Phase 9B — Release acceptance:** final content, telemetry, cross-platform, and release checks.
+7. **Phase 9B — Release acceptance:** final content, telemetry, cross-platform, and release checks.
 
 No later phase may bypass the acceptance gate of the preceding phase.
 
 Phase 3F-E is deployed, live-verified, and accepted. Phase 3F-F interaction clarity/card inspection
 is deployed, live-verified, and accepted. Phase 3F-G is deployed, live-verified, and accepted.
-Phase 3F-H is deployed, live-verified, and accepted. Phase 3F-I is locally complete with commit,
-hosted, and live evidence pending. None of these presentation slices reopen 3F-D
+Phase 3F-H is deployed, live-verified, and accepted. Phase 3F-I is deployed, live-verified, and
+accepted. None of these presentation slices reopen 3F-D
 animation authority or transfer Phase 5A's
 ordered completed-yaku evidence into routine play.
