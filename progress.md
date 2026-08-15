@@ -1071,3 +1071,30 @@ Original prompt: read the package and understand it, then let me know when we ar
   `state-1.json` were inspected.
 - Phase 3F-D is deployed and accepted. Next: Phase 3F-E utility dock/capture cleanup, then Phase 5A
   full local match formats and ordered yaku-card evidence.
+
+## 2026-08-14 — Phase 3F-E utility dock/capture cleanup local gate
+
+- Added the fixed bottom-safe **History**, **Yaku Guide**, **Options** dock, native read-only History
+  and Yaku Guide dialogs, and a static frozen thirteen-yaku reference with canonical example cards.
+  It is intentionally not tutorial/onboarding or a live-table evaluator.
+- Removed redundant routine hand count/points, capture zero-count, and Reveal-section labels. Public
+  capture inspection retains its modal ownership/privacy boundary and now uses regular 5:8 cards with
+  a clearly light frame.
+- Added `UTILITY-3FE-001` through `UTILITY-3FE-008`, ADR 0024, a `validate:phase3fe` flattened gate,
+  and CI/Pages artifact routing to `output/phase-3f-e/e2e/`. Root and Pages production smokes now
+  exercise exact dock order, History/Guide/Options mutual exclusion, Escape focus restoration, all
+  thirteen guide entries/example images, capture frame geometry, privacy, one canvas, and 48 stable
+  CardViews at seven baseline viewports plus focused 390×844 and 844×390 dialogs.
+- Local closure is green. `npm run check` passed format/lint/typecheck/decks, 47 files / 444 ordinary
+  tests, all 10,002 generated matches, and the 772-module build. `validate:phase3fe` passed release
+  deck approval (48/48), 100 technical artifacts, 6 focused files / 79 tests, Workshop, the
+  14-viewport density review, and full root/Pages smoke. The bundled skill client reached ready state
+  with one canvas and 48 persistent CardViews; Yaku Guide, landscape dock, and capture-gallery
+  screenshots were visually inspected.
+- Independent Terra review initially found two medium issues: the browser gate did not prove clearly
+  light borders in all themes, and utility mutual exclusion did not include Options. The shared
+  light-frame token, complete one-dialog-at-a-time guards, and strengthened browser assertions repair
+  both. Root and Pages smokes pass after repair, and post-repair review reports no blocker, high, or
+  medium finding.
+- Phase 3F-E is locally accepted. Next: commit/push, verify hosted CI and Pages, then inspect the
+  cache-busted live runtime. No hosted/live acceptance is claimed yet.

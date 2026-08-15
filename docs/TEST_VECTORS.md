@@ -575,7 +575,26 @@ and Pages browser traces write `no-match-direct-field-travel-390x844[-pages].png
 the top-card/reveal trace and asserts there is no active movement before the player taps Reveal.
 ADR 0023 records the presentation-only boundary.
 
-## 24. Approved-decision coverage matrix
+## 24. Phase 3F-E utility-dock and capture-cleanup vectors
+
+| ID | Required expectation |
+|---|---|
+| `UTILITY-3FE-001-DOCK-ORDER` | The only ordinary bottom-safe utility controls are History, Yaku Guide, and Options in that left-to-right DOM and visual order. They remain below the game frame at all supported viewports and are unavailable only under existing critical gameplay locks. |
+| `UTILITY-3FE-002-HISTORY` | History opens a modal/dialog containing the complete public ordered recap. It changes neither authoritative state nor card identity, is mutually exclusive with the other utility dialogs, Escape closes it, and focus returns to History. Retired inline recap content has no visible footprint in routine play. |
+| `UTILITY-3FE-003-YAKU-GUIDE-COMPLETE` | Yaku Guide is a read-only reference, not a tutorial or current-board evaluator. It contains exactly the canonical thirteen yaku — Five Brights, Four Brights, Four Brights with Rain, Three Brights, Blossom Viewing, Moon Viewing, Animal Trio, Red Text Scrolls, Blue Scrolls, Current-Month Set, Animals, Scrolls, and Plain Cards — each with a short rules/points explanation and an example image. |
+| `UTILITY-3FE-004-UTILITY-FOCUS` | History, Yaku Guide, and Options are mutually exclusive modal surfaces; opening one closes none implicitly because another cannot be opened while one is active. Escape/close restores focus to the initiating control, preserves current game state, and does not unlock a critical decision. |
+| `UTILITY-3FE-005-DECLUTTER` | No routine hand count/point suffix, capture-category zero, or standalone Reveal label is visible. Field/card actionability and required accessible names remain intact; no old inline recap or instruction strip returns. |
+| `UTILITY-3FE-006-CAPTURE-GALLERY` | A nonempty public capture rail opens only its owner’s current public cards. Every gallery face has the regular 5:8 aspect ratio (computed ratio near 0.625), object-fit card artwork, and a visible light/white frame; it does not stretch the card or disclose hidden order/identity. |
+| `UTILITY-3FE-007-PRIVACY-IDENTITY` | All utility and capture dialogs preserve one canvas, the 48 persistent CardViews, current authoritative state, and recipient-safe text projection. They expose neither opponent hand identity, draw order, RNG, checkpoint, nor command IDs. |
+| `UTILITY-3FE-008-ROOT-PAGES-RESPONSIVE` | Root and repository-prefixed Pages traces cover seven baseline responsive viewports plus focused 390×844 and 844×390 dialog/capture checks, with no clipping, browser/network errors, or utility order change. |
+
+Phase 3F-E binding: focused utility-guide presentation tests and root/Pages production smoke prove
+the exact dock order, modal/focus behavior, thirteen-guide content/example images, capture-card
+geometry/frame, decluttered DOM/canvas labels, privacy, persistent-card identity, and responsive
+containment. Artifacts are written under `output/phase-3f-e/e2e/`. ADR 0024 records the
+presentation-only boundary; Phase 5A retains ordered per-yaku scoring evidence in expanded results.
+
+## 25. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

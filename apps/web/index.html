@@ -216,17 +216,29 @@
         </div>
       </section>
 
-      <section class="turn-recap" aria-labelledby="turn-recap-title">
-        <h2 class="visually-hidden" id="turn-recap-title">Turn recap</h2>
-        <p class="turn-recap__latest" data-latest-recap aria-live="polite"></p>
-        <details class="turn-recap__history">
-          <summary>History</summary>
-          <ol data-turn-recaps></ol>
-        </details>
-      </section>
-      <div class="bottom-utilities">
+      <nav class="bottom-utilities" aria-label="Game utilities">
         <button
-          class="options-trigger"
+          class="utility-trigger"
+          type="button"
+          data-history-trigger
+          aria-haspopup="dialog"
+          aria-controls="history-dialog"
+          aria-expanded="false"
+        >
+          History
+        </button>
+        <button
+          class="utility-trigger"
+          type="button"
+          data-yaku-guide-trigger
+          aria-haspopup="dialog"
+          aria-controls="yaku-guide-dialog"
+          aria-expanded="false"
+        >
+          Yaku Guide
+        </button>
+        <button
+          class="utility-trigger options-trigger"
           type="button"
           data-options-trigger
           aria-haspopup="dialog"
@@ -235,7 +247,52 @@
         >
           Options
         </button>
-      </div>
+      </nav>
+
+      <dialog
+        class="utility-dialog history-dialog"
+        id="history-dialog"
+        data-history-dialog
+        aria-labelledby="history-dialog-title"
+      >
+        <header class="utility-dialog__header">
+          <div>
+            <p class="eyebrow">Public turn record</p>
+            <h2 id="history-dialog-title">History</h2>
+          </div>
+          <button type="button" data-history-close>Close</button>
+        </header>
+        <div class="utility-dialog__body history-dialog__body">
+          <p class="history-dialog__empty" data-history-empty>No turns have finished yet.</p>
+          <ol data-turn-recaps></ol>
+        </div>
+      </dialog>
+
+      <dialog
+        class="utility-dialog yaku-guide-dialog"
+        id="yaku-guide-dialog"
+        data-yaku-guide-dialog
+        aria-labelledby="yaku-guide-dialog-title"
+      >
+        <header class="utility-dialog__header">
+          <div>
+            <p class="eyebrow">Reference</p>
+            <h2 id="yaku-guide-dialog-title">Yaku Guide</h2>
+          </div>
+          <button type="button" data-yaku-guide-close>Close</button>
+        </header>
+        <div class="utility-dialog__body yaku-guide-dialog__body">
+          <p class="yaku-guide-dialog__intro">
+            Capture sets to make yaku. This guide explains the fixed rules; it does not analyze the
+            current table.
+          </p>
+          <div data-yaku-guide-groups></div>
+          <section class="yaku-guide-dialog__notes" aria-labelledby="yaku-guide-notes-title">
+            <h3 id="yaku-guide-notes-title">How scoring decisions work</h3>
+            <ul data-yaku-guide-notes></ul>
+          </section>
+        </div>
+      </dialog>
 
       <dialog
         class="capture-inspector"
@@ -251,6 +308,7 @@
         </header>
         <div class="capture-inspector__groups" data-capture-inspector-groups></div>
       </dialog>
+      <p class="visually-hidden" data-latest-recap aria-live="polite"></p>
       <p class="visually-hidden" id="input-instruction" data-input-instruction aria-live="polite">
         Loading keyboard-accessible card controls.
       </p>

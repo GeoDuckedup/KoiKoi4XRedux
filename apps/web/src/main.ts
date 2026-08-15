@@ -36,6 +36,7 @@ import {
   createYakuPresentationState,
   type YakuPresentationStateV1,
 } from "./game/yaku-presentation";
+import { YAKU_GUIDE_ENTRIES, YAKU_GUIDE_GROUPS, YAKU_GUIDE_NOTES } from "./game/yaku-guide";
 import { createAnimationDirector } from "./presentation/animation/animation-director";
 import { projectionsEqual } from "./presentation/animation/projection";
 import type {
@@ -92,6 +93,15 @@ function queryRequired<T extends Element>(selector: string): T {
 
 const host = queryRequired<HTMLElement>("[data-game-host]");
 const status = queryRequired<HTMLElement>("[data-table-status]");
+const historyTrigger = queryRequired<HTMLButtonElement>("[data-history-trigger]");
+const historyDialog = queryRequired<HTMLDialogElement>("[data-history-dialog]");
+const historyClose = queryRequired<HTMLButtonElement>("[data-history-close]");
+const historyEmpty = queryRequired<HTMLElement>("[data-history-empty]");
+const yakuGuideTrigger = queryRequired<HTMLButtonElement>("[data-yaku-guide-trigger]");
+const yakuGuideDialog = queryRequired<HTMLDialogElement>("[data-yaku-guide-dialog]");
+const yakuGuideClose = queryRequired<HTMLButtonElement>("[data-yaku-guide-close]");
+const yakuGuideGroups = queryRequired<HTMLElement>("[data-yaku-guide-groups]");
+const yakuGuideNotes = queryRequired<HTMLUListElement>("[data-yaku-guide-notes]");
 const optionsTrigger = queryRequired<HTMLButtonElement>("[data-options-trigger]");
 const optionsDialog = queryRequired<HTMLDialogElement>("[data-options-dialog]");
 const optionsClose = queryRequired<HTMLButtonElement>("[data-options-close]");
@@ -349,6 +359,7 @@ function currentInputLock(): InputLockReason | null {
   if (animationDirector?.isBusy()) return "animation";
   if (processingIntent) return "awaitingObservation";
   if (captureInspector.open) return "remoteReplay";
+  if (historyDialog.open || yakuGuideDialog.open) return "remoteReplay";
   if (handoffPlayerId !== null) return "remoteReplay";
   return null;
 }
@@ -365,14 +376,23 @@ function isCaptureInspectionOpen(): boolean {
   return captureInspector.open;
 }
 
-function isOptionsBlocked(): boolean {
+function isAnyUtilityDialogOpen(): boolean {
+  return historyDialog.open || yakuGuideDialog.open || optionsDialog.open;
+}
+
+function isCriticalUtilityBlocked(): boolean {
   return (
     processingIntent ||
     handoffPlayerId !== null ||
     isYakuDecisionOpen() ||
     isRoundResultOpen() ||
-    isCaptureInspectionOpen()
+    isCaptureInspectionOpen() ||
+    (animationDirector?.isBusy() ?? false)
   );
+}
+
+function isUtilityOpenerBlocked(): boolean {
+  return isCriticalUtilityBlocked() || isAnyUtilityDialogOpen();
 }
 
 function captureOwnerFromControl(control: HTMLButtonElement): CaptureInspectionOwnerV1 {
@@ -418,6 +438,97 @@ function closeCaptureInspection(restoreFocus = true): void {
       if (!trigger.disabled && !trigger.hidden) trigger.focus();
     });
   }
+}
+
+function closeHistory(restoreFocus = true): void {
+  if (!historyDialog.open) return;
+  historyDialog.close();
+  historyTrigger.setAttribute("aria-expanded", "false");
+  refreshInteractionSurface();
+  if (restoreFocus) queueMicrotask(() => historyTrigger.focus());
+}
+
+function openHistory(): void {
+  if (isUtilityOpenerBlocked()) return;
+  historyDialog.showModal();
+  historyTrigger.setAttribute("aria-expanded", "true");
+  refreshInteractionSurface();
+  queueMicrotask(() => historyClose.focus());
+}
+
+function renderYakuGuide(): void {
+  yakuGuideGroups.replaceChildren(
+    ...YAKU_GUIDE_GROUPS.map((group) => {
+      const section = document.createElement("section");
+      section.className = "yaku-guide__group";
+      const heading = document.createElement("h3");
+      heading.textContent = group.title;
+      const entries = document.createElement("div");
+      entries.className = "yaku-guide__entries";
+      entries.replaceChildren(
+        ...YAKU_GUIDE_ENTRIES.filter(({ group: entryGroup }) => entryGroup === group.id).map(
+          (entry) => {
+            const article = document.createElement("article");
+            article.className = "yaku-guide__entry";
+            article.dataset.yakuGuideKey = entry.key;
+            const heading = document.createElement("h4");
+            heading.textContent = entry.title;
+            const points = document.createElement("p");
+            points.className = "yaku-guide__points";
+            points.textContent = `${entry.points} ${entry.points === 1 ? "point" : "points"}`;
+            const requirement = document.createElement("p");
+            requirement.className = "yaku-guide__requirement";
+            requirement.textContent = entry.requirement;
+            const examples = document.createElement("div");
+            examples.className = "yaku-guide__cards";
+            examples.setAttribute("aria-label", `${entry.title} example cards`);
+            examples.replaceChildren(
+              ...entry.exampleCardIds.map((cardId) => {
+                const card = getCardDefinition(cardId);
+                const month = getMonthDefinition(card.month);
+                const image = document.createElement("img");
+                image.dataset.yakuGuideCard = cardId;
+                image.src = activeCardFaceUrl(cardId);
+                image.alt = `${month.name} ${card.displayName}`;
+                image.width = 80;
+                image.height = 128;
+                return image;
+              }),
+            );
+            const note = document.createElement("p");
+            note.className = "yaku-guide__note";
+            note.textContent = entry.note;
+            article.append(heading, points, requirement, examples, note);
+            return article;
+          },
+        ),
+      );
+      section.append(heading, entries);
+      return section;
+    }),
+  );
+  yakuGuideNotes.replaceChildren(
+    ...YAKU_GUIDE_NOTES.map((note) =>
+      Object.assign(document.createElement("li"), { textContent: note }),
+    ),
+  );
+}
+
+function closeYakuGuide(restoreFocus = true): void {
+  if (!yakuGuideDialog.open) return;
+  yakuGuideDialog.close();
+  yakuGuideTrigger.setAttribute("aria-expanded", "false");
+  refreshInteractionSurface();
+  if (restoreFocus) queueMicrotask(() => yakuGuideTrigger.focus());
+}
+
+function openYakuGuide(): void {
+  if (isUtilityOpenerBlocked() || deckStatus !== "ready") return;
+  renderYakuGuide();
+  yakuGuideDialog.showModal();
+  yakuGuideTrigger.setAttribute("aria-expanded", "true");
+  refreshInteractionSurface();
+  queueMicrotask(() => yakuGuideClose.focus());
 }
 
 function openCaptureInspection(control: HTMLButtonElement): void {
@@ -477,7 +588,7 @@ function closeOptions(restoreFocus = true): void {
 }
 
 function openOptions(): void {
-  if (isOptionsBlocked() || optionsDialog.open) return;
+  if (isUtilityOpenerBlocked()) return;
   optionsDialog.showModal();
   optionsTrigger.setAttribute("aria-expanded", "true");
   syncThemeControls();
@@ -525,10 +636,13 @@ function renderRecaps(): void {
     }),
   );
   latestRecap.textContent = recaps.at(-1) ?? "";
-  const recapRegion = recapList.closest<HTMLElement>(".turn-recap");
-  if (recapRegion) recapRegion.hidden = recaps.length === 0;
-  const history = recapRegion?.querySelector<HTMLElement>(".turn-recap__history");
-  if (history?.hasAttribute("open")) recapList.scrollTop = recapList.scrollHeight;
+  historyEmpty.hidden = recaps.length > 0;
+  historyTrigger.setAttribute(
+    "aria-label",
+    recaps.length === 0
+      ? "Open History. No completed turns yet."
+      : `Open History. ${recaps.length} completed ${recaps.length === 1 ? "turn" : "turns"}.`,
+  );
 }
 
 function renderSemanticCardBridge(): void {
@@ -846,9 +960,16 @@ function updateControls(): void {
   fullscreenButton.disabled = processingIntent || decisionOpen || resultOpen;
   newRoundButton.disabled =
     busy || processingIntent || handoffPlayerId !== null || decisionOpen || resultOpen;
-  optionsTrigger.disabled = isOptionsBlocked();
-  for (const option of themeOptions) option.disabled = isOptionsBlocked();
-  if (isOptionsBlocked()) closeOptions(false);
+  const utilityOpenersBlocked = isUtilityOpenerBlocked();
+  historyTrigger.disabled = utilityOpenersBlocked || deckStatus !== "ready";
+  yakuGuideTrigger.disabled = utilityOpenersBlocked || deckStatus !== "ready";
+  optionsTrigger.disabled = utilityOpenersBlocked;
+  for (const option of themeOptions) option.disabled = isCriticalUtilityBlocked();
+  if (isCriticalUtilityBlocked()) {
+    closeOptions(false);
+    closeHistory(false);
+    closeYakuGuide(false);
+  }
   renderCaptureInspectionControls();
 }
 
@@ -1093,6 +1214,24 @@ window.advanceTime = (milliseconds: number) => {
   updateControls();
 };
 
+historyTrigger.addEventListener("click", openHistory);
+historyClose.addEventListener("click", () => closeHistory());
+historyDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeHistory();
+});
+historyDialog.addEventListener("close", () => {
+  historyTrigger.setAttribute("aria-expanded", "false");
+});
+yakuGuideTrigger.addEventListener("click", openYakuGuide);
+yakuGuideClose.addEventListener("click", () => closeYakuGuide());
+yakuGuideDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeYakuGuide();
+});
+yakuGuideDialog.addEventListener("close", () => {
+  yakuGuideTrigger.setAttribute("aria-expanded", "false");
+});
 optionsTrigger.addEventListener("click", openOptions);
 optionsClose.addEventListener("click", () => closeOptions());
 optionsDialog.addEventListener("cancel", (event) => {
@@ -1115,7 +1254,7 @@ captureInspector.addEventListener("close", () => {
 });
 for (const option of themeOptions) {
   option.addEventListener("change", () => {
-    if (!option.checked || isOptionsBlocked()) return;
+    if (!option.checked || isCriticalUtilityBlocked() || !optionsDialog.open) return;
     void themeStore.set(option.value).then((theme) => {
       optionsAnnouncement.textContent = `${theme.name} theme applied. The game state and card selection are unchanged.`;
     });
@@ -1153,6 +1292,10 @@ handoffReady.addEventListener("click", () => void acceptHandoff());
 document.addEventListener("fullscreenchange", updateFullscreenLabel);
 window.addEventListener("keydown", (event) => {
   if (captureInspector.open) return;
+  if (historyDialog.open || yakuGuideDialog.open) {
+    if (event.key.toLowerCase() === "f") event.preventDefault();
+    return;
+  }
   if (optionsDialog.open) {
     if (event.key.toLowerCase() === "f") event.preventDefault();
     return;

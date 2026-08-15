@@ -6,7 +6,7 @@ import { chromium } from "playwright";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-3f-d/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-3f-e/e2e");
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
 const mountedBasePath = smokeBasePath === "/" ? "/" : `${smokeBasePath}/`;
@@ -123,6 +123,193 @@ async function closeOptions(page) {
   if (await page.locator("[data-options-dialog]").evaluate((dialog) => dialog.open)) {
     await page.locator("[data-options-close]").click();
   }
+}
+
+async function assertUtilityDialogCycle(page, { trigger, dialog, close, focus = close, label }) {
+  const utilities = [
+    { trigger: "[data-history-trigger]", dialog: "[data-history-dialog]" },
+    { trigger: "[data-yaku-guide-trigger]", dialog: "[data-yaku-guide-dialog]" },
+    { trigger: "[data-options-trigger]", dialog: "[data-options-dialog]" },
+  ];
+  const triggerLocator = page.locator(trigger);
+  const dialogLocator = page.locator(dialog);
+  const before = await readState(page);
+  await triggerLocator.click();
+  await dialogLocator.waitFor({ state: "visible" });
+  assert(
+    await dialogLocator.evaluate((element) => element instanceof HTMLDialogElement && element.open),
+    `${label} did not enter its modal dialog state.`,
+  );
+  assert(
+    await page.locator(focus).evaluate((element) => document.activeElement === element),
+    `${label} did not focus its expected initial control.`,
+  );
+  for (const other of utilities.filter((utility) => utility.dialog !== dialog)) {
+    await page.locator(other.trigger).evaluate((element) => {
+      if (!(element instanceof HTMLButtonElement)) {
+        throw new Error("Phase 3F-E utility opener is not a button.");
+      }
+      element.click();
+    });
+    assert(
+      await dialogLocator.evaluate(
+        (element) => element instanceof HTMLDialogElement && element.open,
+      ),
+      `${label} closed when another utility opener was activated.`,
+    );
+    assert(
+      !(await page.locator(other.dialog).evaluate((element) => element.open)),
+      `${label} allowed ${other.dialog} to open concurrently.`,
+    );
+  }
+  assert(
+    (await page
+      .locator(
+        "[data-history-dialog][open], [data-yaku-guide-dialog][open], [data-options-dialog][open]",
+      )
+      .count()) === 1,
+    `${label} did not retain exactly one open utility dialog.`,
+  );
+  assert(
+    !(await page.locator("[data-history-dialog]").evaluate((element) => element.open)) ||
+      dialog === "[data-history-dialog]",
+    `${label} opened while History was already visible.`,
+  );
+  assert(
+    !(await page.locator("[data-yaku-guide-dialog]").evaluate((element) => element.open)) ||
+      dialog === "[data-yaku-guide-dialog]",
+    `${label} opened while Yaku Guide was already visible.`,
+  );
+  assert(
+    !(await page.locator("[data-options-dialog]").evaluate((element) => element.open)) ||
+      dialog === "[data-options-dialog]",
+    `${label} opened while Options was already visible.`,
+  );
+  const during = await readState(page);
+  assert(
+    during.localRound.stateVersion === before.localRound.stateVersion &&
+      during.localRound.commandCount === before.localRound.commandCount &&
+      during.cards.cardViewCount === before.cards.cardViewCount &&
+      !JSON.stringify(during).includes("drawPileOrdered") &&
+      !JSON.stringify(during).includes("commandId"),
+    `${label} changed authority, CardView identity, or public privacy boundaries.`,
+  );
+  await page.keyboard.press("Escape");
+  assert(
+    !(await dialogLocator.evaluate(
+      (element) => element instanceof HTMLDialogElement && element.open,
+    )) && (await triggerLocator.evaluate((element) => document.activeElement === element)),
+    `Escape did not close ${label} and restore focus to its trigger.`,
+  );
+}
+
+async function assertUtilityDock(page, viewport) {
+  const utilities = page.locator(".bottom-utilities > button");
+  assert(
+    JSON.stringify((await utilities.allTextContents()).map((text) => text.trim())) ===
+      JSON.stringify(["History", "Yaku Guide", "Options"]),
+    `${viewport.width}×${viewport.height} utility dock order changed.`,
+  );
+  const dockBox = await page.locator(".bottom-utilities").boundingBox();
+  const frameBox = await page.locator(".game-frame").boundingBox();
+  assert(
+    dockBox !== null &&
+      frameBox !== null &&
+      dockBox.y >= frameBox.y + frameBox.height &&
+      dockBox.x >= 0 &&
+      dockBox.x + dockBox.width <= viewport.width + 1,
+    `Utility dock escaped its bottom-safe area at ${viewport.width}×${viewport.height}: ${JSON.stringify({ dockBox, frameBox })}.`,
+  );
+}
+
+async function assertYakuGuideContents(page) {
+  const names = [
+    "Five Brights",
+    "Four Brights",
+    "Four Brights with Rain",
+    "Three Brights",
+    "Blossom Viewing",
+    "Moon Viewing",
+    "Animal Trio",
+    "Red Text Scrolls",
+    "Blue Scrolls",
+    "Current-Month Set",
+    "Animals",
+    "Scrolls",
+    "Plain Cards",
+  ];
+  assert(
+    JSON.stringify(await page.locator("[data-yaku-guide-key] h4").allTextContents()) ===
+      JSON.stringify(names),
+    "Yaku Guide did not contain the exact canonical thirteen-yaku reference order.",
+  );
+  const entries = page.locator("[data-yaku-guide-key]");
+  assert((await entries.count()) === 13, "Yaku Guide did not render exactly thirteen entries.");
+  assert(
+    await entries.evaluateAll((items) =>
+      items.every(
+        (item) =>
+          item.querySelectorAll("[data-yaku-guide-card]").length > 0 &&
+          (item.querySelector(".yaku-guide__requirement")?.textContent ?? "").trim().length > 0 &&
+          (item.querySelector(".yaku-guide__points")?.textContent ?? "").trim().length > 0,
+      ),
+    ),
+    "At least one Yaku Guide entry lacks an example image, requirement, or points explanation.",
+  );
+  assert(
+    /does not analyze the current table/u.test(
+      ((await page.locator(".yaku-guide-dialog__intro").textContent()) ?? "").replace(/\s+/gu, " "),
+    ),
+    "Yaku Guide no longer clearly identifies itself as a reference rather than a live-table evaluator.",
+  );
+}
+
+async function inspectCardImageFrames(page, selector) {
+  return page.locator(selector).evaluateAll((images) =>
+    images.map((image) => {
+      const style = getComputedStyle(image);
+      const colorChannels = style.borderTopColor.match(/[\d.]+/gu)?.map(Number) ?? [];
+      const linearChannels = colorChannels.slice(0, 3).map((channel) => {
+        const normalized = channel / 255;
+        return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+      });
+      return {
+        borderColor: style.borderTopColor,
+        borderWidth: Number.parseFloat(style.borderTopWidth),
+        luminance:
+          linearChannels.length === 3
+            ? linearChannels[0] * 0.2126 + linearChannels[1] * 0.7152 + linearChannels[2] * 0.0722
+            : Number.NaN,
+      };
+    }),
+  );
+}
+
+function assertClearlyLightFrames(frames, label) {
+  assert(frames.length > 0, `${label} has no card-image frames to inspect.`);
+  assert(
+    frames.every(
+      ({ borderWidth, luminance }) =>
+        borderWidth >= 2 && Number.isFinite(luminance) && luminance >= 0.8,
+    ),
+    `${label} does not use a clearly light card frame: ${JSON.stringify(frames)}.`,
+  );
+}
+
+async function assertYakuGuideLightFrames(page, themeId) {
+  await page.locator("[data-yaku-guide-trigger]").click();
+  await page.locator("[data-yaku-guide-dialog]").waitFor({ state: "visible" });
+  assertClearlyLightFrames(
+    await inspectCardImageFrames(page, "[data-yaku-guide-card]"),
+    `${themeId} Yaku Guide`,
+  );
+  await page.keyboard.press("Escape");
+  assert(
+    await page
+      .locator("[data-yaku-guide-trigger]")
+      .evaluate((element) => document.activeElement === element),
+    `${themeId} Yaku Guide frame inspection did not restore focus.`,
+  );
 }
 
 async function configureSecondaryOptions(page, options) {
@@ -826,6 +1013,7 @@ try {
         optionsBox !== null && frameBox !== null && optionsBox.y >= frameBox.y + frameBox.height,
         `Options overlaps the card table at ${viewport.width}×${viewport.height}: ${JSON.stringify({ optionsBox, frameBox })}.`,
       );
+      await assertUtilityDock(page, viewport);
       await page.screenshot({
         path: resolve(
           outputDirectory,
@@ -841,6 +1029,70 @@ try {
     await waitForApplicationReady(page, browserErrors, networkErrors);
   }
 
+  await page.setViewportSize({ width: 390, height: 844 });
+  await assertUtilityDialogCycle(page, {
+    trigger: "[data-history-trigger]",
+    dialog: "[data-history-dialog]",
+    close: "[data-history-close]",
+    label: "History",
+  });
+  await assertUtilityDialogCycle(page, {
+    trigger: "[data-yaku-guide-trigger]",
+    dialog: "[data-yaku-guide-dialog]",
+    close: "[data-yaku-guide-close]",
+    label: "Yaku Guide",
+  });
+  await page.locator("[data-yaku-guide-trigger]").click();
+  await page.locator("[data-yaku-guide-dialog]").waitFor({ state: "visible" });
+  await assertYakuGuideContents(page);
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `yaku-guide-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await page.keyboard.press("Escape");
+  await assertUtilityDialogCycle(page, {
+    trigger: "[data-options-trigger]",
+    dialog: "[data-options-dialog]",
+    close: "[data-options-close]",
+    focus: '[data-theme-option][value="ink-parchment"]',
+    label: "Options",
+  });
+  for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
+    await selectTheme(page, themeId);
+    await assertYakuGuideLightFrames(page, themeId);
+  }
+  await selectTheme(page, "ink-parchment");
+  await page.setViewportSize({ width: 844, height: 390 });
+  await assertUtilityDock(page, { width: 844, height: 390 });
+  await assertUtilityDialogCycle(page, {
+    trigger: "[data-history-trigger]",
+    dialog: "[data-history-dialog]",
+    close: "[data-history-close]",
+    label: "History landscape",
+  });
+  await assertUtilityDialogCycle(page, {
+    trigger: "[data-yaku-guide-trigger]",
+    dialog: "[data-yaku-guide-dialog]",
+    close: "[data-yaku-guide-close]",
+    label: "Yaku Guide landscape",
+  });
+  await assertUtilityDialogCycle(page, {
+    trigger: "[data-options-trigger]",
+    dialog: "[data-options-dialog]",
+    close: "[data-options-close]",
+    focus: '[data-theme-option][value="ink-parchment"]',
+    label: "Options landscape",
+  });
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `utility-dock-844x390${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
   await page.setViewportSize({ width: 390, height: 844 });
   await runPhysicalDrawTrace(page);
   await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
@@ -1161,6 +1413,35 @@ try {
         String(captureCount),
       ),
     "Capture inspection did not show exactly the current player's public captured cards.",
+  );
+  const captureGalleryFrames = await page
+    .locator("[data-capture-inspector] img")
+    .evaluateAll((images) =>
+      images.map((image) => {
+        const bounds = image.getBoundingClientRect();
+        const style = getComputedStyle(image);
+        return {
+          ratio: bounds.width / bounds.height,
+          borderWidth: Number.parseFloat(style.borderTopWidth),
+          borderColor: style.borderTopColor,
+          objectFit: style.objectFit,
+        };
+      }),
+    );
+  assert(
+    captureGalleryFrames.length === captureCount &&
+      captureGalleryFrames.every(
+        ({ ratio, borderWidth, borderColor, objectFit }) =>
+          Math.abs(ratio - 0.625) < 0.03 &&
+          borderWidth >= 2 &&
+          borderColor !== "rgba(0, 0, 0, 0)" &&
+          objectFit === "contain",
+      ),
+    `Capture gallery no longer preserves a strong framed 5:8 card treatment: ${JSON.stringify(captureGalleryFrames)}.`,
+  );
+  assertClearlyLightFrames(
+    await inspectCardImageFrames(page, "[data-capture-inspector] img"),
+    "Capture gallery",
   );
   const captureInspectionState = await readState(page);
   assert(

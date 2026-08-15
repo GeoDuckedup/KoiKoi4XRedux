@@ -147,12 +147,11 @@ function renderHand(
   layer: Container,
   bounds: BoardRect,
   handLabel: string,
-  handCount: number,
   scale: number,
   colors: TableSceneColorsV1,
 ): void {
   layer.addChild(
-    label(`${handLabel.toUpperCase()} · ${handCount}`, bounds.x, bounds.y, {
+    label(handLabel.toUpperCase(), bounds.x, bounds.y, {
       color: colors.creamMuted,
       fontSize: Math.max(8, 9 * scale),
       fontWeight: "700",
@@ -172,7 +171,7 @@ function renderCaptureSummary(
   for (const [zone, title] of entries) {
     const bounds = layout.cardZones[zone];
     const compact = bounds.width < 105 || bounds.height < 42;
-    layer.addChild(
+    const children = [
       panel(bounds, {
         fill: colors.ink,
         fillAlpha: 0.76,
@@ -192,20 +191,25 @@ function renderCaptureSummary(
           letterSpacing: compact ? 0.25 : 0.8,
         },
       ),
-      label(
-        String(zoneCounts[zone]),
-        bounds.x + bounds.width - Math.max(5, bounds.width * 0.07),
-        bounds.y + bounds.height / 2,
-        {
-          align: "right",
-          anchorX: 1,
-          anchorY: 0.5,
-          color: colors.gold,
-          fontSize: Math.max(9, Math.min(15 * layout.scale, bounds.height * 0.38)),
-          fontWeight: "700",
-        },
-      ),
-    );
+    ];
+    if (zoneCounts[zone] > 0) {
+      children.push(
+        label(
+          String(zoneCounts[zone]),
+          bounds.x + bounds.width - Math.max(5, bounds.width * 0.07),
+          bounds.y + bounds.height / 2,
+          {
+            align: "right",
+            anchorX: 1,
+            anchorY: 0.5,
+            color: colors.gold,
+            fontSize: Math.max(9, Math.min(15 * layout.scale, bounds.height * 0.38)),
+            fontWeight: "700",
+          },
+        ),
+      );
+    }
+    layer.addChild(...children);
   }
 }
 
@@ -247,16 +251,8 @@ function renderDrawPile(layer: Container, layout: BoardLayout, colors: TableScen
 }
 
 function renderReveal(layer: Container, layout: BoardLayout, colors: TableSceneColorsV1): void {
-  const zone = layout.cardZones.reveal;
   const slot = layout.slots.reveal;
   layer.addChild(
-    label("REVEAL", zone.x + zone.width / 2, zone.y + 3, {
-      anchorX: 0.5,
-      color: colors.creamMuted,
-      fontSize: Math.max(7, 8.5 * layout.scale),
-      fontWeight: "700",
-      letterSpacing: 0.8,
-    }),
     new Graphics()
       .roundRect(slot.x, slot.y, slot.width, slot.height, Math.max(3, slot.width * 0.1))
       .fill({ color: colors.cream, alpha: 0.02 })
@@ -572,7 +568,6 @@ export function createTableScene(
       requiredChrome("OpponentHandLayer"),
       layout.cardZones.opponentHand,
       `${tableStatus.opponentLabel} hand`,
-      tableStatus.opponentHandCount,
       layout.scale,
       theme.table,
     );
@@ -597,8 +592,7 @@ export function createTableScene(
     renderHand(
       requiredChrome("PlayerHandLayer"),
       layout.cardZones.playerHand,
-      `${tableStatus.playerLabel} hand · ${tableStatus.playerScore} pts`,
-      tableStatus.playerHandCount,
+      `${tableStatus.playerLabel} hand`,
       layout.scale,
       theme.table,
     );

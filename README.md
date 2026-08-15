@@ -4,7 +4,8 @@ KoiKoi4x is a greenfield TypeScript rewrite of a two-player Hanafuda strategy ga
 has deployed and accepted **Phase 3E: playability corrections**, **Phase 3F-A: simplified table and
 larger hand**, the player-facing **Phase 3F-B: unified tap-only interaction** outcome, and **Phase
 3F-C: visual interaction cues** with an owner-approved primary deck. **Phase 3F-D: placement and
-capture choreography** is deployed and accepted. It
+capture choreography** is deployed and accepted. **Phase 3F-E: utility dock and capture cleanup**
+is locally accepted and awaits commit/deployment. It
 contains the canonical rules authority, all 48 artwork-independent card records, the complete
 deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
@@ -54,6 +55,7 @@ npm run validate:phase3ec
 npm run validate:phase3fa
 npm run validate:phase3fc
 npm run validate:phase3fd
+npm run validate:phase3fe
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -186,6 +188,26 @@ passed CI run `31844698117` (`verify`, 9m04s) and Pages run `31844698124` (`buil
 the approved deck, one canvas, 48/48 CardViews, 8 field / 8 hand / 24 draw, and clean diagnostics;
 `output/phase-3f-d/live-ready/shot-1.png` and `state-1.json` were inspected. Next: Phase 3F-E utility
 dock/capture cleanup, then Phase 5A full local match formats.
+
+`npm run validate:phase3fe` is the flattened successor gate for the presentation-only utility dock
+and capture cleanup. It keeps the current card/rules/animation authority intact, verifies the exact
+History / Yaku Guide / Options bottom order, History and reference-dialog focus behavior, all thirteen
+canonical Yaku Guide entries with example images, decluttered routine table labels, public capture
+gallery 5:8 framing, privacy, and root/Pages responsive traces. The Guide is a static rules reference,
+not tutorial/onboarding or a current-table evaluator; Phase 5A retains exact ordered yaku-card
+evidence in expanded end-of-play details. Root and Pages artifacts are written under
+`output/phase-3f-e/e2e/`.
+
+Phase 3F-E local closure is green. `npm run check` passed format, lint, all workspace typechecks,
+deck validation, 47 files / 444 ordinary tests, all 10,002 deterministic generated matches, and the
+772-module production build. `npm run validate:phase3fe` passed the approved 48/48 release deck,
+100 technical artifacts, 6 focused files / 79 tests, Workshop, the 14-viewport density review, and
+root plus repository-prefixed Pages browser suites. The bundled web-game client reached ready state
+with one canvas and 48 persistent CardViews; Guide, landscape dock, and capture-gallery screenshots
+were inspected. Independent Terra review initially found two medium issues—cross-theme light-frame
+proof and complete utility-dialog mutual exclusion—and the repaired implementation received no
+remaining blocker, high, or medium finding. Commit/push and hosted CI/Pages/live verification remain;
+this is not yet a hosted or live acceptance claim.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

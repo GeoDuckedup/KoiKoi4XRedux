@@ -852,23 +852,67 @@ live-client iterations reached `ready: true` with the approved `new-primary-deck
 CardViews, 8 field / 8 hand / 24 draw, and zero clipped/invalid/overlap diagnostics. The inspected
 live screenshot and state are `output/phase-3f-d/live-ready/shot-1.png` and `state-1.json`.
 
+### Phase 3F-E — Utility dock and capture cleanup
+
+Status: **implemented, independently reviewed, and locally accepted; deployment pending**.
+
+This is a presentation-only refinement of the established local-table shell. The bottom-safe utility
+row contains exactly **History**, **Yaku Guide**, and **Options**, in that order. History exposes the
+complete public event recap without reopening the retired inline recap. Yaku Guide is a read-only
+reference to the closed thirteen-yaku ruleset, with an example image and short explanation for every
+canonical yaku; it is not tutorial/onboarding logic and never evaluates the current table. Options
+retains its existing cosmetic/table controls.
+
+Capture inspection keeps its public-card-only ownership and modal/focus behavior, but gallery cards
+must retain the regular 5:8 Hanafuda proportion and a clear light frame rather than appearing
+vertically stretched. Routine hand count/points labels, capture-category zero counts, and the Reveal
+section label are removed where the card/table already communicates that information. This slice
+does not alter rules, legal actions, scoring, animation authority, card identity, or hidden-state
+projection. Exact yaku-card evidence in formation order remains Phase 5A result-detail ownership.
+
+Gate:
+
+- `UTILITY-3FE-001` through `UTILITY-3FE-008` bind utility order, modal/focus behavior, closed
+  thirteen-yaku reference completeness, decluttered table labels, capture-only positive counts,
+  regular-ratio/light-frame capture cards, privacy, and responsive root/Pages behavior;
+- root and repository-prefixed production traces exercise History, Yaku Guide, Options, and public
+  capture inspection at all seven supported viewports plus focused 390×844 and 844×390 checks;
+- dialogs are mutually exclusive, Escape restores focus to the initiating utility/capture control,
+  inactive routine recap has no visible footprint, and no utility action changes authoritative state;
+- one canvas, 48 persistent CardViews, public-projection boundaries, dense-field containment, and
+  zero browser/network errors remain intact;
+- CI/Pages run `npm run validate:phase3fe`, a flattened successor gate that runs the approved release
+  deck, technical decks, focused presentation tests, Workshop, density review, and root/Pages smoke,
+  then uploads `output/phase-3f-e/e2e/` evidence.
+
+Architecture is recorded in [`ADR 0024`](./adr/0024-phase-3f-e-utility-dock-and-capture-cleanup.md).
+
+Local closure evidence: `npm run check` passed format/lint/typecheck/decks, 47 files / 444 ordinary
+tests, all 10,002 generated matches, and the 772-module production build. `npm run
+validate:phase3fe` passed release deck approval (48/48), all 100 technical deck artifacts, 6 focused
+files / 79 tests, Workshop, fourteen root/Pages dense-field checks, and root/Pages utility smoke.
+The bundled skill client reached ready state with one canvas and 48 persistent CardViews. The focused
+390×844 Guide and capture-inspection screenshots plus the 844×390 dock screenshot were visually
+inspected under `output/phase-3f-e/e2e/`. Independent Terra review initially found two medium issues:
+the frame test did not prove a clearly light border in every theme, and Options was missing from the
+complete utility-dialog mutual-exclusion guard. Both were repaired; the post-repair review reports no
+blocker, high, or medium finding. Commit/push and hosted CI/Pages/live verification remain; no hosted
+or live acceptance is claimed.
+
 ## Later phases
 
-1. **Phase 3F-E — Utility dock and capture cleanup:** History, Yaku Guide, and Options bottom dock;
-   remove redundant hand/capture/reveal labels; preserve regular card proportions in expanded capture.
-2. **Phase 5A — Full local match formats:** 3/6/12 rounds, full recap/rematch, and ordered
+1. **Phase 5A — Full local match formats:** 3/6/12 rounds, full recap/rematch, and ordered
    yaku-card evidence in expanded end-of-play details.
-3. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
-4. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
-5. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
-6. **Phase 9A — Product polish:** final interface, accessibility, performance, and reliability pass.
-7. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook,
+2. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
+3. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
+4. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
+5. **Phase 9A — Product polish:** final interface, accessibility, performance, and reliability pass.
+6. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook,
    deliberately executed after the final interaction and progression model stabilizes.
-8. **Phase 9B — Release acceptance:** final content, telemetry, cross-platform, and release checks.
+7. **Phase 9B — Release acceptance:** final content, telemetry, cross-platform, and release checks.
 
 No later phase may bypass the acceptance gate of the preceding phase.
 
-The next deferred presentation slice after 3F-D is **Phase 3F-E utility dock and capture cleanup**:
-History, Yaku Guide, and Options occupy the bottom utility row; hand/capture zero-count labels and
-the Reveal label are removed; expanded captures retain the regular card ratio and white frame. It
-does not reopen 3F-D animation authority.
+Phase 3F-E is locally accepted and awaiting deployment. Its bottom dock, public History/reference
+dialogs, and capture cleanup do not reopen 3F-D animation authority or transfer Phase 5A's ordered
+yaku evidence into routine play.
