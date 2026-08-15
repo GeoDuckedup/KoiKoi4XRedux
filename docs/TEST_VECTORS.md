@@ -693,7 +693,30 @@ evidence are pending. This remains presentation-only: no engine, protocol, rules
 scoring, replay, public projection, result evidence, semantic-card controls, or CardView identity
 changes. Phase 5A alone records exact achieved-yaku card evidence in formation order.
 
-## 30. Approved-decision coverage matrix
+## 30. Phase 5A local-match and result-evidence vectors
+
+| ID | Required expectation |
+|---|---|
+| `MATCH-5A-001-FORMATION-ORDER` | The engine records each newly completed ordinary Yaku once, at its exact Hand/Draw trigger, in contiguous round-global sequence order. A later capture cannot rewrite its trigger phase, sequence, or contribution record. |
+| `MATCH-5A-002-SHARED-CARDS` | Formation and final scored rows retain canonical-order contributing CardIds. One qualifying card may appear in multiple Yaku rows when it genuinely supports each Yaku; rows are never deduplicated by card. |
+| `MATCH-5A-003-BRIGHT-UPGRADE` | A Bright-tier upgrade records the newly completed upgrade at its own trigger while preserving earlier completed Bright evidence. The final scored rows and arithmetic include only the authoritative active rows for the awarded result. |
+| `MATCH-5A-004-INCREMENT` | Incremental category Yaku record the actual trigger-time active row and final value. The result award equals the sum of final scored ordinary-Yaku rows times the authoritative table multiplier. |
+| `MATCH-5A-005-RESULT-KINDS` | Banked and last-Koi-caller End-of-Play results carry valid ordinary-Yaku evidence; unscored cancellation/lucky/no-score result kinds do not claim ordinary-Yaku evidence. |
+| `MATCH-5A-006-PROJECTION-PROTOCOL-REPLAY` | The revised public observation, protocol validator, and replay path preserve formation chronology and scored rows, reject malformed/mismatched evidence, and expose no hidden hand, draw order, RNG, checkpoint, or command IDs. |
+| `MATCH-5A-007-THREE-SIX-TWELVE-ADVANCE` | Real local 3/6/12 formats advance only after a completed nonfinal round, retain match totals/history, schedule the actual next month/starter, and finish only at the selected format boundary. |
+| `MATCH-5A-008-RECAP-REMATCH` | Public History retains completed-round recap through real advancement. A completed match shows its authoritative winner/tie and starts a real rematch with reset match state rather than a browser-only visual reset. |
+| `MATCH-5A-009-EXPANDED-RESULT-UI` | Result presentation is concise first and details are closed initially. The compact surface shows winner/outcome, Yaku count, multiplier, award, and next action. Expanded details render authoritative yaku galleries in formation order, intentional repeated cards, and exact arithmetic. |
+| `MATCH-5A-010-RESPONSIVE-PRIVACY` | Root and repository-prefixed Pages traces retain seven baseline viewports and add focused portrait/landscape result-detail checks. They retain one canvas, persistent CardViews, containment, zero browser/network errors, and recipient-safe projection/text. |
+| `MATCH-5A-011-PRODUCTION-TRACE` | Browser acceptance reaches an ordinary Bank/result and End-of-Play through the production deterministic local-deal commands, keeps details closed before expansion, advances the genuine next month/state/history, and completes/rematches without injecting production state. |
+
+Phase 5A binding: focused engine, protocol, fixture, and web tests plus root/Pages production smoke
+prove the 3/6/12 match contract, trigger-time evidence, public schema/replay boundary, concise-first
+result details, responsive privacy, and real advance/rematch. The flattened gate is
+`npm run validate:phase5a`; artifacts belong under `output/phase-5a/e2e/`. ADR 0030 records the
+engine-owned chronology and render-only browser boundary. Release, deployment, and live evidence are
+pending.
+
+## 31. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

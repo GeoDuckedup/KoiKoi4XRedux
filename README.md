@@ -67,6 +67,7 @@ npm run validate:phase3fg
 npm run validate:phase3fh
 npm run validate:phase3fi
 npm run validate:phase3fj
+npm run validate:phase5a
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -332,6 +333,23 @@ visible and accessible no-match strings. Three live client iterations recorded l
 ready `state-1`/`state-2`, one canvas, 48 unique CardViews, no clipped/invalid/overlap diagnostics,
 and an inspected live screenshot. The hosted workflow emitted the Node 20 deprecation notice only;
 it is nonblocking. Phase 3F-J is deployed, live-verified, and accepted; Phase 5A is current.
+
+`npm run validate:phase5a` is the locally accepted flattened successor gate for full local 3/6/12 match
+formats. It retains the Phase 3F-J release-deck, technical-deck, interaction/runtime, Workshop,
+density-review, and Root/Pages production checks, then adds focused engine/protocol/fixture/web
+coverage for trigger-time ordinary-Yaku evidence, public replay/projection validation, real match
+advancement, concise-first result details, and rematch. Root and Pages artifacts are written under
+`output/phase-5a/e2e/`. Focused target-browser Root and repository-prefixed Pages traces are accepted:
+they reach a real Bank/result, expanded yaku gallery, short-landscape card-owned scrolling, real
+three-round advancement/final restriction, and a distinct-deal rematch without state injection. Full
+`npm run check` passed 52 files / 489 ordinary tests, all 10,002 deterministic seeds (3/6/12 = 3,334
+each), deck validation, and the 778-module build. The final single `npm run validate:phase5a` passed
+the 48/48 release deck, 100 technical artifacts, 17 files / 243 focused tests, Workshop, 14-viewport
+density review, and full Root/Pages smoke through the retained interaction suites plus End-of-Play,
+concise/expanded Bank, responsive scrolling, real three-round progression/final restriction, and a
+distinct-deal rematch. Compact and expanded portrait/landscape artifacts were inspected; independent
+Terra re-review found no blocker, high, or medium issue. Commit/push, hosted CI/Pages, deployment,
+and live verification remain pending.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

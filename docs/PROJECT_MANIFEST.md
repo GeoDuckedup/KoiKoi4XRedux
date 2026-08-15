@@ -35,6 +35,7 @@
 | Phase 3F-H active-hand start cue | `docs/adr/0027-phase-3f-h-active-hand-start-cue.md` |
 | Phase 3F-I Reveal start cue | `docs/adr/0028-phase-3f-i-reveal-start-cue.md` |
 | Phase 3F-J legal destination pulse | `docs/adr/0029-phase-3f-j-legal-destination-pulse.md` |
+| Phase 5A formation evidence and local progression | `docs/adr/0030-phase-5a-formation-evidence-and-local-match-progression.md` |
 | Architectural decisions | `docs/adr/` |
 | Agent operating instructions | `AGENTS.md` |
 

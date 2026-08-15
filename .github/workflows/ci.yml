@@ -22,17 +22,12 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run check
-      - run: npm run validate:phase3fj
+      - run: npm run validate:phase5a
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-3f-j-legal-destination-pulse-and-deck-workshop
+          name: phase-5a-local-match-and-result-evidence
           path: |
-            output/phase-3f-j/e2e
-            output/phase-3f-f/e2e
-            output/phase-3f-e/e2e
-            output/phase-3d-d/e2e
-            output/phase-3d-a/visual-directions
-            output/phase-2e/e2e
+            output/phase-5a/e2e
             decks/new-primary-deck/generated/contact-sheets
           if-no-files-found: error

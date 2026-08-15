@@ -2,16 +2,19 @@ import {
   CARD_IDS,
   EngineCommandError,
   applyGameplayCommand,
+  deriveYakuContributingCardIds,
   evaluateYaku,
   getLegalActions,
   validateAuthoritativeState,
   type AuthoritativeGameStateV1,
   type CardId,
+  type CompletedYakuFormationV1,
   type EnginePhaseV1,
   type PlayerId,
   type PlayerStateV1,
   type YakuTriggerKey,
 } from "@koikoi4x/engine";
+import * as enginePublicApi from "@koikoi4x/engine";
 import { describe, expect, it } from "vitest";
 
 interface StateFixtureParts {
@@ -44,6 +47,22 @@ function playerSnapshot(
     activeYaku: evaluation.activeYaku,
     currentYakuTotal: evaluation.currentYakuTotal,
   };
+}
+
+function completedFormationsFor(
+  players: readonly PlayerStateV1[],
+): readonly CompletedYakuFormationV1[] {
+  return players
+    .flatMap((player) =>
+      player.activeYaku.map((yaku) => ({
+        sequence: 0,
+        playerId: player.id,
+        phase: "hand" as const,
+        yaku,
+        contributingCardIds: deriveYakuContributingCardIds(yaku.key, player.captured, 1),
+      })),
+    )
+    .map((formation, index) => ({ ...formation, sequence: index + 1 }));
 }
 
 function buildStateFixture(parts: StateFixtureParts): AuthoritativeGameStateV1 {
@@ -93,6 +112,7 @@ function buildStateFixture(parts: StateFixtureParts): AuthoritativeGameStateV1 {
       firstYakuTriggerPlayerId,
       specialPrivilege: null,
       frozenFinalRoundLeaderId: null,
+      completedYakuFormations: completedFormationsFor(players),
     },
     phase: parts.phase,
     history: [],
@@ -247,6 +267,14 @@ function finalTurnFixture(drawHead: CardId): AuthoritativeGameStateV1 {
 }
 
 describe("Phase 1C yaku state-machine integration", () => {
+  it("keeps transition validation trust markers out of the public engine API", () => {
+    expect(Object.keys(enginePublicApi)).not.toContain("markTrustedValidatedEngineState");
+    const invalidState = { ...directDrawFixture(), stateVersion: -1 };
+    expect(() => enginePublicApi.assertValidAuthoritativeState(invalidState)).toThrow(
+      "STATE_INVARIANT_FAILED",
+    );
+  });
+
   it("combines simultaneous Hand yaku, records them atomically, and pauses before Draw", () => {
     const state = buildStateFixture({
       aHand: MULTI_HAND,
@@ -282,6 +310,22 @@ describe("Phase 1C yaku state-machine integration", () => {
       },
     });
     expect(transition.state.players[0].seenYakuKeys).toEqual(["blossomViewing", "moonViewing"]);
+    expect(transition.state.round.completedYakuFormations).toEqual([
+      {
+        sequence: 1,
+        playerId: "player-a",
+        phase: "hand",
+        yaku: { key: "blossomViewing", name: "Blossom Viewing", points: 5 },
+        contributingCardIds: ["march-curtain", "september-sake-cup"],
+      },
+      {
+        sequence: 2,
+        playerId: "player-a",
+        phase: "hand",
+        yaku: { key: "moonViewing", name: "Moon Viewing", points: 5 },
+        contributingCardIds: ["august-moon", "september-sake-cup"],
+      },
+    ]);
     expect(transition.state.round.firstYakuTriggerPlayerId).toBe("player-a");
     expect(transition.state.round.drawPile).toEqual(state.round.drawPile);
     expect(transition.events.map((event) => event.type)).toEqual([
@@ -331,6 +375,83 @@ describe("Phase 1C yaku state-machine integration", () => {
     }
     expect(rejection).toBeInstanceOf(EngineCommandError);
     expect((rejection as EngineCommandError).code).toBe("COMMAND_NOT_ALLOWED_IN_PHASE");
+
+    const banked = applyGameplayCommand(transition.state, {
+      type: "chooseYakuDecision",
+      commandId: "bank-formed-yaku",
+      matchId: transition.state.matchId,
+      actorId: "player-a",
+      expectedStateVersion: transition.state.stateVersion,
+      choice: "bank",
+    });
+    const result = banked.state.history[0];
+    expect(result?.evidence).toEqual({
+      kind: "ordinaryYaku",
+      completedFormations: transition.state.round.completedYakuFormations,
+      scoredYaku: [
+        {
+          formationSequence: 1,
+          yaku: { key: "blossomViewing", name: "Blossom Viewing", points: 5 },
+          contributingCardIds: ["march-curtain", "september-sake-cup"],
+        },
+        {
+          formationSequence: 2,
+          yaku: { key: "moonViewing", name: "Moon Viewing", points: 5 },
+          contributingCardIds: ["august-moon", "september-sake-cup"],
+        },
+      ],
+    });
+    expect(validateAuthoritativeState(banked.state)).toEqual([]);
+    const firstFormation = transition.state.round.completedYakuFormations[0];
+    const secondFormation = transition.state.round.completedYakuFormations[1];
+    if (firstFormation === undefined || secondFormation === undefined) {
+      throw new Error("Combined formation evidence is incomplete.");
+    }
+    const malformedFormation: AuthoritativeGameStateV1 = {
+      ...transition.state,
+      round: {
+        ...transition.state.round,
+        completedYakuFormations: [
+          {
+            ...firstFormation,
+            contributingCardIds: ["march-curtain", "august-moon"],
+          },
+          secondFormation,
+        ],
+      },
+    };
+    expect(validateAuthoritativeState(malformedFormation).map((entry) => entry.code)).toContain(
+      "ROUND_YAKU_FORMATIONS_INVALID",
+    );
+    if (result?.evidence?.kind !== "ordinaryYaku" || banked.state.phase.kind !== "roundComplete") {
+      throw new Error("Banked ordinary-yaku evidence is missing.");
+    }
+    const firstScoredYaku = result.evidence.scoredYaku[0];
+    const secondScoredYaku = result.evidence.scoredYaku[1];
+    if (firstScoredYaku === undefined || secondScoredYaku === undefined) {
+      throw new Error("Banked scored-yaku evidence is incomplete.");
+    }
+    const malformedResult = {
+      ...result,
+      evidence: {
+        ...result.evidence,
+        scoredYaku: [
+          {
+            ...firstScoredYaku,
+            contributingCardIds: ["march-curtain", "august-moon"] as const,
+          },
+          secondScoredYaku,
+        ],
+      },
+    };
+    const malformedScoredRows: AuthoritativeGameStateV1 = {
+      ...banked.state,
+      history: [malformedResult],
+      phase: { ...banked.state.phase, result: malformedResult },
+    };
+    expect(validateAuthoritativeState(malformedScoredRows).map((entry) => entry.code)).toContain(
+      "CURRENT_ROUND_RESULT_INVALID",
+    );
   });
 
   it("completes Current-Month Set from a Hand four-card sweep without revealing Draw", () => {
@@ -634,6 +755,9 @@ describe("Phase 1C yaku state-machine integration", () => {
       currentPoints: 5,
     });
     expect(transition.events.some((event) => event.type === "yakuDecisionRequired")).toBe(false);
+    expect(transition.state.round.completedYakuFormations).toEqual(
+      state.round.completedYakuFormations,
+    );
   });
 
   it("rejects fabricated player-local trigger history without capture evidence", () => {

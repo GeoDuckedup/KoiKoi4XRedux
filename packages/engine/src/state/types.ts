@@ -52,6 +52,26 @@ export interface ActiveYakuV1 {
   readonly points: number;
 }
 
+/**
+ * Immutable evidence captured at the exact Yaku-check that first completed a
+ * trigger key. Sequences are round-global so independently formed yaku can be
+ * rendered in their actual chronology, including overlapping card sets.
+ */
+export interface CompletedYakuFormationV1 {
+  readonly sequence: number;
+  readonly playerId: PlayerId;
+  readonly phase: CapturePhase;
+  readonly yaku: ActiveYakuV1;
+  readonly contributingCardIds: readonly CardId[];
+}
+
+/** A final scored-yaku row linked back to its trigger-time formation. */
+export interface ScoredYakuEvidenceV1 {
+  readonly formationSequence: number;
+  readonly yaku: ActiveYakuV1;
+  readonly contributingCardIds: readonly CardId[];
+}
+
 export type YakuDecisionResumeV1 =
   | { readonly kind: "drawPhase" }
   | { readonly kind: "completeTurn"; readonly lastActorId: PlayerId }
@@ -152,6 +172,11 @@ export type RoundResultEvidenceV1 =
       readonly kind: "luckyHands";
       readonly hands: readonly LuckyHandEvidence[];
     }
+  | {
+      readonly kind: "ordinaryYaku";
+      readonly completedFormations: readonly CompletedYakuFormationV1[];
+      readonly scoredYaku: readonly ScoredYakuEvidenceV1[];
+    }
   | null;
 
 export type NextRoundStarterReasonV1 =
@@ -221,6 +246,7 @@ export interface RoundStateV1 {
   readonly firstYakuTriggerPlayerId: PlayerId | null;
   readonly specialPrivilege: SpecialPrivilegeStateV1 | null;
   readonly frozenFinalRoundLeaderId: PlayerId | null;
+  readonly completedYakuFormations: readonly CompletedYakuFormationV1[];
 }
 
 export type EnginePhaseV1 =

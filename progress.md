@@ -2,6 +2,21 @@ Original prompt: read the package and understand it, then let me know when we ar
 
 # KoiKoi4x Progress
 
+## 2026-08-15 — Phase 5A locally complete and accepted
+
+- Added the pending release contract only: ADR 0030 and `MATCH-5A-001`–`MATCH-5A-011` define
+  trigger-time ordinary-Yaku formation evidence, public schema/replay validation, real 3/6/12
+  progression/rematch, concise-first result details, and root/Pages privacy evidence.
+- `npm run check` passed 52 files / 489 ordinary tests, all 10,002 deterministic seeds (3/6/12 =
+  3,334 each), deck validation, and the 778-module build. The final single `npm run validate:phase5a`
+  passed the 48/48 release deck, 100 technical artifacts, 17 files / 243 focused tests, Workshop,
+  14-viewport density review, and full Root/Pages smoke through retained interaction suites plus
+  End-of-Play, concise/expanded Bank, responsive scrolling, real three-round progression/final
+  restriction, and distinct-deal rematch.
+- Compact and expanded portrait/landscape result artifacts were inspected. Independent Terra re-review
+  found no blocker, high, or medium issue. Commit/push, hosted CI/Pages, deployment, and live
+  verification remain pending; no release or live claim is made.
+
 ## 2026-08-15 — Phase 3F-J deployed, live-verified, and accepted
 
 - Approved presentation-only refinement: after a Hand or settled Reveal source is selected, existing

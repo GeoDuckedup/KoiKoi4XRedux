@@ -78,6 +78,14 @@ Bank/Koi-Koi actions, applies ordinary/special/final-leader availability, and co
 one accepted decision command. Bank and natural exhaustion commit a typed round result and durable
 history; final-month results commit a cumulative match result.
 
+Phase 5A records each ordinary-Yaku completion in the engine at the exact trigger-time Hand/Draw
+check. A scored ordinary result publishes canonical-order final rows linked to that chronology; a
+shared card remains in every row it actually supports. Projection, protocol validation, and replay
+carry this public evidence before Phase 5B persistence. `apps/web` renders it and sends only real
+advance/rematch intents: it must not infer qualification, scoring, next-round state, or match outcome.
+Nonfinal advancement preserves scores/history through `advanceRound`; a terminal result creates a
+fresh authoritative local match on rematch.
+
 Result commitment and next-round dealing are separate transitions. `advanceRound` validates the
 completed state and command before restoring the external RNG checkpoint, then returns the newly
 advanced checkpoint. Its ordered-deck sibling supports authored fixtures. New deals reset all

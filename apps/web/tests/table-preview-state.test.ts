@@ -84,6 +84,7 @@ describe("Phase 2B table diagnostics", () => {
         handoffPending: false,
         recapCount: 1,
         latestRecap: "Round ready. Player A begins.",
+        matchLength: 3,
         commandCount: 0,
       },
       layout,

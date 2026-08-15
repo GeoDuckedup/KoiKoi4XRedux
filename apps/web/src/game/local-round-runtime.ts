@@ -1,5 +1,6 @@
 import {
   applyGameplayCommand,
+  advanceRound,
   createSeededRandomSource,
   deepFreeze,
   projectPlayerObservation,
@@ -8,6 +9,7 @@ import {
   type AuthoritativeGameStateV1,
   type EngineCheckpointV1,
   type GameplayCommandV1,
+  type MatchLength,
   type PlayerId,
   type PlayerObservationV1,
   type PublicGameEventV1,
@@ -23,6 +25,27 @@ export const PHASE_3B_MATCH_ID = "phase3b-local-round" as const;
 /** @deprecated Use PHASE_3B_MATCH_ID. */
 export const PHASE_3A_MATCH_ID = PHASE_3B_MATCH_ID;
 
+/**
+ * The production initial match keeps the locked Phase 3B seed. Every explicit
+ * fresh match/rematch receives a distinct but reproducible valid engine seed.
+ */
+export function createFreshLocalMatchSeed(restartSequence: number): string {
+  if (!Number.isSafeInteger(restartSequence) || restartSequence < 1) {
+    throw new Error(
+      "LOCAL_MATCH_SEED_SEQUENCE_INVALID: restart sequence must be a positive integer.",
+    );
+  }
+  return (BigInt(restartSequence) + 3n).toString(16).padStart(32, "0");
+}
+
+/** A rematch retains its completed authoritative format; a fresh match uses Options. */
+export function resolveFreshLocalMatchLength(
+  selectedMatchLength: MatchLength,
+  completedMatchLength: MatchLength | null = null,
+): MatchLength {
+  return completedMatchLength ?? selectedMatchLength;
+}
+
 export interface LocalRoundTransitionV1 {
   readonly after: PlayerObservationV1;
   readonly before: PlayerObservationV1;
@@ -36,6 +59,7 @@ export interface LocalRoundRuntimeV1 {
   readonly state: AuthoritativeGameStateV1;
   readonly viewerId: PlayerId;
   createSource: () => InteractionSourceV1;
+  advanceRound: () => LocalRoundTransitionV1;
   observe: () => PlayerObservationV1;
   submit: (intent: InputCommandIntentV1) => LocalRoundTransitionV1;
   switchViewer: (playerId: PlayerId) => PlayerObservationV1;
@@ -76,6 +100,7 @@ function commandFromIntent(intent: InputCommandIntentV1, commandId: string): Gam
 
 export function createLocalRoundRuntime(input?: {
   readonly matchId?: string;
+  readonly matchLength?: MatchLength;
   readonly seed?: string;
 }): LocalRoundRuntimeV1 {
   const matchId = input?.matchId ?? PHASE_3B_MATCH_ID;
@@ -85,22 +110,21 @@ export function createLocalRoundRuntime(input?: {
       commandId: `${matchId}:start`,
       matchId,
       expectedStateVersion: 0,
-      matchLength: 3,
+      matchLength: input?.matchLength ?? 3,
       starterPolicy: { kind: "provided", playerId: "player-a" },
     },
     createSeededRandomSource(input?.seed ?? PHASE_3B_LOCAL_SEED),
   );
-  if (started.state.phase.kind !== "awaitingHandPlay") {
-    throw new Error("PHASE3B_OPENING_RESULT: the locked local seed must begin a playable round.");
-  }
   let state = started.state;
-  let viewerId: PlayerId = started.state.phase.playerId;
+  let checkpoint = started.checkpoint;
+  let viewerId: PlayerId =
+    started.state.phase.kind === "awaitingHandPlay" ? started.state.phase.playerId : "player-a";
   let commandSequence = 0;
 
   const observe = (): PlayerObservationV1 => projectPlayerObservation(state, viewerId);
   const runtime: LocalRoundRuntimeV1 = {
     get checkpoint() {
-      return started.checkpoint;
+      return checkpoint;
     },
     get state() {
       return state;
@@ -110,6 +134,39 @@ export function createLocalRoundRuntime(input?: {
     },
     observe,
     createSource: () => createInteractionSourceFromObservation(observe()),
+    advanceRound: () => {
+      const before = observe();
+      if (state.phase.kind !== "roundComplete") {
+        throw new Error(
+          "LOCAL_ROUND_ADVANCE_INVALID: only a completed nonfinal round can advance.",
+        );
+      }
+      commandSequence += 1;
+      const transition = advanceRound(
+        state,
+        deepFreeze({
+          type: "advanceRound" as const,
+          commandId: `${matchId}:advance:${commandSequence}`,
+          matchId,
+          expectedStateVersion: state.stateVersion,
+        }),
+        checkpoint,
+      );
+      state = transition.state;
+      checkpoint = transition.checkpoint;
+      const after = observe();
+      const handoffPlayerId =
+        state.phase.kind === "awaitingHandPlay" && state.phase.playerId !== viewerId
+          ? state.phase.playerId
+          : null;
+      return deepFreeze({
+        before,
+        after,
+        events: projectPublicEvents(transition.events),
+        handoffPlayerId,
+        roundComplete: state.phase.kind === "roundComplete" || state.phase.kind === "matchComplete",
+      });
+    },
     submit: (intent) => {
       const before = observe();
       if (

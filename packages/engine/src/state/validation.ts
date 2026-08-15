@@ -8,18 +8,37 @@ import {
   frozenLeader,
 } from "../rules/round-results";
 import {
+  deriveYakuContributingCardIds,
   evaluateYaku,
   hasValidYakuSeenHistory,
   isCanonicalActiveYaku,
+  isCanonicalYakuContributionSnapshot,
   isYakuTriggerKey,
 } from "../rules/yaku";
-import { MATCH_LENGTHS, PLAYER_IDS, type AuthoritativeGameStateV1 } from "./types";
+import {
+  MATCH_LENGTHS,
+  PLAYER_IDS,
+  type AuthoritativeGameStateV1,
+  type CompletedYakuFormationV1,
+  type RoundResultV1,
+  type ScoredYakuEvidenceV1,
+} from "./types";
+import { isTrustedValidatedEngineState } from "./trusted-engine-state-cache";
 
 export interface StateValidationIssue {
   readonly code: string;
   readonly path: string;
   readonly message: string;
 }
+
+/**
+ * Engine transitions deep-freeze their evidence. Re-validating an unchanged,
+ * already frozen formation/history object on each subsequent command is pure
+ * duplicate work, so memoize only demonstrably deep-frozen engine artifacts.
+ * Hand-authored or partially frozen external states always take the full path.
+ */
+const COMPLETED_FORMATION_VALIDITY = new WeakMap<object, boolean>();
+const ORDINARY_RESULT_VALIDITY = new WeakMap<object, boolean>();
 
 function issue(code: string, path: string, message: string): StateValidationIssue {
   return Object.freeze({ code, path, message });
@@ -67,6 +86,129 @@ function authoritativeCardZones(state: AuthoritativeGameStateV1): readonly {
     : zones;
 }
 
+function cardIdsAreCanonicalOrder(cardIds: readonly CardId[]): boolean {
+  return cardIds.every(
+    (cardId, index) =>
+      index === 0 || CARD_IDS.indexOf(cardIds[index - 1] ?? cardId) < CARD_IDS.indexOf(cardId),
+  );
+}
+
+function isDeepFrozenFormationSet(formations: readonly CompletedYakuFormationV1[]): boolean {
+  return (
+    Object.isFrozen(formations) &&
+    formations.every(
+      (formation) =>
+        Object.isFrozen(formation) &&
+        Object.isFrozen(formation.yaku) &&
+        Object.isFrozen(formation.contributingCardIds),
+    )
+  );
+}
+
+function completedFormationsAreStructurallyValid(
+  formations: readonly CompletedYakuFormationV1[],
+  scheduledMonth: number,
+): boolean {
+  const cacheable = isDeepFrozenFormationSet(formations);
+  const cached = cacheable ? COMPLETED_FORMATION_VALIDITY.get(formations) : undefined;
+  if (cached !== undefined) return cached;
+  const formationKeys = new Set<string>();
+  const valid = formations.every((formation, index) => {
+    const uniqueKey = `${formation.playerId}:${formation.yaku.key}`;
+    const valid =
+      formation.sequence === index + 1 &&
+      PLAYER_IDS.includes(formation.playerId) &&
+      (formation.phase === "hand" || formation.phase === "draw") &&
+      isCanonicalActiveYaku(formation.yaku) &&
+      formation.contributingCardIds.length > 0 &&
+      formation.contributingCardIds.every(isCardId) &&
+      new Set(formation.contributingCardIds).size === formation.contributingCardIds.length &&
+      cardIdsAreCanonicalOrder(formation.contributingCardIds) &&
+      isCanonicalYakuContributionSnapshot(
+        formation.yaku,
+        formation.contributingCardIds,
+        scheduledMonth as 1,
+      ) &&
+      !formationKeys.has(uniqueKey);
+    formationKeys.add(uniqueKey);
+    return valid;
+  });
+  if (cacheable) COMPLETED_FORMATION_VALIDITY.set(formations, valid);
+  return valid;
+}
+
+function scoredYakuRowsAreValid(
+  result: RoundResultV1,
+  scoredYaku: readonly ScoredYakuEvidenceV1[],
+  completedFormations: readonly CompletedYakuFormationV1[],
+): boolean {
+  if (result.scorerId === null || scoredYaku.length !== result.activeYaku.length) return false;
+  const sequences = scoredYaku.map((row) => row.formationSequence);
+  if (
+    new Set(sequences).size !== sequences.length ||
+    !sequences.every((entry, index) => index === 0 || (sequences[index - 1] ?? 0) < entry)
+  )
+    return false;
+  const rowsMatchActive = scoredYaku.every((row) =>
+    result.activeYaku.some(
+      (active) =>
+        JSON.stringify(active) === JSON.stringify(row.yaku) &&
+        row.contributingCardIds.length > 0 &&
+        row.contributingCardIds.every(isCardId) &&
+        new Set(row.contributingCardIds).size === row.contributingCardIds.length &&
+        cardIdsAreCanonicalOrder(row.contributingCardIds) &&
+        isCanonicalYakuContributionSnapshot(
+          row.yaku,
+          row.contributingCardIds,
+          result.scheduledMonth,
+        ) &&
+        (() => {
+          const formation = completedFormations.find(
+            (candidate) =>
+              candidate.sequence === row.formationSequence &&
+              candidate.playerId === result.scorerId &&
+              candidate.yaku.key === row.yaku.key,
+          );
+          return (
+            formation !== undefined &&
+            formation.contributingCardIds.every((cardId) =>
+              row.contributingCardIds.includes(cardId),
+            )
+          );
+        })(),
+    ),
+  );
+  return (
+    rowsMatchActive &&
+    scoredYaku.reduce((sum, row) => sum + row.yaku.points, 0) === result.basePoints
+  );
+}
+
+function ordinaryYakuEvidenceIsValid(result: RoundResultV1): boolean {
+  if (result.evidence?.kind !== "ordinaryYaku") return false;
+  const cacheable =
+    Object.isFrozen(result) &&
+    Object.isFrozen(result.activeYaku) &&
+    Object.isFrozen(result.evidence) &&
+    Object.isFrozen(result.evidence.scoredYaku) &&
+    result.evidence.scoredYaku.every(
+      (row) =>
+        Object.isFrozen(row) &&
+        Object.isFrozen(row.yaku) &&
+        Object.isFrozen(row.contributingCardIds),
+    );
+  const cached = cacheable ? ORDINARY_RESULT_VALIDITY.get(result) : undefined;
+  if (cached !== undefined) return cached;
+  const valid =
+    completedFormationsAreStructurallyValid(
+      result.evidence.completedFormations,
+      result.scheduledMonth,
+    ) &&
+    scoredYakuRowsAreValid(result, result.evidence.scoredYaku, result.evidence.completedFormations);
+  if (cacheable) ORDINARY_RESULT_VALIDITY.set(result, valid);
+  return valid;
+}
+
 function currentRoundResultMatchesLiveState(
   state: AuthoritativeGameStateV1,
   scoresBeforeRound: { readonly "player-a": number; readonly "player-b": number },
@@ -107,6 +249,18 @@ function currentRoundResultMatchesLiveState(
     scorer === undefined ||
     JSON.stringify(result.activeYaku) !== JSON.stringify(scorer.activeYaku) ||
     result.basePoints !== scorer.currentYakuTotal
+  ) {
+    return false;
+  }
+  if (
+    result.evidence?.kind === "ordinaryYaku" &&
+    !result.evidence.scoredYaku.every(
+      (row) =>
+        JSON.stringify(row.contributingCardIds) ===
+        JSON.stringify(
+          deriveYakuContributingCardIds(row.yaku.key, scorer.captured, state.round.scheduledMonth),
+        ),
+    )
   ) {
     return false;
   }
@@ -381,7 +535,7 @@ export function validateAuthoritativeState(
               ? result.scorerId !== null &&
                 result.basePoints === activeTotal &&
                 result.activeYaku.length > 0 &&
-                result.evidence === null
+                ordinaryYakuEvidenceIsValid(result)
               : result.kind === "endOfPlayNoScore" &&
                 result.basePoints === 0 &&
                 result.activeYaku.length === 0 &&
@@ -515,6 +669,55 @@ export function validateAuthoritativeState(
   }
   if (!PLAYER_IDS.includes(state.round.starterId)) {
     issues.push(issue("STARTER_INVALID", "$.round.starterId", "Starter must be a match player."));
+  }
+  if (
+    !completedFormationsAreStructurallyValid(
+      state.round.completedYakuFormations,
+      state.round.scheduledMonth,
+    )
+  ) {
+    issues.push(
+      issue(
+        "ROUND_YAKU_FORMATIONS_INVALID",
+        "$.round.completedYakuFormations",
+        "Completed yaku formations must be canonical, unique per player/key, and contiguous.",
+      ),
+    );
+  }
+  for (const formation of state.round.completedYakuFormations) {
+    const owner = state.players.find((player) => player.id === formation.playerId);
+    if (
+      owner === undefined ||
+      !formation.contributingCardIds.every((cardId) => owner.captured.includes(cardId)) ||
+      !owner.seenYakuKeys.includes(formation.yaku.key)
+    ) {
+      issues.push(
+        issue(
+          "ROUND_YAKU_FORMATION_OWNERSHIP_INVALID",
+          "$.round.completedYakuFormations",
+          "Formation cards and trigger keys must belong to the recorded player.",
+        ),
+      );
+      break;
+    }
+  }
+  if (
+    state.players.some((player) =>
+      player.seenYakuKeys.some(
+        (key) =>
+          !state.round.completedYakuFormations.some(
+            (formation) => formation.playerId === player.id && formation.yaku.key === key,
+          ),
+      ),
+    )
+  ) {
+    issues.push(
+      issue(
+        "ROUND_YAKU_FORMATION_HISTORY_INVALID",
+        "$.round.completedYakuFormations",
+        "Every seen yaku trigger must have one immutable completed formation.",
+      ),
+    );
   }
   if (![1, 2, 3, 4].includes(state.round.tableMultiplier)) {
     issues.push(
@@ -926,6 +1129,7 @@ export function validateInitialSetupState(
 }
 
 export function assertValidAuthoritativeState(state: AuthoritativeGameStateV1): void {
+  if (isTrustedValidatedEngineState(state)) return;
   const issues = validateAuthoritativeState(state);
   if (issues.length > 0) {
     throw new Error(

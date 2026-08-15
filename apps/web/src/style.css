@@ -564,7 +564,7 @@ select:focus-visible {
   line-height: 1.48;
 }
 
-.round-result__score,
+.round-result__facts,
 .round-result__evidence,
 .round-result__transition,
 .round-result__history {
@@ -574,9 +574,40 @@ select:focus-visible {
   background: rgb(255 243 207 / 4%);
 }
 
-.round-result__score {
+.round-result__facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.round-result__facts p {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  padding: 0.52rem 0.4rem;
+  border: 1px solid rgb(233 187 90 / 24%);
+  border-radius: 10px;
+  color: rgb(255 243 207 / 66%);
+  font-size: clamp(0.62rem, 1.45vw, 0.75rem);
   text-align: center;
-  animation: round-result-score 560ms 120ms ease-out both;
+  background: rgb(2 8 5 / 34%);
+}
+
+.round-result__facts strong {
+  overflow: hidden;
+  color: #e9bb5a;
+  font-size: clamp(0.98rem, 2.2vw, 1.22rem);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.round-result__next {
+  padding: 0.58rem 0.72rem;
+  border-left: 3px solid rgb(233 187 90 / 64%);
+  color: rgb(255 243 207 / 82%);
+  font-size: clamp(0.73rem, 1.5vw, 0.84rem);
+  line-height: 1.38;
+  background: rgb(255 243 207 / 4%);
 }
 
 .round-result__arithmetic {
@@ -603,6 +634,59 @@ select:focus-visible {
   font-size: clamp(0.72rem, 1.5vw, 0.84rem);
   line-height: 1.4;
   text-align: left;
+}
+
+.round-result__yaku {
+  padding-left: 0;
+  list-style: none;
+}
+
+.round-result__yaku-row {
+  display: grid;
+  gap: 0.42rem;
+  padding: 0.56rem;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 42%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--theme-surface-raised) 30%, transparent);
+}
+
+.round-result__yaku-title {
+  color: var(--theme-text);
+  font-weight: 800;
+}
+
+.round-result__yaku-cards {
+  display: flex;
+  gap: 0.34rem;
+  overflow-x: auto;
+  padding: 0.08rem 0.02rem 0.2rem;
+  scrollbar-width: thin;
+}
+
+.round-result__yaku-cards figure {
+  display: grid;
+  flex: 0 0 52px;
+  gap: 0.18rem;
+  width: 52px;
+  margin: 0;
+}
+
+.round-result__yaku-cards img {
+  display: block;
+  width: 52px;
+  height: auto;
+  aspect-ratio: 5 / 8;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 62%, #fff);
+  border-radius: 5px;
+  background: var(--theme-surface-raised);
+  object-fit: contain;
+}
+
+.round-result__yaku-cards figcaption {
+  overflow-wrap: anywhere;
+  color: var(--theme-text-muted);
+  font-size: 0.54rem;
+  line-height: 1.12;
 }
 
 .round-result__totals {
@@ -1033,7 +1117,7 @@ kbd {
     border-radius: 16px;
   }
 
-  .round-result__score,
+  .round-result__facts,
   .round-result__evidence,
   .round-result__transition,
   .round-result__history {
@@ -1059,7 +1143,7 @@ kbd {
     grid-column: 1;
   }
 
-  .round-result__score,
+  .round-result__facts,
   .round-result__evidence,
   .round-result__transition,
   .round-result__history {
@@ -1168,7 +1252,7 @@ kbd {
     grid-column: 1;
   }
 
-  .round-result__score,
+  .round-result__facts,
   .round-result__evidence,
   .round-result__transition,
   .round-result__history {
@@ -1183,7 +1267,7 @@ kbd {
     font-size: 1.2rem;
   }
 
-  .round-result__score,
+  .round-result__facts,
   .round-result__evidence,
   .round-result__transition,
   .round-result__history {
@@ -2803,5 +2887,26 @@ body:has(.handoff:not([hidden])) .bottom-utilities {
 
   .capture-inspector__groups {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  /* Results must cover the visual viewport rather than inherit the table's
+     intentionally tall game-frame height. The card owns any vertical scroll. */
+  .round-result {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    padding: 6px;
+    overflow: hidden;
+  }
+
+  .round-result__card {
+    width: min(calc(100vw - 12px), 760px);
+    max-width: 100%;
+    max-height: calc(100dvh - 12px);
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 }

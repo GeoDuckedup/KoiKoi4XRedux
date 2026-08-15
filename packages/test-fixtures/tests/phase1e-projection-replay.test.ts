@@ -649,6 +649,133 @@ describe("Phase 1E replay, idempotency, public hashes, and protocol", () => {
       );
     }
 
+    const runtimePublic = projectPublicState(runtime.state);
+    const ordinaryIndex = runtimePublic.history.findIndex(
+      (result) => result.evidence?.kind === "ordinaryYaku",
+    );
+    if (ordinaryIndex < 0)
+      throw new Error("Replay fixture must contain an ordinary scored result.");
+    const ordinaryResult = runtimePublic.history[ordinaryIndex];
+    const ordinaryEvidence = ordinaryResult?.evidence;
+    if (ordinaryResult === undefined || ordinaryEvidence?.kind !== "ordinaryYaku") {
+      throw new Error("Ordinary result evidence is missing.");
+    }
+    const firstFormationCard = ordinaryEvidence.completedFormations[0]?.contributingCardIds[0];
+    const firstScoredCard = ordinaryEvidence.scoredYaku[0]?.contributingCardIds[0];
+    if (firstFormationCard === undefined || firstScoredCard === undefined) {
+      throw new Error("Ordinary result contributor evidence is incomplete.");
+    }
+    const malformedOrdinaryEvidence = {
+      ...runtimePublic,
+      history: runtimePublic.history.map((result, index) =>
+        index !== ordinaryIndex
+          ? result
+          : {
+              ...result,
+              evidence: {
+                ...ordinaryEvidence,
+                scoredYaku: ordinaryEvidence.scoredYaku.map((row, rowIndex) =>
+                  rowIndex === 0 ? { ...row, formationSequence: 0 } : row,
+                ),
+              },
+            },
+      ),
+    } as typeof runtimePublic;
+    expect(() => decodePublicTurnRecordV1(wireForState(malformedOrdinaryEvidence))).toThrow(
+      ProtocolValidationError,
+    );
+    const malformedContributorSnapshots = [
+      {
+        ...runtimePublic,
+        history: runtimePublic.history.map((result, index) =>
+          index !== ordinaryIndex
+            ? result
+            : {
+                ...result,
+                evidence: {
+                  ...ordinaryEvidence,
+                  completedFormations: ordinaryEvidence.completedFormations.map(
+                    (formation, formIndex) =>
+                      formIndex === 0
+                        ? { ...formation, contributingCardIds: [firstFormationCard] }
+                        : formation,
+                  ),
+                },
+              },
+        ),
+      },
+      {
+        ...runtimePublic,
+        history: runtimePublic.history.map((result, index) =>
+          index !== ordinaryIndex
+            ? result
+            : {
+                ...result,
+                evidence: {
+                  ...ordinaryEvidence,
+                  scoredYaku: ordinaryEvidence.scoredYaku.map((row, rowIndex) =>
+                    rowIndex === 0 ? { ...row, contributingCardIds: [firstScoredCard] } : row,
+                  ),
+                },
+              },
+        ),
+      },
+      {
+        ...runtimePublic,
+        history: runtimePublic.history.map((result, index) =>
+          index !== ordinaryIndex
+            ? result
+            : {
+                ...result,
+                activeYaku: [{ key: "animals", name: "Animals", points: 6 }],
+                basePoints: 6,
+                tableMultiplierAtDecision: 1,
+                scoringMultiplier: 1,
+                awardedPoints: 6,
+                evidence: {
+                  kind: "ordinaryYaku",
+                  completedFormations: [
+                    {
+                      sequence: 1,
+                      playerId: result.scorerId ?? "player-a",
+                      phase: "hand",
+                      yaku: { key: "animals", name: "Animals", points: 3 },
+                      contributingCardIds: [
+                        "february-bush-warbler",
+                        "april-cuckoo",
+                        "may-bridge",
+                        "august-geese",
+                        "september-sake-cup",
+                      ],
+                    },
+                  ],
+                  scoredYaku: [
+                    {
+                      formationSequence: 1,
+                      yaku: { key: "animals", name: "Animals", points: 6 },
+                      contributingCardIds: [
+                        "april-cuckoo",
+                        "may-bridge",
+                        "june-butterfly",
+                        "july-boar",
+                        "august-geese",
+                        "september-sake-cup",
+                        "october-deer",
+                        "november-swallow",
+                      ],
+                    },
+                  ],
+                },
+              },
+        ),
+      },
+    ];
+    for (const malformed of malformedContributorSnapshots) {
+      expect(() =>
+        decodePublicTurnRecordV1(wireForState(malformed as typeof runtimePublic)),
+      ).toThrow(ProtocolValidationError);
+    }
+
     const nonenumerablePlayer = { ...before.players[0] } as Record<string, unknown>;
     Object.defineProperty(nonenumerablePlayer, "opponentCards", {
       enumerable: false,

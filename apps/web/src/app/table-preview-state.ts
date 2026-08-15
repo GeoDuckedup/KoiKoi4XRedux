@@ -24,6 +24,7 @@ export interface LocalRoundSnapshotV1 {
   readonly commandCount: number;
   readonly handoffPending: boolean;
   readonly latestRecap: string | null;
+  readonly matchLength: 3 | 6 | 12;
   readonly phase: PublicPhaseV1["kind"];
   readonly recapCount: number;
   readonly roundNumber: number;

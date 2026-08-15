@@ -8,7 +8,7 @@ const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = process.env.SMOKE_DIST_DIR
   ? resolve(process.env.SMOKE_DIST_DIR)
   : resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-3f-j/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-5a/e2e");
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
 const mountedBasePath = smokeBasePath === "/" ? "/" : `${smokeBasePath}/`;
@@ -29,6 +29,10 @@ const viewports = [
   { width: 844, height: 390, mode: "landscape" },
   { width: 1366, height: 768, mode: "desktop" },
   { width: 1920, height: 1080, mode: "desktop" },
+];
+const focusedPhase5AResultViewports = [
+  { width: 390, height: 844, mode: "portrait" },
+  { width: 844, height: 390, mode: "landscape" },
 ];
 const expectedLayerOrder = [
   "BackgroundLayer",
@@ -112,6 +116,31 @@ async function waitForApplicationReady(page, browserErrors, networkErrors) {
 
 async function readState(page) {
   return page.evaluate(() => JSON.parse(window.render_game_to_text()));
+}
+
+async function waitForViewportSettlement(page, { width, height }) {
+  await page.waitForFunction(
+    (expected) => {
+      const state = JSON.parse(window.render_game_to_text());
+      return state.viewport.width === expected.width && state.viewport.height === expected.height;
+    },
+    { width, height },
+    { timeout: 30_000 },
+  );
+  await page.evaluate(
+    () =>
+      new Promise((resolvePromise) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolvePromise)),
+      ),
+  );
+}
+
+function publicOpeningDealSignature(state) {
+  return JSON.stringify(
+    state.cards.visibleViews
+      .filter(({ zone }) => zone === "field" || zone === "playerHand")
+      .map(({ cardId, zone, slotId }) => ({ cardId, zone, slotId })),
+  );
 }
 
 async function actionableSemanticControlCount(page) {
@@ -886,6 +915,17 @@ async function assertLegalDestinationAttention(
         page.locator(`[data-legal-destination-attention="${ring.cardId}"]`).boundingBox(),
         control.boundingBox(),
       ]);
+      const territory =
+        ringBox !== null && controlBox !== null
+          ? {
+              ringBox,
+              controlBox,
+              leftOverflow: controlBox.x - ringBox.x,
+              topOverflow: controlBox.y - ringBox.y,
+              rightOverflow: ringBox.x + ringBox.width - (controlBox.x + controlBox.width),
+              bottomOverflow: ringBox.y + ringBox.height - (controlBox.y + controlBox.height),
+            }
+          : { ringBox, controlBox };
       assert(
         ringBox !== null &&
           controlBox !== null &&
@@ -893,7 +933,7 @@ async function assertLegalDestinationAttention(
           ringBox.y >= controlBox.y - 1 &&
           ringBox.x + ringBox.width <= controlBox.x + controlBox.width + 1 &&
           ringBox.y + ringBox.height <= controlBox.y + controlBox.height + 1,
-        `${label} target ${ring.cardId} edge escaped its legal semantic target territory.`,
+        `${label} target ${ring.cardId} edge escaped its legal semantic target territory: ${JSON.stringify(territory)}.`,
       );
     }
   }
@@ -1172,7 +1212,7 @@ async function chooseYakuDecisionThroughResultBeat(page, choice) {
     const feedback = document.querySelector("[data-yaku-feedback]");
     const result = document.querySelector("[data-round-result]");
     if (!(feedback instanceof HTMLElement) || !(result instanceof HTMLElement)) {
-      throw new Error("Phase 3C feedback/result surfaces are missing.");
+      throw new Error("Phase 5A feedback/result surfaces are missing.");
     }
     globalThis.__phase3cResultObserver?.disconnect();
     const trace = [];
@@ -1658,6 +1698,56 @@ async function playLockedHandSequence(page, cardIds) {
   return readState(page);
 }
 
+async function playProductionRoundToResult(page, label) {
+  for (let step = 0; step < 64; step += 1) {
+    let state = await acceptHandoffIfPending(page);
+    if (state.localRound.phase === "roundComplete" || state.localRound.phase === "matchComplete") {
+      return state;
+    }
+    if (state.localRound.phase === "awaitingYakuDecision") {
+      const bank = page.locator("[data-yaku-bank]");
+      const koiKoi = page.locator("[data-yaku-koi-koi]");
+      const canBank = (await bank.isVisible()) && (await bank.isEnabled());
+      const canKoiKoi = (await koiKoi.isVisible()) && (await koiKoi.isEnabled());
+      if (canBank) {
+        await chooseYakuDecision(page, "bank");
+        await waitForResultVisualSettlement(page);
+        return readState(page);
+      }
+      if (canKoiKoi) {
+        await chooseYakuDecision(page, "koiKoi");
+        const afterDecision = await readState(page);
+        if (afterDecision.result !== null) {
+          await waitForResultVisualSettlement(page);
+          return afterDecision;
+        }
+        continue;
+      }
+      throw new Error(
+        `${label} has no enabled authoritative Yaku decision: ${JSON.stringify({ phase: state.localRound.phase, bankVisible: await bank.isVisible(), bankEnabled: await bank.isEnabled(), koiKoiVisible: await koiKoi.isVisible(), koiKoiEnabled: await koiKoi.isEnabled() })}.`,
+      );
+    }
+    if (state.localRound.phase === "awaitingDrawResolution") {
+      await resolvePendingDrawIfNeeded(page);
+      continue;
+    }
+    if (state.localRound.phase === "awaitingHandPlay") {
+      const cardId = await page
+        .locator('[data-input-role="selectable"]')
+        .first()
+        .getAttribute("data-card-id");
+      assert(cardId !== null, `${label} had no production hand card to play.`);
+      await playHandCardById(page, cardId);
+      continue;
+    }
+    state = await readState(page);
+    throw new Error(`${label} reached an unsupported production phase: ${state.localRound.phase}.`);
+  }
+  throw new Error(
+    `${label} did not reach an authoritative result within the bounded production trace.`,
+  );
+}
+
 async function playHandCardThroughFeedbackBeat(page, cardId) {
   await acceptHandoffIfPending(page);
   await resolvePendingDrawIfNeeded(page);
@@ -1766,7 +1856,7 @@ assert(
   densityReviewResponse.status === 404,
   "The non-shipping Phase 3D-D density harness entered the production build.",
 );
-process.stdout.write(`Phase 3C smoke server ready at ${pageUrl}.\n`);
+process.stdout.write(`Phase 5A smoke server ready at ${pageUrl}.\n`);
 
 let browser;
 try {
@@ -1804,7 +1894,7 @@ try {
         );
       }
       const state = await readState(page);
-      assert(state.screen === "localRound", "Phase 3C must identify the local round screen.");
+      assert(state.screen === "localRound", "Phase 5A must identify the local round screen.");
       assert(
         state.presentationMode === "authoritativeLocalRound",
         "The technical fixture must be replaced by an authoritative local round.",
@@ -1891,709 +1981,734 @@ try {
         fullPage: true,
       });
     }
-    process.stdout.write("Phase 3C seven-viewport baseline passed.\n");
+    process.stdout.write("Phase 5A seven-viewport baseline passed.\n");
   } else {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(pageUrl, { waitUntil: "networkidle" });
     await waitForApplicationReady(page, browserErrors, networkErrors);
   }
 
-  await page.setViewportSize({ width: 390, height: 844 });
-  const handCueBeforeOptions = await assertHandPlayAttention(page, {
-    label: "390x844",
-    screenshot: true,
-  });
-  await assertNoLegalDestinationAttention(page, "idle Hand");
-  const handCueSemanticCount = await actionableSemanticControlCount(page);
-  await openOptions(page);
-  await assertHandPlayAttentionHidden(page, "Options dialog");
-  await closeOptions(page);
-  const handCueAfterOptions = await assertHandPlayAttention(page, { label: "390x844-restored" });
-  assert(
-    handCueAfterOptions.localRound.stateVersion === handCueBeforeOptions.localRound.stateVersion &&
-      handCueAfterOptions.localRound.commandCount ===
-        handCueBeforeOptions.localRound.commandCount &&
-      handCueAfterOptions.cards.cardViewCount === handCueBeforeOptions.cards.cardViewCount &&
-      (await actionableSemanticControlCount(page)) === handCueSemanticCount,
-    "Opening or closing Options changed Hand attention authority or semantic controls.",
-  );
-  const handSource = page.locator(
-    '[data-input-role="selectable"][data-card-id="april-red-scroll"]',
-  );
-  await handSource.click();
-  await page.waitForFunction(
-    () => JSON.parse(window.render_game_to_text()).input.selectedCardId === "april-red-scroll",
-  );
-  await assertHandPlayAttentionHidden(page, "selected Hand source");
-  const selectedHandCueState = await readState(page);
-  assert(
-    selectedHandCueState.localRound.stateVersion === handCueBeforeOptions.localRound.stateVersion &&
-      selectedHandCueState.localRound.commandCount ===
-        handCueBeforeOptions.localRound.commandCount &&
-      selectedHandCueState.cards.cardViewCount === handCueBeforeOptions.cards.cardViewCount &&
-      (await handSource.getAttribute("aria-pressed")) === "true",
-    "Selecting a Hand source changed authority, persistent CardViews, or selected-source semantics before the existing move resolves.",
-  );
-  await assertLegalDestinationAttention(page, {
-    label: "hand-target-selected-390x844",
-    kind: selectedHandCueState.input.fieldPlacementAvailable ? "fieldPlacement" : "targets",
-    screenshot: true,
-  });
-  for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
-    await selectTheme(page, themeId);
-    await assertLegalDestinationAttention(page, {
-      label: `hand-target-${themeId}-390x844`,
-      kind: "targets",
+  if (process.env.SMOKE_PHASE5A_ONLY !== "1") {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const handCueBeforeOptions = await assertHandPlayAttention(page, {
+      label: "390x844",
       screenshot: true,
     });
-  }
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await assertLegalDestinationAttention(page, {
-    label: "hand-target-reduced-motion-390x844",
-    kind: "targets",
-    reducedMotion: true,
-    screenshot: true,
-  });
-  await page.setViewportSize({ width: 844, height: 390 });
-  await assertLegalDestinationAttention(page, {
-    label: "hand-target-reduced-motion-844x390",
-    kind: "targets",
-    reducedMotion: true,
-    screenshot: true,
-  });
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.emulateMedia({ reducedMotion: "no-preference" });
-  await selectTheme(page, "ink-parchment");
-  await assertLegalDestinationAttention(page, {
-    label: "hand-target-motion-restored-390x844",
-    kind: "targets",
-  });
-  await page.screenshot({
-    path: resolve(
-      outputDirectory,
-      `hand-start-cue-selected-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-    ),
-    fullPage: true,
-  });
-  await page.keyboard.press("Escape");
-  await page.waitForFunction(() => {
-    const state = JSON.parse(window.render_game_to_text());
-    return state.input.status === "idle" && state.input.selectedCardId === null;
-  });
-  const handCueAfterCancel = await assertHandPlayAttention(page, { label: "390x844-cancelled" });
-  await assertNoLegalDestinationAttention(page, "cancelled Hand source");
-  assert(
-    handCueAfterCancel.localRound.stateVersion === handCueBeforeOptions.localRound.stateVersion &&
-      handCueAfterCancel.localRound.commandCount === handCueBeforeOptions.localRound.commandCount &&
-      handCueAfterCancel.cards.cardViewCount === handCueBeforeOptions.cards.cardViewCount,
-    "Cancelling a selected Hand source changed authority or persistent CardViews.",
-  );
-  await assertUtilityDialogCycle(page, {
-    trigger: "[data-context-help-trigger]",
-    dialog: "[data-context-help-dialog]",
-    close: "[data-context-help-close]",
-    label: "Contextual help",
-  });
-  await assertContextHelp(page);
-  await assertUtilityDialogCycle(page, {
-    trigger: "[data-history-trigger]",
-    dialog: "[data-history-dialog]",
-    close: "[data-history-close]",
-    label: "History",
-  });
-  await assertUtilityDialogCycle(page, {
-    trigger: "[data-yaku-guide-trigger]",
-    dialog: "[data-yaku-guide-dialog]",
-    close: "[data-yaku-guide-close]",
-    label: "Yaku Guide",
-  });
-  await page.locator("[data-yaku-guide-trigger]").click();
-  await page.locator("[data-yaku-guide-dialog]").waitFor({ state: "visible" });
-  await assertYakuGuideContents(page);
-  await page.screenshot({
-    path: resolve(
-      outputDirectory,
-      `yaku-guide-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-    ),
-    fullPage: true,
-  });
-  await page.keyboard.press("Escape");
-  await assertUtilityDialogCycle(page, {
-    trigger: "[data-options-trigger]",
-    dialog: "[data-options-dialog]",
-    close: "[data-options-close]",
-    focus: '[data-theme-option][value="ink-parchment"]',
-    label: "Options",
-  });
-  for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
-    await selectTheme(page, themeId);
-    await assertHandPlayAttention(page, { label: `theme-${themeId}-390x844`, screenshot: true });
-    await assertYakuGuideLightFrames(page, themeId);
-    await assertCardInspectorTheme(page, themeId);
-  }
-  await selectTheme(page, "ink-parchment");
-  await page.setViewportSize({ width: 844, height: 390 });
-  await assertHandPlayAttention(page, { label: "844x390", screenshot: true });
-  await assertUtilityDock(page, { width: 844, height: 390 });
-  await assertUtilityDialogCycle(page, {
-    trigger: "[data-history-trigger]",
-    dialog: "[data-history-dialog]",
-    close: "[data-history-close]",
-    label: "History landscape",
-  });
-  await assertUtilityDialogCycle(page, {
-    trigger: "[data-yaku-guide-trigger]",
-    dialog: "[data-yaku-guide-dialog]",
-    close: "[data-yaku-guide-close]",
-    label: "Yaku Guide landscape",
-  });
-  await assertUtilityDialogCycle(page, {
-    trigger: "[data-options-trigger]",
-    dialog: "[data-options-dialog]",
-    close: "[data-options-close]",
-    focus: '[data-theme-option][value="ink-parchment"]',
-    label: "Options landscape",
-  });
-  await page.screenshot({
-    path: resolve(
-      outputDirectory,
-      `utility-dock-844x390${smokeBasePath === "/" ? "" : "-pages"}.png`,
-    ),
-    fullPage: true,
-  });
-  await page.setViewportSize({ width: 390, height: 844 });
-  await assertCardInspection(
-    page,
-    '[data-card-id="january-pine-plain-b"][data-inspectable="true"]',
-    "field-card",
-    ["currentMonthSet", "plainCards"],
-  );
-  await assertCardInspection(
-    page,
-    '[data-card-id="november-red-scroll"][data-inspectable="true"]',
-    "own-hand-card",
-    ["currentMonthSet", "scrolls"],
-  );
-  await page.setViewportSize({ width: 844, height: 390 });
-  await assertContextHelp(page, "844x390");
-  await assertCardInspection(
-    page,
-    '[data-card-id="january-pine-plain-b"][data-inspectable="true"]',
-    "field-card",
-    ["currentMonthSet", "plainCards"],
-    "844x390",
-  );
-  await assertCardInspection(
-    page,
-    '[data-card-id="december-phoenix"][data-inspectable="true"]',
-    "high-entry-field-card",
-    ["fiveBrights", "fourBrights", "fourBrightsWithRain", "threeBrights", "currentMonthSet"],
-    "844x390",
-    { assertScroll: true },
-  );
-  await page.setViewportSize({ width: 390, height: 844 });
-  await runPhysicalDrawTrace(page);
-  await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
-  await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
-  await page.waitForFunction(
-    () => JSON.parse(window.render_game_to_text()).animation.mode === "reducedMotion",
-  );
-  await assertHandPlayAttention(page, {
-    label: "reduced-motion-390x844",
-    reducedMotion: true,
-    screenshot: true,
-  });
-
-  await openOptions(page);
-  await assertHandPlayAttentionHidden(page, "reduced-motion Options dialog");
-  for (const removedControl of [
-    "[data-input-mode]",
-    "[data-animation-mode]",
-    "[data-animation-accelerate]",
-    "[data-animation-finish]",
-  ]) {
+    await assertNoLegalDestinationAttention(page, "idle Hand");
+    const handCueSemanticCount = await actionableSemanticControlCount(page);
+    await openOptions(page);
+    await assertHandPlayAttentionHidden(page, "Options dialog");
+    await closeOptions(page);
+    const handCueAfterOptions = await assertHandPlayAttention(page, { label: "390x844-restored" });
     assert(
-      (await page.locator(removedControl).count()) === 0,
-      `${removedControl} remained in the simplified Options dialog.`,
+      handCueAfterOptions.localRound.stateVersion ===
+        handCueBeforeOptions.localRound.stateVersion &&
+        handCueAfterOptions.localRound.commandCount ===
+          handCueBeforeOptions.localRound.commandCount &&
+        handCueAfterOptions.cards.cardViewCount === handCueBeforeOptions.cards.cardViewCount &&
+        (await actionableSemanticControlCount(page)) === handCueSemanticCount,
+      "Opening or closing Options changed Hand attention authority or semantic controls.",
     );
-  }
-  assert(
-    await page.locator('[data-theme-option][value="ink-parchment"]').isChecked(),
-    "Options did not identify the selected Ink theme.",
-  );
-  assert(
+    const handSource = page.locator(
+      '[data-input-role="selectable"][data-card-id="april-red-scroll"]',
+    );
+    await handSource.click();
+    await page.waitForFunction(
+      () => JSON.parse(window.render_game_to_text()).input.selectedCardId === "april-red-scroll",
+    );
+    await assertHandPlayAttentionHidden(page, "selected Hand source");
+    const selectedHandCueState = await readState(page);
+    assert(
+      selectedHandCueState.localRound.stateVersion ===
+        handCueBeforeOptions.localRound.stateVersion &&
+        selectedHandCueState.localRound.commandCount ===
+          handCueBeforeOptions.localRound.commandCount &&
+        selectedHandCueState.cards.cardViewCount === handCueBeforeOptions.cards.cardViewCount &&
+        (await handSource.getAttribute("aria-pressed")) === "true",
+      "Selecting a Hand source changed authority, persistent CardViews, or selected-source semantics before the existing move resolves.",
+    );
+    await assertLegalDestinationAttention(page, {
+      label: "hand-target-selected-390x844",
+      kind: selectedHandCueState.input.fieldPlacementAvailable ? "fieldPlacement" : "targets",
+      screenshot: true,
+    });
+    for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
+      await selectTheme(page, themeId);
+      await assertLegalDestinationAttention(page, {
+        label: `hand-target-${themeId}-390x844`,
+        kind: "targets",
+        screenshot: true,
+      });
+    }
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await assertLegalDestinationAttention(page, {
+      label: "hand-target-reduced-motion-390x844",
+      kind: "targets",
+      reducedMotion: true,
+      screenshot: true,
+    });
+    await page.setViewportSize({ width: 844, height: 390 });
+    await waitForViewportSettlement(page, { width: 844, height: 390 });
+    await assertLegalDestinationAttention(page, {
+      label: "hand-target-reduced-motion-844x390",
+      kind: "targets",
+      reducedMotion: true,
+      screenshot: true,
+    });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await waitForViewportSettlement(page, { width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await selectTheme(page, "ink-parchment");
+    await assertLegalDestinationAttention(page, {
+      label: "hand-target-motion-restored-390x844",
+      kind: "targets",
+    });
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `hand-start-cue-selected-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(() => {
+      const state = JSON.parse(window.render_game_to_text());
+      return state.input.status === "idle" && state.input.selectedCardId === null;
+    });
+    const handCueAfterCancel = await assertHandPlayAttention(page, { label: "390x844-cancelled" });
+    await assertNoLegalDestinationAttention(page, "cancelled Hand source");
+    assert(
+      handCueAfterCancel.localRound.stateVersion === handCueBeforeOptions.localRound.stateVersion &&
+        handCueAfterCancel.localRound.commandCount ===
+          handCueBeforeOptions.localRound.commandCount &&
+        handCueAfterCancel.cards.cardViewCount === handCueBeforeOptions.cards.cardViewCount,
+      "Cancelling a selected Hand source changed authority or persistent CardViews.",
+    );
+    await assertUtilityDialogCycle(page, {
+      trigger: "[data-context-help-trigger]",
+      dialog: "[data-context-help-dialog]",
+      close: "[data-context-help-close]",
+      label: "Contextual help",
+    });
+    await assertContextHelp(page);
+    await assertUtilityDialogCycle(page, {
+      trigger: "[data-history-trigger]",
+      dialog: "[data-history-dialog]",
+      close: "[data-history-close]",
+      label: "History",
+    });
+    await assertUtilityDialogCycle(page, {
+      trigger: "[data-yaku-guide-trigger]",
+      dialog: "[data-yaku-guide-dialog]",
+      close: "[data-yaku-guide-close]",
+      label: "Yaku Guide",
+    });
+    await page.locator("[data-yaku-guide-trigger]").click();
+    await page.locator("[data-yaku-guide-dialog]").waitFor({ state: "visible" });
+    await assertYakuGuideContents(page);
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `yaku-guide-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+    await page.keyboard.press("Escape");
+    await assertUtilityDialogCycle(page, {
+      trigger: "[data-options-trigger]",
+      dialog: "[data-options-dialog]",
+      close: "[data-options-close]",
+      focus: '[data-theme-option][value="ink-parchment"]',
+      label: "Options",
+    });
+    for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
+      await selectTheme(page, themeId);
+      await assertHandPlayAttention(page, { label: `theme-${themeId}-390x844`, screenshot: true });
+      await assertYakuGuideLightFrames(page, themeId);
+      await assertCardInspectorTheme(page, themeId);
+    }
+    await selectTheme(page, "ink-parchment");
+    await page.setViewportSize({ width: 844, height: 390 });
+    await assertHandPlayAttention(page, { label: "844x390", screenshot: true });
+    await assertUtilityDock(page, { width: 844, height: 390 });
+    await assertUtilityDialogCycle(page, {
+      trigger: "[data-history-trigger]",
+      dialog: "[data-history-dialog]",
+      close: "[data-history-close]",
+      label: "History landscape",
+    });
+    await assertUtilityDialogCycle(page, {
+      trigger: "[data-yaku-guide-trigger]",
+      dialog: "[data-yaku-guide-dialog]",
+      close: "[data-yaku-guide-close]",
+      label: "Yaku Guide landscape",
+    });
+    await assertUtilityDialogCycle(page, {
+      trigger: "[data-options-trigger]",
+      dialog: "[data-options-dialog]",
+      close: "[data-options-close]",
+      focus: '[data-theme-option][value="ink-parchment"]',
+      label: "Options landscape",
+    });
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `utility-dock-844x390${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await assertCardInspection(
+      page,
+      '[data-card-id="january-pine-plain-b"][data-inspectable="true"]',
+      "field-card",
+      ["currentMonthSet", "plainCards"],
+    );
+    await assertCardInspection(
+      page,
+      '[data-card-id="november-red-scroll"][data-inspectable="true"]',
+      "own-hand-card",
+      ["currentMonthSet", "scrolls"],
+    );
+    await page.setViewportSize({ width: 844, height: 390 });
+    await assertContextHelp(page, "844x390");
+    await assertCardInspection(
+      page,
+      '[data-card-id="january-pine-plain-b"][data-inspectable="true"]',
+      "field-card",
+      ["currentMonthSet", "plainCards"],
+      "844x390",
+    );
+    await assertCardInspection(
+      page,
+      '[data-card-id="december-phoenix"][data-inspectable="true"]',
+      "high-entry-field-card",
+      ["fiveBrights", "fourBrights", "fourBrightsWithRain", "threeBrights", "currentMonthSet"],
+      "844x390",
+      { assertScroll: true },
+    );
+    await page.setViewportSize({ width: 390, height: 844 });
+    await runPhysicalDrawTrace(page);
+    await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
+    await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
+    await page.waitForFunction(
+      () => JSON.parse(window.render_game_to_text()).animation.mode === "reducedMotion",
+    );
+    await assertHandPlayAttention(page, {
+      label: "reduced-motion-390x844",
+      reducedMotion: true,
+      screenshot: true,
+    });
+
+    await openOptions(page);
+    await assertHandPlayAttentionHidden(page, "reduced-motion Options dialog");
+    for (const removedControl of [
+      "[data-input-mode]",
+      "[data-animation-mode]",
+      "[data-animation-accelerate]",
+      "[data-animation-finish]",
+    ]) {
+      assert(
+        (await page.locator(removedControl).count()) === 0,
+        `${removedControl} remained in the simplified Options dialog.`,
+      );
+    }
+    assert(
+      await page.locator('[data-theme-option][value="ink-parchment"]').isChecked(),
+      "Options did not identify the selected Ink theme.",
+    );
+    assert(
+      await page
+        .locator('[data-theme-option][value="ink-parchment"]')
+        .evaluate((option) => document.activeElement === option),
+      "Options did not focus the selected theme.",
+    );
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `options-ink-parchment-mobile${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+    await page.keyboard.press("Escape");
+    assert(
+      !(await page.locator("[data-options-dialog]").evaluate((dialog) => dialog.open)) &&
+        (await page
+          .locator("[data-options-trigger]")
+          .evaluate((trigger) => document.activeElement === trigger)),
+      "Escape did not close Options and return focus to its trigger.",
+    );
+    await assertHandPlayAttention(page, {
+      label: "reduced-motion-390x844-restored",
+      reducedMotion: true,
+    });
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.waitForFunction(
+      () => JSON.parse(window.render_game_to_text()).animation.mode === "normal",
+    );
+    await assertHandPlayAttention(page, { label: "motion-restored-390x844" });
+
     await page
-      .locator('[data-theme-option][value="ink-parchment"]')
-      .evaluate((option) => document.activeElement === option),
-    "Options did not focus the selected theme.",
-  );
-  await page.screenshot({
-    path: resolve(
-      outputDirectory,
-      `options-ink-parchment-mobile${smokeBasePath === "/" ? "" : "-pages"}.png`,
-    ),
-    fullPage: true,
-  });
-  await page.keyboard.press("Escape");
-  assert(
-    !(await page.locator("[data-options-dialog]").evaluate((dialog) => dialog.open)) &&
-      (await page
-        .locator("[data-options-trigger]")
-        .evaluate((trigger) => document.activeElement === trigger)),
-    "Escape did not close Options and return focus to its trigger.",
-  );
-  await assertHandPlayAttention(page, {
-    label: "reduced-motion-390x844-restored",
-    reducedMotion: true,
-  });
-  await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.waitForFunction(
-    () => JSON.parse(window.render_game_to_text()).animation.mode === "normal",
-  );
-  await assertHandPlayAttention(page, { label: "motion-restored-390x844" });
-
-  await page.locator('[data-input-role="selectable"][data-card-id="november-red-scroll"]').click();
-  await page.waitForFunction(
-    () => JSON.parse(window.render_game_to_text()).input.selectedCardId === "november-red-scroll",
-  );
-  const beforeThemeSwitch = await readState(page);
-  const persistentTokens = beforeThemeSwitch.cards.visibleViews.map(({ cardId, token }) => [
-    cardId,
-    token,
-  ]);
-  for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
-    await selectTheme(page, themeId);
-    const themed = await readState(page);
-    assert(
-      themed.theme.activeId === themeId &&
-        themed.theme.optionsOpen === false &&
-        themed.canvasCount === 1 &&
-        themed.cards.cardViewCount === 48 &&
-        themed.deck.activeDeckId === beforeThemeSwitch.deck.activeDeckId &&
-        themed.localRound.stateVersion === beforeThemeSwitch.localRound.stateVersion &&
-        themed.localRound.commandCount === beforeThemeSwitch.localRound.commandCount &&
-        themed.input.selectedCardId === beforeThemeSwitch.input.selectedCardId &&
-        JSON.stringify(themed.input.legalTargetCardIds) ===
-          JSON.stringify(beforeThemeSwitch.input.legalTargetCardIds) &&
-        JSON.stringify(themed.cards.visibleViews.map(({ cardId, token }) => [cardId, token])) ===
-          JSON.stringify(persistentTokens),
-      `${themeId} changed gameplay state or persistent CardView identity.`,
+      .locator('[data-input-role="selectable"][data-card-id="november-red-scroll"]')
+      .click();
+    await page.waitForFunction(
+      () => JSON.parse(window.render_game_to_text()).input.selectedCardId === "november-red-scroll",
     );
+    const beforeThemeSwitch = await readState(page);
+    const persistentTokens = beforeThemeSwitch.cards.visibleViews.map(({ cardId, token }) => [
+      cardId,
+      token,
+    ]);
+    for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
+      await selectTheme(page, themeId);
+      const themed = await readState(page);
+      assert(
+        themed.theme.activeId === themeId &&
+          themed.theme.optionsOpen === false &&
+          themed.canvasCount === 1 &&
+          themed.cards.cardViewCount === 48 &&
+          themed.deck.activeDeckId === beforeThemeSwitch.deck.activeDeckId &&
+          themed.localRound.stateVersion === beforeThemeSwitch.localRound.stateVersion &&
+          themed.localRound.commandCount === beforeThemeSwitch.localRound.commandCount &&
+          themed.input.selectedCardId === beforeThemeSwitch.input.selectedCardId &&
+          JSON.stringify(themed.input.legalTargetCardIds) ===
+            JSON.stringify(beforeThemeSwitch.input.legalTargetCardIds) &&
+          JSON.stringify(themed.cards.visibleViews.map(({ cardId, token }) => [cardId, token])) ===
+            JSON.stringify(persistentTokens),
+        `${themeId} changed gameplay state or persistent CardView identity.`,
+      );
+      assert(
+        (await page.locator("[data-input-instruction]").textContent())?.includes(
+          "highlighted field",
+        ),
+        `${themeId} replaced the selected-card accessibility instruction.`,
+      );
+      await assertPointerQuietInteractionControl(
+        page,
+        "[data-input-field-placement]",
+        `${themeId} no-match field destination`,
+      );
+      for (const viewport of [
+        { id: "mobile", width: 390, height: 844 },
+        { id: "desktop", width: 1366, height: 768 },
+      ]) {
+        await page.setViewportSize(viewport);
+        await page.waitForFunction(
+          (width) => JSON.parse(window.render_game_to_text()).viewport.width === width,
+          viewport.width,
+        );
+        await page.screenshot({
+          path: resolve(
+            outputDirectory,
+            `theme-${themeId}-${viewport.id}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+          ),
+          fullPage: true,
+        });
+      }
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    await selectTheme(page, "moonlit-indigo");
+    await page.reload({ waitUntil: "networkidle" });
+    await waitForApplicationReady(page, browserErrors, networkErrors);
+    const restoredTheme = await readState(page);
     assert(
-      (await page.locator("[data-input-instruction]").textContent())?.includes("highlighted field"),
-      `${themeId} replaced the selected-card accessibility instruction.`,
+      restoredTheme.theme.activeId === "moonlit-indigo" &&
+        (await page.locator('meta[name="theme-color"]').getAttribute("content")) === "#080f1b",
+      "The IndexedDB theme preference did not restore after reload.",
+    );
+    await selectTheme(page, "ink-parchment");
+    await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
+    process.stdout.write(
+      "Phase 3D-C runtime theme, persistence, and Options focus trace passed.\n",
+    );
+
+    await configureSecondaryOptions(page, { animationMode: "normal" });
+    await page.waitForFunction(
+      () => JSON.parse(window.render_game_to_text()).animation.mode === "normal",
+    );
+    const placementBefore = await readState(page);
+    await page
+      .locator('[data-input-role="selectable"][data-card-id="november-red-scroll"]')
+      .click();
+    await page.waitForFunction(() => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
+        state.input.status === "confirming" &&
+        state.input.handResolutionKind === "placeOnField" &&
+        state.input.fieldPlacementAvailable === true
+      );
+    });
+    const placementSelected = await readState(page);
+    assert(
+      placementSelected.localRound.stateVersion === placementBefore.localRound.stateVersion &&
+        placementSelected.input.selectedCardId === "november-red-scroll" &&
+        placementSelected.input.legalTargetCardIds.length === 0,
+      "No-match source selection mutated state or invented a capture target.",
+    );
+    await assertLegalDestinationAttention(page, {
+      label: "hand-no-match-selected-390x844",
+      kind: "fieldPlacement",
+      screenshot: true,
+    });
+    const placementControl = page.locator("[data-input-field-placement]");
+    assert(await placementControl.isVisible(), "The no-match field destination is missing.");
+    assert(
+      (await placementControl.getAttribute("aria-label")) === "No match. Place card on the field.",
+      "The field destination does not retain its exact no-match accessible wording.",
     );
     await assertPointerQuietInteractionControl(
       page,
       "[data-input-field-placement]",
-      `${themeId} no-match field destination`,
+      "No-match field destination",
     );
-    for (const viewport of [
-      { id: "mobile", width: 390, height: 844 },
-      { id: "desktop", width: 1366, height: 768 },
-    ]) {
-      await page.setViewportSize(viewport);
-      await page.waitForFunction(
-        (width) => JSON.parse(window.render_game_to_text()).viewport.width === width,
-        viewport.width,
-      );
-      await page.screenshot({
-        path: resolve(
-          outputDirectory,
-          `theme-${themeId}-${viewport.id}${smokeBasePath === "/" ? "" : "-pages"}.png`,
-        ),
-        fullPage: true,
-      });
-    }
-  }
-  await page.setViewportSize({ width: 390, height: 844 });
-  await selectTheme(page, "moonlit-indigo");
-  await page.reload({ waitUntil: "networkidle" });
-  await waitForApplicationReady(page, browserErrors, networkErrors);
-  const restoredTheme = await readState(page);
-  assert(
-    restoredTheme.theme.activeId === "moonlit-indigo" &&
-      (await page.locator('meta[name="theme-color"]').getAttribute("content")) === "#080f1b",
-    "The IndexedDB theme preference did not restore after reload.",
-  );
-  await selectTheme(page, "ink-parchment");
-  await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
-  process.stdout.write("Phase 3D-C runtime theme, persistence, and Options focus trace passed.\n");
-
-  await configureSecondaryOptions(page, { animationMode: "normal" });
-  await page.waitForFunction(
-    () => JSON.parse(window.render_game_to_text()).animation.mode === "normal",
-  );
-  const placementBefore = await readState(page);
-  await page.locator('[data-input-role="selectable"][data-card-id="november-red-scroll"]').click();
-  await page.waitForFunction(() => {
-    const state = JSON.parse(window.render_game_to_text());
-    return (
-      state.input.status === "confirming" &&
-      state.input.handResolutionKind === "placeOnField" &&
-      state.input.fieldPlacementAvailable === true
-    );
-  });
-  const placementSelected = await readState(page);
-  assert(
-    placementSelected.localRound.stateVersion === placementBefore.localRound.stateVersion &&
-      placementSelected.input.selectedCardId === "november-red-scroll" &&
-      placementSelected.input.legalTargetCardIds.length === 0,
-    "No-match source selection mutated state or invented a capture target.",
-  );
-  await assertLegalDestinationAttention(page, {
-    label: "hand-no-match-selected-390x844",
-    kind: "fieldPlacement",
-    screenshot: true,
-  });
-  const placementControl = page.locator("[data-input-field-placement]");
-  assert(await placementControl.isVisible(), "The no-match field destination is missing.");
-  assert(
-    (await placementControl.getAttribute("aria-label")) === "No match. Place card on the field.",
-    "The field destination does not retain its exact no-match accessible wording.",
-  );
-  await assertPointerQuietInteractionControl(
-    page,
-    "[data-input-field-placement]",
-    "No-match field destination",
-  );
-  await page.screenshot({
-    path: resolve(
-      outputDirectory,
-      `no-match-field-destination-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-    ),
-    fullPage: true,
-  });
-  await page.evaluate(() => window.advanceTime(0));
-  await placementControl.click({ noWaitAfter: true });
-  const noMatchTravel = await advanceUntilAnimationClip(page, "travel", "cardPlacedOnField");
-  assert(
-    noMatchTravel.animation.activeClip?.kind === "travel" &&
-      noMatchTravel.animation.activeClip?.eventType === "cardPlacedOnField",
-    "No-match placement did not enter its direct field-travel clip.",
-  );
-  const activeNoMatchTravel = noMatchTravel.animation.activeClip;
-  if (!activeNoMatchTravel) throw new Error("No-match travel clip disappeared before evidence.");
-  const remainingNoMatchTravelMs = activeNoMatchTravel.durationMs - activeNoMatchTravel.elapsedMs;
-  const midTravelAdvanceMs = Math.max(1, Math.floor(remainingNoMatchTravelMs / 2));
-  assert(
-    midTravelAdvanceMs < remainingNoMatchTravelMs,
-    `No-match travel has no safe mid-clip evidence interval: ${JSON.stringify(activeNoMatchTravel)}.`,
-  );
-  await page.evaluate((durationMs) => window.advanceTime(durationMs), midTravelAdvanceMs);
-  const noMatchMidTravel = await readState(page);
-  assert(
-    noMatchMidTravel.animation.activeClip?.kind === "travel" &&
-      noMatchMidTravel.animation.activeClip?.eventType === "cardPlacedOnField",
-    "No-match placement settled before its mid-travel evidence frame.",
-  );
-  await page.screenshot({
-    path: resolve(
-      outputDirectory,
-      `no-match-direct-field-travel-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-    ),
-    fullPage: true,
-  });
-  await page.evaluate(() => window.advanceTime(1_000));
-  await waitForAcceptedHandIntent(page, placementBefore.localRound.stateVersion);
-
-  await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
-  const pairBefore = await readState(page);
-  await page.locator('[data-input-role="selectable"][data-card-id="january-pine-plain-a"]').click();
-  await page.waitForFunction(() => {
-    const state = JSON.parse(window.render_game_to_text());
-    return (
-      state.input.status === "confirming" &&
-      state.input.handResolutionKind === "capturePair" &&
-      state.input.legalTargetCardIds.length === 1
-    );
-  });
-  const pairSelected = await readState(page);
-  assert(
-    pairSelected.localRound.stateVersion === pairBefore.localRound.stateVersion &&
-      pairSelected.input.legalTargetCardIds[0] === "january-pine-plain-b",
-    "Unique-match source selection did not expose exactly its authoritative match.",
-  );
-  const pairTarget = page.locator(
-    '[data-input-role="target"][data-card-id="january-pine-plain-b"]',
-  );
-  assert(await pairTarget.isVisible(), "The unique-match target is missing.");
-  assert(
-    (await pairTarget.getAttribute("aria-label"))?.includes("confirm matching capture"),
-    "The unique-match target does not expose capture-confirmation semantics.",
-  );
-  assert(
-    (await page
-      .locator('[data-input-role="selectable"][data-card-id="january-pine-plain-a"]')
-      .getAttribute("aria-pressed")) === "true",
-    "The unique-match hand source did not retain selected-source semantics.",
-  );
-  await assertPointerQuietInteractionControl(
-    page,
-    '[data-input-role="target"][data-card-id="january-pine-plain-b"]',
-    "Unique-match target",
-  );
-  await page.screenshot({
-    path: resolve(
-      outputDirectory,
-      `source-selected-pair-target-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-    ),
-    fullPage: true,
-  });
-  await page.evaluate(() => window.advanceTime(0));
-  await pairTarget.click({ noWaitAfter: true });
-  const pairHold = await advanceUntilAnimationClip(page, "alignment", "captureStarted");
-  assert(
-    pairHold.animation.activeClip?.kind === "alignment" &&
-      pairHold.animation.activeClip?.eventType === "captureStarted",
-    "Pair capture did not enter its source-over-target hold.",
-  );
-  await page.screenshot({
-    path: resolve(
-      outputDirectory,
-      `hand-pair-overlap-hold-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-    ),
-    fullPage: true,
-  });
-  await page.evaluate(() => window.advanceTime(1_000));
-  await waitForAcceptedHandIntent(page, pairBefore.localRound.stateVersion);
-  process.stdout.write("Phase 3F-C source, target, and no-match field-cue trace passed.\n");
-
-  await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
-  await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
-
-  await playLockedHandSequence(page, PHASE_3B_HAND_DECISION_SEQUENCE.slice(0, -1));
-  const lastHandDecisionCard = PHASE_3B_HAND_DECISION_SEQUENCE.at(-1);
-  assert(lastHandDecisionCard, "The locked Hand decision sequence is empty.");
-  const handAnimals = await playHandCardThroughFeedbackBeat(page, lastHandDecisionCard);
-  assert(
-    handAnimals.localRound.phase === "awaitingYakuDecision" &&
-      handAnimals.yaku?.decision?.phase === "hand" &&
-      hasYaku(handAnimals, "animals"),
-    "The locked Hand Animals decision did not appear.",
-  );
-  assert(handAnimals.yaku.decision.currentYakuTotal === 3, "Hand Animals did not total 3.");
-  assert(handAnimals.yaku.decision.bank?.awardedPoints === 3, "Hand Bank was not 3 at 1×.");
-  assert(
-    handAnimals.yaku.decision.koiKoi?.resultingTableMultiplier === 2,
-    "Hand Koi-Koi did not raise 1× to 2×.",
-  );
-  assert(handAnimals.input.status === "decision", "Card input was not locked for the decision.");
-  assert(
-    (await actionableSemanticControlCount(page)) === 0,
-    "Hand-card semantic controls remained active during the decision.",
-  );
-  assert(await page.locator("[data-yaku-decision]").isVisible(), "Yaku decision tray is missing.");
-  const decisionBox = await page.locator("[data-yaku-decision]").boundingBox();
-  const gameBox = await page.locator(".game-frame").boundingBox();
-  assert(
-    decisionBox !== null && gameBox !== null && decisionBox.y >= gameBox.y + gameBox.height - 1,
-    `The Yaku decision surface obscures the table: ${JSON.stringify({ decisionBox, gameBox })}.`,
-  );
-  for (const selector of [
-    "[data-deck-select]",
-    "[data-fullscreen-button]",
-    "[data-new-round]",
-    "[data-options-trigger]",
-  ]) {
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `no-match-field-destination-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+    await page.evaluate(() => window.advanceTime(0));
+    await placementControl.click({ noWaitAfter: true });
+    const noMatchTravel = await advanceUntilAnimationClip(page, "travel", "cardPlacedOnField");
     assert(
-      await page.locator(selector).isDisabled(),
-      `${selector} escaped the modal decision lock.`,
+      noMatchTravel.animation.activeClip?.kind === "travel" &&
+        noMatchTravel.animation.activeClip?.eventType === "cardPlacedOnField",
+      "No-match placement did not enter its direct field-travel clip.",
     );
-  }
-  assert(
-    (await page.locator("[data-yaku-bank]").textContent())?.includes("3 points"),
-    "Hand Bank button omitted its authoritative 3-point award.",
-  );
-  assert(
-    (await page.locator("[data-yaku-koi-koi]").textContent())?.includes("2×"),
-    "Hand Koi-Koi button omitted the 2× consequence.",
-  );
-  const captureCount =
-    handAnimals.cards.zoneCounts.playerBrights +
-    handAnimals.cards.zoneCounts.playerAnimals +
-    handAnimals.cards.zoneCounts.playerScrolls +
-    handAnimals.cards.zoneCounts.playerPlains;
-  const stateBeforeCaptureInspection = handAnimals.localRound.stateVersion;
-  await page.locator('[data-capture-inspect="player"]').click();
-  await page.waitForFunction(
-    () => JSON.parse(window.render_game_to_text()).captureInspection.open === true,
-  );
-  assert(
-    (await page.locator("[data-capture-inspector] img").count()) === captureCount &&
-      (await page.locator("[data-capture-inspector-title]").textContent())?.includes(
-        String(captureCount),
-      ),
-    "Capture inspection did not show exactly the current player's public captured cards.",
-  );
-  const captureGalleryFrames = await page
-    .locator("[data-capture-inspector] img")
-    .evaluateAll((images) =>
-      images.map((image) => {
-        const bounds = image.getBoundingClientRect();
-        const style = getComputedStyle(image);
-        return {
-          ratio: bounds.width / bounds.height,
-          borderWidth: Number.parseFloat(style.borderTopWidth),
-          borderColor: style.borderTopColor,
-          objectFit: style.objectFit,
-        };
-      }),
+    const activeNoMatchTravel = noMatchTravel.animation.activeClip;
+    if (!activeNoMatchTravel) throw new Error("No-match travel clip disappeared before evidence.");
+    const remainingNoMatchTravelMs = activeNoMatchTravel.durationMs - activeNoMatchTravel.elapsedMs;
+    const midTravelAdvanceMs = Math.max(1, Math.floor(remainingNoMatchTravelMs / 2));
+    assert(
+      midTravelAdvanceMs < remainingNoMatchTravelMs,
+      `No-match travel has no safe mid-clip evidence interval: ${JSON.stringify(activeNoMatchTravel)}.`,
     );
-  assert(
-    captureGalleryFrames.length === captureCount &&
-      captureGalleryFrames.every(
-        ({ ratio, borderWidth, borderColor, objectFit }) =>
-          Math.abs(ratio - 0.625) < 0.03 &&
-          borderWidth >= 2 &&
-          borderColor !== "rgba(0, 0, 0, 0)" &&
-          objectFit === "contain",
+    await page.evaluate((durationMs) => window.advanceTime(durationMs), midTravelAdvanceMs);
+    const noMatchMidTravel = await readState(page);
+    assert(
+      noMatchMidTravel.animation.activeClip?.kind === "travel" &&
+        noMatchMidTravel.animation.activeClip?.eventType === "cardPlacedOnField",
+      "No-match placement settled before its mid-travel evidence frame.",
+    );
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `no-match-direct-field-travel-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
       ),
-    `Capture gallery no longer preserves a strong framed 5:8 card treatment: ${JSON.stringify(captureGalleryFrames)}.`,
-  );
-  assertClearlyLightFrames(
-    await inspectCardImageFrames(page, "[data-capture-inspector] img"),
-    "Capture gallery",
-  );
-  const captureInspectionState = await readState(page);
-  assert(
-    captureInspectionState.localRound.stateVersion === stateBeforeCaptureInspection &&
-      captureInspectionState.cards.cardViewCount === 48 &&
-      !JSON.stringify(captureInspectionState).includes("drawPileOrdered") &&
-      !JSON.stringify(captureInspectionState).includes("commandId"),
-    "Capture inspection changed authoritative state, CardView identity, or exposed private data.",
-  );
-  await page.screenshot({
-    path: resolve(
-      outputDirectory,
-      `capture-inspection-koi-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-    ),
-    fullPage: true,
-  });
-  await page.keyboard.press("Escape");
-  await page.waitForFunction(
-    () => JSON.parse(window.render_game_to_text()).captureInspection.open === false,
-  );
-  assert(
-    await page.locator("[data-yaku-decision]").isVisible(),
-    "Closing capture inspection lost the unresolved Yaku decision.",
-  );
-  assert(
+      fullPage: true,
+    });
+    await page.evaluate(() => window.advanceTime(1_000));
+    await waitForAcceptedHandIntent(page, placementBefore.localRound.stateVersion);
+
+    await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
+    const pairBefore = await readState(page);
     await page
-      .locator('[data-capture-inspect="player"]')
-      .evaluate((element) => document.activeElement === element),
-    "Closing capture inspection did not restore focus to its public capture trigger.",
-  );
-  await page.screenshot({
-    path: resolve(
-      outputDirectory,
-      `hand-animals-decision-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-    ),
-    fullPage: true,
-  });
-  process.stdout.write("Phase 3B Hand Animals decision passed.\n");
-
-  await chooseYakuDecision(page, "koiKoi");
-  const afterHandKoi = await readState(page);
-  assert(afterHandKoi.yaku.tableMultiplier === 2, "Koi-Koi did not preserve the public 2× table.");
-  assert(
-    afterHandKoi.yaku.feedback?.chosenDecision?.choice === "koiKoi" &&
-      afterHandKoi.yaku.feedback?.koiKoi?.currentTableMultiplier === 2,
-    "Koi-Koi feedback omitted its authoritative continuation event.",
-  );
-  assert(
-    afterHandKoi.localRound.latestRecap?.includes("Drew"),
-    "Hand Koi-Koi did not resume Draw before its handoff boundary.",
-  );
-  await page.screenshot({
-    path: resolve(
-      outputDirectory,
-      `hand-koi-draw-resumed-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-    ),
-    fullPage: true,
-  });
-  process.stdout.write("Phase 3B Hand Koi-Koi Draw continuation passed.\n");
-
-  await playLockedHandSequence(page, PHASE_3B_FINAL_DRAW_SEQUENCE);
-  const finalDraw = await resolvePendingDrawIfNeeded(page);
-  assert(
-    finalDraw.localRound.phase === "awaitingYakuDecision" &&
-      finalDraw.yaku?.decision?.phase === "draw" &&
-      hasYaku(finalDraw, "blueScrolls") &&
-      hasYaku(finalDraw, "scrolls"),
-    "The locked combined final-Draw decision did not appear.",
-  );
-  assert(finalDraw.yaku.tableMultiplier === 2, "Final Draw decision was not at 2×.");
-  assert(finalDraw.yaku.decision.currentYakuTotal === 11, "Final Draw total was not 11.");
-  assert(finalDraw.yaku.decision.bank?.awardedPoints === 22, "Final Draw Bank was not 22.");
-  assert(
-    finalDraw.yaku.decision.koiKoi?.resultingTableMultiplier === 3,
-    "Final Draw Koi-Koi did not raise 2× to 3×.",
-  );
-  assert(
-    (await page.locator("[data-yaku-decision-summary]").textContent())?.includes("Blue Scrolls") &&
-      (await page.locator("[data-yaku-decision-summary]").textContent())?.includes("Scrolls"),
-    "Combined final-Draw yaku are not presented together.",
-  );
-  await page.screenshot({
-    path: resolve(
-      outputDirectory,
-      `final-draw-combined-decision-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-    ),
-    fullPage: true,
-  });
-  process.stdout.write("Phase 3B final-Draw combined decision passed.\n");
-
-  assert(
-    await page.locator("[data-new-round]").isDisabled(),
-    "New Round can discard an unresolved final-Draw decision.",
-  );
-  const finalKoiResult = await chooseYakuDecisionThroughResultBeat(page, "koiKoi");
-  await waitForResultVisualSettlement(page);
-  assert(
-    finalKoiResult.state.localRound.phase === "roundComplete" &&
-      finalKoiResult.state.result?.kind === "endOfPlayLastKoiCaller",
-    "Final-Draw Koi-Koi did not produce the committed End-of-Play result.",
-  );
-  assert(
-    finalKoiResult.state.result.scorerId === "player-b" &&
-      finalKoiResult.state.result.scoring?.basePoints === 11 &&
-      finalKoiResult.state.result.scoring?.scoringMultiplier === 3 &&
-      finalKoiResult.state.result.scoring?.awardedPoints === 33,
-    `Final-Draw result arithmetic changed: ${JSON.stringify(finalKoiResult.state.result)}.`,
-  );
-  assert(
-    await page.locator("[data-round-result]").isVisible(),
-    "End-of-Play result modal is not visible.",
-  );
-  await assertHandPlayAttentionHidden(page, "End-of-Play result");
-  assert(
-    (await page.locator("[data-round-result-outcome]").textContent())?.includes(
-      "last Koi-Koi caller",
-    ) &&
-      (await page.locator("[data-round-result-arithmetic]").textContent())?.includes(
-        "11 points × 3× = 33 points",
+      .locator('[data-input-role="selectable"][data-card-id="january-pine-plain-a"]')
+      .click();
+    await page.waitForFunction(() => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
+        state.input.status === "confirming" &&
+        state.input.handResolutionKind === "capturePair" &&
+        state.input.legalTargetCardIds.length === 1
+      );
+    });
+    const pairSelected = await readState(page);
+    assert(
+      pairSelected.localRound.stateVersion === pairBefore.localRound.stateVersion &&
+        pairSelected.input.legalTargetCardIds[0] === "january-pine-plain-b",
+      "Unique-match source selection did not expose exactly its authoritative match.",
+    );
+    const pairTarget = page.locator(
+      '[data-input-role="target"][data-card-id="january-pine-plain-b"]',
+    );
+    assert(await pairTarget.isVisible(), "The unique-match target is missing.");
+    assert(
+      (await pairTarget.getAttribute("aria-label"))?.includes("confirm matching capture"),
+      "The unique-match target does not expose capture-confirmation semantics.",
+    );
+    assert(
+      (await page
+        .locator('[data-input-role="selectable"][data-card-id="january-pine-plain-a"]')
+        .getAttribute("aria-pressed")) === "true",
+      "The unique-match hand source did not retain selected-source semantics.",
+    );
+    await assertPointerQuietInteractionControl(
+      page,
+      '[data-input-role="target"][data-card-id="january-pine-plain-b"]',
+      "Unique-match target",
+    );
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `source-selected-pair-target-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
       ),
-    "End-of-Play result copy omitted the authoritative caller/arithmetic.",
-  );
-  assert(
-    !(await page.locator("[data-round-result-details]").evaluate((details) => details.open)) &&
-      !(await page.locator("[data-round-result-transition]").isVisible()) &&
-      (await page.locator("[data-round-result-action]").isVisible()),
-    "End-of-Play did not open as a concise outcome/points/action summary.",
-  );
-  await page.screenshot({
-    path: resolve(
-      outputDirectory,
-      `end-of-play-result-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-    ),
-    fullPage: true,
-  });
-  process.stdout.write("Phase 3C End-of-Play result passed.\n");
+      fullPage: true,
+    });
+    await page.evaluate(() => window.advanceTime(0));
+    await pairTarget.click({ noWaitAfter: true });
+    const pairHold = await advanceUntilAnimationClip(page, "alignment", "captureStarted");
+    assert(
+      pairHold.animation.activeClip?.kind === "alignment" &&
+        pairHold.animation.activeClip?.eventType === "captureStarted",
+      "Pair capture did not enter its source-over-target hold.",
+    );
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `hand-pair-overlap-hold-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+    await page.evaluate(() => window.advanceTime(1_000));
+    await waitForAcceptedHandIntent(page, pairBefore.localRound.stateVersion);
+    process.stdout.write("Phase 3F-C source, target, and no-match field-cue trace passed.\n");
+
+    await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
+    await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
+
+    await playLockedHandSequence(page, PHASE_3B_HAND_DECISION_SEQUENCE.slice(0, -1));
+    const lastHandDecisionCard = PHASE_3B_HAND_DECISION_SEQUENCE.at(-1);
+    assert(lastHandDecisionCard, "The locked Hand decision sequence is empty.");
+    const handAnimals = await playHandCardThroughFeedbackBeat(page, lastHandDecisionCard);
+    assert(
+      handAnimals.localRound.phase === "awaitingYakuDecision" &&
+        handAnimals.yaku?.decision?.phase === "hand" &&
+        hasYaku(handAnimals, "animals"),
+      "The locked Hand Animals decision did not appear.",
+    );
+    assert(handAnimals.yaku.decision.currentYakuTotal === 3, "Hand Animals did not total 3.");
+    assert(handAnimals.yaku.decision.bank?.awardedPoints === 3, "Hand Bank was not 3 at 1×.");
+    assert(
+      handAnimals.yaku.decision.koiKoi?.resultingTableMultiplier === 2,
+      "Hand Koi-Koi did not raise 1× to 2×.",
+    );
+    assert(handAnimals.input.status === "decision", "Card input was not locked for the decision.");
+    assert(
+      (await actionableSemanticControlCount(page)) === 0,
+      "Hand-card semantic controls remained active during the decision.",
+    );
+    assert(
+      await page.locator("[data-yaku-decision]").isVisible(),
+      "Yaku decision tray is missing.",
+    );
+    const decisionBox = await page.locator("[data-yaku-decision]").boundingBox();
+    const gameBox = await page.locator(".game-frame").boundingBox();
+    assert(
+      decisionBox !== null && gameBox !== null && decisionBox.y >= gameBox.y + gameBox.height - 1,
+      `The Yaku decision surface obscures the table: ${JSON.stringify({ decisionBox, gameBox })}.`,
+    );
+    for (const selector of [
+      "[data-deck-select]",
+      "[data-fullscreen-button]",
+      "[data-new-round]",
+      "[data-options-trigger]",
+    ]) {
+      assert(
+        await page.locator(selector).isDisabled(),
+        `${selector} escaped the modal decision lock.`,
+      );
+    }
+    assert(
+      (await page.locator("[data-yaku-bank]").textContent())?.includes("3 points"),
+      "Hand Bank button omitted its authoritative 3-point award.",
+    );
+    assert(
+      (await page.locator("[data-yaku-koi-koi]").textContent())?.includes("2×"),
+      "Hand Koi-Koi button omitted the 2× consequence.",
+    );
+    const captureCount =
+      handAnimals.cards.zoneCounts.playerBrights +
+      handAnimals.cards.zoneCounts.playerAnimals +
+      handAnimals.cards.zoneCounts.playerScrolls +
+      handAnimals.cards.zoneCounts.playerPlains;
+    const stateBeforeCaptureInspection = handAnimals.localRound.stateVersion;
+    await page.locator('[data-capture-inspect="player"]').click();
+    await page.waitForFunction(
+      () => JSON.parse(window.render_game_to_text()).captureInspection.open === true,
+    );
+    assert(
+      (await page.locator("[data-capture-inspector] img").count()) === captureCount &&
+        (await page.locator("[data-capture-inspector-title]").textContent())?.includes(
+          String(captureCount),
+        ),
+      "Capture inspection did not show exactly the current player's public captured cards.",
+    );
+    const captureGalleryFrames = await page
+      .locator("[data-capture-inspector] img")
+      .evaluateAll((images) =>
+        images.map((image) => {
+          const bounds = image.getBoundingClientRect();
+          const style = getComputedStyle(image);
+          return {
+            ratio: bounds.width / bounds.height,
+            borderWidth: Number.parseFloat(style.borderTopWidth),
+            borderColor: style.borderTopColor,
+            objectFit: style.objectFit,
+          };
+        }),
+      );
+    assert(
+      captureGalleryFrames.length === captureCount &&
+        captureGalleryFrames.every(
+          ({ ratio, borderWidth, borderColor, objectFit }) =>
+            Math.abs(ratio - 0.625) < 0.03 &&
+            borderWidth >= 2 &&
+            borderColor !== "rgba(0, 0, 0, 0)" &&
+            objectFit === "contain",
+        ),
+      `Capture gallery no longer preserves a strong framed 5:8 card treatment: ${JSON.stringify(captureGalleryFrames)}.`,
+    );
+    assertClearlyLightFrames(
+      await inspectCardImageFrames(page, "[data-capture-inspector] img"),
+      "Capture gallery",
+    );
+    const captureInspectionState = await readState(page);
+    assert(
+      captureInspectionState.localRound.stateVersion === stateBeforeCaptureInspection &&
+        captureInspectionState.cards.cardViewCount === 48 &&
+        !JSON.stringify(captureInspectionState).includes("drawPileOrdered") &&
+        !JSON.stringify(captureInspectionState).includes("commandId"),
+      "Capture inspection changed authoritative state, CardView identity, or exposed private data.",
+    );
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `capture-inspection-koi-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(
+      () => JSON.parse(window.render_game_to_text()).captureInspection.open === false,
+    );
+    assert(
+      await page.locator("[data-yaku-decision]").isVisible(),
+      "Closing capture inspection lost the unresolved Yaku decision.",
+    );
+    assert(
+      await page
+        .locator('[data-capture-inspect="player"]')
+        .evaluate((element) => document.activeElement === element),
+      "Closing capture inspection did not restore focus to its public capture trigger.",
+    );
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `hand-animals-decision-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+    process.stdout.write("Phase 3B Hand Animals decision passed.\n");
+
+    await chooseYakuDecision(page, "koiKoi");
+    const afterHandKoi = await readState(page);
+    assert(
+      afterHandKoi.yaku.tableMultiplier === 2,
+      "Koi-Koi did not preserve the public 2× table.",
+    );
+    assert(
+      afterHandKoi.yaku.feedback?.chosenDecision?.choice === "koiKoi" &&
+        afterHandKoi.yaku.feedback?.koiKoi?.currentTableMultiplier === 2,
+      "Koi-Koi feedback omitted its authoritative continuation event.",
+    );
+    assert(
+      afterHandKoi.localRound.latestRecap?.includes("Drew"),
+      "Hand Koi-Koi did not resume Draw before its handoff boundary.",
+    );
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `hand-koi-draw-resumed-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+    process.stdout.write("Phase 3B Hand Koi-Koi Draw continuation passed.\n");
+
+    await playLockedHandSequence(page, PHASE_3B_FINAL_DRAW_SEQUENCE);
+    const finalDraw = await resolvePendingDrawIfNeeded(page);
+    assert(
+      finalDraw.localRound.phase === "awaitingYakuDecision" &&
+        finalDraw.yaku?.decision?.phase === "draw" &&
+        hasYaku(finalDraw, "blueScrolls") &&
+        hasYaku(finalDraw, "scrolls"),
+      "The locked combined final-Draw decision did not appear.",
+    );
+    assert(finalDraw.yaku.tableMultiplier === 2, "Final Draw decision was not at 2×.");
+    assert(finalDraw.yaku.decision.currentYakuTotal === 11, "Final Draw total was not 11.");
+    assert(finalDraw.yaku.decision.bank?.awardedPoints === 22, "Final Draw Bank was not 22.");
+    assert(
+      finalDraw.yaku.decision.koiKoi?.resultingTableMultiplier === 3,
+      "Final Draw Koi-Koi did not raise 2× to 3×.",
+    );
+    assert(
+      (await page.locator("[data-yaku-decision-summary]").textContent())?.includes(
+        "Blue Scrolls",
+      ) && (await page.locator("[data-yaku-decision-summary]").textContent())?.includes("Scrolls"),
+      "Combined final-Draw yaku are not presented together.",
+    );
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `final-draw-combined-decision-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+    process.stdout.write("Phase 3B final-Draw combined decision passed.\n");
+
+    assert(
+      await page.locator("[data-new-round]").isDisabled(),
+      "New Round can discard an unresolved final-Draw decision.",
+    );
+    const finalKoiResult = await chooseYakuDecisionThroughResultBeat(page, "koiKoi");
+    await waitForResultVisualSettlement(page);
+    assert(
+      finalKoiResult.state.localRound.phase === "roundComplete" &&
+        finalKoiResult.state.result?.kind === "endOfPlayLastKoiCaller",
+      "Final-Draw Koi-Koi did not produce the committed End-of-Play result.",
+    );
+    assert(
+      finalKoiResult.state.result.scorerId === "player-b" &&
+        finalKoiResult.state.result.scoring?.basePoints === 11 &&
+        finalKoiResult.state.result.scoring?.scoringMultiplier === 3 &&
+        finalKoiResult.state.result.scoring?.awardedPoints === 33,
+      `Final-Draw result arithmetic changed: ${JSON.stringify(finalKoiResult.state.result)}.`,
+    );
+    assert(
+      await page.locator("[data-round-result]").isVisible(),
+      "End-of-Play result modal is not visible.",
+    );
+    await assertHandPlayAttentionHidden(page, "End-of-Play result");
+    assert(
+      (await page.locator("[data-round-result-outcome]").textContent())?.includes(
+        "last Koi-Koi caller",
+      ) &&
+        (await page.locator("[data-round-result-arithmetic]").textContent())?.includes(
+          "11 points × 3× = 33 points",
+        ),
+      "End-of-Play result copy omitted the authoritative caller/arithmetic.",
+    );
+    assert(
+      !(await page.locator("[data-round-result-details]").evaluate((details) => details.open)) &&
+        !(await page.locator("[data-round-result-transition]").isVisible()) &&
+        (await page.locator("[data-round-result-action]").isVisible()),
+      "End-of-Play did not open as a concise outcome/points/action summary.",
+    );
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `end-of-play-result-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+    process.stdout.write("Phase 5A End-of-Play result passed.\n");
+  }
 
   await page.goto(pageUrl, { waitUntil: "networkidle" });
   await waitForApplicationReady(page, browserErrors, networkErrors);
   await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
+  const initialDealSignature = publicOpeningDealSignature(await readState(page));
   const freshHandAnimals = await playLockedHandSequence(page, PHASE_3B_HAND_DECISION_SEQUENCE);
   assert(
     freshHandAnimals.localRound.phase === "awaitingYakuDecision" &&
@@ -2631,10 +2746,10 @@ try {
     `Bank result snapshot changed: ${JSON.stringify(banked.result)}.`,
   );
   assert(
-    banked.result.action.actionLabel === "Start another local round" &&
+    banked.result.action.actionLabel === "Continue to next round" &&
       banked.result.action.plan?.scheduledMonth === 2 &&
       banked.result.action.plan?.starterId === "player-a",
-    "The truthful local action or authoritative February plan is missing.",
+    "The real continuation action or authoritative February plan is missing.",
   );
   assert(
     (await page.locator("[data-round-result-context]").textContent())?.includes("January") &&
@@ -2653,14 +2768,110 @@ try {
   await page.locator("[data-round-result-details] > summary").click();
   assert(
     (await page.locator("[data-round-result-transition]").isVisible()) &&
-      (await page.locator("[data-round-result-multipliers]").isVisible()),
-    "The result Details disclosure did not reveal authoritative scoring and transition facts.",
+      (await page.locator("[data-round-result-multipliers]").isVisible()) &&
+      (await page.locator("[data-round-result-yaku] .round-result__yaku-row").count()) ===
+        banked.result.scoredYaku.length &&
+      (await page.locator("[data-round-result-yaku] .round-result__yaku-cards img").count()) ===
+        banked.result.scoredYaku.reduce((sum, row) => sum + row.contributingCardIds.length, 0),
+    "The result Details disclosure did not reveal authoritative scoring, transition, and exact yaku-card evidence.",
   );
+  const expandedGallery = await page
+    .locator("[data-round-result-yaku] .round-result__yaku-cards img")
+    .evaluateAll((images) =>
+      images.map((image) => {
+        const bounds = image.getBoundingClientRect();
+        const style = getComputedStyle(image);
+        return {
+          ratio: bounds.width / bounds.height,
+          borderWidth: Number.parseFloat(style.borderTopWidth),
+          borderColor: style.borderTopColor,
+          objectFit: style.objectFit,
+          alt: image.alt,
+          caption: image.parentElement?.querySelector("figcaption")?.textContent?.trim() ?? "",
+        };
+      }),
+    );
+  assert(
+    expandedGallery.length > 0 &&
+      expandedGallery.every(
+        ({ ratio, borderWidth, borderColor, objectFit, alt, caption }) =>
+          Math.abs(ratio - 0.625) < 0.03 &&
+          borderWidth >= 1 &&
+          borderColor !== "rgba(0, 0, 0, 0)" &&
+          objectFit === "contain" &&
+          !/^[a-z]+-[a-z0-9-]+$/u.test(alt) &&
+          !/^[a-z]+-[a-z0-9-]+$/u.test(caption),
+      ),
+    `Expanded scored-Yaku gallery lost its framed 5:8 card treatment: ${JSON.stringify(expandedGallery)}.`,
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `bank-expanded-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 844, height: 390 });
+  const expandedContainment = await page.locator("[data-round-result]").evaluate((result) => {
+    const card = result.querySelector(".round-result__card");
+    if (!(card instanceof HTMLElement)) throw new Error("Expanded result card disappeared.");
+    const bounds = result.getBoundingClientRect();
+    const cardBounds = card.getBoundingClientRect();
+    card.scrollTop = 0;
+    const header = result.querySelector("[data-round-result-title]");
+    const action = result.querySelector("[data-round-result-action]");
+    card.scrollTop = card.scrollHeight;
+    const detailsReachBottom =
+      card.scrollTop >= Math.max(0, card.scrollHeight - card.clientHeight) - 1;
+    card.scrollTop = 0;
+    return {
+      outer: {
+        width: bounds.width,
+        height: bounds.height,
+        overflowY: getComputedStyle(result).overflowY,
+      },
+      card: {
+        x: cardBounds.x,
+        y: cardBounds.y,
+        width: cardBounds.width,
+        height: cardBounds.height,
+        scrollHeight: card.scrollHeight,
+        clientHeight: card.clientHeight,
+        overflowY: getComputedStyle(card).overflowY,
+      },
+      headerVisible: header instanceof HTMLElement && header.getBoundingClientRect().height > 0,
+      actionVisible: action instanceof HTMLElement && action.getBoundingClientRect().height > 0,
+      detailsReachBottom,
+    };
+  });
+  assert(
+    expandedContainment.outer.width <= 845 &&
+      expandedContainment.outer.height <= 391 &&
+      expandedContainment.outer.overflowY === "hidden" &&
+      expandedContainment.card.x >= -1 &&
+      expandedContainment.card.y >= -1 &&
+      expandedContainment.card.x + expandedContainment.card.width <= 845 &&
+      expandedContainment.card.y + expandedContainment.card.height <= 391 &&
+      (expandedContainment.card.overflowY === "auto" ||
+        expandedContainment.card.overflowY === "scroll") &&
+      expandedContainment.card.scrollHeight >= expandedContainment.card.clientHeight &&
+      expandedContainment.headerVisible &&
+      expandedContainment.actionVisible &&
+      expandedContainment.detailsReachBottom,
+    `Expanded result escaped landscape containment: ${JSON.stringify(expandedContainment)}.`,
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `bank-expanded-844x390${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.locator("[data-round-result-details] > summary").click();
   assert(
-    (await page.locator("[data-round-result-action]").textContent()) ===
-      "Start another local round",
-    "The local result acknowledgement overclaims authoritative next-round advancement.",
+    (await page.locator("[data-round-result-action]").textContent()) === "Continue to February",
+    "The nonfinal result did not offer real local-round advancement.",
   );
   for (const selector of [
     "[data-deck-select]",
@@ -2682,38 +2893,53 @@ try {
     (await page.locator("[data-turn-recaps]").textContent())?.includes("banked 3 × 1× = 3 points"),
     "The compact History disclosure did not retain the complete ordered recap data.",
   );
-  for (const viewport of viewports) {
+  for (const viewport of process.env.SMOKE_PHASE5A_ONLY === "1"
+    ? focusedPhase5AResultViewports
+    : viewports) {
     await page.setViewportSize(viewport);
-    const { resultBox, cardBox, overflowY } = await page
-      .locator("[data-round-result]")
-      .evaluate((result) => {
-        const card = result.querySelector(".round-result__card");
-        if (!(card instanceof HTMLElement)) throw new Error("The result card disappeared.");
-        const resultBounds = result.getBoundingClientRect();
-        const cardBounds = card.getBoundingClientRect();
-        return {
-          resultBox: {
-            x: resultBounds.x,
-            y: resultBounds.y,
-            width: resultBounds.width,
-            height: resultBounds.height,
-          },
-          cardBox: {
-            x: cardBounds.x,
-            y: cardBounds.y,
-            width: cardBounds.width,
-            height: cardBounds.height,
-          },
-          overflowY: getComputedStyle(result).overflowY,
-        };
-      });
+    const {
+      resultBox,
+      cardBox,
+      outerOverflowY,
+      cardOverflowY,
+      cardScrollHeight,
+      cardClientHeight,
+    } = await page.locator("[data-round-result]").evaluate((result) => {
+      const card = result.querySelector(".round-result__card");
+      if (!(card instanceof HTMLElement)) throw new Error("The result card disappeared.");
+      const resultBounds = result.getBoundingClientRect();
+      const cardBounds = card.getBoundingClientRect();
+      return {
+        resultBox: {
+          x: resultBounds.x,
+          y: resultBounds.y,
+          width: resultBounds.width,
+          height: resultBounds.height,
+        },
+        cardBox: {
+          x: cardBounds.x,
+          y: cardBounds.y,
+          width: cardBounds.width,
+          height: cardBounds.height,
+        },
+        outerOverflowY: getComputedStyle(result).overflowY,
+        cardOverflowY: getComputedStyle(card).overflowY,
+        cardScrollHeight: card.scrollHeight,
+        cardClientHeight: card.clientHeight,
+      };
+    });
     assert(resultBox !== null, `${viewport.width}×${viewport.height} result modal disappeared.`);
+    const landscapeCardScroll = viewport.width === 844 && viewport.height === 390;
     assert(
       resultBox.x >= 0 &&
         resultBox.y >= 0 &&
         resultBox.x + resultBox.width <= viewport.width + 1 &&
-        (overflowY === "auto" || overflowY === "scroll"),
-      `${viewport.width}×${viewport.height} result overlay escaped horizontal bounds or lost vertical scrolling: ${JSON.stringify({ resultBox, overflowY })}.`,
+        (landscapeCardScroll
+          ? outerOverflowY === "hidden" &&
+            (cardOverflowY === "auto" || cardOverflowY === "scroll") &&
+            cardScrollHeight >= cardClientHeight
+          : outerOverflowY === "auto" || outerOverflowY === "scroll"),
+      `${viewport.width}×${viewport.height} result overlay lost its expected scroll owner: ${JSON.stringify({ resultBox, landscapeCardScroll, outerOverflowY, cardOverflowY, cardScrollHeight, cardClientHeight })}.`,
     );
     assert(
       cardBox.x >= resultBox.x - 3 &&
@@ -2730,7 +2956,7 @@ try {
       fullPage: true,
     });
   }
-  process.stdout.write("Phase 3C Bank result seven-viewport modal passed.\n");
+  process.stdout.write("Phase 5A Bank result seven-viewport modal passed.\n");
   assert(
     !JSON.stringify(banked).includes("drawPileOrdered") &&
       !JSON.stringify(banked).includes("rng") &&
@@ -2738,25 +2964,77 @@ try {
       !JSON.stringify(banked).includes("commandId"),
     "The browser text surface leaked server-only state.",
   );
+  const recapCountBeforeAdvance = banked.localRound.recapCount;
   await page.locator("[data-round-result-action]").click();
   await page.waitForFunction(() => {
     const state = JSON.parse(window.render_game_to_text());
     return (
       state.localRound.phase === "awaitingHandPlay" &&
-      state.localRound.stateVersion === 1 &&
-      state.localRound.roundNumber === 1 &&
-      state.localRound.scheduledMonth === 1 &&
+      state.localRound.roundNumber === 2 &&
+      state.localRound.scheduledMonth === 2 &&
       state.result === null
     );
   });
   assert(
     !(await page.locator("[data-round-result]").isVisible()),
-    "The explicit local restart did not dismiss the result shell.",
+    "The real local round advance did not dismiss the result shell.",
   );
+  const advanced = await readState(page);
+  assert(
+    advanced.localRound.recapCount >= recapCountBeforeAdvance &&
+      advanced.localRound.matchLength === 3 &&
+      (await page.locator("[data-turn-recaps]").textContent())?.includes(
+        "banked 3 × 1× = 3 points",
+      ),
+    `Real Phase 5A advancement lost match recap or format: ${JSON.stringify(advanced.localRound)}.`,
+  );
+  await acceptHandoffIfPending(page);
+  const roundTwo = await playProductionRoundToResult(page, "Round 2");
+  assert(
+    roundTwo.localRound.roundNumber === 2 && roundTwo.result !== null,
+    "Round 2 did not finish.",
+  );
+  await page.locator("[data-round-result-action]").click();
+  await page.waitForFunction(() => {
+    const state = JSON.parse(window.render_game_to_text());
+    return state.localRound.roundNumber === 3 && state.result === null;
+  });
+  await acceptHandoffIfPending(page);
+  const terminal = await playProductionRoundToResult(page, "Round 3");
+  assert(
+    terminal.localRound.phase === "matchComplete" &&
+      terminal.localRound.roundNumber === 3 &&
+      terminal.result?.action.actionLabel === "Start rematch",
+    `The real 3-round production trace did not reach a terminal rematch result: ${JSON.stringify(terminal.result)}.`,
+  );
+  assert(
+    (await page.locator("[data-round-result-action]").textContent()) === "Start rematch",
+    "The terminal result did not offer a real rematch.",
+  );
+  await page.locator("[data-round-result-action]").click();
+  await page.waitForFunction(() => {
+    const state = JSON.parse(window.render_game_to_text());
+    return (
+      state.localRound.phase === "awaitingHandPlay" &&
+      state.localRound.roundNumber === 1 &&
+      state.localRound.scheduledMonth === 1 &&
+      state.localRound.recapCount === 0 &&
+      state.localRound.matchLength === 3 &&
+      state.result === null
+    );
+  });
+  const rematched = await readState(page);
+  assert(
+    publicOpeningDealSignature(rematched) !== initialDealSignature &&
+      !JSON.stringify(rematched).includes("seed") &&
+      !JSON.stringify(rematched).includes("checkpoint"),
+    "The real rematch reused the first public deal or leaked server-only seed/checkpoint state.",
+  );
+  process.stdout.write("Phase 5A real 3-round advance and rematch trace passed.\n");
   assert(browserErrors.length === 0, `Browser errors: ${browserErrors.join("\n")}`);
   assert(networkErrors.length === 0, `Network errors: ${networkErrors.join("\n")}`);
   process.stdout.write(
-    "Phase 3C root/Pages yaku, End-of-Play, Bank result, modal-lock, and restart smoke passed.\n",
+    "Phase 5A root/Pages yaku, End-of-Play, Bank result, progression, and rematch smoke passed.\n",
   );
 } finally {
   if (browser) await browser.close();

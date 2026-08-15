@@ -1,7 +1,12 @@
 import { CARD_IDS, type LegalActionV1, type PlayerObservationV1 } from "@koikoi4x/engine";
 import { describe, expect, it } from "vitest";
 
-import { createLocalRoundRuntime } from "../src/game/local-round-runtime";
+import {
+  createFreshLocalMatchSeed,
+  createLocalRoundRuntime,
+  PHASE_3B_LOCAL_SEED,
+  resolveFreshLocalMatchLength,
+} from "../src/game/local-round-runtime";
 import {
   createInteractionSourceFromObservation,
   projectObservationToBoard,
@@ -58,6 +63,22 @@ function intentFromAction(
   });
 }
 
+function completeCurrentRound(runtime: ReturnType<typeof createLocalRoundRuntime>): void {
+  let commandCount = 0;
+  while (
+    runtime.state.phase.kind !== "roundComplete" &&
+    runtime.state.phase.kind !== "matchComplete"
+  ) {
+    const observation = runtime.observe();
+    const action = observation.legalActions[0];
+    if (!action) throw new Error(`No legal action in ${observation.publicState.phase.kind}.`);
+    const transition = runtime.submit(intentFromAction(observation, action));
+    commandCount += 1;
+    if (transition.handoffPlayerId) runtime.switchViewer(transition.handoffPlayerId);
+    if (commandCount > 64) throw new Error("LOCAL_MATCH_DRIVER_EXHAUSTED: round did not complete.");
+  }
+}
+
 describe("Phase 3A local authoritative round", () => {
   it("LOCAL-001 installs the approved primary runtime descriptor first", () => {
     expect(INSTALLED_DECKS[0]).toEqual({
@@ -97,6 +118,56 @@ describe("Phase 3A local authoritative round", () => {
     expect(JSON.stringify(source)).not.toContain("drawPileOrdered");
     expect(JSON.stringify(source)).not.toContain("commandId");
     expect(Object.isFrozen(projection)).toBe(true);
+  });
+
+  it.each([3, 6, 12] as const)(
+    "PHASE-5A starts the configured %i-round local format",
+    (matchLength) => {
+      const runtime = createLocalRoundRuntime({
+        matchId: `phase5a-format-${matchLength}`,
+        matchLength,
+      });
+
+      expect(runtime.state.matchLength).toBe(matchLength);
+      expect(runtime.observe().publicState.matchLength).toBe(matchLength);
+      expect(runtime.state.round).toMatchObject({ roundNumber: 1, scheduledMonth: 1 });
+    },
+  );
+
+  it("PHASE-5A preserves a completed format for rematch while fresh matches use the selected format", () => {
+    expect(resolveFreshLocalMatchLength(6, 3)).toBe(3);
+    expect(resolveFreshLocalMatchLength(12, 6)).toBe(6);
+    expect(resolveFreshLocalMatchLength(6)).toBe(6);
+  });
+
+  it("PHASE-5A assigns fresh local matches distinct reproducible seeds and opening deals", () => {
+    const firstSeed = createFreshLocalMatchSeed(1);
+    const secondSeed = createFreshLocalMatchSeed(2);
+    expect(firstSeed).toMatch(/^[0-9a-f]{32}$/u);
+    expect(secondSeed).toMatch(/^[0-9a-f]{32}$/u);
+    expect(firstSeed).not.toBe(PHASE_3B_LOCAL_SEED);
+    expect(secondSeed).not.toBe(firstSeed);
+
+    const first = createLocalRoundRuntime({
+      matchId: "phase5a-fresh-seed-one",
+      matchLength: 3,
+      seed: firstSeed,
+    });
+    const repeatedFirst = createLocalRoundRuntime({
+      matchId: "phase5a-fresh-seed-one-repeat",
+      matchLength: 3,
+      seed: firstSeed,
+    });
+    const second = createLocalRoundRuntime({
+      matchId: "phase5a-fresh-seed-two",
+      matchLength: 3,
+      seed: secondSeed,
+    });
+
+    expect(first.observe().ownHand).toEqual(repeatedFirst.observe().ownHand);
+    expect(first.state.round.field).toEqual(repeatedFirst.state.round.field);
+    expect(second.observe().ownHand).not.toEqual(first.observe().ownHand);
+    expect(second.state.round.field).not.toEqual(first.state.round.field);
   });
 
   it("LOCAL-003/004 executes Hand → Draw and creates exact event-boundary animation data", () => {
@@ -245,4 +316,79 @@ describe("Phase 3A local authoritative round", () => {
     expect(recapObserved).toBe(true);
     expect(runtime.checkpoint.matchId).toBe("phase3a-complete-round");
   });
+
+  it("PHASE-5A advances a completed match checkpoint into the next scheduled round", () => {
+    const runtime = createLocalRoundRuntime({
+      matchId: "phase5a-advance-round",
+      matchLength: 3,
+    });
+    while (runtime.state.phase.kind !== "roundComplete") {
+      const current = runtime.observe();
+      const action = current.legalActions[0];
+      if (!action) throw new Error(`No legal action in ${current.publicState.phase.kind}.`);
+      const transition = runtime.submit(intentFromAction(current, action));
+      if (transition.handoffPlayerId) runtime.switchViewer(transition.handoffPlayerId);
+    }
+
+    const history = runtime.state.history;
+    const checkpoint = runtime.checkpoint;
+    const advanced = runtime.advanceRound();
+
+    expect(advanced.before.publicState.phase.kind).toBe("roundComplete");
+    expect(runtime.state.matchLength).toBe(3);
+    expect(runtime.state.round).toMatchObject({ roundNumber: 2, scheduledMonth: 2 });
+    expect(runtime.state.history).toEqual(history);
+    expect(runtime.checkpoint.matchId).toBe(checkpoint.matchId);
+    expect(runtime.checkpoint).not.toEqual(checkpoint);
+    if (advanced.handoffPlayerId) {
+      expect(advanced.after.playerId).not.toBe(advanced.handoffPlayerId);
+      expect(runtime.switchViewer(advanced.handoffPlayerId).playerId).toBe(
+        advanced.handoffPlayerId,
+      );
+    }
+  });
+
+  it.each([3, 6, 12] as const)(
+    "PHASE-5A completes a real %i-round local match and a fresh runtime resets its match state",
+    (matchLength) => {
+      const runtime = createLocalRoundRuntime({
+        matchId: `phase5a-full-match-${matchLength}`,
+        matchLength,
+      });
+      let advances = 0;
+      while (runtime.state.phase.kind !== "matchComplete") {
+        completeCurrentRound(runtime);
+        if (runtime.state.phase.kind === "roundComplete") {
+          const transition = runtime.advanceRound();
+          advances += 1;
+          if (transition.handoffPlayerId) runtime.switchViewer(transition.handoffPlayerId);
+        }
+      }
+
+      expect(runtime.state.status).toBe("complete");
+      expect(runtime.state.round).toMatchObject({
+        roundNumber: matchLength,
+        scheduledMonth: matchLength,
+        isFinalScheduledRound: true,
+      });
+      expect(runtime.state.history).toHaveLength(matchLength);
+      expect(runtime.state.phase).toMatchObject({
+        kind: "matchComplete",
+        result: { matchLength, roundsPlayed: matchLength },
+      });
+      expect(advances).toBe(matchLength - 1);
+
+      const fresh = createLocalRoundRuntime({
+        matchId: `phase5a-fresh-match-${matchLength}`,
+        matchLength,
+      });
+      expect(fresh.state).toMatchObject({
+        matchLength,
+        status: "inProgress",
+        history: [],
+        round: { roundNumber: 1, scheduledMonth: 1, isFinalScheduledRound: false },
+      });
+      expect(fresh.state.players.map(({ score }) => score)).toEqual([0, 0]);
+    },
+  );
 });

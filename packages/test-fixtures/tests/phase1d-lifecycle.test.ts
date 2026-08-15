@@ -7,6 +7,7 @@ import {
   createNoScoreRoundResult,
   createSeededRandomSource,
   createScoredRoundResult,
+  deriveYakuContributingCardIds,
   deriveNextRoundPlan,
   evaluateYaku,
   getLegalActions,
@@ -15,6 +16,7 @@ import {
   type ActiveYakuV1,
   type AuthoritativeGameStateV1,
   type CardId,
+  type CompletedYakuFormationV1,
   type GameplayTransitionV1,
   type MatchLength,
   type PlayerId,
@@ -95,11 +97,36 @@ function player(
   };
 }
 
+function completedFormationsFor(
+  players: readonly PlayerStateV1[],
+  scheduledMonth: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12,
+): readonly CompletedYakuFormationV1[] {
+  return players
+    .flatMap((candidate) =>
+      candidate.activeYaku.map((yaku) => ({
+        sequence: 0,
+        playerId: candidate.id,
+        phase: "hand" as const,
+        yaku,
+        contributingCardIds: deriveYakuContributingCardIds(
+          yaku.key,
+          candidate.captured,
+          scheduledMonth,
+        ),
+      })),
+    )
+    .map((formation, index) => ({ ...formation, sequence: index + 1 }));
+}
+
 function handTriggerSource(): AuthoritativeGameStateV1 {
   const captured = ["march-curtain", "august-moon"] as const satisfies readonly CardId[];
   const allocated = [...MULTI_HAND, ...OPPONENT_HAND, ...FIELD, ...captured];
   const allocatedSet = new Set<CardId>(allocated);
   const drawPile = CARD_IDS.filter((cardId) => !allocatedSet.has(cardId));
+  const players = [
+    player("player-a", MULTI_HAND, captured),
+    player("player-b", OPPONENT_HAND, []),
+  ] as const;
   return {
     formatVersion: 1,
     rulesVersion: "1.0",
@@ -108,7 +135,7 @@ function handTriggerSource(): AuthoritativeGameStateV1 {
     matchId: "phase1d-match",
     matchLength: 12,
     status: "inProgress",
-    players: [player("player-a", MULTI_HAND, captured), player("player-b", OPPONENT_HAND, [])],
+    players,
     round: {
       roundNumber: 1,
       scheduledMonth: 1,
@@ -121,6 +148,7 @@ function handTriggerSource(): AuthoritativeGameStateV1 {
       firstYakuTriggerPlayerId: null,
       specialPrivilege: null,
       frozenFinalRoundLeaderId: null,
+      completedYakuFormations: completedFormationsFor(players, 1),
     },
     phase: { kind: "awaitingHandPlay", playerId: "player-a" },
     history: [],
@@ -229,6 +257,7 @@ function finalTurnSource(drawHead: CardId): AuthoritativeGameStateV1 {
       firstYakuTriggerPlayerId: "player-a",
       specialPrivilege: null,
       frozenFinalRoundLeaderId: null,
+      completedYakuFormations: completedFormationsFor(players, 1),
     },
     phase: { kind: "awaitingHandPlay", playerId: "player-b" },
     history: [],
@@ -265,6 +294,7 @@ function finalFirstTriggerSource(): AuthoritativeGameStateV1 {
       firstYakuTriggerPlayerId: null,
       specialPrivilege: null,
       frozenFinalRoundLeaderId: null,
+      completedYakuFormations: [],
     },
     phase: { kind: "awaitingHandPlay", playerId: "player-b" },
     history: [],
@@ -323,19 +353,21 @@ function historicalState(
   scores: PointDeltas,
   history: readonly RoundResultV1[],
 ): AuthoritativeGameStateV1 {
+  const players = [
+    { ...template.players[0], score: scores["player-a"] },
+    { ...template.players[1], score: scores["player-b"] },
+  ] as const;
   return {
     ...template,
     matchLength: 3,
-    players: [
-      { ...template.players[0], score: scores["player-a"] },
-      { ...template.players[1], score: scores["player-b"] },
-    ],
+    players,
     round: {
       ...template.round,
       roundNumber,
       scheduledMonth: roundNumber as 1,
       isFinalScheduledRound: roundNumber === 3,
       starterId,
+      completedYakuFormations: completedFormationsFor(players, roundNumber as 1),
     },
     history,
   };
@@ -349,7 +381,36 @@ function scoredHistoryResult(
   scoringMultiplier: TableMultiplier,
   scoresBefore: PointDeltas,
 ): RoundResultV1 {
-  const state = historicalState(template, roundNumber, starterId, scoresBefore, []);
+  const baseline = historicalState(template, roundNumber, starterId, scoresBefore, []);
+  const yaku = HISTORY_YAKU[0];
+  if (yaku === undefined) throw new Error("Historical yaku fixture is missing.");
+  const scorer = baseline.players.find((player) => player.id === scorerId);
+  if (scorer === undefined) throw new Error("Historical scorer fixture is missing.");
+  const hasFormation = baseline.round.completedYakuFormations.some(
+    (formation) => formation.playerId === scorerId && formation.yaku.key === yaku.key,
+  );
+  const state: AuthoritativeGameStateV1 = {
+    ...baseline,
+    round: {
+      ...baseline.round,
+      completedYakuFormations: hasFormation
+        ? baseline.round.completedYakuFormations
+        : [
+            ...baseline.round.completedYakuFormations,
+            {
+              sequence: baseline.round.completedYakuFormations.length + 1,
+              playerId: scorerId,
+              phase: "hand",
+              yaku,
+              contributingCardIds: deriveYakuContributingCardIds(
+                yaku.key,
+                scorer.captured,
+                roundNumber as 1,
+              ),
+            },
+          ],
+    },
+  };
   return createScoredRoundResult(state, {
     kind: "bankedScore",
     reasonCode: "BANKED_SCORE",
@@ -405,6 +466,7 @@ function completedBeforeFinalRound(
         mostRecentKoiKoiCallerId: null,
         specialPrivilege: null,
         frozenFinalRoundLeaderId: null,
+        completedYakuFormations: completedFormationsFor(scheduledPlayers, roundNumber as 1),
       },
       history: [...history],
     };
@@ -1011,6 +1073,7 @@ describe("Phase 1D transition and final-leader policies", () => {
         mostRecentKoiKoiCallerId: "player-b",
         firstYakuTriggerPlayerId: "player-b",
         frozenFinalRoundLeaderId: "player-a",
+        completedYakuFormations: completedFormationsFor([finalState.players[0], b], 3),
       },
     };
     expect(validateAuthoritativeState(state)).toEqual([]);

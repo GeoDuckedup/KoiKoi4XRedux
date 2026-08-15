@@ -85,6 +85,15 @@
         <section class="options-dialog__group" aria-labelledby="options-table-title">
           <h3 id="options-table-title">Table</h3>
           <label>
+            <span>Match length</span>
+            <select data-match-length-select aria-describedby="match-length-note">
+              <option value="3" selected>3 rounds</option>
+              <option value="6">6 rounds</option>
+              <option value="12">12 rounds</option>
+            </select>
+            <small id="match-length-note">Applies when a fresh match starts.</small>
+          </label>
+          <label>
             <span>Deck artwork</span>
             <select data-deck-select disabled>
               <option value="new-primary-deck">Primary Deck</option>
@@ -94,9 +103,7 @@
           </label>
           <div class="options-dialog__button-row">
             <button type="button" data-fullscreen-button>Enter fullscreen</button>
-            <button type="button" class="new-round-button" data-new-round>
-              Start another local round
-            </button>
+            <button type="button" class="new-round-button" data-new-round>Start fresh match</button>
           </div>
         </section>
       </dialog>
@@ -175,23 +182,23 @@
         >
           <article class="round-result__card">
             <div class="round-result__heading">
-              <p class="eyebrow" data-round-result-context>Round result</p>
+              <p class="eyebrow" data-round-result-context>Round 1 · January</p>
               <h2 id="round-result-title" data-round-result-title>Round complete</h2>
               <p id="round-result-outcome" data-round-result-outcome></p>
             </div>
-            <div class="round-result__score" data-round-result-score>
-              <p class="round-result__arithmetic" data-round-result-arithmetic></p>
+            <div class="round-result__facts" data-round-result-facts>
+              <p><span>Yaku</span><strong data-round-result-yaku-count>0</strong></p>
+              <p><span>Scoring</span><strong data-round-result-scoring-multiplier>—</strong></p>
+              <p><span>Awarded</span><strong data-round-result-awarded-points>0</strong></p>
             </div>
-            <div class="round-result__totals" aria-label="Match scores after this round">
-              <p><span>Player A</span><strong data-round-result-score-a>0</strong></p>
-              <p><span>Player B</span><strong data-round-result-score-b>0</strong></p>
-            </div>
-            <button type="button" data-round-result-action>Start another local round</button>
+            <p class="round-result__next" data-round-result-next></p>
+            <button type="button" data-round-result-action>Continue</button>
             <details class="round-result__details" data-round-result-details>
-              <summary>See scoring and round details</summary>
+              <summary>See winning yaku &amp; score</summary>
               <div class="round-result__details-body">
                 <section class="round-result__scoring-details" data-round-result-scoring-details>
-                  <h3>Scoring details</h3>
+                  <h3>Authoritative score</h3>
+                  <p class="round-result__arithmetic" data-round-result-arithmetic></p>
                   <p class="round-result__multipliers" data-round-result-multipliers></p>
                   <ul class="round-result__yaku" data-round-result-yaku></ul>
                 </section>
@@ -199,6 +206,10 @@
                   <h3>Committed evidence</h3>
                   <ul data-round-result-evidence-list></ul>
                 </section>
+                <div class="round-result__totals" aria-label="Match scores after this round">
+                  <p><span>Player A</span><strong data-round-result-score-a>0</strong></p>
+                  <p><span>Player B</span><strong data-round-result-score-b>0</strong></p>
+                </div>
                 <section class="round-result__transition" data-round-result-transition>
                   <h3 data-round-result-transition-title>Next-round plan</h3>
                   <p data-round-result-transition-copy></p>

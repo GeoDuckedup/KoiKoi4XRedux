@@ -3759,12 +3759,18 @@ Phase 4 acceptance:
 
 ### Phase 5A — Full match formats
 
-- 3/6/12 rounds;
-- full recap;
-- ordered end-of-play yaku evidence that renders the exact qualifying cards for each yaku (including
-  repeated cards where one card supports more than one yaku);
-- final-round rules;
-- rematch.
+- 3/6/12-round formats advance through the actual scheduled months/starter plans and retain the full
+  public recap;
+- engine-owned trigger-time ordinary-Yaku formation chronology renders the exact qualifying cards in
+  formation order, including intentional repeated cards where one card supports more than one Yaku;
+- completed ordinary results expose only final scored rows and their authoritative arithmetic; the
+  browser does not reconstruct qualifying cards, points, chronology, progression, winner, or rematch;
+- concise result first: outcome/winner, Yaku count, multiplier, award, and next action; chronology,
+  card galleries, repetitions, and arithmetic begin behind a closed details disclosure;
+- final-round rules and authoritative terminal winner/tie outcome;
+- rematch starts an actual fresh local match, not a presentation-only reset;
+- public observation, protocol, and replay schema revision complete before Phase 5B persistence, with
+  recipient-safe evidence only.
 
 ### Phase 5B — Local persistence
 

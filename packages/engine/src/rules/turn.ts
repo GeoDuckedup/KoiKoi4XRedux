@@ -1,12 +1,14 @@
 import { isCardId, type CardId } from "../cards/catalog";
 import { rejectCommand } from "../state/errors";
 import { deepFreeze } from "../state/freeze";
+import { markTrustedValidatedEngineState } from "../state/trusted-engine-state-cache";
 import {
   PLAYER_IDS,
   type AuthoritativeGameStateV1,
   type ActiveYakuV1,
   type CapturePhase,
   type ChooseYakuDecisionCommandV1,
+  type CompletedYakuFormationV1,
   type EnginePhaseV1,
   type GameplayEventV1,
   type GameplayCommandV1,
@@ -30,7 +32,7 @@ import {
   resolveCapture,
   type CaptureResolutionV1,
 } from "./capture";
-import { evaluateYaku } from "./yaku";
+import { deriveYakuContributingCardIds, evaluateYaku } from "./yaku";
 import {
   createMatchResult,
   createNoScoreRoundResult,
@@ -147,6 +149,7 @@ interface YakuCheckResult {
   readonly events: readonly TurnEventV1[];
   readonly decisionPhase: Extract<EnginePhaseV1, { readonly kind: "awaitingYakuDecision" }> | null;
   readonly firstYakuTriggerPlayerId: PlayerId | null;
+  readonly completedYakuFormations: readonly CompletedYakuFormationV1[];
 }
 
 function yakuValueChangeEvents(
@@ -204,6 +207,22 @@ function performYakuCheck(
     phase,
     yaku,
   }));
+  const completedYakuFormations = deepFreeze<readonly CompletedYakuFormationV1[]>([
+    ...state.round.completedYakuFormations,
+    ...evaluation.newYaku.map((yaku, index) =>
+      deepFreeze({
+        sequence: state.round.completedYakuFormations.length + index + 1,
+        playerId: actorId,
+        phase,
+        yaku,
+        contributingCardIds: deriveYakuContributingCardIds(
+          yaku.key,
+          actorAfter.captured,
+          state.round.scheduledMonth,
+        ),
+      }),
+    ),
+  ]);
   const valueChangeEvents = yakuValueChangeEvents(
     actorId,
     phase,
@@ -228,6 +247,7 @@ function performYakuCheck(
       events: valueChangeEvents,
       decisionPhase: null,
       firstYakuTriggerPlayerId: state.round.firstYakuTriggerPlayerId,
+      completedYakuFormations,
     });
   }
   const context = deepFreeze({
@@ -252,6 +272,7 @@ function performYakuCheck(
     events,
     decisionPhase: { kind: "awaitingYakuDecision", playerId: actorId, context },
     firstYakuTriggerPlayerId: state.round.firstYakuTriggerPlayerId ?? actorId,
+    completedYakuFormations,
   });
 }
 
@@ -274,6 +295,7 @@ function commitTransition(
     phase,
   });
   assertValidAuthoritativeState(state);
+  markTrustedValidatedEngineState(state);
   return deepFreeze({ state, events });
 }
 
@@ -347,6 +369,7 @@ function commitRoundResult(
     history,
   });
   assertValidAuthoritativeState(state);
+  markTrustedValidatedEngineState(state);
   return deepFreeze({ state, events });
 }
 
@@ -554,7 +577,10 @@ function applyPlayHandCard(
       state.round.drawPile,
       handYaku.decisionPhase,
       deepFreeze(events),
-      { firstYakuTriggerPlayerId: handYaku.firstYakuTriggerPlayerId },
+      {
+        firstYakuTriggerPlayerId: handYaku.firstYakuTriggerPlayerId,
+        completedYakuFormations: handYaku.completedYakuFormations,
+      },
     );
   }
 
@@ -565,6 +591,7 @@ function applyPlayHandCard(
     handResolution.field,
     state.round.drawPile,
     deepFreeze(events),
+    { completedYakuFormations: handYaku.completedYakuFormations },
   );
 }
 
@@ -628,7 +655,10 @@ function applyResolveDrawCard(
       state.round.drawPile,
       drawYaku.decisionPhase,
       deepFreeze(events),
-      { firstYakuTriggerPlayerId: drawYaku.firstYakuTriggerPlayerId },
+      {
+        firstYakuTriggerPlayerId: drawYaku.firstYakuTriggerPlayerId,
+        completedYakuFormations: drawYaku.completedYakuFormations,
+      },
     );
   }
   return completeTurn(
@@ -638,6 +668,7 @@ function applyResolveDrawCard(
     resolution.field,
     state.round.drawPile,
     deepFreeze(events),
+    { completedYakuFormations: drawYaku.completedYakuFormations },
   );
 }
 

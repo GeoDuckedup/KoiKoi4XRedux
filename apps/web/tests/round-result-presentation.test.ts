@@ -62,6 +62,37 @@ const luckyEvidence = deepFreeze({
 } satisfies RoundResultEvidenceV1);
 const luckyHand = luckyEvidence.hands[0];
 if (luckyHand === undefined) throw new Error("LUCKY_TEST_EVIDENCE_MISSING");
+const ordinaryYakuEvidence = deepFreeze({
+  kind: "ordinaryYaku" as const,
+  completedFormations: [
+    {
+      sequence: 1,
+      playerId: "player-a" as const,
+      phase: "hand" as const,
+      yaku: animals,
+      contributingCardIds: [
+        "june-butterfly",
+        "july-boar",
+        "october-deer",
+        "september-sake-cup",
+        "may-bridge",
+      ] as const,
+    },
+  ],
+  scoredYaku: [
+    {
+      formationSequence: 1,
+      yaku: animals,
+      contributingCardIds: [
+        "june-butterfly",
+        "july-boar",
+        "october-deer",
+        "september-sake-cup",
+        "may-bridge",
+      ] as const,
+    },
+  ],
+} satisfies RoundResultEvidenceV1);
 
 function plan(overrides: Partial<NextRoundPlanV1> = {}): NextRoundPlanV1 {
   return deepFreeze({
@@ -182,7 +213,7 @@ describe("Phase 3C public round-result presentation", () => {
 
     expect(state).toMatchObject({
       visibility: "roundResult",
-      title: "Banked score",
+      title: "Player A wins the round",
       outcomeLabel: "Player A banked 3 points.",
       scorerId: "player-a",
       activeYaku: [animals],
@@ -190,7 +221,7 @@ describe("Phase 3C public round-result presentation", () => {
         tableMultiplierLabel: "Table multiplier at decision: 1×.",
         arithmeticLabel: "3 points × 1× = 3 points.",
       },
-      action: { actionLabel: "Start another local round" },
+      action: { actionLabel: "Continue to next round" },
     });
   });
 
@@ -208,11 +239,27 @@ describe("Phase 3C public round-result presentation", () => {
     });
 
     expect(state).toMatchObject({
-      title: "End of Play",
+      title: "Player B wins at End of Play",
       reasonCode: "END_OF_PLAY_LAST_KOI_CALLER",
       outcomeLabel: "Player B was the last Koi-Koi caller and receives 6 points.",
       scorerId: "player-b",
     });
+  });
+
+  it("PRES-RESULT-ORDINARY-YAKU copies final scored rows and exact card IDs from committed evidence", () => {
+    const source = result({ evidence: ordinaryYakuEvidence });
+    const state = createRoundResultPresentation({ observation: observation({ result: source }) });
+
+    expect(state?.scoredYaku).toEqual(ordinaryYakuEvidence.scoredYaku);
+    expect(state?.scoredYaku).not.toBe(ordinaryYakuEvidence.scoredYaku);
+    expect(state?.scoredYaku[0]?.contributingCardIds).toEqual([
+      "june-butterfly",
+      "july-boar",
+      "october-deer",
+      "september-sake-cup",
+      "may-bridge",
+    ]);
+    expect(state?.evidence).not.toBe(source.evidence);
   });
 
   it("PRES-RESULT-003 keeps an End-of-Play 0–0 result free of fabricated scoring or yaku", () => {
@@ -234,7 +281,7 @@ describe("Phase 3C public round-result presentation", () => {
     const state = createRoundResultPresentation({ observation: observation({ result: source }) });
 
     expect(state).toMatchObject({
-      title: "Field cancellation",
+      title: "Round cancelled",
       evidence: fieldEvidence,
       activeYaku: [],
       scoring: null,
@@ -248,7 +295,7 @@ describe("Phase 3C public round-result presentation", () => {
     });
 
     expect(state).toMatchObject({
-      title: "Lucky win",
+      title: "Player A wins with a lucky hand",
       outcomeLabel: "Player A wins with a lucky hand and receives 6 points.",
       activeYaku: [],
       evidence: luckyEvidence,
@@ -266,7 +313,7 @@ describe("Phase 3C public round-result presentation", () => {
     });
 
     expect(state).toMatchObject({
-      title: "Both lucky hands",
+      title: "Both lucky hands draw",
       outcomeLabel: "Both players have lucky hands; this round is a draw.",
       scorerId: null,
       scoring: null,
@@ -315,7 +362,7 @@ describe("Phase 3C public round-result presentation", () => {
     });
 
     expect(state?.action).toEqual({
-      actionLabel: "Start another local round",
+      actionLabel: "Continue to next round",
       plan: nextRound,
       starterReasonLabel: "A zero-point January round alternates the starter.",
     });
@@ -347,16 +394,16 @@ describe("Phase 3C public round-result presentation", () => {
     });
 
     expect(winner).toMatchObject({
-      title: "Match complete",
+      title: "Player A wins the match.",
       outcomeLabel: "Player A wins the match.",
       matchScoresAfter: { "player-a": 9, "player-b": 6 },
-      action: { actionLabel: "Start a new local match" },
+      action: { actionLabel: "Start rematch" },
     });
     expect(tie).toMatchObject({
-      title: "Match complete",
+      title: "The match ends in a tie.",
       outcomeLabel: "The match ends in a tie.",
       matchScoresAfter: { "player-a": 6, "player-b": 6 },
-      action: { actionLabel: "Start a new local match" },
+      action: { actionLabel: "Start rematch" },
     });
   });
 

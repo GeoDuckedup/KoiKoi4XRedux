@@ -15,6 +15,7 @@ import {
   type RoundResultV1,
   type TableMultiplier,
 } from "../state/types";
+import { deriveYakuContributingCardIds } from "./yaku";
 
 export function otherPlayerId(playerId: PlayerId): PlayerId {
   return playerId === PLAYER_IDS[0] ? PLAYER_IDS[1] : PLAYER_IDS[0];
@@ -117,6 +118,27 @@ export function createScoredRoundResult(
   },
 ): RoundResultV1 {
   const awardedPoints = input.basePoints * input.scoringMultiplier;
+  const scorer = state.players.find((player) => player.id === input.scorerId);
+  if (scorer === undefined) throw new Error("PLAYER_INVARIANT: scorer missing from round state.");
+  const scoredYaku = input.activeYaku
+    .map((yaku) => {
+      const formation = state.round.completedYakuFormations.find(
+        (candidate) => candidate.playerId === input.scorerId && candidate.yaku.key === yaku.key,
+      );
+      if (formation === undefined) {
+        throw new Error(`YAKU_EVIDENCE_MISSING: ${yaku.key} has no completed formation.`);
+      }
+      return deepFreeze({
+        formationSequence: formation.sequence,
+        yaku,
+        contributingCardIds: deriveYakuContributingCardIds(
+          yaku.key,
+          scorer.captured,
+          state.round.scheduledMonth,
+        ),
+      });
+    })
+    .sort((left, right) => left.formationSequence - right.formationSequence);
   return buildRoundResult(state, {
     ...input,
     pointDeltas: deepFreeze({
@@ -124,7 +146,11 @@ export function createScoredRoundResult(
       "player-b": input.scorerId === "player-b" ? awardedPoints : 0,
     }),
     awardedPoints,
-    evidence: null,
+    evidence: deepFreeze({
+      kind: "ordinaryYaku",
+      completedFormations: state.round.completedYakuFormations,
+      scoredYaku,
+    }),
     scoresBefore: scorePair(state),
   });
 }

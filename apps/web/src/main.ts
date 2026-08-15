@@ -2,6 +2,7 @@ import { Application, type Texture } from "pixi.js";
 import {
   getCardDefinition,
   getMonthDefinition,
+  type MatchLength,
   type PlayerId,
   type PlayerObservationV1,
   type PublicPhaseV1,
@@ -20,7 +21,9 @@ import { createCardInspectionPresentation } from "./game/card-inspection";
 import { createContextualHelpPresentation } from "./game/contextual-help";
 import {
   createLocalRoundRuntime,
+  createFreshLocalMatchSeed,
   PHASE_3A_MATCH_ID,
+  resolveFreshLocalMatchLength,
   type LocalRoundRuntimeV1,
   type LocalRoundTransitionV1,
 } from "./game/local-round-runtime";
@@ -132,6 +135,7 @@ const themeOptions = Object.freeze([
   ...document.querySelectorAll<HTMLInputElement>("[data-theme-option]"),
 ]);
 const fullscreenButton = queryRequired<HTMLButtonElement>("[data-fullscreen-button]");
+const matchLengthSelect = queryRequired<HTMLSelectElement>("[data-match-length-select]");
 const deckSelect = queryRequired<HTMLSelectElement>("[data-deck-select]");
 const cardInputOverlay = queryRequired<HTMLElement>("[data-card-input-overlay]");
 const handPlayAttention = queryRequired<HTMLElement>("[data-hand-play-attention]");
@@ -176,11 +180,17 @@ const roundResult = queryRequired<HTMLElement>("[data-round-result]");
 const roundResultContext = queryRequired<HTMLElement>("[data-round-result-context]");
 const roundResultTitle = queryRequired<HTMLElement>("[data-round-result-title]");
 const roundResultOutcome = queryRequired<HTMLElement>("[data-round-result-outcome]");
-const roundResultScore = queryRequired<HTMLElement>("[data-round-result-score]");
+const roundResultFacts = queryRequired<HTMLElement>("[data-round-result-facts]");
 const roundResultScoringDetails = queryRequired<HTMLElement>("[data-round-result-scoring-details]");
 const roundResultArithmetic = queryRequired<HTMLElement>("[data-round-result-arithmetic]");
 const roundResultMultipliers = queryRequired<HTMLElement>("[data-round-result-multipliers]");
 const roundResultYaku = queryRequired<HTMLUListElement>("[data-round-result-yaku]");
+const roundResultYakuCount = queryRequired<HTMLElement>("[data-round-result-yaku-count]");
+const roundResultScoringMultiplier = queryRequired<HTMLElement>(
+  "[data-round-result-scoring-multiplier]",
+);
+const roundResultAwardedPoints = queryRequired<HTMLElement>("[data-round-result-awarded-points]");
+const roundResultNext = queryRequired<HTMLElement>("[data-round-result-next]");
 const roundResultScoreA = queryRequired<HTMLElement>("[data-round-result-score-a]");
 const roundResultScoreB = queryRequired<HTMLElement>("[data-round-result-score-b]");
 const roundResultEvidence = queryRequired<HTMLElement>("[data-round-result-evidence]");
@@ -208,7 +218,8 @@ let currentLayout: BoardLayout | undefined;
 let animationDirector: AnimationDirectorV1 | undefined;
 let interactionController: InteractionControllerV1 | undefined;
 let domCardBridge: DomCardBridgeV1 | undefined;
-let runtime: LocalRoundRuntimeV1 = createLocalRoundRuntime();
+let selectedMatchLength: MatchLength = 3;
+let runtime: LocalRoundRuntimeV1 = createLocalRoundRuntime({ matchLength: selectedMatchLength });
 let observation: PlayerObservationV1 = runtime.observe();
 let projection: PresentationBoardProjection = projectObservationToBoard(observation);
 let recentYakuEvents: readonly LocalRoundTransitionV1["events"][number][] = Object.freeze([]);
@@ -365,6 +376,7 @@ function snapshot() {
       recapCount: recaps.length,
       latestRecap: recaps.at(-1) ?? null,
       commandCount,
+      matchLength: observation.publicState.matchLength,
     },
     theme: {
       activeId: activeTheme.id,
@@ -1069,6 +1081,7 @@ function evidenceItems(presentation: RoundResultPresentationV1): readonly string
       }),
     );
   }
+  if (presentation.evidence.kind === "ordinaryYaku") return Object.freeze([]);
   return Object.freeze(
     presentation.evidence.hands.map(({ playerId, fullHand, qualification }) => {
       const qualificationLabel =
@@ -1077,6 +1090,33 @@ function evidenceItems(presentation: RoundResultPresentationV1): readonly string
       return `${resultPlayerLabel(playerId)} · ${qualificationLabel}: ${cards}.`;
     }),
   );
+}
+
+function createScoredYakuRow(row: RoundResultPresentationV1["scoredYaku"][number]): HTMLLIElement {
+  const item = document.createElement("li");
+  item.className = "round-result__yaku-row";
+  const heading = document.createElement("p");
+  heading.className = "round-result__yaku-title";
+  heading.textContent = `${row.yaku.name} · ${row.yaku.points} ${row.yaku.points === 1 ? "point" : "points"}`;
+  const cards = document.createElement("div");
+  cards.className = "round-result__yaku-cards";
+  cards.replaceChildren(
+    ...row.contributingCardIds.map((cardId) => {
+      const figure = document.createElement("figure");
+      figure.dataset.cardId = cardId;
+      const image = document.createElement("img");
+      image.src = activeCardFaceUrl(cardId);
+      image.alt = getCardDefinition(cardId).displayName;
+      image.width = 80;
+      image.height = 128;
+      const caption = document.createElement("figcaption");
+      caption.textContent = getCardDefinition(cardId).displayName;
+      figure.append(image, caption);
+      return figure;
+    }),
+  );
+  item.append(heading, cards);
+  return item;
 }
 
 function renderRoundResult(): void {
@@ -1088,11 +1128,21 @@ function renderRoundResult(): void {
     return;
   }
 
-  roundResultContext.textContent = `${presentation.visibility === "matchResult" ? "Match result" : "Round result"} · Round ${presentation.roundNumber} · ${getMonthDefinition(presentation.scheduledMonth).name}`;
+  roundResultContext.textContent = `Round ${presentation.roundNumber} · ${getMonthDefinition(presentation.scheduledMonth).name}`;
   roundResultTitle.textContent = presentation.title;
   roundResultOutcome.textContent = presentation.outcomeLabel;
   roundResultScoreA.textContent = `${presentation.matchScoresAfter["player-a"]} (${presentation.pointDeltas["player-a"] > 0 ? "+" : "±"}${presentation.pointDeltas["player-a"]})`;
   roundResultScoreB.textContent = `${presentation.matchScoresAfter["player-b"]} (${presentation.pointDeltas["player-b"] > 0 ? "+" : "±"}${presentation.pointDeltas["player-b"]})`;
+  roundResultYakuCount.textContent = String(presentation.scoredYaku.length);
+  roundResultScoringMultiplier.textContent = presentation.scoring
+    ? `${presentation.scoring.scoringMultiplier}×`
+    : "—";
+  roundResultAwardedPoints.textContent = `${presentation.scoring?.awardedPoints ?? 0}`;
+  roundResultFacts.hidden = false;
+  roundResultNext.textContent =
+    "plan" in presentation.action
+      ? `Next · ${resultPlayerLabel(presentation.action.plan.starterId)} starts ${getMonthDefinition(presentation.action.plan.scheduledMonth).name}.`
+      : `Match complete · ${presentation.action.outcomeLabel}`;
   roundResultArithmetic.textContent = presentation.scoring?.arithmeticLabel ?? "0 points awarded.";
   roundResultMultipliers.textContent = presentation.scoring
     ? [presentation.scoring.tableMultiplierLabel, presentation.scoring.scoringMultiplierLabel]
@@ -1100,15 +1150,15 @@ function renderRoundResult(): void {
         .join(" ")
     : "";
   roundResultYaku.replaceChildren(
-    ...(presentation.activeYaku.length > 0
-      ? presentation.activeYaku.map((entry) =>
+    ...(presentation.scoredYaku.length > 0
+      ? presentation.scoredYaku.map((row) => createScoredYakuRow(row))
+      : [
           Object.assign(document.createElement("li"), {
-            textContent: `${entry.name} · ${entry.points} ${entry.points === 1 ? "point" : "points"}`,
+            textContent:
+              "No ordinary yaku scored; automatic evidence is shown separately when applicable.",
           }),
-        )
-      : [Object.assign(document.createElement("li"), { textContent: "No scoring yaku." })]),
+        ]),
   );
-  roundResultScore.hidden = presentation.scoring === null;
   roundResultScoringDetails.hidden = presentation.scoring === null;
 
   const evidence = evidenceItems(presentation);
@@ -1143,7 +1193,16 @@ function renderRoundResult(): void {
       }),
     ),
   );
-  roundResultAction.textContent = presentation.action.actionLabel;
+  roundResultAction.textContent =
+    "plan" in presentation.action
+      ? `Continue to ${getMonthDefinition(presentation.action.plan.scheduledMonth).name}`
+      : presentation.action.actionLabel;
+  roundResultDetailsSummary.textContent =
+    presentation.evidence?.kind === "ordinaryYaku"
+      ? "See winning yaku & score"
+      : presentation.evidence?.kind === "luckyHands"
+        ? "See opening evidence & score"
+        : "See round details";
   roundResult.hidden = false;
 
   const key = `${observation.publicState.matchId}:${observation.publicState.stateVersion}:${presentation.kind}`;
@@ -1358,18 +1417,26 @@ async function acceptHandoff(): Promise<void> {
   refreshInteractionSurface();
 }
 
-async function resetLocalRound(fromResultAction = false): Promise<void> {
+async function startFreshLocalMatch(
+  fromResultAction = false,
+  completedMatchLength: MatchLength | null = null,
+): Promise<void> {
   if (!animationDirector) return;
   if (isYakuDecisionOpen()) {
-    status.textContent = "Resolve the Bank or Koi-Koi decision before starting a new round.";
+    status.textContent = "Resolve the Bank or Koi-Koi decision before starting a fresh match.";
     return;
   }
   if (isRoundResultOpen() && !fromResultAction) {
-    status.textContent = "Use the round-result action before starting another local round.";
+    status.textContent = "Use the round-result action before starting a fresh match.";
     return;
   }
   restartCount += 1;
-  runtime = createLocalRoundRuntime({ matchId: `${PHASE_3A_MATCH_ID}-${restartCount}` });
+  const matchLength = resolveFreshLocalMatchLength(selectedMatchLength, completedMatchLength);
+  runtime = createLocalRoundRuntime({
+    matchId: `${PHASE_3A_MATCH_ID}-${restartCount}`,
+    matchLength,
+    seed: createFreshLocalMatchSeed(restartCount),
+  });
   observation = runtime.observe();
   projection = projectObservationToBoard(observation);
   refreshYakuPresentation();
@@ -1382,8 +1449,47 @@ async function resetLocalRound(fromResultAction = false): Promise<void> {
   await animationDirector.cancelAndSnapTo(projection);
   interactionController = createController();
   renderRecaps();
-  status.textContent = "Player A may select a hand card.";
+  status.textContent =
+    observation.publicState.phase.kind === "roundComplete" ||
+    observation.publicState.phase.kind === "matchComplete"
+      ? `New ${matchLength}-round match. An opening result is ready to review.`
+      : `New ${matchLength}-round match. Player A may select a hand card.`;
   refreshInteractionSurface();
+}
+
+async function advanceLocalRound(): Promise<void> {
+  if (!animationDirector || !resultPresentation || !("plan" in resultPresentation.action)) return;
+  if (processingIntent || handoffPlayerId !== null) return;
+  processingIntent = true;
+  refreshInteractionSurface();
+  try {
+    const transition = runtime.advanceRound();
+    observation = transition.after;
+    projection = projectObservationToBoard(observation);
+    pendingTurnEvents = [];
+    interactionController?.replaceSource(createInteractionSourceFromObservation(observation));
+    refreshYakuPresentation(transition.events, transition.before);
+    refreshRoundResultPresentation(transition.events);
+    handoffPlayerId = transition.handoffPlayerId;
+    await animationDirector.cancelAndSnapTo(projection);
+    if (handoffPlayerId) {
+      handoffTitle.textContent = `Pass to ${playerName(handoffPlayerId)}`;
+      handoffDescription.textContent = `The next private hand remains covered until ${playerName(handoffPlayerId)} is ready.`;
+      handoffReady.textContent = `${playerName(handoffPlayerId)} ready`;
+      handoff.hidden = false;
+      status.textContent = `Round advanced. Pass the device to ${playerName(handoffPlayerId)}.`;
+    } else if (transition.roundComplete) {
+      status.textContent = "The automatic result is ready to review.";
+    } else {
+      status.textContent = `${playerName(observation.playerId)} is ready. Select a hand card.`;
+    }
+  } catch (error: unknown) {
+    status.textContent = `Could not advance the local round: ${error instanceof Error ? error.message : "unknown error"}`;
+    console.error(error);
+  } finally {
+    processingIntent = false;
+    refreshInteractionSurface();
+  }
 }
 
 function redraw(): void {
@@ -1524,6 +1630,15 @@ fullscreenButton.addEventListener("click", () => {
   void toggleFullscreen();
 });
 deckSelect.addEventListener("change", () => void switchDeck(deckSelect.value));
+matchLengthSelect.addEventListener("change", () => {
+  const value = Number(matchLengthSelect.value);
+  if (value !== 3 && value !== 6 && value !== 12) {
+    matchLengthSelect.value = String(selectedMatchLength);
+    return;
+  }
+  selectedMatchLength = value;
+  optionsAnnouncement.textContent = `${selectedMatchLength}-round format selected. It will apply when a fresh match starts.`;
+});
 fieldPlacementControl.addEventListener("click", () => {
   interactionController?.confirm();
   refreshInteractionSurface();
@@ -1544,9 +1659,15 @@ yakuKoiKoiButton.addEventListener("click", () => {
 });
 newRoundButton.addEventListener("click", () => {
   closeOptions(false);
-  void resetLocalRound();
+  void startFreshLocalMatch();
 });
-roundResultAction.addEventListener("click", () => void resetLocalRound(true));
+roundResultAction.addEventListener("click", () => {
+  if (resultPresentation && "plan" in resultPresentation.action) {
+    void advanceLocalRound();
+  } else if (resultPresentation && "result" in resultPresentation.action) {
+    void startFreshLocalMatch(true, resultPresentation.action.result.matchLength);
+  }
+});
 handoffReady.addEventListener("click", () => void acceptHandoff());
 document.addEventListener("fullscreenchange", updateFullscreenLabel);
 window.addEventListener("keydown", (event) => {

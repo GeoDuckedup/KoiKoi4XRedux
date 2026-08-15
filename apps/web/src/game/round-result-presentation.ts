@@ -1,6 +1,7 @@
 import {
   deepFreeze,
   type ActiveYakuV1,
+  type CompletedYakuFormationV1,
   type MatchResultV1,
   type MonthNumber,
   type NextRoundPlanV1,
@@ -12,6 +13,7 @@ import {
   type RoundResultKindV1,
   type RoundResultReasonCodeV1,
   type RoundResultV1,
+  type ScoredYakuEvidenceV1,
   type SpecialPrivilegeStateV1,
   type TableMultiplier,
 } from "@koikoi4x/engine";
@@ -37,13 +39,13 @@ export interface RoundResultScoringPresentationV1 {
 }
 
 export interface RoundResultNextRoundPresentationV1 {
-  readonly actionLabel: "Start another local round";
+  readonly actionLabel: string;
   readonly plan: NextRoundPlanV1;
   readonly starterReasonLabel: string;
 }
 
 export interface MatchResultPresentationV1 {
-  readonly actionLabel: "Start a new local match";
+  readonly actionLabel: "Start rematch";
   readonly outcomeLabel: string;
   readonly result: MatchResultV1;
 }
@@ -67,6 +69,8 @@ export interface RoundResultPresentationV1 {
   readonly scheduledMonth: MonthNumber;
   readonly scorerId: PlayerId | null;
   readonly scoring: RoundResultScoringPresentationV1 | null;
+  /** Final scored rows copied from committed ordinary-yaku result evidence. */
+  readonly scoredYaku: readonly ScoredYakuEvidenceV1[];
   readonly title: string;
   readonly visibility: "roundResult" | "matchResult";
 }
@@ -101,8 +105,17 @@ function copyEvidence(evidence: RoundResultEvidenceV1): RoundResultEvidenceV1 {
       ),
     });
   }
+  if (evidence.kind === "ordinaryYaku") {
+    return deepFreeze({
+      kind: evidence.kind,
+      completedFormations: evidence.completedFormations.map((formation) =>
+        copyCompletedFormation(formation),
+      ),
+      scoredYaku: evidence.scoredYaku.map((row) => copyScoredYaku(row)),
+    });
+  }
   return deepFreeze({
-    kind: evidence.kind,
+    kind: "luckyHands",
     hands: evidence.hands.map((hand) =>
       deepFreeze({
         playerId: hand.playerId,
@@ -126,6 +139,24 @@ function copyEvidence(evidence: RoundResultEvidenceV1): RoundResultEvidenceV1 {
   });
 }
 
+function copyCompletedFormation(formation: CompletedYakuFormationV1): CompletedYakuFormationV1 {
+  return deepFreeze({
+    sequence: formation.sequence,
+    playerId: formation.playerId,
+    phase: formation.phase,
+    yaku: deepFreeze({ ...formation.yaku }),
+    contributingCardIds: Object.freeze([...formation.contributingCardIds]),
+  });
+}
+
+function copyScoredYaku(row: ScoredYakuEvidenceV1): ScoredYakuEvidenceV1 {
+  return deepFreeze({
+    formationSequence: row.formationSequence,
+    yaku: deepFreeze({ ...row.yaku }),
+    contributingCardIds: Object.freeze([...row.contributingCardIds]),
+  });
+}
+
 function copyMatchResult(result: MatchResultV1): MatchResultV1 {
   return deepFreeze({
     matchLength: result.matchLength,
@@ -141,30 +172,30 @@ function reasonOutcome(result: RoundResultV1): {
 } {
   if (result.kind === "bankedScore") {
     return {
-      title: "Banked score",
+      title: `${playerName(result.scorerId as PlayerId)} wins the round`,
       outcomeLabel: `${playerName(result.scorerId as PlayerId)} banked ${result.awardedPoints} points.`,
     };
   }
   if (result.kind === "endOfPlayLastKoiCaller") {
     return {
-      title: "End of Play",
+      title: `${playerName(result.scorerId as PlayerId)} wins at End of Play`,
       outcomeLabel: `${playerName(result.scorerId as PlayerId)} was the last Koi-Koi caller and receives ${result.awardedPoints} points.`,
     };
   }
   if (result.kind === "endOfPlayNoScore") {
-    return { title: "End of Play", outcomeLabel: "No Koi-Koi caller: no points are awarded." };
+    return { title: "Round ends tied", outcomeLabel: "No Koi-Koi caller: no points are awarded." };
   }
   if (result.kind === "fieldCancellation") {
-    return { title: "Field cancellation", outcomeLabel: "The opening field cancels this round." };
+    return { title: "Round cancelled", outcomeLabel: "The opening field cancels this round." };
   }
   if (result.kind === "luckyWin") {
     return {
-      title: "Lucky win",
+      title: `${playerName(result.scorerId as PlayerId)} wins with a lucky hand`,
       outcomeLabel: `${playerName(result.scorerId as PlayerId)} wins with a lucky hand and receives ${result.awardedPoints} points.`,
     };
   }
   return {
-    title: "Both lucky hands",
+    title: "Both lucky hands draw",
     outcomeLabel: "Both players have lucky hands; this round is a draw.",
   };
 }
@@ -246,23 +277,24 @@ export function createRoundResultPresentation(input: {
   if (matchResult === null) {
     if (nextRound === null) return null;
     action = deepFreeze({
-      actionLabel: "Start another local round" as const,
+      actionLabel: "Continue to next round",
       plan: nextRound,
       starterReasonLabel: starterReasonLabel(nextRound),
     });
   } else {
     action = deepFreeze({
-      actionLabel: "Start a new local match" as const,
+      actionLabel: "Start rematch" as const,
       outcomeLabel: matchOutcome(matchResult),
       result: matchResult,
     });
   }
 
+  const evidence = copyEvidence(result.evidence);
   return deepFreeze({
     visibility: matchResult === null ? "roundResult" : "matchResult",
     kind: result.kind,
     reasonCode: result.reasonCode,
-    title: matchResult === null ? outcome.title : "Match complete",
+    title: matchResult === null ? outcome.title : matchOutcome(matchResult),
     outcomeLabel: matchResult === null ? outcome.outcomeLabel : matchOutcome(matchResult),
     roundNumber: result.roundNumber,
     scheduledMonth: result.scheduledMonth,
@@ -271,7 +303,11 @@ export function createRoundResultPresentation(input: {
     scoring: scoringPresentation(result),
     pointDeltas: copyPoints(result.pointDeltas),
     matchScoresAfter: copyPoints(matchResult?.finalScores ?? result.matchScoresAfter),
-    evidence: copyEvidence(result.evidence),
+    evidence,
+    scoredYaku:
+      evidence?.kind === "ordinaryYaku"
+        ? evidence.scoredYaku
+        : Object.freeze<readonly ScoredYakuEvidenceV1[]>([]),
     history: historyPresentation(history),
     matchResult,
     action,

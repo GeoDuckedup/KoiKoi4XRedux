@@ -226,6 +226,7 @@ function buildInitialState(
     firstYakuTriggerPlayerId: null,
     specialPrivilege: null,
     frozenFinalRoundLeaderId: null,
+    completedYakuFormations: [],
   });
   const result =
     outcome === null

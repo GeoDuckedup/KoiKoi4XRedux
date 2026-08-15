@@ -3,6 +3,7 @@ import { shuffleWithRandomSource } from "../random/shuffle";
 import { restoreRandomSource } from "../random/xoshiro128ss";
 import { rejectCommand } from "../state/errors";
 import { deepFreeze } from "../state/freeze";
+import { markTrustedValidatedEngineState } from "../state/trusted-engine-state-cache";
 import {
   RULES_VERSION,
   type AdvanceRoundCommandV1,
@@ -195,6 +196,7 @@ function buildAdvancedRound(
     specialPrivilege: plan.specialPrivilege,
     frozenFinalRoundLeaderId:
       plan.roundNumber === state.matchLength ? frozenLeader(scoresBefore) : null,
+    completedYakuFormations: [],
   });
   const outcome = evaluateOpeningOutcome(zones.field, zones.hands);
   const automaticResult =
@@ -235,6 +237,7 @@ function buildAdvancedRound(
     history,
   });
   assertValidAuthoritativeState(nextState);
+  markTrustedValidatedEngineState(nextState);
   return deepFreeze({
     state: nextState,
     events: setupEvents(committedRound, zones, outcome, automaticResult, matchResult),

@@ -21,6 +21,29 @@ This file tracks the currently approved implementation sequence. [`DESIGN.md`](.
 - End every subphase report with scope, files, decisions, exact validation results, limitations, user verification/deployment steps, and the next recommended subphase.
 - Never describe static inspection, compilation, or documentation review as runtime gameplay validation.
 
+## Current Phase 5A contract — full local match formats
+
+Status: **locally complete and accepted; release/deployment evidence pending**.
+
+- Engine-owned trigger-time formation chronology is the authority for ordinary-Yaku result rows;
+  browser code renders the public projection and never reconstructs qualification.
+- The public/protocol/replay revision lands before Phase 5B persistence. It includes final scored rows,
+  canonical contributing-card order, and intentional repeated cards across Yaku rows.
+- Real local 3/6/12 formats must advance through actual months/starter plans and completed history;
+  completed matches must present authoritative outcome and start a real rematch.
+- The result is concise first: winner/outcome, Yaku count, multiplier, award, and next action. Ordered
+  Yaku galleries, repetitions, chronology, and arithmetic begin in a closed details disclosure.
+- `MATCH-5A-001` through `MATCH-5A-011`, ADR 0030, and `npm run validate:phase5a` are the release
+  contract. Root and Pages artifacts target `output/phase-5a/e2e/`.
+- `npm run check` passed 52 files / 489 ordinary tests, all 10,002 deterministic seeds (3/6/12 =
+  3,334 each), deck validation, and the 778-module build. The final single `validate:phase5a` passed
+  48/48 release deck approval, 100 technical artifacts, 17 files / 243 focused tests, Workshop,
+  14-viewport density review, and full Root/Pages smoke through retained interaction suites,
+  End-of-Play, concise/expanded Bank, responsive scrolling, real three-round final restriction, and
+  distinct-deal rematch. Compact/expanded portrait/landscape artifacts were inspected; independent
+  Terra re-review found no blocker, high, or medium issue.
+- Commit/push, hosted CI/Pages, deployment, and live verification remain pending.
+
 ## Phase 0 — Rule lock and foundation
 
 ### Phase 0A — Canonical rules decision log

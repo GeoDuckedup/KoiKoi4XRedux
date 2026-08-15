@@ -1,4 +1,4 @@
-import { getCardDefinition, isCardId, type CardId } from "../cards/catalog";
+import { CARD_IDS, getCardDefinition, isCardId, type CardId } from "../cards/catalog";
 import { MONTHS, type MonthNumber } from "../cards/months";
 import { deepFreeze } from "../state/freeze";
 import {
@@ -45,6 +45,19 @@ const BRIGHT_YAKU_KEYS = Object.freeze([
   "threeBrights",
 ] as const satisfies readonly YakuTriggerKey[]);
 
+const FIXED_YAKU_CARD_IDS: Readonly<Partial<Record<YakuTriggerKey, readonly CardId[]>>> =
+  Object.freeze({
+    blossomViewing: ["march-curtain", "september-sake-cup"],
+    moonViewing: ["august-moon", "september-sake-cup"],
+    animalTrio: ["june-butterfly", "july-boar", "october-deer"],
+    redTextScrolls: [
+      "january-red-text-scroll",
+      "february-red-text-scroll",
+      "march-red-text-scroll",
+    ],
+    blueScrolls: ["june-blue-scroll", "september-blue-scroll", "october-blue-scroll"],
+  });
+
 export function isYakuTriggerKey(value: string): value is YakuTriggerKey {
   return (YAKU_TRIGGER_KEYS as readonly string[]).includes(value);
 }
@@ -75,6 +88,42 @@ function yaku(key: YakuTriggerKey, points: number): ActiveYakuV1 {
 
 function hasEvery(captured: ReadonlySet<CardId>, required: readonly CardId[]): boolean {
   return required.every((cardId) => captured.has(cardId));
+}
+
+/**
+ * Returns the exact cards that substantiate a currently active yaku. The
+ * result is always in CARD_IDS order, never capture order, so it is stable
+ * across replay and presentation.
+ */
+export function deriveYakuContributingCardIds(
+  key: YakuTriggerKey,
+  capturedCardIds: readonly CardId[],
+  scheduledMonth: MonthNumber,
+): readonly CardId[] {
+  validateInputs(capturedCardIds, scheduledMonth, []);
+  const captured = new Set(capturedCardIds);
+  const fixed = FIXED_YAKU_CARD_IDS[key];
+  if (fixed !== undefined) return deepFreeze(CARD_IDS.filter((cardId) => fixed.includes(cardId)));
+  if (key === "currentMonthSet") {
+    return deepFreeze(
+      CARD_IDS.filter(
+        (cardId) => captured.has(cardId) && getCardDefinition(cardId).month === scheduledMonth,
+      ),
+    );
+  }
+  if ((BRIGHT_YAKU_KEYS as readonly YakuTriggerKey[]).includes(key)) {
+    return deepFreeze(
+      CARD_IDS.filter(
+        (cardId) => captured.has(cardId) && getCardDefinition(cardId).category === "bright",
+      ),
+    );
+  }
+  const category = key === "animals" ? "animal" : key === "scrolls" ? "scroll" : "plain";
+  return deepFreeze(
+    CARD_IDS.filter(
+      (cardId) => captured.has(cardId) && getCardDefinition(cardId).category === category,
+    ),
+  );
 }
 
 function validateInputs(
@@ -154,6 +203,29 @@ export function evaluateYaku(
     newYaku,
     categoryCounts,
   });
+}
+
+/**
+ * Verifies that a persisted contributor snapshot alone proves the recorded
+ * trigger. No seen-history is supplied, so points remain formation-time facts.
+ */
+export function isCanonicalYakuContributionSnapshot(
+  yaku: ActiveYakuV1,
+  contributingCardIds: readonly CardId[],
+  scheduledMonth: MonthNumber,
+): boolean {
+  if (!isCanonicalActiveYaku(yaku)) return false;
+  try {
+    const evaluation = evaluateYaku(contributingCardIds, scheduledMonth);
+    return (
+      evaluation.newYaku.some((entry) => JSON.stringify(entry) === JSON.stringify(yaku)) &&
+      JSON.stringify(
+        deriveYakuContributingCardIds(yaku.key, contributingCardIds, scheduledMonth),
+      ) === JSON.stringify(contributingCardIds)
+    );
+  } catch {
+    return false;
+  }
 }
 
 export function hasValidYakuSeenHistory(

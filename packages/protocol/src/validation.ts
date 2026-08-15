@@ -1,8 +1,11 @@
 import {
   MATCH_LENGTHS,
   PLAYER_IDS,
+  CARD_IDS,
   YAKU_TRIGGER_KEYS,
+  deriveYakuContributingCardIds,
   isCanonicalActiveYaku,
+  isCanonicalYakuContributionSnapshot,
   isCardId,
   type ActiveYakuV1,
   type PlayerId,
@@ -158,6 +161,44 @@ function assertCards(
   }
 }
 
+function assertCanonicalCardOrder(cardIds: readonly unknown[], path: string): void {
+  if (
+    cardIds.some(
+      (cardId, index) =>
+        index > 0 &&
+        CARD_IDS.indexOf(cardIds[index - 1] as (typeof CARD_IDS)[number]) >=
+          CARD_IDS.indexOf(cardId as (typeof CARD_IDS)[number]),
+    )
+  ) {
+    rejectProtocol("PUBLIC_YAKU_EVIDENCE_INVALID", `${path} must use canonical CardId order.`);
+  }
+}
+
+function assertContributingCards(value: unknown, path: string): readonly unknown[] {
+  assertCards(value, path);
+  if ((value as readonly unknown[]).length === 0) {
+    rejectProtocol("PUBLIC_YAKU_EVIDENCE_INVALID", `${path} must not be empty.`);
+  }
+  assertCanonicalCardOrder(value as readonly unknown[], path);
+  return value as readonly unknown[];
+}
+
+function assertYakuContributionSnapshot(
+  yaku: ActiveYakuV1,
+  contributingCardIds: readonly unknown[],
+  scheduledMonth: number,
+  path: string,
+): void {
+  const cardIds = contributingCardIds as readonly (typeof CARD_IDS)[number][];
+  if (
+    !isCanonicalYakuContributionSnapshot(yaku, cardIds, scheduledMonth as 1) ||
+    JSON.stringify(deriveYakuContributingCardIds(yaku.key, cardIds, scheduledMonth as 1)) !==
+      JSON.stringify(cardIds)
+  ) {
+    rejectProtocol("PUBLIC_YAKU_EVIDENCE_INVALID", `${path} does not prove its recorded Yaku.`);
+  }
+}
+
 function assertDrawResolution(value: unknown, path: string): void {
   assertRecord(value, path);
   if (value.kind === "placeOnField") {
@@ -294,7 +335,48 @@ function assertNextRound(value: unknown, path: string): void {
   assertPrivilege(value.specialPrivilege, `${path}.specialPrivilege`);
 }
 
-function assertRoundEvidence(value: unknown, path: string): void {
+function assertCompletedYakuFormation(value: unknown, scheduledMonth: number, path: string): void {
+  assertRecord(value, path);
+  assertExactKeys(value, ["sequence", "playerId", "phase", "yaku", "contributingCardIds"], path);
+  assertPositiveInteger(value.sequence, `${path}.sequence`);
+  assertPlayer(value.playerId, `${path}.playerId`);
+  assertEnum(value.phase, ["hand", "draw"] as const, `${path}.phase`);
+  assertActiveYaku(value.yaku, `${path}.yaku`);
+  const cards = assertContributingCards(value.contributingCardIds, `${path}.contributingCardIds`);
+  assertYakuContributionSnapshot(value.yaku as ActiveYakuV1, cards, scheduledMonth, path);
+}
+
+function assertCompletedYakuFormations(value: unknown, scheduledMonth: number, path: string): void {
+  assertArray(value, path);
+  const seen = new Set<string>();
+  value.forEach((formation, index) => {
+    assertCompletedYakuFormation(formation, scheduledMonth, `${path}[${index}]`);
+    const record = formation as Record<string, unknown>;
+    if (record.sequence !== index + 1) {
+      rejectProtocol(
+        "PUBLIC_YAKU_EVIDENCE_INVALID",
+        `${path}[${index}].sequence is not contiguous.`,
+      );
+    }
+    const yaku = record.yaku as Record<string, unknown>;
+    const key = `${record.playerId as string}:${yaku.key as string}`;
+    if (seen.has(key)) {
+      rejectProtocol("PUBLIC_YAKU_EVIDENCE_INVALID", `${path} repeats a player/yaku trigger.`);
+    }
+    seen.add(key);
+  });
+}
+
+function assertScoredYaku(value: unknown, scheduledMonth: number, path: string): void {
+  assertRecord(value, path);
+  assertExactKeys(value, ["formationSequence", "yaku", "contributingCardIds"], path);
+  assertPositiveInteger(value.formationSequence, `${path}.formationSequence`);
+  assertActiveYaku(value.yaku, `${path}.yaku`);
+  const cards = assertContributingCards(value.contributingCardIds, `${path}.contributingCardIds`);
+  assertYakuContributionSnapshot(value.yaku as ActiveYakuV1, cards, scheduledMonth, path);
+}
+
+function assertRoundEvidence(value: unknown, scheduledMonth: number, path: string): void {
   if (value === null) return;
   assertRecord(value, path);
   if (value.kind === "fieldCancellation") {
@@ -305,6 +387,19 @@ function assertRoundEvidence(value: unknown, path: string): void {
   if (value.kind === "luckyHands") {
     assertExactKeys(value, ["kind", "hands"], path);
     assertLuckyHands(value.hands, `${path}.hands`);
+    return;
+  }
+  if (value.kind === "ordinaryYaku") {
+    assertExactKeys(value, ["kind", "completedFormations", "scoredYaku"], path);
+    assertCompletedYakuFormations(
+      value.completedFormations,
+      scheduledMonth,
+      `${path}.completedFormations`,
+    );
+    assertArray(value.scoredYaku, `${path}.scoredYaku`);
+    value.scoredYaku.forEach((entry, index) =>
+      assertScoredYaku(entry, scheduledMonth, `${path}.scoredYaku[${index}]`),
+    );
     return;
   }
   rejectProtocol("PUBLIC_RESULT_EVIDENCE_INVALID", `${path}.kind is invalid.`);
@@ -379,7 +474,7 @@ function assertRoundResult(value: unknown, path: string): void {
   assertMultiplierOrNull(value.tableMultiplierAtDecision, `${path}.tableMultiplierAtDecision`);
   assertMultiplierOrNull(value.scoringMultiplier, `${path}.scoringMultiplier`);
   assertNonnegativeInteger(value.awardedPoints, `${path}.awardedPoints`);
-  assertRoundEvidence(value.evidence, `${path}.evidence`);
+  assertRoundEvidence(value.evidence, value.scheduledMonth as number, `${path}.evidence`);
   assertNextRound(value.nextRound, `${path}.nextRound`);
   assertPointDeltas(value.matchScoresAfter, `${path}.matchScoresAfter`);
   if (activeYaku.reduce((sum, entry) => sum + entry.points, 0) !== value.basePoints) {
@@ -392,6 +487,50 @@ function assertRoundResult(value: unknown, path: string): void {
   const scoringMultiplier = value.scoringMultiplier as number | null;
   if (scoringMultiplier !== null && awardedPoints !== basePoints * scoringMultiplier) {
     rejectProtocol("PUBLIC_RESULT_INVALID", `${path}.awardedPoints is inconsistent.`);
+  }
+  const evidence = value.evidence as Record<string, unknown> | null;
+  const ordinaryScored = value.kind === "bankedScore" || value.kind === "endOfPlayLastKoiCaller";
+  if (ordinaryScored) {
+    if (evidence?.kind !== "ordinaryYaku" || value.scorerId === null) {
+      rejectProtocol(
+        "PUBLIC_RESULT_EVIDENCE_INVALID",
+        `${path}.evidence must contain ordinary Yaku evidence.`,
+      );
+    }
+    const formations = evidence.completedFormations as readonly Record<string, unknown>[];
+    const scored = evidence.scoredYaku as readonly Record<string, unknown>[];
+    const activeKeys = new Set(activeYaku.map((entry) => entry.key));
+    const formationBySequence = new Map(
+      formations.map((entry) => [entry.sequence as number, entry]),
+    );
+    const sequences = scored.map((entry) => entry.formationSequence as number);
+    if (
+      scored.length !== activeYaku.length ||
+      new Set(sequences).size !== sequences.length ||
+      sequences.some((sequence, index) => index > 0 && (sequences[index - 1] ?? 0) >= sequence) ||
+      scored.some((row) => {
+        const yaku = row.yaku as ActiveYakuV1;
+        const formation = formationBySequence.get(row.formationSequence as number);
+        return (
+          !activeKeys.has(yaku.key) ||
+          !activeYaku.some((active) => JSON.stringify(active) === JSON.stringify(yaku)) ||
+          formation === undefined ||
+          formation.playerId !== value.scorerId ||
+          (formation.yaku as Record<string, unknown>).key !== yaku.key ||
+          !(formation.contributingCardIds as readonly unknown[]).every((cardId) =>
+            (row.contributingCardIds as readonly unknown[]).includes(cardId),
+          )
+        );
+      }) ||
+      scored.reduce((sum, row) => sum + ((row.yaku as ActiveYakuV1).points ?? 0), 0) !== basePoints
+    ) {
+      rejectProtocol("PUBLIC_RESULT_EVIDENCE_INVALID", `${path}.ordinaryYaku is inconsistent.`);
+    }
+  } else if (evidence?.kind === "ordinaryYaku") {
+    rejectProtocol(
+      "PUBLIC_RESULT_EVIDENCE_INVALID",
+      `${path}.ordinaryYaku is only valid for scored rounds.`,
+    );
   }
 }
 

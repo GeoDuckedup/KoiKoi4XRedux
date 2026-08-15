@@ -15,6 +15,21 @@ round using real player observations and commands, the owner-approved primary de
 cards, deterministic public-event animation, private pass-the-device handoff, accessible turn recap,
 and the retained local-only deterministic deck Workshop/raster review pipeline
 
+## Phase 5A — locally complete and accepted
+
+Phase 5A is integrating real 3/6/12 local match progression, public trigger-time ordinary-Yaku
+evidence, concise-first result details, and rematch. ADR 0030 locks engine ownership of formation
+chronology and the pre-5B public/protocol/replay revision; the browser remains render-only for those
+facts. `MATCH-5A-001` through `MATCH-5A-011` and `validate:phase5a` define the pending release gate.
+`npm run check` passed 52 files / 489 ordinary tests, all 10,002 deterministic seeds (3/6/12 = 3,334
+each), deck validation, and the 778-module build. The final single `npm run validate:phase5a` passed
+the 48/48 release deck, 100 technical artifacts, 17 files / 243 focused tests, Workshop, 14-viewport
+density review, and full Root/Pages smoke through the retained interaction suites plus End-of-Play,
+concise/expanded Bank, responsive scrolling, real three-round progression/final restriction, and
+distinct-deal rematch. Compact and expanded portrait/landscape artifacts were inspected; independent
+Terra re-review found no blocker, high, or medium issue. Commit/push, hosted CI/Pages, deployment,
+and live verification remain pending.
+
 ## Current result
 
 Phase 3E-A responds directly to owner playtesting. Permanent numbered field slots are removed while
