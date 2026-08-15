@@ -8,27 +8,36 @@ live-verified, and accepted; Phase 3F-G card inspector yaku reference/native ges
 deployed, live-verified, and accepted; Phase 3F-H active-hand start cue is deployed, live-verified,
 and accepted; Phase 3F-I Reveal start cue is deployed, live-verified, and accepted; Phase 3F-J legal
 destination pulse is deployed, live-verified, and accepted; Phase 5A full local match formats is
-current
+deployed, live-verified, and accepted; Phase 5B local persistence is next
 
-**Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
-round using real player observations and commands, the owner-approved primary deck, persistent Pixi
-cards, deterministic public-event animation, private pass-the-device handoff, accessible turn recap,
-and the retained local-only deterministic deck Workshop/raster review pipeline
+**Runtime state:** Complete deterministic headless match engine plus playable browser-local 3/6/12-round
+formats using real player observations and commands, the owner-approved primary deck, persistent Pixi
+cards, deterministic public-event animation, private pass-the-device handoff, accessible recap/result
+evidence, and the retained local-only deterministic deck Workshop/raster review pipeline
 
-## Phase 5A — locally complete and accepted
+## Phase 5A — deployed, live-verified, and accepted
 
-Phase 5A is integrating real 3/6/12 local match progression, public trigger-time ordinary-Yaku
-evidence, concise-first result details, and rematch. ADR 0030 locks engine ownership of formation
-chronology and the pre-5B public/protocol/replay revision; the browser remains render-only for those
-facts. `MATCH-5A-001` through `MATCH-5A-011` and `validate:phase5a` define the pending release gate.
+Phase 5A delivers real 3/6/12 local match progression, public trigger-time ordinary-Yaku evidence,
+concise-first result details, and rematch. ADR 0030 locks engine ownership of formation chronology and
+the pre-5B public/protocol/replay revision; the browser remains render-only for those facts.
+`MATCH-5A-001` through `MATCH-5A-011` and `validate:phase5a` define the accepted release gate.
 `npm run check` passed 52 files / 489 ordinary tests, all 10,002 deterministic seeds (3/6/12 = 3,334
 each), deck validation, and the 778-module build. The final single `npm run validate:phase5a` passed
 the 48/48 release deck, 100 technical artifacts, 17 files / 243 focused tests, Workshop, 14-viewport
 density review, and full Root/Pages smoke through the retained interaction suites plus End-of-Play,
 concise/expanded Bank, responsive scrolling, real three-round progression/final restriction, and
 distinct-deal rematch. Compact and expanded portrait/landscape artifacts were inspected; independent
-Terra re-review found no blocker, high, or medium issue. Commit/push, hosted CI/Pages, deployment,
-and live verification remain pending.
+Terra re-review found no blocker, high, or medium issue. Implementation commit `945c2a3` passed CI
+`31909040672` (`verify`, 19m40s) and Pages `31909040671` (`build`, 17m34s; deploy, 10s); both
+`npm run check` and `validate:phase5a` passed. The only hosted annotation was the nonblocking Node 20
+GitHub Actions deprecation. The cache-busted live HTTP/2 response was 200 MISS, `Last-Modified: Sat,
+15 Aug 2026 21:35:36 GMT`, with `assets/index-DQO4OPuh.js` containing `See winning yaku & score`,
+`Start rematch`, `completedYakuFormations`, and `ordinaryYaku`. After assets loaded, the live browser
+was `ready:true` with one canvas, 48/48 unique CardViews, 24/0/8/8/8 draw/reveal/player-Hand/
+opponent-Hand/field counts, match length 3, idle `awaitingHandPlay`, no locks, and no
+clipped/invalid/overlap diagnostics. `output/phase-5a/live-ready/shot-2.png` was visually inspected;
+no error artifact was produced. Phase 5A is deployed, live-verified, and accepted. Next: Phase 5B
+local persistence.
 
 ## Current result
 
@@ -232,8 +241,8 @@ diagnostics. Commit `26828d4` passed hosted CI run `31899208391` (`verify`, 14m2
 `assets/index-CTcqBr2T.css`; live JS contains the exact shipped visible and accessible strings.
 Three live-client iterations recorded loading `state-0`, then ready `state-1`/`state-2`, one canvas,
 48 unique CardViews, no clipped/invalid/overlap diagnostics, and an inspected live shot. The hosted
-workflow's Node 20 deprecation annotation is nonblocking. Phase 3F-J is deployed, live-verified,
-and accepted; Phase 5A is current.
+workflow's Node 20 deprecation annotation is nonblocking. Phase 3F-J and Phase 5A are deployed,
+live-verified, and accepted; Phase 5B local persistence is next.
 
 Release commit `51a1821` passed CI run `31742306302` and Pages run `31742306314`; the Pages deploy
 job completed successfully. A cache-busted live browser check reached ready state with the approved

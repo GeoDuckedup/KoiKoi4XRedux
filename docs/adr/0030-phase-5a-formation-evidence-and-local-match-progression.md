@@ -1,6 +1,6 @@
 # ADR 0030: Phase 5A formation evidence and local match progression
 
-**Status:** Locally accepted for Phase 5A; release/deployment evidence pending.
+**Status:** Deployed, live-verified, and accepted for Phase 5A.
 
 ## Context
 
@@ -41,5 +41,12 @@ the Yaku first formed.
   seeds, deck validation, and a 778-module build) and the final single `validate:phase5a` gate (48/48
   release deck, 100 technical artifacts, 17 files / 243 focused tests, Workshop, 14-viewport density,
   and full Root/Pages smoke). The compact/expanded portrait/landscape result artifacts were inspected;
-  independent Terra re-review found no blocker, high, or medium issue. Hosted CI/Pages, deployment,
-  and live evidence remain separate release obligations.
+  independent Terra re-review found no blocker, high, or medium issue. Implementation commit `945c2a3`
+  passed CI `31909040672` (`verify`, 19m40s) and Pages `31909040671` (`build`, 17m34s; deploy, 10s);
+  both `npm run check` and `validate:phase5a` passed. The only hosted annotation was the nonblocking
+  Node 20 GitHub Actions deprecation. A cache-busted live HTTP/2 200 MISS response, dated Sat, 15 Aug
+  2026 21:35:36 GMT, served `assets/index-DQO4OPuh.js` with the expected result/schema markers. The
+  loaded live browser was ready with one canvas, 48/48 unique CardViews, 24/0/8/8/8
+  draw/reveal/player-Hand/opponent-Hand/field counts, match length 3, idle input, no locks, no layout
+  diagnostics, and an inspected `output/phase-5a/live-ready/shot-2.png`; no error artifact was
+  produced. Phase 5A is deployed, live-verified, and accepted. Phase 5B local persistence is next.

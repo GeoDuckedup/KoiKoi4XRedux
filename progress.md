@@ -2,7 +2,7 @@ Original prompt: read the package and understand it, then let me know when we ar
 
 # KoiKoi4x Progress
 
-## 2026-08-15 — Phase 5A locally complete and accepted
+## 2026-08-15 — Phase 5A deployed, live-verified, and accepted
 
 - Added the pending release contract only: ADR 0030 and `MATCH-5A-001`–`MATCH-5A-011` define
   trigger-time ordinary-Yaku formation evidence, public schema/replay validation, real 3/6/12
@@ -14,8 +14,18 @@ Original prompt: read the package and understand it, then let me know when we ar
   End-of-Play, concise/expanded Bank, responsive scrolling, real three-round progression/final
   restriction, and distinct-deal rematch.
 - Compact and expanded portrait/landscape result artifacts were inspected. Independent Terra re-review
-  found no blocker, high, or medium issue. Commit/push, hosted CI/Pages, deployment, and live
-  verification remain pending; no release or live claim is made.
+  found no blocker, high, or medium issue. Implementation commit `945c2a3` passed CI `31909040672`
+  (`verify`, 19m40s) and Pages `31909040671` (`build`, 17m34s; deploy, 10s); both `npm run check` and
+  `validate:phase5a` passed. The only hosted annotation was the nonblocking Node 20 GitHub Actions
+  deprecation.
+- A cache-busted live HTTP/2 request returned 200 MISS, `Last-Modified: Sat, 15 Aug 2026 21:35:36
+  GMT`, and `assets/index-DQO4OPuh.js` containing `See winning yaku & score`, `Start rematch`,
+  `completedYakuFormations`, and `ordinaryYaku`. After assets loaded, the live browser reached
+  `ready:true` with one canvas, 48/48 unique CardViews, 24/0/8/8/8 draw/reveal/player-Hand/
+  opponent-Hand/field counts, match length 3, idle `awaitingHandPlay`, no locks, and no
+  clipped/invalid/overlap diagnostics. `output/phase-5a/live-ready/shot-2.png` was visually inspected
+  and no error artifact was produced. Phase 5A is deployed, live-verified, and accepted. Next: Phase
+  5B local persistence.
 
 ## 2026-08-15 — Phase 3F-J deployed, live-verified, and accepted
 

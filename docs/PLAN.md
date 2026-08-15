@@ -7,7 +7,8 @@ interaction clarity/card inspection is deployed and accepted; Phase 3F-G card in
 reference/native gesture polish is deployed, live-verified, and accepted; Phase 3F-H active-hand
 start cue is deployed, live-verified, and accepted; Phase 3F-I Reveal start cue is deployed,
 live-verified, and accepted; Phase 3F-J legal destination pulse is deployed, live-verified, and
-accepted; Phase 5A full local match formats is current
+accepted; Phase 5A full local match formats is deployed, live-verified, and accepted; Phase 5B local
+persistence is next
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -23,7 +24,7 @@ This file tracks the currently approved implementation sequence. [`DESIGN.md`](.
 
 ## Current Phase 5A contract — full local match formats
 
-Status: **locally complete and accepted; release/deployment evidence pending**.
+Status: **deployed, live-verified, and accepted**.
 
 - Engine-owned trigger-time formation chronology is the authority for ordinary-Yaku result rows;
   browser code renders the public projection and never reconstructs qualification.
@@ -42,7 +43,15 @@ Status: **locally complete and accepted; release/deployment evidence pending**.
   End-of-Play, concise/expanded Bank, responsive scrolling, real three-round final restriction, and
   distinct-deal rematch. Compact/expanded portrait/landscape artifacts were inspected; independent
   Terra re-review found no blocker, high, or medium issue.
-- Commit/push, hosted CI/Pages, deployment, and live verification remain pending.
+- Implementation commit `945c2a3` passed CI `31909040672` (`verify`, 19m40s) and Pages
+  `31909040671` (`build`, 17m34s; deploy, 10s); both `npm run check` and `validate:phase5a` passed.
+  The only hosted annotation was the nonblocking Node 20 GitHub Actions deprecation. A cache-busted
+  live HTTP/2 request returned 200 MISS, `Last-Modified: Sat, 15 Aug 2026 21:35:36 GMT`, and
+  `assets/index-DQO4OPuh.js` containing the expected result/schema markers. The loaded live browser
+  reached `ready:true` with one canvas, 48/48 unique CardViews, 24/0/8/8/8 draw/reveal/player-Hand/
+  opponent-Hand/field counts, match length 3, idle `awaitingHandPlay`, no locks, and no
+  clipped/invalid/overlap diagnostics. `output/phase-5a/live-ready/shot-2.png` was inspected with no
+  error artifact. Phase 5A is deployed, live-verified, and accepted. Next: Phase 5B local persistence.
 
 ## Phase 0 — Rule lock and foundation
 
@@ -1138,12 +1147,12 @@ response was HTTP/2 200 MISS, `Last-Modified: Sat, 15 Aug 2026 17:58:05 GMT`, wi
 visible and accessible strings. A three-iteration live client trace recorded loading `state-0`, then
 ready `state-1`/`state-2`, one canvas, 48 unique CardViews, no clipped/invalid/overlap diagnostics,
 and an inspected live screenshot. The hosted workflow's Node 20 deprecation notice is nonblocking.
-Phase 3F-J is deployed, live-verified, and accepted; Phase 5A is current.
+Phase 3F-J and Phase 5A are deployed, live-verified, and accepted; Phase 5B local persistence is
+next.
 
 ## Later phases
 
-1. **Phase 5A — Full local match formats:** 3/6/12 rounds, full recap/rematch, and ordered
-   yaku-card evidence in expanded end-of-play details.
+1. **Phase 5B — Local persistence:** IndexedDB autosave, continue/delete, and schema validation.
 2. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
 3. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
 4. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.

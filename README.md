@@ -332,7 +332,8 @@ response was HTTP/2 200 MISS, `Last-Modified: Sat, 15 Aug 2026 17:58:05 GMT`, wi
 visible and accessible no-match strings. Three live client iterations recorded loading `state-0`, then
 ready `state-1`/`state-2`, one canvas, 48 unique CardViews, no clipped/invalid/overlap diagnostics,
 and an inspected live screenshot. The hosted workflow emitted the Node 20 deprecation notice only;
-it is nonblocking. Phase 3F-J is deployed, live-verified, and accepted; Phase 5A is current.
+it is nonblocking. Phase 3F-J and Phase 5A are deployed, live-verified, and accepted; Phase 5B is
+next.
 
 `npm run validate:phase5a` is the locally accepted flattened successor gate for full local 3/6/12 match
 formats. It retains the Phase 3F-J release-deck, technical-deck, interaction/runtime, Workshop,
@@ -348,8 +349,18 @@ the 48/48 release deck, 100 technical artifacts, 17 files / 243 focused tests, W
 density review, and full Root/Pages smoke through the retained interaction suites plus End-of-Play,
 concise/expanded Bank, responsive scrolling, real three-round progression/final restriction, and a
 distinct-deal rematch. Compact and expanded portrait/landscape artifacts were inspected; independent
-Terra re-review found no blocker, high, or medium issue. Commit/push, hosted CI/Pages, deployment,
-and live verification remain pending.
+Terra re-review found no blocker, high, or medium issue.
+
+Phase 5A deployment record: implementation commit `945c2a3` passed CI run `31909040672` (`verify`,
+19m40s) and Pages run `31909040671` (`build`, 17m34s; deploy, 10s); both `npm run check` and
+`validate:phase5a` passed. The only annotation was the nonblocking Node 20 GitHub Actions deprecation.
+A cache-busted live request returned HTTP/2 200 MISS with `Last-Modified: Sat, 15 Aug 2026 21:35:36
+GMT` and `assets/index-DQO4OPuh.js`, which contains `See winning yaku & score`, `Start rematch`,
+`completedYakuFormations`, and `ordinaryYaku`. After assets loaded, the live browser was `ready:true`
+with one canvas, 48/48 unique CardViews, draw/reveal/player-Hand/opponent-Hand/field counts of
+24/0/8/8/8, match length 3, idle `awaitingHandPlay`, no locks, and no clipped/invalid/overlap
+diagnostics. [`shot-2.png`](output/phase-5a/live-ready/shot-2.png) was inspected and no error artifact
+was produced. Phase 5A is deployed, live-verified, and accepted. Next: Phase 5B local persistence.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot
