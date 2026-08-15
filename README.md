@@ -7,8 +7,8 @@ larger hand**, the player-facing **Phase 3F-B: unified tap-only interaction** ou
 capture choreography** is deployed and accepted. **Phase 3F-E: utility dock and capture cleanup**
 is deployed, live-verified, and accepted. **Phase 3F-F: interaction clarity and card inspection** is
 deployed, live-verified, and accepted. **Phase 3F-G: card inspector yaku reference/native gesture
-polish** is locally complete and accepted; commit/push/hosted CI/Pages/live verification remain
-pending. The repository contains the canonical rules authority, all
+polish** is deployed, live-verified, and accepted. The repository contains the canonical rules
+authority, all
 48 artwork-independent card records, the complete
 deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
@@ -246,9 +246,15 @@ root/Pages smoke. `npm run check` passed 49 ordinary test files / 452 tests, all
 seeds, release-deck validation, and the 774-module build. Root/Pages collapsed, expanded, and
 844×390 scroll-bottom screenshots under `output/phase-3f-g/e2e/` were inspected; the bundled
 develop-web-game client completed three 1280×720 iterations with one canvas, 48 unique CardViews,
-and no invalid layout. Independent Terra re-review found no blocker, high, or medium issue.
-Commit/push, hosted CI/Pages, and live verification remain pending. WebKit/iOS native touch-callout
-behavior remains a supplemental manual-device check.
+and no invalid layout. Independent Terra re-review found no blocker, high, or medium issue. Commit
+`9fafb2f` passed hosted CI `31868152672` (`verify`, 10m38s) and Pages `31868152577` (build through
+06:05:54Z; deploy 06:05:58–06:06:06Z). A cache-busted live request returned HTTP/2 200 MISS with
+`Last-Modified: 2026-08-15 06:06:03 GMT`; the live bundled game-client completed two ready
+iterations with one canvas, 48 unique CardViews, and no layout diagnostics. Live Playwright semantic
+verification focused January Pine Plain B, pressed `I`, opened the locked inspector with collapsed
+count 2, then expanded Current-Month Set and Plain Cards with their exact example images and
+conditional copy. WebKit/iOS native touch-callout behavior remains a supplemental manual-device
+check.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

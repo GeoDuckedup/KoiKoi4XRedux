@@ -2,7 +2,7 @@ Original prompt: read the package and understand it, then let me know when we ar
 
 # KoiKoi4x Progress
 
-## 2026-08-15 — Phase 3F-G locally complete and accepted
+## 2026-08-15 — Phase 3F-G deployed, live-verified, and accepted
 
 - Completed the optional card-inspector yaku reference and scoped native long-press
   selection/touch-callout suppression without introducing tutorial, current-board evaluator,
@@ -16,8 +16,15 @@ Original prompt: read the package and understand it, then let me know when we ar
   develop-web-game client iterations at 1280×720 showed one canvas, 48 unique CardViews, and no
   invalid layout; Root/Pages collapsed, expanded, and 844×390 scroll-bottom screenshots under
   `output/phase-3f-g/e2e/` were inspected.
-- Commit/push, hosted CI/Pages, and live verification remain pending. WebKit/iOS native touch-callout
-  behavior remains a supplemental manual-device check. Next: Phase 5A full local match formats.
+- Commit `9fafb2f` passed hosted CI run `31868152672` (`verify`, 10m38s) and Pages run
+  `31868152577` (build through 06:05:54Z; deploy 06:05:58–06:06:06Z). A cache-busted live request
+  returned HTTP/2 200 MISS with `Last-Modified: 2026-08-15 06:06:03 GMT`.
+- The live bundled game-client completed two ready iterations with one canvas, 48 unique CardViews,
+  and no layout diagnostics. Live Playwright semantic verification focused January Pine Plain B,
+  pressed `I`, opened the locked inspector with collapsed count 2, then expanded Current-Month Set
+  and Plain Cards with their exact example images and conditional copy.
+- WebKit/iOS native touch-callout behavior remains a supplemental manual-device check. Next: Phase
+  5A full local match formats.
 
 ## 2026-08-08 — Phase 0A started
 

@@ -4,8 +4,8 @@
 **Updated:** August 14, 2026
 **Current gate:** Phase 3F-E utility dock/capture cleanup is deployed and accepted; Phase 3F-F
 interaction clarity/card inspection is deployed and accepted; Phase 3F-G card inspector yaku
-reference/native gesture polish is locally complete and accepted; commit/push/hosted CI/Pages/live
-verification remain pending before Phase 5A full local match formats
+reference/native gesture polish is deployed, live-verified, and accepted; Phase 5A full local match
+formats is next
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -941,7 +941,7 @@ Architecture is recorded in [`ADR 0025`](./adr/0025-phase-3f-f-interaction-clari
 
 ### Phase 3F-G — Card inspector yaku reference and native gesture polish
 
-Status: **locally complete and accepted; commit/push/hosted CI/Pages/live verification pending**.
+Status: **deployed, live-verified, and accepted**.
 
 This narrow presentation/reference follow-up to 3F-F replaces the inspector's factual grid
 with a collapsed optional **Yaku this card can contribute to** expander that reuses the Yaku Guide's
@@ -974,6 +974,14 @@ scroll-bottom screenshots were inspected under `output/phase-3f-g/e2e/`. A WebKi
 check remains supplemental evidence for browser touch-callout behavior; no additional heavyweight CI
 browser install is required.
 
+Deployment evidence: commit `9fafb2f` passed hosted CI run `31868152672` (`verify`, 10m38s) and
+Pages run `31868152577` (build through 06:05:54Z; deploy 06:05:58–06:06:06Z). The cache-busted live
+site returned HTTP/2 200 MISS with `Last-Modified: 2026-08-15 06:06:03 GMT`. The live bundled
+game-client completed two ready iterations with one canvas, 48 unique CardViews, and no layout
+diagnostics. Live Playwright semantic verification focused January Pine Plain B, pressed `I`, opened
+the locked inspector with collapsed count 2, then expanded Current-Month Set and Plain Cards with
+their exact example images and conditional copy.
+
 Architecture is recorded in [`ADR 0026`](./adr/0026-phase-3f-g-card-inspector-yaku-reference.md).
 
 ## Later phases
@@ -991,6 +999,6 @@ Architecture is recorded in [`ADR 0026`](./adr/0026-phase-3f-g-card-inspector-ya
 No later phase may bypass the acceptance gate of the preceding phase.
 
 Phase 3F-E is deployed, live-verified, and accepted. Phase 3F-F interaction clarity/card inspection
-is deployed, live-verified, and accepted. Phase 3F-G is the approved in-progress inspector-only
-follow-up. None of these presentation slices reopen 3F-D animation authority or transfer Phase 5A's
+is deployed, live-verified, and accepted. Phase 3F-G is deployed, live-verified, and accepted. None
+of these presentation slices reopen 3F-D animation authority or transfer Phase 5A's
 ordered completed-yaku evidence into routine play.

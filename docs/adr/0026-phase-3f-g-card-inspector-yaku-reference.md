@@ -1,6 +1,6 @@
 # ADR 0026 — Phase 3F-G card inspector yaku reference and native gesture polish
 
-**Status:** Locally complete and accepted; commit/push/hosted CI/Pages/live verification pending
+**Status:** Deployed, live-verified, and accepted
 
 ## Context
 
@@ -59,8 +59,14 @@ release deck, 100 technical artifacts, 8 focused files / 87 tests, Workshop, 14 
 viewports, and full root/Pages smoke. Independent Terra re-review found no blocker, high, or medium
 issue. Three bundled develop-web-game client iterations at 1280×720 showed one canvas, 48 unique
 CardViews, and no invalid layout; Root/Pages collapsed, expanded, and 844×390 scroll-bottom
-screenshots were inspected under `output/phase-3f-g/e2e/`. Commit/push, hosted CI/Pages, and live
-evidence remain pending. WebKit/iOS native touch-callout behavior remains supplemental manual-device
+screenshots were inspected under `output/phase-3f-g/e2e/`. Commit `9fafb2f` passed hosted CI run
+`31868152672` (`verify`, 10m38s) and Pages run `31868152577` (build through 06:05:54Z; deploy
+06:05:58–06:06:06Z). A cache-busted live request returned HTTP/2 200 MISS with
+`Last-Modified: 2026-08-15 06:06:03 GMT`. The live bundled game-client completed two ready
+iterations with one canvas, 48 unique CardViews, and no layout diagnostics. Live Playwright semantic
+verification focused January Pine Plain B, pressed `I`, opened the locked inspector with collapsed
+count 2, then expanded Current-Month Set and Plain Cards with their exact example images and
+conditional copy. WebKit/iOS native touch-callout behavior remains supplemental manual-device
 evidence.
 
 ## Next subphase
