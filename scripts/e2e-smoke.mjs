@@ -256,9 +256,23 @@ async function assertCardInspection(page, selector, label, screenshotId = "390x8
     (await control.getAttribute("data-inspectable")) === "true",
     `${label} was not marked as a privacy-safe inspectable card.`,
   );
+  const expectedCardId = await control.getAttribute("data-card-id");
+  assert(expectedCardId !== null, `${label} inspectable card has no CardId.`);
+  await control.scrollIntoViewIfNeeded();
   const bounds = await control.boundingBox();
   assert(bounds !== null, `${label} inspectable card has no browser bounds.`);
   const point = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+  const hit = await page.evaluate(({ x, y }) => {
+    const element = document.elementFromPoint(x, y);
+    const card = element?.closest("[data-card-id]");
+    return card
+      ? { cardId: card.dataset.cardId ?? null, inspectable: card.dataset.inspectable }
+      : null;
+  }, point);
+  assert(
+    hit?.cardId === expectedCardId && hit.inspectable === "true",
+    `${label} center is not a hittable inspectable card: ${JSON.stringify({ point, hit, expectedCardId })}.`,
+  );
   await page.mouse.move(point.x, point.y);
   await page.mouse.down();
   await page.mouse.up();
@@ -277,8 +291,26 @@ async function assertCardInspection(page, selector, label, screenshotId = "390x8
     `${label} drag cancellation incorrectly opened the inspector.`,
   );
   const before = await readState(page);
+  await page.evaluate(() => {
+    const targetWindow = window;
+    delete targetWindow.__phase3ffPointerDown;
+    document.addEventListener(
+      "pointerdown",
+      (event) => {
+        const card =
+          event.target instanceof Element ? event.target.closest("[data-card-id]") : null;
+        targetWindow.__phase3ffPointerDown = card?.getAttribute("data-card-id") ?? null;
+      },
+      { capture: true, once: true },
+    );
+  });
   await page.mouse.move(point.x, point.y);
   await page.mouse.down();
+  await page.waitForFunction(() => window.__phase3ffPointerDown !== undefined);
+  assert(
+    (await page.evaluate(() => window.__phase3ffPointerDown)) === expectedCardId,
+    `${label} primary pointerdown reached the wrong card control.`,
+  );
   await page.waitForTimeout(550);
   await page.locator("[data-card-inspector]").waitFor({ state: "visible" });
   await page.mouse.up();
