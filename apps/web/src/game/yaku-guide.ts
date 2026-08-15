@@ -1,4 +1,12 @@
-import { deepFreeze, type CardId, type MonthNumber, type YakuTriggerKey } from "@koikoi4x/engine";
+import {
+  CARD_CATALOG,
+  deepFreeze,
+  getCardDefinition,
+  getMonthDefinition,
+  type CardId,
+  type MonthNumber,
+  type YakuTriggerKey,
+} from "@koikoi4x/engine";
 
 export type YakuGuideGroupIdV1 = "bright" | "named" | "seasonal" | "category";
 
@@ -11,6 +19,10 @@ export interface YakuGuideEntryV1 {
   readonly requirement: string;
   readonly scheduledMonth: MonthNumber;
   readonly title: string;
+}
+
+export interface CardYakuGuideEntryV1 extends YakuGuideEntryV1 {
+  readonly contributionCondition?: string;
 }
 
 export interface YakuGuideGroupV1 {
@@ -207,3 +219,116 @@ export const YAKU_GUIDE_NOTES = deepFreeze([
   "A starting-hand lucky result is an opening rule, not a yaku: four cards of one month or four distinct month pairs scores 6 and ends the round before normal play.",
   "The table begins at 1×. Koi-Koi raises it by one step, up to 4×; a special first-yaku privilege can affect the next round's first eligible decision.",
 ]);
+
+const FIXED_YAKU_KEYS = new Set<YakuTriggerKey>([
+  "blossomViewing",
+  "moonViewing",
+  "animalTrio",
+  "redTextScrolls",
+  "blueScrolls",
+]);
+
+const BRIGHT_YAKU_KEYS = new Set<YakuTriggerKey>([
+  "fiveBrights",
+  "fourBrights",
+  "fourBrightsWithRain",
+  "threeBrights",
+]);
+
+function isRainBright(card: { readonly flags: readonly string[] }): boolean {
+  return card.flags.includes("rainBright");
+}
+
+function isPossibleYakuForCard(cardId: CardId, key: YakuTriggerKey): boolean {
+  const card = getCardDefinition(cardId);
+  if (key === "currentMonthSet") return true;
+  if (key === "animals") return card.category === "animal";
+  if (key === "scrolls") return card.category === "scroll";
+  if (key === "plainCards") return card.category === "plain";
+  if (FIXED_YAKU_KEYS.has(key))
+    return card.fixedYakuMemberships.some((membership) => membership === key);
+  if (!BRIGHT_YAKU_KEYS.has(key) || card.category !== "bright") return false;
+  if (key === "fiveBrights" || key === "fourBrightsWithRain") return true;
+  return !isRainBright(card);
+}
+
+function qualifyingExampleCardIds(cardId: CardId, entry: YakuGuideEntryV1): readonly CardId[] {
+  const card = getCardDefinition(cardId);
+  const cardsInCatalogOrder = (predicate: (candidate: (typeof CARD_CATALOG)[number]) => boolean) =>
+    CARD_CATALOG.filter(predicate).map(({ id }) => id);
+  const withInspectedFirst = (candidates: readonly CardId[], count: number) =>
+    [cardId, ...candidates.filter((candidate) => candidate !== cardId)].slice(0, count);
+
+  if (entry.key === "currentMonthSet") {
+    return cardsInCatalogOrder((candidate) => candidate.month === card.month);
+  }
+  if (entry.key === "animals") {
+    return withInspectedFirst(
+      cardsInCatalogOrder((candidate) => candidate.category === "animal"),
+      5,
+    );
+  }
+  if (entry.key === "scrolls") {
+    return withInspectedFirst(
+      cardsInCatalogOrder((candidate) => candidate.category === "scroll"),
+      5,
+    );
+  }
+  if (entry.key === "plainCards") {
+    return withInspectedFirst(
+      cardsInCatalogOrder((candidate) => candidate.category === "plain"),
+      10,
+    );
+  }
+  if (entry.key === "fiveBrights") {
+    return cardsInCatalogOrder((candidate) => candidate.category === "bright");
+  }
+  if (entry.key === "fourBrights") {
+    return cardsInCatalogOrder(
+      (candidate) => candidate.category === "bright" && !isRainBright(candidate),
+    );
+  }
+  if (entry.key === "fourBrightsWithRain") {
+    const rain = cardsInCatalogOrder(isRainBright);
+    const nonRainBrights = cardsInCatalogOrder(
+      (candidate) => candidate.category === "bright" && !isRainBright(candidate),
+    );
+    return isRainBright(card)
+      ? [...rain, ...nonRainBrights.slice(0, 3)]
+      : [...rain, cardId, ...nonRainBrights.filter((candidate) => candidate !== cardId)].slice(
+          0,
+          4,
+        );
+  }
+  if (entry.key === "threeBrights") {
+    return withInspectedFirst(
+      cardsInCatalogOrder(
+        (candidate) => candidate.category === "bright" && !isRainBright(candidate),
+      ),
+      3,
+    );
+  }
+  return entry.exampleCardIds;
+}
+
+/**
+ * Static catalog/rules reference for a single card. It deliberately accepts no
+ * observation, captures, score, or current round data, so it cannot claim a
+ * yaku is presently achievable or achieved.
+ */
+export function getYakuGuideEntriesForCard(cardId: CardId): readonly CardYakuGuideEntryV1[] {
+  const card = getCardDefinition(cardId);
+  const month = getMonthDefinition(card.month);
+  return deepFreeze(
+    YAKU_GUIDE_ENTRIES.filter((entry) => isPossibleYakuForCard(cardId, entry.key)).map((entry) =>
+      Object.freeze({
+        ...entry,
+        exampleCardIds: Object.freeze(qualifyingExampleCardIds(cardId, entry)),
+        scheduledMonth: entry.key === "currentMonthSet" ? card.month : entry.scheduledMonth,
+        ...(entry.key === "currentMonthSet"
+          ? { contributionCondition: `Contributes when ${month.name} is the scheduled month.` }
+          : {}),
+      }),
+    ),
+  );
+}

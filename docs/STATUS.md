@@ -4,7 +4,8 @@
 
 **Overall state:** Greenfield rewrite through Phase 3F-E utility dock/capture cleanup is deployed,
 live-verified, and accepted; Phase 3F-F interaction clarity/card inspection is deployed,
-live-verified, and accepted
+live-verified, and accepted; Phase 3F-G card inspector yaku reference/native gesture polish is in
+locally complete and accepted; commit/push/hosted CI/Pages/live verification remain pending
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -111,6 +112,21 @@ passed CI `31865103301` and Pages `31865103302`. The cache-busted live build ret
 and the inspected final live client was ready with one canvas, 48 unique CardViews, 24/8/8/8 zones,
 16 semantic controls (8 actionable + 8 inspect-only), closed utilities, and no diagnostics. Phase 3F-F
 is deployed, live-verified, and accepted.
+
+Phase 3F-G is a locally complete and accepted presentation/reference follow-up. It replaces the
+inspector's facts grid with an optional collapsed yaku-reference expander and suppresses browser native
+selection/touch-callout only over game card interaction surfaces. It remains static catalog reference
+content, not a current-table evaluator, tutorial, strategy adviser, or completed-yaku result. No
+engine, protocol, rules, scoring, replay, public projection, result evidence, or persistent CardView
+semantics are authorized. Exact achieved-yaku cards and formation chronology remain Phase 5A work.
+`npm run check` passed 49 ordinary test files / 452 tests, all 10,002 generated seeds, release-deck
+validation, and the 774-module build. `npm run validate:phase3fg` passed 48/48 release deck, 100
+technical artifacts, 8 focused files / 87 tests, Workshop, 14 root/Pages density viewports, and full
+root/Pages smoke. Independent Terra re-review found no blocker, high, or medium issue. Three bundled
+develop-web-game client iterations at 1280×720 showed one canvas, 48 unique CardViews, and no invalid
+layout; Root/Pages collapsed, expanded, and 844×390 scroll-bottom screenshots under
+`output/phase-3f-g/e2e/` were inspected. Commit/push, hosted CI/Pages, and live verification are
+pending. WebKit/iOS native touch-callout behavior remains a supplemental manual-device check.
 
 Release commit `51a1821` passed CI run `31742306302` and Pages run `31742306314`; the Pages deploy
 job completed successfully. A cache-busted live browser check reached ready state with the approved

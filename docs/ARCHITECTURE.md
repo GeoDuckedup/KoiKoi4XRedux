@@ -176,6 +176,12 @@ inspection gesture. Both consume only recipient-safe observation/card metadata; 
 rules, emits an intent, creates a CardView, or expands hidden-information visibility. See
 [`ADR 0025`](./adr/0025-phase-3f-f-interaction-clarity-and-card-inspection.md).
 
+Phase 3F-G retains that boundary while replacing factual inspector content with a static
+catalog/Yaku-Guide reference expander. It may map a public card to general yaku contributions but
+does not query live scoring, result evidence, or trigger chronology. Scoped interaction-surface CSS
+prevents browser-owned long-press selection/touch callouts without disabling normal dialog text
+selection or scrolling. See [`ADR 0026`](./adr/0026-phase-3f-g-card-inspector-yaku-reference.md).
+
 Phase 2E keeps deck authoring outside the production client. Portable package, transform,
 contact-sheet, and approval contracts live in `packages/deck-format/src`; Sharp, filesystem access,
 atomic writes, source decoding, and deterministic raster generation live only under

@@ -348,18 +348,18 @@
         </header>
         <div class="card-inspector__body">
           <img data-card-inspector-image alt="" width="250" height="400" />
-          <div class="card-inspector__facts">
-            <p data-card-inspector-category></p>
-            <p data-card-inspector-flower></p>
-            <section data-card-inspector-yaku hidden>
-              <h3>Related yaku</h3>
-              <ul data-card-inspector-yaku-list></ul>
-            </section>
-            <section>
-              <h3>Card facts</h3>
-              <ul data-card-inspector-notes></ul>
-            </section>
-          </div>
+          <details class="card-inspector__yaku" data-card-inspector-yaku>
+            <summary
+              data-card-inspector-yaku-summary
+              aria-controls="card-inspector-yaku-entries"
+              aria-expanded="false"
+            ></summary>
+            <div
+              class="card-inspector__entries"
+              id="card-inspector-yaku-entries"
+              data-card-inspector-yaku-entries
+            ></div>
+          </details>
         </div>
       </dialog>
       <p class="visually-hidden" data-latest-recap aria-live="polite"></p>

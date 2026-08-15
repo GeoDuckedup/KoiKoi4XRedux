@@ -31,15 +31,18 @@ describe("Phase 3F-F contextual surfaces", () => {
     expect(placement.summary).toContain("no matching field card");
   });
 
-  it("formats catalog facts without evaluating the current board", () => {
+  it("formats a static card reference without evaluating the current board", () => {
     const inspection = createCardInspectionPresentation("september-sake-cup");
     expect(inspection).toMatchObject({
       title: "Sake Cup",
       month: "September",
-      category: "Animal",
     });
-    expect(inspection.factualNotes).toContain("This is the September Sake Cup.");
-    expect(inspection.fixedYaku).toEqual(["Blossom Viewing", "Moon Viewing"]);
+    expect(inspection.yakuEntries.map(({ key }) => key)).toEqual([
+      "blossomViewing",
+      "moonViewing",
+      "currentMonthSet",
+      "animals",
+    ]);
     expect(JSON.stringify(inspection)).not.toContain("currentYaku");
   });
 

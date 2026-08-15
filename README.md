@@ -6,7 +6,9 @@ larger hand**, the player-facing **Phase 3F-B: unified tap-only interaction** ou
 3F-C: visual interaction cues** with an owner-approved primary deck. **Phase 3F-D: placement and
 capture choreography** is deployed and accepted. **Phase 3F-E: utility dock and capture cleanup**
 is deployed, live-verified, and accepted. **Phase 3F-F: interaction clarity and card inspection** is
-deployed, live-verified, and accepted. The repository contains the canonical rules authority, all
+deployed, live-verified, and accepted. **Phase 3F-G: card inspector yaku reference/native gesture
+polish** is locally complete and accepted; commit/push/hosted CI/Pages/live verification remain
+pending. The repository contains the canonical rules authority, all
 48 artwork-independent card records, the complete
 deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
@@ -58,6 +60,7 @@ npm run validate:phase3fc
 npm run validate:phase3fd
 npm run validate:phase3fe
 npm run validate:phase3ff
+npm run validate:phase3fg
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -232,6 +235,20 @@ and the 774-module build. The inspected bundled-client final state/screenshot un
 draw, 8 actionable plus 8 inspect-only semantic controls, closed utility surfaces, and no diagnostics;
 CI `31865103301`, Pages `31865103302`, and cache-busted live verification passed; Phase 3F-F is
 deployed and accepted.
+
+`npm run validate:phase3fg` is the locally accepted successor gate for the optional collapsed
+card-inspector yaku reference, scoped native long-press selection/touch-callout suppression,
+all-card static mapping, dialog scrolling, accessibility, privacy, and root/Pages theme evidence.
+It remains a reference surface rather than current-table analysis or achieved-yaku results; exact
+formation-time yaku evidence remains Phase 5A. It passed 48/48 release deck approval, 100 technical
+artifacts, 8 focused files / 87 tests, Workshop, 14 root/Pages density viewports, and full
+root/Pages smoke. `npm run check` passed 49 ordinary test files / 452 tests, all 10,002 generated
+seeds, release-deck validation, and the 774-module build. Root/Pages collapsed, expanded, and
+844×390 scroll-bottom screenshots under `output/phase-3f-g/e2e/` were inspected; the bundled
+develop-web-game client completed three 1280×720 iterations with one canvas, 48 unique CardViews,
+and no invalid layout. Independent Terra re-review found no blocker, high, or medium issue.
+Commit/push, hosted CI/Pages, and live verification remain pending. WebKit/iOS native touch-callout
+behavior remains a supplemental manual-device check.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

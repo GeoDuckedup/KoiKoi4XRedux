@@ -330,7 +330,8 @@ Guidelines:
 - **Ribbon**, **Chaff**, and **Seed** are legacy/traditional aliases. They may appear in migration notes about the old source or as secondary rulebook aliases, but not as the primary new-game terminology.
 - Use **Bank** as the primary action label. “Pass” may appear only as a secondary traditional/legacy synonym in the rulebook.
 - Do not show unexplained abbreviations in onboarding.
-- Card inspection should show month, flower, category, and relevant yaku.
+- Card inspection should show static yaku contributions through an optional reference expander; it
+  must not imply a yaku is currently achieved or achievable.
 - Button arithmetic must be explicit, such as **Bank 15 points**.
 
 ## 6.2 Canonical stages of play
@@ -1310,10 +1311,15 @@ PLAIN CARDS             7 / 10
 Tap-and-hold, right-click, or a dedicated info affordance opens:
 
 - large card image;
-- month and flower;
-- category;
-- named static yaku participation;
-- short cultural/card description if provided.
+- a collapsed **Yaku this card can contribute to** reference expander, using the Yaku Guide's style
+  and static descriptions;
+- scrollable reference content when expanded, with a persistent close control.
+
+The reference may show a card under every canonical yaku it can generally contribute to, including
+category thresholds and the conditional Current-Month Set. It does not evaluate the current table,
+make a strategic recommendation, or represent achieved yaku/formation evidence. Browser native
+selection and touch-callout suppression is limited to game card interaction surfaces; regular dialog
+text remains selectable.
 
 Inspection is available only for face-up public Field cards and the local player’s face-up Hand; it
 never exposes opponent-hand identity, face-down Draw/deck identity/order, or private engine state. It
@@ -3659,6 +3665,19 @@ Phase 3 acceptance:
   header-adjacent `PLACE HERE` badge. No idle placeholders or copy over card art returns.
 - This is a presentation-only choreography pass: capture authority, projections, event semantics,
   rules, controls, CardView identity, and reduced-motion final parity remain unchanged.
+
+### Phase 3F-G — Card inspector yaku reference and native gesture polish
+
+- Replace the inspector's factual grid with a collapsed, keyboard-accessible yaku-reference
+  expander using the existing Yaku Guide's presentation vocabulary.
+- Cover every canonical CardId's static yaku contribution relationships without running the yaku
+  evaluator or describing current-table availability; retain Phase 5A ownership of exact
+  completed-yaku cards and their trigger-time formation order.
+- Suppress browser native selection/touch-callout behavior only on game card interaction surfaces;
+  short taps, long-press cancellation, context-menu/keyboard inspection, modal focus, privacy, and
+  normal dialog scrolling remain intact.
+- Keep this as presentation/reference-only work: no tutorial, engine, protocol, rule, scoring,
+  replay, projection, result, or CardView-identity change.
 
 ## Phase 4 — Onboarding
 

@@ -38,7 +38,12 @@ import {
   createYakuPresentationState,
   type YakuPresentationStateV1,
 } from "./game/yaku-presentation";
-import { YAKU_GUIDE_ENTRIES, YAKU_GUIDE_GROUPS, YAKU_GUIDE_NOTES } from "./game/yaku-guide";
+import {
+  type CardYakuGuideEntryV1,
+  YAKU_GUIDE_ENTRIES,
+  YAKU_GUIDE_GROUPS,
+  YAKU_GUIDE_NOTES,
+} from "./game/yaku-guide";
 import { createAnimationDirector } from "./presentation/animation/animation-director";
 import { projectionsEqual } from "./presentation/animation/projection";
 import type {
@@ -133,11 +138,9 @@ const cardInspectorClose = queryRequired<HTMLButtonElement>("[data-card-inspecto
 const cardInspectorTitle = queryRequired<HTMLElement>("[data-card-inspector-title]");
 const cardInspectorMonth = queryRequired<HTMLElement>("[data-card-inspector-month]");
 const cardInspectorImage = queryRequired<HTMLImageElement>("[data-card-inspector-image]");
-const cardInspectorCategory = queryRequired<HTMLElement>("[data-card-inspector-category]");
-const cardInspectorFlower = queryRequired<HTMLElement>("[data-card-inspector-flower]");
-const cardInspectorYaku = queryRequired<HTMLElement>("[data-card-inspector-yaku]");
-const cardInspectorYakuList = queryRequired<HTMLUListElement>("[data-card-inspector-yaku-list]");
-const cardInspectorNotes = queryRequired<HTMLUListElement>("[data-card-inspector-notes]");
+const cardInspectorYaku = queryRequired<HTMLDetailsElement>("[data-card-inspector-yaku]");
+const cardInspectorYakuSummary = queryRequired<HTMLElement>("[data-card-inspector-yaku-summary]");
+const cardInspectorYakuEntries = queryRequired<HTMLElement>("[data-card-inspector-yaku-entries]");
 const inputInstruction = queryRequired<HTMLElement>("[data-input-instruction]");
 const newRoundButton = queryRequired<HTMLButtonElement>("[data-new-round]");
 const handoff = queryRequired<HTMLElement>("[data-handoff]");
@@ -467,6 +470,53 @@ function activeCardFaceUrl(cardId: Parameters<typeof getCardDefinition>[0]): str
   return new URL(bundle.manifest.cardFaces[cardId].path, manifestUrl).href;
 }
 
+/** Shared DOM presentation for the static Yaku Guide and an inspected card's reference. */
+function createYakuGuideEntryElement(entry: CardYakuGuideEntryV1): HTMLElement {
+  const article = document.createElement("article");
+  article.className = "yaku-guide__entry";
+  article.dataset.yakuGuideKey = entry.key;
+  const heading = document.createElement("h4");
+  heading.textContent = entry.title;
+  const points = document.createElement("p");
+  points.className = "yaku-guide__points";
+  points.textContent = `${entry.points} ${entry.points === 1 ? "point" : "points"}`;
+  const requirement = document.createElement("p");
+  requirement.className = "yaku-guide__requirement";
+  requirement.textContent = entry.requirement;
+  const examples = document.createElement("div");
+  examples.className = "yaku-guide__cards";
+  examples.setAttribute("aria-label", `${entry.title} example cards`);
+  examples.replaceChildren(
+    ...entry.exampleCardIds.map((cardId) => {
+      const card = getCardDefinition(cardId);
+      const month = getMonthDefinition(card.month);
+      const image = document.createElement("img");
+      image.dataset.yakuGuideCard = cardId;
+      image.src = activeCardFaceUrl(cardId);
+      image.alt = `${month.name} ${card.displayName}`;
+      image.width = 80;
+      image.height = 128;
+      return image;
+    }),
+  );
+  const note = document.createElement("p");
+  note.className = "yaku-guide__note";
+  note.textContent = entry.note;
+  const condition = entry.contributionCondition
+    ? Object.assign(document.createElement("p"), {
+        className: "yaku-guide__condition",
+        textContent: entry.contributionCondition,
+      })
+    : null;
+  article.append(heading, points, requirement, examples, note);
+  if (condition) article.append(condition);
+  return article;
+}
+
+function syncCardInspectorYakuDisclosure(): void {
+  cardInspectorYakuSummary.setAttribute("aria-expanded", String(cardInspectorYaku.open));
+}
+
 function closeContextHelp(restoreFocus = true): void {
   if (!contextHelpDialog.open) return;
   contextHelpDialog.close();
@@ -516,18 +566,12 @@ function openCardInspection(
   cardInspectorMonth.textContent = presentation.month;
   cardInspectorImage.src = activeCardFaceUrl(cardId);
   cardInspectorImage.alt = `${presentation.month} ${presentation.title}`;
-  cardInspectorCategory.textContent = `${presentation.category} card`;
-  cardInspectorFlower.textContent = `${presentation.flower} month`;
-  cardInspectorYaku.hidden = presentation.fixedYaku.length === 0;
-  cardInspectorYakuList.replaceChildren(
-    ...presentation.fixedYaku.map((entry) =>
-      Object.assign(document.createElement("li"), { textContent: entry }),
-    ),
-  );
-  cardInspectorNotes.replaceChildren(
-    ...presentation.factualNotes.map((entry) =>
-      Object.assign(document.createElement("li"), { textContent: entry }),
-    ),
+  cardInspectorYaku.open = presentation.yakuDisclosure.ariaExpanded;
+  syncCardInspectorYakuDisclosure();
+  cardInspectorYakuSummary.setAttribute("aria-controls", presentation.yakuDisclosure.ariaControls);
+  cardInspectorYakuSummary.textContent = presentation.yakuDisclosure.label;
+  cardInspectorYakuEntries.replaceChildren(
+    ...presentation.yakuEntries.map((entry) => createYakuGuideEntryElement(entry)),
   );
   cardInspector.showModal();
   refreshInteractionSurface();
@@ -575,40 +619,7 @@ function renderYakuGuide(): void {
       entries.className = "yaku-guide__entries";
       entries.replaceChildren(
         ...YAKU_GUIDE_ENTRIES.filter(({ group: entryGroup }) => entryGroup === group.id).map(
-          (entry) => {
-            const article = document.createElement("article");
-            article.className = "yaku-guide__entry";
-            article.dataset.yakuGuideKey = entry.key;
-            const heading = document.createElement("h4");
-            heading.textContent = entry.title;
-            const points = document.createElement("p");
-            points.className = "yaku-guide__points";
-            points.textContent = `${entry.points} ${entry.points === 1 ? "point" : "points"}`;
-            const requirement = document.createElement("p");
-            requirement.className = "yaku-guide__requirement";
-            requirement.textContent = entry.requirement;
-            const examples = document.createElement("div");
-            examples.className = "yaku-guide__cards";
-            examples.setAttribute("aria-label", `${entry.title} example cards`);
-            examples.replaceChildren(
-              ...entry.exampleCardIds.map((cardId) => {
-                const card = getCardDefinition(cardId);
-                const month = getMonthDefinition(card.month);
-                const image = document.createElement("img");
-                image.dataset.yakuGuideCard = cardId;
-                image.src = activeCardFaceUrl(cardId);
-                image.alt = `${month.name} ${card.displayName}`;
-                image.width = 80;
-                image.height = 128;
-                return image;
-              }),
-            );
-            const note = document.createElement("p");
-            note.className = "yaku-guide__note";
-            note.textContent = entry.note;
-            article.append(heading, points, requirement, examples, note);
-            return article;
-          },
+          (entry) => createYakuGuideEntryElement(entry),
         ),
       );
       section.append(heading, entries);
@@ -1370,6 +1381,7 @@ cardInspector.addEventListener("close", () => {
   cardInspectionCardId = null;
   cardInspectionTrigger = null;
 });
+cardInspectorYaku.addEventListener("toggle", syncCardInspectorYakuDisclosure);
 for (const control of captureInspectControls) {
   control.addEventListener("click", () => openCaptureInspection(control));
 }

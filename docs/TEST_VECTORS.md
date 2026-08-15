@@ -614,7 +614,26 @@ movement, contextual help, and privacy-safe card inspection. Focused artifacts a
 or result-evidence authority changes. Phase 5A alone records ordered, exact yaku-card evidence at
 formation time for expanded end-of-play details.
 
-## 26. Approved-decision coverage matrix
+## 26. Phase 3F-G card-inspector yaku-reference/native-gesture vectors
+
+| ID | Required expectation |
+|---|---|
+| `VISUAL-3FG-001-NATIVE-SELECTION` | Face-up public Field and local-Hand semantic card interaction surfaces suppress browser-owned text selection, touch callout, and native context-menu chrome for inspection gestures. A long press opens the inspector without a selection range, `selectionchange` selection, normal move intent, authoritative state mutation, or CardView replacement. This suppression is scoped to game card interaction surfaces only: ordinary dialog/body text remains selectable and native modal scrolling remains available. |
+| `VISUAL-3FG-002-EXPANDER-REFERENCE` | The inspector opens with its yaku-reference section collapsed, replacing the former facts grid. Its bottom control names the static relationship and count, exposes `aria-expanded`/`aria-controls`, and expands or collapses through pointer and keyboard. The content uses the Yaku Guide's reference style and states that it is not current-table analysis, strategy, or achieved-yaku evidence. |
+| `VISUAL-3FG-003-ALL-CARD-MAPPING` | Every one of the 48 canonical CardIds maps deterministically to exactly its canonical static yaku contribution entries in Yaku Guide order. Coverage includes September Sake Cup, November Rain bright tiers, Blue Scroll, Plain card, category thresholds, and conditional Current-Month Set. A card may contribute to several entries. Opening Luck and Four-Card Sweep are excluded; no yaku evaluator or live board state is consulted. |
+| `VISUAL-3FG-004-SCROLL-CONTAINMENT` | At 390×844 and 844×390, expanded inspector content is internally scrollable to both ends within the native dialog; it has no horizontal overflow, viewport clipping, or background-scroll leak, and a visible close control remains reachable. Collapsing is safe from any scroll position. |
+| `VISUAL-3FG-005-A11Y-FOCUS-INPUT` | Long press, `I`, Context Menu/Shift+F10, and context-menu activation open the same read-only inspector. Short tap retains its ordinary legal move behavior; early release, drag beyond the established threshold, cancellation, state/animation change, and an input-locking dialog prevent inspection. Native-dialog focus, Escape/focus return, expander keyboard operation, and mutual exclusion with existing dialogs/critical decisions remain intact. |
+| `VISUAL-3FG-006-PRIVACY-AUTHORITY` | Inspector and expanded reference remain available only for public Field and local Hand cards and expose neither opponent-hand identity, Draw/deck identity or order, RNG, checkpoint, command ID, current/achieved yaku, result evidence, nor yaku trigger chronology. Opening, expanding, and scrolling change neither authoritative state/version/command count nor the one canvas/48 persistent CardViews. |
+| `VISUAL-3FG-007-THEME-ROOT-PAGES` | Chromium root and repository-prefixed Pages smoke covers the seven baseline viewports (320×568, 360×640, 390×844, 768×1024, 844×390, 1366×768, 1920×1080) for readiness/short-tap containment, plus expanded inspector root/Pages traces at 390×844 and 844×390 across Ink & Parchment, Moonlit Indigo, and Warm Ivory. These retain guide-style readability, scroll containment, one canvas, 48 persistent CardViews, and zero browser/network errors. WebKit or real-device native-callout evidence is supplemental when available. |
+
+Phase 3F-G binding: `phase3fg-card-inspector.test.ts`, retained input/board/animation/local-runtime
+tests, Workshop, density review, and root/Pages production smoke prove the static mapping, scoped
+native-selection suppression, expander/focus/scroll behavior, privacy, and responsive themes.
+Artifacts belong under `output/phase-3f-g/e2e/`. This is presentation/reference only: it does not
+change engine, protocol, rules, scoring, replay, public projection, result evidence, or CardView
+identity. Phase 5A alone records exact achieved-yaku card evidence in formation order.
+
+## 27. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

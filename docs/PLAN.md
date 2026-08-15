@@ -3,7 +3,9 @@
 **Plan version:** 1.1
 **Updated:** August 14, 2026
 **Current gate:** Phase 3F-E utility dock/capture cleanup is deployed and accepted; Phase 3F-F
-interaction clarity/card inspection is deployed and accepted; Phase 5A full local match formats is next
+interaction clarity/card inspection is deployed and accepted; Phase 3F-G card inspector yaku
+reference/native gesture polish is locally complete and accepted; commit/push/hosted CI/Pages/live
+verification remain pending before Phase 5A full local match formats
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -937,6 +939,43 @@ closed utility surfaces, and no diagnostics. CI/Pages and live verification are 
 
 Architecture is recorded in [`ADR 0025`](./adr/0025-phase-3f-f-interaction-clarity-and-card-inspection.md).
 
+### Phase 3F-G — Card inspector yaku reference and native gesture polish
+
+Status: **locally complete and accepted; commit/push/hosted CI/Pages/live verification pending**.
+
+This narrow presentation/reference follow-up to 3F-F replaces the inspector's factual grid
+with a collapsed optional **Yaku this card can contribute to** expander that reuses the Yaku Guide's
+static reference language and visual treatment. It names general catalog-defined contributions only;
+it never claims a yaku is achieved, available now, or strategically preferable. Native selection and
+browser touch-callout suppression apply only to game card interaction surfaces so a long press does
+not produce browser-owned selection chrome; ordinary dialog/body text remains selectable and
+scrollable.
+
+Gate:
+
+- `VISUAL-3FG-001` through `VISUAL-3FG-007` bind scoped native-selection suppression, collapsed
+  expander semantics, all-48-card canonical reference mapping, internal dialog scrolling,
+  keyboard/pointer/modal parity, privacy/authority invariants, and root/Pages responsive theme
+  evidence;
+- this remains browser presentation/reference work only: no engine, protocol, rules, scoring, legal
+  actions, replay, public projection, result type, or persistent-CardView identity changes; Phase 5A
+  alone records exact completed-yaku cards and their formation chronology in results;
+- `npm run validate:phase3fg` is the flattened gate. It retains release-deck, technical-deck,
+  interaction/runtime, Workshop, density-review, and root/Pages smoke checks while adding focused
+  `phase3fg-card-inspector.test.ts` coverage. CI and Pages use `output/phase-3f-g/e2e/` evidence.
+
+Local evidence: `npm run check` passed 49 ordinary test files / 452 tests, all 10,002 generated
+seeds, release-deck validation, and the 774-module build. `npm run validate:phase3fg` passed the
+48/48 release deck, 100 technical artifacts, 8 focused files / 87 tests, Workshop, 14 root/Pages
+density viewports, and full root/Pages smoke. An independent Terra re-review found no blocker, high,
+or medium issue. The bundled develop-web-game client completed three 1280×720 iterations with one
+canvas, 48 unique CardViews, and no invalid layout; Root/Pages collapsed, expanded, and 844×390
+scroll-bottom screenshots were inspected under `output/phase-3f-g/e2e/`. A WebKit or real-device
+check remains supplemental evidence for browser touch-callout behavior; no additional heavyweight CI
+browser install is required.
+
+Architecture is recorded in [`ADR 0026`](./adr/0026-phase-3f-g-card-inspector-yaku-reference.md).
+
 ## Later phases
 
 1. **Phase 5A — Full local match formats:** 3/6/12 rounds, full recap/rematch, and ordered
@@ -952,6 +991,6 @@ Architecture is recorded in [`ADR 0025`](./adr/0025-phase-3f-f-interaction-clari
 No later phase may bypass the acceptance gate of the preceding phase.
 
 Phase 3F-E is deployed, live-verified, and accepted. Phase 3F-F interaction clarity/card inspection
-is deployed, live-verified, and accepted. The accepted dock, public
-History/reference dialogs, and capture cleanup do not reopen
-3F-D animation authority or transfer Phase 5A's ordered yaku evidence into routine play.
+is deployed, live-verified, and accepted. Phase 3F-G is the approved in-progress inspector-only
+follow-up. None of these presentation slices reopen 3F-D animation authority or transfer Phase 5A's
+ordered completed-yaku evidence into routine play.

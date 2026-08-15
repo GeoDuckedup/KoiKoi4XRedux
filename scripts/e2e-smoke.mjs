@@ -5,8 +5,10 @@ import { extname, resolve } from "node:path";
 import { chromium } from "playwright";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
-const distributionDirectory = resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-3f-f/e2e");
+const distributionDirectory = process.env.SMOKE_DIST_DIR
+  ? resolve(process.env.SMOKE_DIST_DIR)
+  : resolve(repositoryRoot, "apps/web/dist");
+const outputDirectory = resolve(repositoryRoot, "output/phase-3f-g/e2e");
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
 const mountedBasePath = smokeBasePath === "/" ? "/" : `${smokeBasePath}/`;
@@ -249,7 +251,14 @@ async function assertContextHelp(page, screenshotId = "390x844") {
   );
 }
 
-async function assertCardInspection(page, selector, label, screenshotId = "390x844") {
+async function assertCardInspection(
+  page,
+  selector,
+  label,
+  expectedYakuKeys,
+  screenshotId = "390x844",
+  { assertScroll = false } = {},
+) {
   const control = page.locator(selector);
   assert(await control.isVisible(), `${label} inspectable card control is missing.`);
   assert(
@@ -273,6 +282,51 @@ async function assertCardInspection(page, selector, label, screenshotId = "390x8
     hit?.cardId === expectedCardId && hit.inspectable === "true",
     `${label} center is not a hittable inspectable card: ${JSON.stringify({ point, hit, expectedCardId })}.`,
   );
+  const selectionPolicy = await page.evaluate(() => {
+    const control = document.querySelector("[data-card-id]");
+    const game = document.querySelector(".game-host");
+    const inspector = document.querySelector("[data-card-inspector]");
+    const yakuRequirement = document.querySelector(
+      "[data-card-inspector-yaku-entries] .yaku-guide__requirement",
+    );
+    if (!(control instanceof HTMLElement) || !(game instanceof HTMLElement)) {
+      throw new Error("Phase 3F-G selection-policy targets are missing.");
+    }
+    const read = (element) => {
+      const style = getComputedStyle(element);
+      return {
+        userSelect: style.userSelect,
+        webkitUserSelect: style.webkitUserSelect,
+        webkitTouchCallout: style.webkitTouchCallout,
+      };
+    };
+    return {
+      control: read(control),
+      game: read(game),
+      inspector: inspector instanceof HTMLElement ? read(inspector) : null,
+      yakuRequirement: yakuRequirement instanceof HTMLElement ? read(yakuRequirement) : null,
+    };
+  });
+  for (const [surface, policy] of Object.entries({
+    card: selectionPolicy.control,
+    game: selectionPolicy.game,
+  })) {
+    assert(
+      policy.userSelect === "none" && policy.webkitUserSelect === "none",
+      `${label} ${surface} interaction surface does not suppress native text selection: ${JSON.stringify(policy)}.`,
+    );
+    if (await page.evaluate(() => CSS.supports("-webkit-touch-callout", "none"))) {
+      assert(
+        policy.webkitTouchCallout === "none",
+        `${label} ${surface} interaction surface does not suppress WebKit touch callout: ${JSON.stringify(policy)}.`,
+      );
+    }
+  }
+  assert(
+    selectionPolicy.inspector?.userSelect !== "none",
+    `${label} inspector text selection was disabled outside the game interaction surface.`,
+  );
+  await page.evaluate(() => window.getSelection()?.removeAllRanges());
   await page.mouse.move(point.x, point.y);
   await page.mouse.down();
   await page.mouse.up();
@@ -314,6 +368,10 @@ async function assertCardInspection(page, selector, label, screenshotId = "390x8
   await page.waitForTimeout(550);
   await page.locator("[data-card-inspector]").waitFor({ state: "visible" });
   await page.mouse.up();
+  assert(
+    await page.evaluate(() => window.getSelection()?.toString() === ""),
+    `${label} long press left browser-native text selected.`,
+  );
   const imageMetrics = await page.locator("[data-card-inspector-image]").evaluate((image) => {
     const box = image.getBoundingClientRect();
     return { ratio: box.width / box.height, alt: image.getAttribute("alt") };
@@ -335,13 +393,151 @@ async function assertCardInspection(page, selector, label, screenshotId = "390x8
       during.cards.cardViewCount === before.cards.cardViewCount,
     `${label} long press changed authoritative state or persistent CardView identity.`,
   );
+  const inspector = page.locator("[data-card-inspector]");
+  const yaku = page.locator("[data-card-inspector-yaku]");
+  const yakuSummary = page.locator("[data-card-inspector-yaku-summary]");
+  assert(
+    !(await yaku.evaluate((details) => details.open)),
+    `${label} inspector did not open collapsed.`,
+  );
+  assert(
+    (await yakuSummary.textContent())?.trim() ===
+      `Yaku this card can contribute to (${expectedYakuKeys.length})`,
+    `${label} inspector summary changed or has the wrong static yaku count.`,
+  );
+  assert(
+    (await yakuSummary.getAttribute("aria-expanded")) === "false" &&
+      (await yakuSummary.getAttribute("aria-controls")) === "card-inspector-yaku-entries",
+    `${label} collapsed yaku summary lacks its explicit ARIA contract.`,
+  );
   await page.screenshot({
     path: resolve(
       outputDirectory,
-      `card-inspector-${label.replaceAll(/[^a-z0-9]+/giu, "-").toLowerCase()}-${screenshotId}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      `card-inspector-collapsed-${label.replaceAll(/[^a-z0-9]+/giu, "-").toLowerCase()}-${screenshotId}${smokeBasePath === "/" ? "" : "-pages"}.png`,
     ),
     fullPage: true,
   });
+  await yakuSummary.focus();
+  await page.keyboard.press("Space");
+  assert(
+    await yaku.evaluate((details) => details.open),
+    `${label} Space did not expand yaku reference.`,
+  );
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector("[data-card-inspector-yaku-summary]")
+        ?.getAttribute("aria-expanded") === "true",
+  );
+  assert(
+    (await yakuSummary.getAttribute("aria-expanded")) === "true",
+    `${label} expanded yaku summary did not update aria-expanded.`,
+  );
+  const yakuEntries = yaku.locator("[data-yaku-guide-key]");
+  assert(
+    JSON.stringify(
+      await yakuEntries.evaluateAll((entries) =>
+        entries.map((entry) => entry.dataset.yakuGuideKey),
+      ),
+    ) === JSON.stringify(expectedYakuKeys),
+    `${label} inspector yaku keys are not the exact canonical static order.`,
+  );
+  assert(
+    await yakuEntries.evaluateAll((entries) =>
+      entries.every(
+        (entry) =>
+          entry.querySelectorAll("[data-yaku-guide-card]").length > 0 &&
+          (entry.querySelector(".yaku-guide__requirement")?.textContent ?? "").trim().length > 0,
+      ),
+    ),
+    `${label} expanded inspector lacks guide-style cards or requirement prose.`,
+  );
+  const expandedSelection = await page
+    .locator("[data-card-inspector-yaku-entries] .yaku-guide__requirement")
+    .evaluateAll((entries) =>
+      entries.map((entry) => {
+        const style = getComputedStyle(entry);
+        return { userSelect: style.userSelect, webkitUserSelect: style.webkitUserSelect };
+      }),
+    );
+  assert(
+    expandedSelection.length === expectedYakuKeys.length &&
+      expandedSelection.every(
+        ({ userSelect, webkitUserSelect }) => userSelect !== "none" && webkitUserSelect !== "none",
+      ),
+    `${label} expanded reference prose is incorrectly non-selectable: ${JSON.stringify(expandedSelection)}.`,
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `card-inspector-expanded-${label.replaceAll(/[^a-z0-9]+/giu, "-").toLowerCase()}-${screenshotId}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await page.keyboard.press("Enter");
+  assert(
+    !(await yaku.evaluate((details) => details.open)),
+    `${label} Enter did not collapse yaku reference.`,
+  );
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector("[data-card-inspector-yaku-summary]")
+        ?.getAttribute("aria-expanded") === "false",
+  );
+  assert(
+    (await yakuSummary.getAttribute("aria-expanded")) === "false",
+    `${label} collapsed yaku summary did not update aria-expanded.`,
+  );
+  await page.keyboard.press("Space");
+  assert(await yaku.evaluate((details) => details.open), `${label} yaku reference did not reopen.`);
+  if (assertScroll) {
+    const beforeDocumentScroll = await page.evaluate(() => window.scrollY);
+    const scrollEvidence = await inspector.evaluate((dialog) => {
+      if (!(dialog instanceof HTMLDialogElement))
+        throw new Error("Card inspector is not a dialog.");
+      dialog.scrollTop = dialog.scrollHeight;
+      const close = dialog.querySelector("[data-card-inspector-close]");
+      const dialogBox = dialog.getBoundingClientRect();
+      const closeBox = close?.getBoundingClientRect();
+      return {
+        clientHeight: dialog.clientHeight,
+        scrollHeight: dialog.scrollHeight,
+        scrollLeft: dialog.scrollLeft,
+        scrollTop: dialog.scrollTop,
+        scrollWidth: dialog.scrollWidth,
+        dialogTop: dialogBox.top,
+        closeTop: closeBox?.top ?? null,
+      };
+    });
+    assert(
+      scrollEvidence.scrollHeight > scrollEvidence.clientHeight &&
+        scrollEvidence.scrollTop === scrollEvidence.scrollHeight - scrollEvidence.clientHeight &&
+        scrollEvidence.scrollLeft === 0,
+      `${label} expanded inspector did not expose an internal vertical scroll range: ${JSON.stringify(scrollEvidence)}.`,
+    );
+    assert(
+      scrollEvidence.scrollLeft === 0 &&
+        scrollEvidence.scrollWidth <=
+          (await inspector.evaluate((dialog) => dialog.clientWidth)) + 1 &&
+        scrollEvidence.closeTop !== null &&
+        scrollEvidence.closeTop >= scrollEvidence.dialogTop - 1,
+      `${label} expanded inspector has horizontal overflow or lost sticky Close: ${JSON.stringify(scrollEvidence)}.`,
+    );
+    await inspector.hover();
+    await page.mouse.wheel(0, 400);
+    assert(
+      (await page.evaluate(() => window.scrollY)) === beforeDocumentScroll,
+      `${label} inspector scroll leaked to the page background.`,
+    );
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `card-inspector-scroll-bottom-${label.replaceAll(/[^a-z0-9]+/giu, "-").toLowerCase()}-${screenshotId}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+  }
   await page.keyboard.press("Escape");
   assert(
     !(await page.locator("[data-card-inspector]").evaluate((dialog) => dialog.open)) &&
@@ -356,6 +552,19 @@ async function assertCardInspection(page, selector, label, screenshotId = "390x8
     !(await page.locator("[data-card-inspector]").evaluate((dialog) => dialog.open)),
     `${label} keyboard inspection did not close cleanly.`,
   );
+  await control.click({ button: "right" });
+  await page.locator("[data-card-inspector]").waitFor({ state: "visible" });
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector("[data-card-inspector-yaku-summary]")
+        ?.getAttribute("aria-expanded") === "false",
+  );
+  assert(
+    !(await yaku.evaluate((details) => details.open)),
+    `${label} context-menu inspection did not reset collapsed state.`,
+  );
+  await page.keyboard.press("Escape");
 }
 
 async function assertUtilityDock(page, viewport) {
@@ -464,6 +673,37 @@ async function assertYakuGuideLightFrames(page, themeId) {
       .locator("[data-yaku-guide-trigger]")
       .evaluate((element) => document.activeElement === element),
     `${themeId} Yaku Guide frame inspection did not restore focus.`,
+  );
+}
+
+async function assertCardInspectorTheme(page, themeId) {
+  const control = page.locator('[data-card-id="january-pine-plain-b"][data-inspectable="true"]');
+  await control.focus();
+  await page.keyboard.press("I");
+  await page.locator("[data-card-inspector]").waitFor({ state: "visible" });
+  const yaku = page.locator("[data-card-inspector-yaku]");
+  const summary = page.locator("[data-card-inspector-yaku-summary]");
+  assert(
+    !(await yaku.evaluate((details) => details.open)),
+    `${themeId} inspector did not reset closed.`,
+  );
+  await summary.click();
+  assert(await yaku.evaluate((details) => details.open), `${themeId} inspector did not expand.`);
+  assertClearlyLightFrames(
+    await inspectCardImageFrames(page, "[data-card-inspector-yaku-entries] [data-yaku-guide-card]"),
+    `${themeId} card inspector`,
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `theme-card-inspector-${themeId}-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await page.keyboard.press("Escape");
+  assert(
+    await control.evaluate((element) => document.activeElement === element),
+    `${themeId} inspector did not return focus to its invoking card.`,
   );
 }
 
@@ -1225,6 +1465,7 @@ try {
   for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
     await selectTheme(page, themeId);
     await assertYakuGuideLightFrames(page, themeId);
+    await assertCardInspectorTheme(page, themeId);
   }
   await selectTheme(page, "ink-parchment");
   await page.setViewportSize({ width: 844, height: 390 });
@@ -1260,11 +1501,13 @@ try {
     page,
     '[data-card-id="january-pine-plain-b"][data-inspectable="true"]',
     "field-card",
+    ["currentMonthSet", "plainCards"],
   );
   await assertCardInspection(
     page,
     '[data-card-id="november-red-scroll"][data-inspectable="true"]',
     "own-hand-card",
+    ["currentMonthSet", "scrolls"],
   );
   await page.setViewportSize({ width: 844, height: 390 });
   await assertContextHelp(page, "844x390");
@@ -1272,7 +1515,16 @@ try {
     page,
     '[data-card-id="january-pine-plain-b"][data-inspectable="true"]',
     "field-card",
+    ["currentMonthSet", "plainCards"],
     "844x390",
+  );
+  await assertCardInspection(
+    page,
+    '[data-card-id="december-phoenix"][data-inspectable="true"]',
+    "high-entry-field-card",
+    ["fiveBrights", "fourBrights", "fourBrightsWithRain", "threeBrights", "currentMonthSet"],
+    "844x390",
+    { assertScroll: true },
   );
   await page.setViewportSize({ width: 390, height: 844 });
   await runPhysicalDrawTrace(page);

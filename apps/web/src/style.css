@@ -154,6 +154,18 @@ select:focus-visible {
   pointer-events: none;
 }
 
+/* Keep native long-press selection/callouts off the table controls only. Dialog prose remains selectable. */
+.game-host,
+.game-host canvas,
+.card-input-overlay,
+.card-input-control,
+.field-placement-control,
+.capture-inspect-control {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 .card-input-control {
   position: absolute;
   min-width: 1px;
@@ -2303,16 +2315,19 @@ body:has(.handoff:not([hidden])) .bottom-utilities {
   background: color-mix(in srgb, var(--theme-page) 72%, #000 34%);
 }
 
+.card-inspector .utility-dialog__header {
+  background: var(--theme-surface);
+}
+
 .card-inspector__body {
   display: grid;
-  grid-template-columns: minmax(120px, 250px) minmax(0, 1fr);
-  gap: clamp(0.8rem, 3vw, 1.25rem);
+  gap: clamp(0.8rem, 3vw, 1.1rem);
   padding: clamp(0.9rem, 3vw, 1.25rem);
 }
 
 .card-inspector__body img {
   display: block;
-  width: 100%;
+  width: min(100%, clamp(150px, 37svh, 280px));
   height: auto;
   aspect-ratio: 5 / 8;
   box-sizing: border-box;
@@ -2322,51 +2337,70 @@ body:has(.handoff:not([hidden])) .bottom-utilities {
   object-fit: contain;
   background: var(--theme-page);
   box-shadow: 2px 3px 0 color-mix(in srgb, var(--theme-page) 60%, #000 42%);
+  justify-self: center;
 }
 
-.card-inspector__facts {
+.card-inspector__yaku {
   display: grid;
-  align-content: start;
-  gap: 0.75rem;
-}
-
-.card-inspector__facts > p,
-.card-inspector__facts section,
-.card-inspector__facts h3,
-.card-inspector__facts ul {
-  margin: 0;
-}
-
-.card-inspector__facts > p {
-  color: var(--theme-text-muted);
-}
-
-.card-inspector__facts section {
-  display: grid;
-  gap: 0.3rem;
-  padding: 0.65rem;
-  border: 1px solid color-mix(in srgb, var(--theme-border) 40%, transparent);
-  border-radius: 10px;
+  min-width: 0;
+  gap: 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 44%, transparent);
+  border-radius: 12px;
   background: color-mix(in srgb, var(--theme-surface-raised) 38%, transparent);
 }
 
-.card-inspector__facts h3 {
+.card-inspector__yaku > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 0.72rem 0.85rem;
   color: var(--theme-text);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
 }
 
-.card-inspector__facts ul {
+.card-inspector__yaku > summary::-webkit-details-marker {
+  display: none;
+}
+
+.card-inspector__yaku > summary::after {
+  content: "+";
+  flex: 0 0 auto;
+  margin-left: 0.8rem;
+  color: var(--theme-accent);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.card-inspector__yaku[open] > summary {
+  border-bottom: 1px solid color-mix(in srgb, var(--theme-border) 40%, transparent);
+}
+
+.card-inspector__yaku[open] > summary::after {
+  content: "−";
+}
+
+.card-inspector__yaku > summary:focus-visible {
+  outline: 3px solid var(--theme-accent);
+  outline-offset: -3px;
+}
+
+.card-inspector__entries {
   display: grid;
-  gap: 0.24rem;
-  padding-left: 1.1rem;
-  color: var(--theme-text-muted);
-  line-height: 1.38;
+  min-width: 0;
+  gap: 0.65rem;
+  padding: 0 0.7rem 0.7rem;
+}
+
+.card-inspector__entries .yaku-guide__entry {
+  margin: 0;
 }
 
 @media (max-width: 520px) {
   .card-inspector__body {
-    grid-template-columns: minmax(0, 150px) minmax(0, 1fr);
     gap: 0.75rem;
     padding: 0.8rem;
   }
@@ -2445,6 +2479,12 @@ body:has(.handoff:not([hidden])) .bottom-utilities {
 
 .yaku-guide__note {
   font-size: 0.72rem !important;
+}
+
+.yaku-guide__condition {
+  color: var(--theme-accent) !important;
+  font-size: 0.72rem !important;
+  font-weight: 700;
 }
 
 .yaku-guide__cards {
@@ -2625,6 +2665,11 @@ body:has(.handoff:not([hidden])) .bottom-utilities {
   }
 
   .utility-dialog {
+    width: calc(100% - 10px);
+    max-height: calc(100svh - 10px);
+  }
+
+  .card-inspector {
     width: calc(100% - 10px);
     max-height: calc(100svh - 10px);
   }

@@ -2,6 +2,23 @@ Original prompt: read the package and understand it, then let me know when we ar
 
 # KoiKoi4x Progress
 
+## 2026-08-15 — Phase 3F-G locally complete and accepted
+
+- Completed the optional card-inspector yaku reference and scoped native long-press
+  selection/touch-callout suppression without introducing tutorial, current-board evaluator,
+  engine/protocol/rules/scoring/replay/projection/result changes, or Phase 5A formation-time
+  achieved-yaku evidence.
+- `npm run check` passed 49 ordinary test files / 452 tests, all 10,002 generated seeds,
+  release-deck validation, and the 774-module build. `npm run validate:phase3fg` passed 48/48
+  release deck, 100 technical artifacts, 8 focused files / 87 tests, Workshop, 14 root/Pages density
+  viewports, and full root/Pages smoke.
+- Independent Terra re-review found no blocker, high, or medium issue. Three bundled
+  develop-web-game client iterations at 1280×720 showed one canvas, 48 unique CardViews, and no
+  invalid layout; Root/Pages collapsed, expanded, and 844×390 scroll-bottom screenshots under
+  `output/phase-3f-g/e2e/` were inspected.
+- Commit/push, hosted CI/Pages, and live verification remain pending. WebKit/iOS native touch-callout
+  behavior remains a supplemental manual-device check. Next: Phase 5A full local match formats.
+
 ## 2026-08-08 — Phase 0A started
 
 - Read the complete v1.6 handoff package and inspected the legacy reference repository.
