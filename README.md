@@ -9,7 +9,8 @@ is deployed, live-verified, and accepted. **Phase 3F-F: interaction clarity and 
 deployed, live-verified, and accepted. **Phase 3F-G: card inspector yaku reference/native gesture
 polish** is deployed, live-verified, and accepted. **Phase 3F-H: active-hand start cue** is deployed,
 live-verified, and accepted. **Phase 3F-I: Reveal start cue** is deployed, live-verified, and
-accepted. The repository contains the canonical rules
+accepted. **Phase 3F-J: legal destination pulse** is locally complete and accepted, pending
+deployment. The repository contains the canonical rules
 authority, all
 48 artwork-independent card records, the complete
 deterministic headless match
@@ -65,6 +66,7 @@ npm run validate:phase3ff
 npm run validate:phase3fg
 npm run validate:phase3fh
 npm run validate:phase3fi
+npm run validate:phase3fj
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -306,6 +308,24 @@ clipped/invalid/overlap diagnostics, and an inspected screenshot. Phase 3F-I is 
 live-verified, and accepted. iOS/WebKit perceived-pulse inspection remains supplemental.
 The work remains presentation-only: Phase 5A owns ordered exact
 achieved-yaku-card evidence in expanded result details.
+
+`npm run validate:phase3fj` is the locally accepted flattened successor gate for the legal-destination
+pulse. It retains the Phase 3F-I release-deck, technical-deck, interaction/runtime, Workshop,
+density-review, and root/Pages checks while adding focused authoritative target/no-match decoration
+coverage. After a selected Hand or Reveal source, legal Field targets pulse yellow-gold; no-match
+instead pulses the actual Field and reads `NO MATCH · PLACE HERE`. The selected source remains solid
+gold, and idle Hand/Reveal cues remain white. `npm run check` passed 52 ordinary test files / 477
+tests, all 10,002 generated seeds, deck validation, and the 777-module build. `validate:phase3fj`
+passed the 48/48 release deck, 100 technical artifacts, 11 focused files / 112 tests, Workshop, the
+Phase 3D-D 14 root/Pages density viewports, and complete Root/Pages smoke through Bank/restart.
+Target, no-match, Draw, Warm Ivory, reduced-landscape, and Pages screenshots under
+`output/phase-3f-j/e2e/` were inspected. A first browser-harness attempt wrongly selected Field card
+`april-cuckoo` as a Hand source; the real opening Hand source is `april-red-scroll`, whose target is
+Field `april-cuckoo`. The follow-up assertion now correctly distinguishes the exact visual CardPlacement
+ring from the intentionally partitioned semantic target hit territory. Terra independent review found
+no blocker, high, or medium issue. The final bundled client completed three ready iterations with one
+canvas, 48 unique CardViews, and no diagnostics. Commit/push, hosted validation, deployment, and live
+verification remain pending.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

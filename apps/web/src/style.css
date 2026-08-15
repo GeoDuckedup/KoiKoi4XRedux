@@ -180,6 +180,49 @@ select:focus-visible {
   animation: reveal-play-attention-pulse 1.2s ease-in-out infinite alternate;
 }
 
+.field-destination-attention {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.legal-destination-attention {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid var(--theme-accent);
+  border-radius: clamp(7px, 2.4vw, 11px);
+  background: transparent;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 16%),
+    0 0 10px color-mix(in srgb, var(--theme-accent) 42%, transparent);
+  opacity: 0.62;
+  pointer-events: none;
+  animation: legal-destination-attention-pulse 1.2s ease-in-out infinite alternate;
+}
+
+.legal-destination-attention--field {
+  border-width: 3px;
+  border-radius: clamp(10px, 3vw, 16px);
+}
+
+.legal-field-placement-copy {
+  position: absolute;
+  box-sizing: border-box;
+  max-width: calc(100% - 52px);
+  padding: 2px 5px;
+  border: 1px solid var(--theme-accent);
+  border-radius: 999px;
+  color: var(--theme-accent-ink);
+  background: var(--theme-accent);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 18%);
+  font-size: clamp(0.38rem, 1.35vw, 0.58rem);
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  line-height: 1.15;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 @keyframes hand-play-attention-pulse {
   to {
     box-shadow:
@@ -195,6 +238,15 @@ select:focus-visible {
       0 0 0 1px rgb(0 0 0 / 18%),
       0 0 18px rgb(255 255 255 / 68%);
     opacity: 0.96;
+  }
+}
+
+@keyframes legal-destination-attention-pulse {
+  to {
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 16%),
+      0 0 20px color-mix(in srgb, var(--theme-accent) 76%, transparent);
+    opacity: 1;
   }
 }
 
@@ -1164,6 +1216,11 @@ kbd {
 
   .reveal-play-attention {
     opacity: 0.9;
+    animation: none !important;
+  }
+
+  .legal-destination-attention {
+    opacity: 1;
     animation: none !important;
   }
 }

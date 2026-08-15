@@ -63,6 +63,10 @@ import {
 import { INSTALLED_DECKS, isInstalledDeckId } from "./presentation/deck/installed-decks";
 import { createDomCardBridge, type DomCardBridgeV1 } from "./presentation/input/dom-card-bridge";
 import { shouldShowHandPlayAttention } from "./presentation/input/hand-play-attention";
+import {
+  findFaceUpLegalFieldPlacements,
+  resolveFieldDestinationAttention,
+} from "./presentation/input/field-destination-attention";
 import { buildSemanticCardControls } from "./presentation/input/hit-areas";
 import { createInteractionController } from "./presentation/input/input-controller";
 import {
@@ -132,6 +136,7 @@ const deckSelect = queryRequired<HTMLSelectElement>("[data-deck-select]");
 const cardInputOverlay = queryRequired<HTMLElement>("[data-card-input-overlay]");
 const handPlayAttention = queryRequired<HTMLElement>("[data-hand-play-attention]");
 const revealPlayAttention = queryRequired<HTMLElement>("[data-reveal-play-attention]");
+const fieldDestinationAttention = queryRequired<HTMLElement>("[data-field-destination-attention]");
 const fieldPlacementControl = queryRequired<HTMLButtonElement>("[data-input-field-placement]");
 const captureInspectControls = Object.freeze([
   ...document.querySelectorAll<HTMLButtonElement>("[data-capture-inspect]"),
@@ -712,6 +717,7 @@ function closeOptions(restoreFocus = true): void {
   optionsTrigger.setAttribute("aria-expanded", "false");
   renderHandPlayAttention();
   renderRevealPlayAttention();
+  renderFieldDestinationAttention();
   if (restoreFocus) optionsTrigger.focus();
 }
 
@@ -722,6 +728,7 @@ function openOptions(): void {
   syncThemeControls();
   renderHandPlayAttention();
   renderRevealPlayAttention();
+  renderFieldDestinationAttention();
   queueMicrotask(() => themeOptions.find(({ checked }) => checked)?.focus());
 }
 
@@ -828,11 +835,61 @@ function renderRevealPlayAttention(inspection = interactionController?.inspect()
   revealPlayAttention.style.height = `${placement.bounds.height}px`;
 }
 
+function renderFieldDestinationAttention(inspection = interactionController?.inspect()): void {
+  if (!currentLayout || !inspection || currentInputLock() !== null || optionsDialog.open) {
+    fieldDestinationAttention.hidden = true;
+    fieldDestinationAttention.replaceChildren();
+    return;
+  }
+  const attention = resolveFieldDestinationAttention({ inspection });
+  if (!attention) {
+    fieldDestinationAttention.hidden = true;
+    fieldDestinationAttention.replaceChildren();
+    return;
+  }
+  const decorations: HTMLElement[] = [];
+  if (attention.kind === "fieldPlacement") {
+    const bounds = currentLayout.cardZones.field;
+    const perimeter = document.createElement("div");
+    perimeter.className = "legal-destination-attention legal-destination-attention--field";
+    perimeter.dataset.legalDestinationAttention = "field-placement";
+    perimeter.style.left = `${bounds.x}px`;
+    perimeter.style.top = `${bounds.y}px`;
+    perimeter.style.width = `${bounds.width}px`;
+    perimeter.style.height = `${bounds.height}px`;
+    const badge = document.createElement("div");
+    badge.className = "legal-field-placement-copy";
+    badge.dataset.legalFieldPlacementCopy = "";
+    badge.textContent = "NO MATCH · PLACE HERE";
+    badge.style.left = `${bounds.x + Math.max(46, 58 * currentLayout.scale)}px`;
+    badge.style.top = `${bounds.y + Math.max(3, 4 * currentLayout.scale)}px`;
+    decorations.push(perimeter, badge);
+  } else {
+    for (const placement of findFaceUpLegalFieldPlacements({
+      layout: currentLayout,
+      projection,
+      legalTargetCardIds: attention.legalTargetCardIds,
+    })) {
+      const perimeter = document.createElement("div");
+      perimeter.className = "legal-destination-attention legal-destination-attention--target";
+      perimeter.dataset.legalDestinationAttention = placement.cardId;
+      perimeter.style.left = `${placement.bounds.x}px`;
+      perimeter.style.top = `${placement.bounds.y}px`;
+      perimeter.style.width = `${placement.bounds.width}px`;
+      perimeter.style.height = `${placement.bounds.height}px`;
+      decorations.push(perimeter);
+    }
+  }
+  fieldDestinationAttention.replaceChildren(...decorations);
+  fieldDestinationAttention.hidden = decorations.length === 0;
+}
+
 function renderSemanticCardBridge(): void {
   if (!interactionController || !currentLayout) return;
   const inspection = interactionController.inspect();
   renderHandPlayAttention(inspection);
   renderRevealPlayAttention(inspection);
+  renderFieldDestinationAttention(inspection);
   const controls = buildSemanticCardControls({
     inspection,
     layout: currentLayout,
@@ -845,12 +902,7 @@ function renderSemanticCardBridge(): void {
   semanticControlCount = controls.length + (showFieldPlacement ? 1 : 0);
   if (showFieldPlacement && inspection.selectedCardId) {
     const bounds = currentLayout.cardZones.field;
-    const card = getCardDefinition(inspection.selectedCardId);
-    const month = getMonthDefinition(card.month);
-    fieldPlacementControl.setAttribute(
-      "aria-label",
-      `Place ${month.name} ${card.displayName} on the field. Position is automatic.`,
-    );
+    fieldPlacementControl.setAttribute("aria-label", "No match. Place card on the field.");
     fieldPlacementControl.style.left = `${bounds.x}px`;
     fieldPlacementControl.style.top = `${bounds.y}px`;
     fieldPlacementControl.style.width = `${bounds.width}px`;

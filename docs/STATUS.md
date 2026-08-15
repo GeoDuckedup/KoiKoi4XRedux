@@ -6,8 +6,9 @@
 live-verified, and accepted; Phase 3F-F interaction clarity/card inspection is deployed,
 live-verified, and accepted; Phase 3F-G card inspector yaku reference/native gesture polish is
 deployed, live-verified, and accepted; Phase 3F-H active-hand start cue is deployed, live-verified,
-and accepted; Phase 3F-I Reveal start cue is deployed, live-verified, and accepted; Phase 5A full
-local match formats is current
+and accepted; Phase 3F-I Reveal start cue is deployed, live-verified, and accepted; Phase 3F-J legal
+destination pulse is locally complete and accepted, pending deployment; Phase 5A full local match
+formats follows
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -191,6 +192,26 @@ ready in 4/4 snapshots: one canvas, 48 unique CardViews, idle `awaitingHandPlay`
 no clipped/invalid/overlap diagnostics, and an inspected screenshot. Phase 3F-I is deployed,
 live-verified, and accepted. iOS/WebKit perceived-pulse inspection remains supplemental.
 Phase 5A retains ordered exact achieved-yaku cards and formation chronology.
+
+Phase 3F-J is locally complete and accepted as a presentation-only continuation of the established
+interaction language. Once the player selects a Hand or settled Reveal source, every already-authoritative
+matching Field target will pulse yellow-gold as the next required tap. A no-match source instead
+gives the actual Field a pulsing yellow-gold perimeter and the compact copy `NO MATCH · PLACE HERE`.
+The selected source stays solid gold; idle Hand/Reveal start cues stay white; no target appears,
+moves, scales, or becomes semantic before source selection. Exact-two and sweep retain all legal
+choices. Engine, scoring, action authority, projection, replay, semantic-control counts, and
+persistent CardView identity remain out of scope. `npm run check` passed 52 ordinary test files /
+477 tests, all 10,002 generated seeds, deck validation, and the 777-module build. `npm run
+validate:phase3fj` passed the 48/48 release deck, 100 technical artifacts, 11 focused files / 112
+tests, Workshop, the Phase 3D-D 14 root/Pages density viewports, and full Root/Pages smoke through
+Bank/restart. Target, no-match, Draw, Warm Ivory, reduced-landscape, and Pages screenshots were
+inspected. The first smoke harness selection incorrectly treated Field `april-cuckoo` as a Hand
+source; it now selects opening Hand `april-red-scroll` and proves its authoritative `april-cuckoo`
+target. The browser assertion also now correctly checks the exact visual ring within its intended
+partitioned semantic target territory; focused tests retain the exact CardPlacement-bound guarantee.
+The full rerun passed. Terra independent review found no blocker, high, or medium finding. The final
+bundled client completed three ready iterations with one canvas, 48 unique CardViews, and no
+diagnostics. Commit/push, hosted CI/Pages, deployment, and live verification remain pending.
 
 Release commit `51a1821` passed CI run `31742306302` and Pages run `31742306314`; the Pages deploy
 job completed successfully. A cache-busted live browser check reached ready state with the approved

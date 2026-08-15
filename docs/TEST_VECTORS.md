@@ -672,7 +672,28 @@ protocol, rules, legal actions, scoring, replay, public projection, result evide
 controls, or CardView identity changes. Phase 5A alone records exact achieved-yaku card evidence in
 formation order.
 
-## 29. Approved-decision coverage matrix
+## 29. Phase 3F-J legal-destination-pulse vectors
+
+| ID | Required expectation |
+|---|---|
+| `VISUAL-3FJ-001-SELECTED-SOURCE-DESTINATION` | At an authoritative local selected Hand or settled Reveal source, the source retains solid yellow-gold selected semantics while every existing public legal Field target receives a pulsing yellow-gold outer edge. No source, field card, or Field zone moves, scales, fills, or gains a new action. |
+| `VISUAL-3FJ-002-NO-MATCH-PLACE-HERE` | A selected no-match Hand or settled Reveal source exposes exactly one pulsing yellow-gold actual-Field perimeter and the compact visible badge `NO MATCH · PLACE HERE`. It restores no empty slot, numbering, confirmation control, strategic coordinate, or routine copy. The existing accessible field-placement action is exactly named `No match. Place card on the field.` and does not suggest a player-chosen coordinate or browser-derived rule. |
+| `VISUAL-3FJ-003-CARDINALITY-LIFECYCLE` | Idle Hand and settled idle Reveal states expose zero gold legal-destination decorations. Unique pair exposes one target edge; exact-two exposes exactly two; a three-target sweep exposes exactly three; no-match exposes one Field perimeter and no target edge. Selecting a source starts the decorations synchronously; cancel/Escape restores the applicable white start cue and removes all gold destination decorations; intent/animation, utilities, decisions, handoff, opponent turn, and results expose none. |
+| `VISUAL-3FJ-004-DRAW-PARITY` | A real physical Draw trace keeps Reveal white and Field undecorated until Reveal is tapped. After selection, the same target/no-match gold pulse semantics and selected-source `aria-pressed` state apply. Options opening/closing preserves a selected source, target/no-match state, authority values, and persistent CardView tokens while decorations are appropriately suppressed/restored by the existing modal lifecycle. |
+| `VISUAL-3FJ-005-MOTION-THEME-RESPONSIVE` | Normal motion uses a 1.2-second edge-only yellow-gold pulse; `prefers-reduced-motion: reduce` uses a steady visible gold edge. Ink & Parchment, Moonlit Indigo, and Warm Ivory preserve the theme accent/gold and containment at 390×844 and 844×390 without CSS transforms. |
+| `VISUAL-3FJ-006-SEMANTIC-PRIVACY-AUTHORITY` | Every destination decoration and no-match badge is `aria-hidden` and pointer-inert, has no card/actionable/semantic-control attributes, and exposes no hidden card, deck order, RNG, command ID, current/achieved yaku, or result data. Decoration lifecycle changes neither state version, command count, legal actions, public observation, one-canvas status, semantic-control count, nor 48 persistent CardViews. |
+| `VISUAL-3FJ-007-ROOT-PAGES` | Chromium Root and repository-prefixed Pages smoke retain seven baseline viewports, zero browser/network errors, and existing Hand/Draw selection/Bank/restart behavior. They include one real no-match or target browser flow plus direct DOM/CSS proof for lifecycle, exact bounds, selection, motion, themes, responsive containment, semantic inertness, and authority neutrality; focused real-state tests own exhaustive 0/1/2/3 family cardinality if a deterministic browser trace cannot reach every family. |
+
+Phase 3F-J binding: `phase3fj-legal-destination-pulse.test.ts`, retained Phase 3F-I input/board/
+animation/local-runtime tests, Workshop, density review, and root/Pages production smoke prove the
+authoritative legal-destination lifecycle, cardinality, no-match language, motion, responsive themes,
+privacy, and authority neutrality. The flattened gate is `npm run validate:phase3fj`; Root and Pages
+artifacts belong under `output/phase-3f-j/e2e/`. Full release-gate, review, deployment, and live
+evidence are pending. This remains presentation-only: no engine, protocol, rules, legal actions,
+scoring, replay, public projection, result evidence, semantic-card controls, or CardView identity
+changes. Phase 5A alone records exact achieved-yaku card evidence in formation order.
+
+## 30. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

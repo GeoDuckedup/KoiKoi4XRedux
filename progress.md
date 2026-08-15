@@ -2,6 +2,26 @@ Original prompt: read the package and understand it, then let me know when we ar
 
 # KoiKoi4x Progress
 
+## 2026-08-15 — Phase 3F-J legal destination pulse locally complete and accepted
+
+- Approved presentation-only refinement: after a Hand or settled Reveal source is selected, existing
+  legal matching Field targets should pulse yellow-gold; a no-match source should instead pulse the
+  actual Field perimeter and show `NO MATCH · PLACE HERE`. The selected source stays solid gold and
+  white remains reserved for the idle Hand/Reveal start cue.
+- `npm run check` passed 52 ordinary test files / 477 tests, all 10,002 generated seeds, deck
+  validation, and the 777-module build. `npm run validate:phase3fj` passed the 48/48 release deck,
+  100 technical artifacts, 11 focused files / 112 tests, Workshop, 14 root/Pages density viewports,
+  and full Root/Pages smoke through Bank/restart. Target, no-match, Draw, Warm Ivory,
+  reduced-landscape, and Pages screenshots were inspected; Terra independent review found no
+  blocker, high, or medium issue.
+- The smoke harness first selected Field `april-cuckoo` as though it were a Hand card. It now selects
+  real opening Hand `april-red-scroll` and proves the resulting legal `april-cuckoo` Field target.
+  A follow-up repair keeps the visual ring on exact CardPlacement bounds while checking browser
+  containment inside the intentionally partitioned semantic touch territory. The full rerun was
+  green. The bundled client completed three ready iterations with one canvas, 48 unique CardViews,
+  and no diagnostics. Commit/push, hosted CI/Pages, deployment, and live verification remain pending;
+  Phase 5A is next.
+
 ## 2026-08-15 — Phase 3F-I deployed, live-verified, and accepted
 
 - Completed a narrow presentation-only addition: after the physical Draw card has completed travel,

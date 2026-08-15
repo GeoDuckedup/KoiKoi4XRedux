@@ -3710,6 +3710,19 @@ Phase 3 acceptance:
   engine, protocol, rules, scoring, replay, projection, result, semantic-control, or CardView-
   identity change.
 
+### Phase 3F-J — Legal destination pulse
+
+- After the player selects a Hand or settled Reveal source, pulse the yellow-gold edge of every
+  authoritative legal Field target. The selected source remains solid gold; it does not pulse.
+- When no Field card matches, pulse the actual Field perimeter yellow-gold and show only the compact
+  `NO MATCH · PLACE HERE` badge. Do not restore empty slots, numbered placeholders, routine copy,
+  or a strategic placement coordinate.
+- Do not show a gold Field destination before source selection, choose a target from exact-two/sweep
+  choices, move/scale/fill cards, or create a semantic control. Under reduced motion retain the
+  same target/destination emphasis as a steady gold edge.
+- This is presentation-only and preserves the canonical legal-action, Draw, animation, scoring,
+  engine, protocol, replay, projection, and persistent CardView boundaries.
+
 ## Phase 4 — Onboarding
 
 Phase 4 retains its numeric identity but is intentionally executed after full-match progression,

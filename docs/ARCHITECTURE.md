@@ -196,6 +196,13 @@ input intent, legal action, semantic DOM control, CardView, or authoritative tra
 absent until the Draw reveal pause completes. Pixi continues to own gold selected-source and legal-
 target feedback. See [`ADR 0028`](./adr/0028-phase-3f-i-reveal-start-cue.md).
 
+Phase 3F-J extends the presentation boundary only after an authoritative source selection: recipient-
+safe input inspection supplies the existing legal Field target IDs or no-match placement state, which
+may drive `aria-hidden`, pointer-inert gold destination perimeters and compact no-match copy. These
+decorations neither infer matches nor create controls, intents, legal actions, CardViews, or state
+transitions. The semantic overlay remains the sole activation surface. See
+[`ADR 0029`](./adr/0029-phase-3f-j-legal-destination-pulse.md).
+
 Phase 2E keeps deck authoring outside the production client. Portable package, transform,
 contact-sheet, and approval contracts live in `packages/deck-format/src`; Sharp, filesystem access,
 atomic writes, source decoding, and deterministic raster generation live only under

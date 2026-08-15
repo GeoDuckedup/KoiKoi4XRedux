@@ -34,6 +34,7 @@
 | Phase 3F-G card inspector yaku reference/native gesture polish | `docs/adr/0026-phase-3f-g-card-inspector-yaku-reference.md` |
 | Phase 3F-H active-hand start cue | `docs/adr/0027-phase-3f-h-active-hand-start-cue.md` |
 | Phase 3F-I Reveal start cue | `docs/adr/0028-phase-3f-i-reveal-start-cue.md` |
+| Phase 3F-J legal destination pulse | `docs/adr/0029-phase-3f-j-legal-destination-pulse.md` |
 | Architectural decisions | `docs/adr/` |
 | Agent operating instructions | `AGENTS.md` |
 

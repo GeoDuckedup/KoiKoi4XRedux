@@ -8,7 +8,7 @@ const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = process.env.SMOKE_DIST_DIR
   ? resolve(process.env.SMOKE_DIST_DIR)
   : resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-3f-i/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-3f-j/e2e");
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
 const mountedBasePath = smokeBasePath === "/" ? "/" : `${smokeBasePath}/`;
@@ -780,6 +780,134 @@ async function assertRevealPlayAttentionHidden(page, label) {
   assert(!(await cue.isVisible()), `${label} incorrectly retained the Reveal attention perimeter.`);
 }
 
+async function assertNoLegalDestinationAttention(page, label) {
+  const container = page.locator("[data-field-destination-attention]");
+  assert(
+    !(await container.isVisible()) &&
+      (await page.locator("[data-legal-destination-attention]").count()) === 0 &&
+      (await page.locator("[data-legal-field-placement-copy]").count()) === 0,
+    `${label} exposed a legal-destination decoration before destination selection.`,
+  );
+}
+
+async function assertLegalDestinationAttention(
+  page,
+  { label, kind, reducedMotion = false, screenshot = false },
+) {
+  const state = await readState(page);
+  assert(
+    state.input.selectedCardId !== null &&
+      (state.input.status === "confirming" || state.input.status === "targeting"),
+    `${label} is not at a selected source awaiting a destination.`,
+  );
+  const container = page.locator("[data-field-destination-attention]");
+  const rings = page.locator("[data-legal-destination-attention]");
+  assert(await container.isVisible(), `${label} legal-destination container is missing.`);
+  const expectedTargetIds = state.input.legalTargetCardIds;
+  const expectedCount = kind === "fieldPlacement" ? 1 : expectedTargetIds.length;
+  assert(
+    (await rings.count()) === expectedCount,
+    `${label} legal-destination cardinality is wrong: ${JSON.stringify({ expectedCount, expectedTargetIds })}.`,
+  );
+  assert(
+    (await page.locator("[data-legal-field-placement-copy]").count()) ===
+      (kind === "fieldPlacement" ? 1 : 0),
+    `${label} no-match badge cardinality is wrong.`,
+  );
+  const evidence = await rings.evaluateAll((elements) =>
+    elements.map((element) => {
+      const style = getComputedStyle(element);
+      const probe = document.createElement("div");
+      probe.style.borderTop = "2px solid var(--theme-accent)";
+      document.body.append(probe);
+      const accent = getComputedStyle(probe).borderTopColor;
+      probe.remove();
+      return {
+        animationDuration: style.animationDuration,
+        animationName: style.animationName,
+        ariaHidden: element.closest("[aria-hidden]")?.getAttribute("aria-hidden") ?? null,
+        borderTopColor: style.borderTopColor,
+        cardId: element.getAttribute("data-legal-destination-attention"),
+        pointerEvents: style.pointerEvents,
+        transform: style.transform,
+        accent,
+        height: element.style.height,
+        left: element.style.left,
+        top: element.style.top,
+        width: element.style.width,
+      };
+    }),
+  );
+  assert(
+    evidence.every(
+      (ring) =>
+        ring.ariaHidden === "true" &&
+        ring.pointerEvents === "none" &&
+        ring.borderTopColor === ring.accent &&
+        ring.transform === "none" &&
+        ring.left.endsWith("px") &&
+        ring.top.endsWith("px") &&
+        ring.width.endsWith("px") &&
+        ring.height.endsWith("px") &&
+        (reducedMotion
+          ? ring.animationName === "none"
+          : ring.animationName === "legal-destination-attention-pulse" &&
+            ring.animationDuration === "1.2s"),
+    ),
+    `${label} destination edge lacks the expected theme-gold, inert ${reducedMotion ? "steady" : "pulse"} treatment: ${JSON.stringify(evidence)}.`,
+  );
+  assert(
+    (await page
+      .locator(
+        "[data-legal-destination-attention][data-card-id], [data-legal-destination-attention][data-actionable], [data-field-destination-attention][data-actionable]",
+      )
+      .count()) === 0,
+    `${label} destination decoration became a semantic control.`,
+  );
+  if (kind === "fieldPlacement") {
+    assert(
+      evidence[0]?.cardId === "field-placement" &&
+        (await page.locator("[data-legal-field-placement-copy]").textContent())?.trim() ===
+          "NO MATCH · PLACE HERE",
+      `${label} did not render the exact no-match Field destination language.`,
+    );
+  } else {
+    assert(
+      JSON.stringify(evidence.map((ring) => ring.cardId)) === JSON.stringify(expectedTargetIds),
+      `${label} destination rings did not map exactly to authoritative legal target IDs.`,
+    );
+    for (const ring of evidence) {
+      const control = page.locator(`[data-input-role="target"][data-card-id="${ring.cardId}"]`);
+      assert(
+        (await control.count()) === 1,
+        `${label} target ${ring.cardId} lost its semantic control.`,
+      );
+      const [ringBox, controlBox] = await Promise.all([
+        page.locator(`[data-legal-destination-attention="${ring.cardId}"]`).boundingBox(),
+        control.boundingBox(),
+      ]);
+      assert(
+        ringBox !== null &&
+          controlBox !== null &&
+          ringBox.x >= controlBox.x - 1 &&
+          ringBox.y >= controlBox.y - 1 &&
+          ringBox.x + ringBox.width <= controlBox.x + controlBox.width + 1 &&
+          ringBox.y + ringBox.height <= controlBox.y + controlBox.height + 1,
+        `${label} target ${ring.cardId} edge escaped its legal semantic target territory.`,
+      );
+    }
+  }
+  if (screenshot) {
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `legal-destination-${label}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+  }
+}
+
 async function assertUtilityDock(page, viewport) {
   const utilities = page.locator(".bottom-utilities > button");
   assert(
@@ -1315,6 +1443,7 @@ async function runPhysicalDrawTrace(page) {
   );
   const settled = await readState(page);
   await assertHandPlayAttentionHidden(page, "settled Draw Reveal");
+  await assertNoLegalDestinationAttention(page, "settled unselected Draw Reveal");
   const settledBeforeOptions = await assertRevealPlayAttention(page, {
     label: "settled-390x844",
     screenshot: true,
@@ -1390,6 +1519,12 @@ async function runPhysicalDrawTrace(page) {
       (await page.locator("[data-input-field-placement]").isVisible()),
     "Selecting Reveal did not expose existing gold legal target or no-match destination semantics.",
   );
+  const selectedTargetCount = await page.locator('[data-input-role="target"]').count();
+  await assertLegalDestinationAttention(page, {
+    label: "draw-reveal-selected-390x844",
+    kind: selectedTargetCount > 0 ? "targets" : "fieldPlacement",
+    screenshot: true,
+  });
   await page.screenshot({
     path: resolve(
       outputDirectory,
@@ -1401,9 +1536,9 @@ async function runPhysicalDrawTrace(page) {
   const selectedFieldPlacementVisible = await page
     .locator("[data-input-field-placement]")
     .isVisible();
-  const selectedTargetCount = await page.locator('[data-input-role="target"]').count();
   await openOptions(page);
   await assertRevealPlayAttentionHidden(page, "selected Reveal Options dialog");
+  await assertNoLegalDestinationAttention(page, "selected Reveal Options dialog");
   const selectedDuringOptions = await readState(page);
   assert(
     selectedDuringOptions.input.status === selectedBeforeOptions.input.status &&
@@ -1428,6 +1563,10 @@ async function runPhysicalDrawTrace(page) {
   );
   await closeOptions(page);
   await assertRevealPlayAttentionHidden(page, "selected Reveal Options restored");
+  await assertLegalDestinationAttention(page, {
+    label: "draw-reveal-selected-options-restored-390x844",
+    kind: selectedTargetCount > 0 ? "targets" : "fieldPlacement",
+  });
   const selectedAfterOptions = await readState(page);
   assert(
     selectedAfterOptions.input.status === selectedBeforeOptions.input.status &&
@@ -1454,6 +1593,7 @@ async function runPhysicalDrawTrace(page) {
     { timeout: 30_000 },
   );
   await assertRevealPlayAttention(page, { label: "settled-cancel-restored-390x844" });
+  await assertNoLegalDestinationAttention(page, "settled cancelled Draw Reveal");
 }
 
 async function playHandCardById(page, cardId) {
@@ -1763,6 +1903,7 @@ try {
     label: "390x844",
     screenshot: true,
   });
+  await assertNoLegalDestinationAttention(page, "idle Hand");
   const handCueSemanticCount = await actionableSemanticControlCount(page);
   await openOptions(page);
   await assertHandPlayAttentionHidden(page, "Options dialog");
@@ -1777,11 +1918,11 @@ try {
     "Opening or closing Options changed Hand attention authority or semantic controls.",
   );
   const handSource = page.locator(
-    '[data-input-role="selectable"][data-card-id="november-red-scroll"]',
+    '[data-input-role="selectable"][data-card-id="april-red-scroll"]',
   );
   await handSource.click();
   await page.waitForFunction(
-    () => JSON.parse(window.render_game_to_text()).input.selectedCardId === "november-red-scroll",
+    () => JSON.parse(window.render_game_to_text()).input.selectedCardId === "april-red-scroll",
   );
   await assertHandPlayAttentionHidden(page, "selected Hand source");
   const selectedHandCueState = await readState(page);
@@ -1790,9 +1931,43 @@ try {
       selectedHandCueState.localRound.commandCount ===
         handCueBeforeOptions.localRound.commandCount &&
       selectedHandCueState.cards.cardViewCount === handCueBeforeOptions.cards.cardViewCount &&
-      (await actionableSemanticControlCount(page)) === handCueSemanticCount,
-    "Selecting a Hand source changed authority or semantic control count before the existing move resolves.",
+      (await handSource.getAttribute("aria-pressed")) === "true",
+    "Selecting a Hand source changed authority, persistent CardViews, or selected-source semantics before the existing move resolves.",
   );
+  await assertLegalDestinationAttention(page, {
+    label: "hand-target-selected-390x844",
+    kind: selectedHandCueState.input.fieldPlacementAvailable ? "fieldPlacement" : "targets",
+    screenshot: true,
+  });
+  for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
+    await selectTheme(page, themeId);
+    await assertLegalDestinationAttention(page, {
+      label: `hand-target-${themeId}-390x844`,
+      kind: "targets",
+      screenshot: true,
+    });
+  }
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await assertLegalDestinationAttention(page, {
+    label: "hand-target-reduced-motion-390x844",
+    kind: "targets",
+    reducedMotion: true,
+    screenshot: true,
+  });
+  await page.setViewportSize({ width: 844, height: 390 });
+  await assertLegalDestinationAttention(page, {
+    label: "hand-target-reduced-motion-844x390",
+    kind: "targets",
+    reducedMotion: true,
+    screenshot: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await selectTheme(page, "ink-parchment");
+  await assertLegalDestinationAttention(page, {
+    label: "hand-target-motion-restored-390x844",
+    kind: "targets",
+  });
   await page.screenshot({
     path: resolve(
       outputDirectory,
@@ -1806,6 +1981,7 @@ try {
     return state.input.status === "idle" && state.input.selectedCardId === null;
   });
   const handCueAfterCancel = await assertHandPlayAttention(page, { label: "390x844-cancelled" });
+  await assertNoLegalDestinationAttention(page, "cancelled Hand source");
   assert(
     handCueAfterCancel.localRound.stateVersion === handCueBeforeOptions.localRound.stateVersion &&
       handCueAfterCancel.localRound.commandCount === handCueBeforeOptions.localRound.commandCount &&
@@ -2065,13 +2241,16 @@ try {
       placementSelected.input.legalTargetCardIds.length === 0,
     "No-match source selection mutated state or invented a capture target.",
   );
+  await assertLegalDestinationAttention(page, {
+    label: "hand-no-match-selected-390x844",
+    kind: "fieldPlacement",
+    screenshot: true,
+  });
   const placementControl = page.locator("[data-input-field-placement]");
   assert(await placementControl.isVisible(), "The no-match field destination is missing.");
   assert(
-    (await placementControl.getAttribute("aria-label"))
-      ?.toLowerCase()
-      .includes("position is automatic"),
-    "The field destination does not explain that field position is automatic.",
+    (await placementControl.getAttribute("aria-label")) === "No match. Place card on the field.",
+    "The field destination does not retain its exact no-match accessible wording.",
   );
   await assertPointerQuietInteractionControl(
     page,

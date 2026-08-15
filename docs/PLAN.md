@@ -6,7 +6,8 @@
 interaction clarity/card inspection is deployed and accepted; Phase 3F-G card inspector yaku
 reference/native gesture polish is deployed, live-verified, and accepted; Phase 3F-H active-hand
 start cue is deployed, live-verified, and accepted; Phase 3F-I Reveal start cue is deployed,
-live-verified, and accepted; Phase 5A full local match formats is current
+live-verified, and accepted; Phase 3F-J legal destination pulse is locally complete and accepted,
+pending deployment; Phase 5A full local match formats follows
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -1072,6 +1073,43 @@ a longer cache-busted run reached ready in 4/4 snapshots with one canvas, 48 uni
 `awaitingHandPlay`, 8/8/24/8 allocation, no clipped/invalid/overlap diagnostics, and an inspected
 screenshot. Phase 3F-I is deployed, live-verified, and accepted; iOS/WebKit perceived pulse remains
 supplemental.
+
+### Phase 3F-J — Legal destination pulse
+
+Status: **locally complete and accepted; deployment pending**.
+
+After the local player selects a Hand or settled Reveal source, the already-authoritative next tap
+must become visually active: every legal matching Field card gets a restrained pulsing yellow-gold
+edge, or the actual Field receives one pulsing yellow-gold perimeter plus the compact badge
+`NO MATCH · PLACE HERE`. The selected source remains solid gold and does not pulse. Before a source
+is selected, no Field target or no-match perimeter appears; white remains exclusive to the required
+Hand/Reveal start cue. Exact-two and sweep preserve one pulse per legal target without choosing one
+for the player. No card moves, scales, fills, or gains a browser-owned legal action.
+
+Gate:
+
+- `VISUAL-3FJ-001` through `VISUAL-3FJ-007` bind source/target lifecycle, no-match wording,
+  cardinality, motion/theme/viewport behavior, semantic inertness, and Root/Pages smoke;
+- `npm run validate:phase3fj` is the flattened successor gate. It retains the Phase 3F-I release
+  deck, technical-deck, interaction/runtime, Workshop, density-review, and Root/Pages smoke checks
+  while adding `phase3fj-legal-destination-pulse.test.ts`; CI/Pages artifacts are written under
+  `output/phase-3f-j/e2e/`;
+- this is presentation-only: it changes no engine, protocol, rules, legal-action, scoring, replay,
+  projection, result, semantic-control, or persistent-CardView behavior.
+
+Local closure: `npm run check` passed 52 ordinary test files / 477 tests, all 10,002 generated
+seeds, deck validation, and the 777-module build. `npm run validate:phase3fj` passed the 48/48
+release deck, 100 technical artifacts, 11 focused files / 112 tests, Workshop, the Phase 3D-D 14
+root/Pages density viewports, and full Root/Pages smoke through Bank/restart. Inspected artifacts
+under `output/phase-3f-j/e2e/` cover target, no-match, Draw, Warm Ivory, reduced landscape, and
+Pages. The first smoke attempt used Field `april-cuckoo` as a Hand source; production opening state
+instead exposes Hand `april-red-scroll`, whose authoritative Field target is `april-cuckoo`. A second
+repair changed the browser check from false direct equality with the semantic hit area (which is
+intentionally partitioned for touch) to legal-territory containment; focused coverage retains exact
+CardPlacement-ring geometry. The full rerun was green. Terra independent review found no blocker,
+high, or medium finding. The final bundled game client completed three ready iterations with one
+canvas, 48 unique CardViews, and no diagnostics. Commit/push, hosted CI/Pages, and live verification
+remain pending.
 
 ## Later phases
 
