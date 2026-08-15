@@ -5,8 +5,8 @@
 **Overall state:** Greenfield rewrite through Phase 3F-E utility dock/capture cleanup is deployed,
 live-verified, and accepted; Phase 3F-F interaction clarity/card inspection is deployed,
 live-verified, and accepted; Phase 3F-G card inspector yaku reference/native gesture polish is
-deployed, live-verified, and accepted; Phase 3F-H active-hand start cue is locally complete and
-accepted, with release pending; Phase 5A full local match formats remains next
+deployed, live-verified, and accepted; Phase 3F-H active-hand start cue is deployed, live-verified,
+and accepted; Phase 5A full local match formats is current
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -150,8 +150,14 @@ Root/Pages 390×844, selected, 844×390, three-theme, and reduced-motion screens
 iterations with one canvas, 48 unique CardViews, and no layout diagnostics. Browser evidence initially
 caught an Options selection-reset regression; replacing the whole-surface refresh with a
 decorative-only cue renderer preserved selection and the rerun was green. Independent Terra re-review
-found no blocker, high, or medium issue. Commit/push, hosted CI, Pages deployment, and live verification
-remain pending; Phase 5A remains the next substantive product phase.
+found no blocker, high, or medium issue. Commit `55a4032` passed hosted CI run `31873371558`
+(`verify`, 08:00:07–08:13:59Z; both `check` and `validate:phase3fh` passed) and Pages run
+`31873371515` (`build`, 08:00:08–08:12:34Z; `deploy`, 08:12:39–08:12:49Z). A cache-busted live
+request returned HTTP/2 200 MISS with `Last-Modified: 2026-08-15 08:12:44 GMT`. The live bundled
+client completed two ready iterations with the visible whole-Hand white perimeter, one canvas, 48
+stable CardViews, and no layout diagnostics. Phase 3F-H is deployed, live-verified, and accepted. A
+physical iPhone/WebKit check of perceived pulse motion and white-outline contrast remains
+supplemental; Phase 5A is the current substantive product phase.
 
 Release commit `51a1821` passed CI run `31742306302` and Pages run `31742306314`; the Pages deploy
 job completed successfully. A cache-busted live browser check reached ready state with the approved

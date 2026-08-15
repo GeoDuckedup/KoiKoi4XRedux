@@ -2,7 +2,7 @@ Original prompt: read the package and understand it, then let me know when we ar
 
 # KoiKoi4x Progress
 
-## 2026-08-15 — Phase 3F-H locally complete and accepted
+## 2026-08-15 — Phase 3F-H deployed, live-verified, and accepted
 
 - Began the narrow presentation-only pass for a restrained white Player Hand start cue at the local
   player's idle Hand step. The cue will clear as soon as a source is selected, remain absent during
@@ -18,8 +18,15 @@ Original prompt: read the package and understand it, then let me know when we ar
   re-review found no blocker, high, or medium issue.
 - Browser acceptance initially caught an Options selection-reset regression caused by refreshing the
   whole interaction surface. A decorative-only cue renderer repaired it, preserving the selected
-  source, and the rerun was green. Commit/push, hosted CI, Pages deployment, and live verification
-  remain pending; Phase 5A is next.
+  source, and the rerun was green.
+- Commit `55a4032` passed hosted CI run `31873371558` (`verify`, 08:00:07–08:13:59Z; both `check`
+  and `validate:phase3fh` passed) and Pages run `31873371515` (`build`, 08:00:08–08:12:34Z;
+  `deploy`, 08:12:39–08:12:49Z). A cache-busted live request returned HTTP/2 200 MISS with
+  `Last-Modified: 2026-08-15 08:12:44 GMT`.
+- The live bundled client completed two ready iterations with the visible whole-Hand white perimeter,
+  one canvas, 48 stable CardViews, and no layout diagnostics. Phase 3F-H is deployed, live-verified,
+  and accepted. A physical iPhone/WebKit check of perceived pulse motion and white-outline contrast
+  remains supplemental; Phase 5A is current.
 - No Phase 5A progression, result-detail, ordered yaku-evidence, engine, protocol, rules, scoring,
   replay, projection, semantic-control, or CardView-identity authority is in scope.
 

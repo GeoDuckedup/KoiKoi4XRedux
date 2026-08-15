@@ -5,7 +5,7 @@
 **Current gate:** Phase 3F-E utility dock/capture cleanup is deployed and accepted; Phase 3F-F
 interaction clarity/card inspection is deployed and accepted; Phase 3F-G card inspector yaku
 reference/native gesture polish is deployed, live-verified, and accepted; Phase 3F-H active-hand
-start cue is locally complete and accepted; Phase 5A full local match formats remains next
+start cue is deployed, live-verified, and accepted; Phase 5A full local match formats is current
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -986,7 +986,7 @@ Architecture is recorded in [`ADR 0026`](./adr/0026-phase-3f-g-card-inspector-ya
 
 ### Phase 3F-H — Active-hand start cue
 
-Status: **locally complete and accepted; release pending**.
+Status: **deployed, live-verified, and accepted**.
 
 This narrow presentation-only follow-up makes the beginning of a local Hand turn visually obvious:
 an `aria-hidden`, pointer-inert decorative DOM perimeter follows the canonical actual Player Hand
@@ -1015,8 +1015,15 @@ Root/Pages 390×844, selected, 844×390, three-theme, and reduced-motion screens
 `output/phase-3f-h/e2e/` were inspected. Initial browser evidence caught an Options path that reset a
 selected source by refreshing the whole interaction surface; it was repaired with a decorative-only
 cue renderer, preserving the existing selection lifecycle, and the rerun was green. Independent Terra
-re-review found no blocker, high, or medium issue. Commit/push, hosted CI, Pages deployment, and live
-verification remain pending.
+re-review found no blocker, high, or medium issue.
+
+Deployment evidence: commit `55a4032` passed hosted CI run `31873371558` (`verify`,
+08:00:07–08:13:59Z; both `check` and `validate:phase3fh` passed) and Pages run `31873371515`
+(`build`, 08:00:08–08:12:34Z; `deploy`, 08:12:39–08:12:49Z). A cache-busted live request returned
+HTTP/2 200 MISS with `Last-Modified: 2026-08-15 08:12:44 GMT`. The live bundled client completed two
+ready iterations with the visible whole-Hand white perimeter, one canvas, 48 stable CardViews, and no
+layout diagnostics. A physical iPhone/WebKit check of perceived pulse motion and white-outline
+contrast remains supplemental.
 
 ## Later phases
 
@@ -1034,6 +1041,6 @@ No later phase may bypass the acceptance gate of the preceding phase.
 
 Phase 3F-E is deployed, live-verified, and accepted. Phase 3F-F interaction clarity/card inspection
 is deployed, live-verified, and accepted. Phase 3F-G is deployed, live-verified, and accepted.
-Phase 3F-H is locally complete and accepted, with release pending. None of these presentation slices
-reopen 3F-D animation authority or transfer Phase 5A's
+Phase 3F-H is deployed, live-verified, and accepted. None of these presentation slices reopen 3F-D
+animation authority or transfer Phase 5A's
 ordered completed-yaku evidence into routine play.

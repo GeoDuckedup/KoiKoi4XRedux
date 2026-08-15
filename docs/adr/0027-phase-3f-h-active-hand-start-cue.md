@@ -1,6 +1,6 @@
 # ADR 0027 — Phase 3F-H active-hand start cue
 
-**Status:** Locally complete and accepted; release pending
+**Status:** Deployed, live-verified, and accepted
 
 ## Context
 
@@ -54,8 +54,13 @@ bundled web-game client completed three ready 1280×720 iterations with one canv
 and no layout diagnostics; Root/Pages 390×844, selected, 844×390, three-theme, and reduced-motion
 screenshots were inspected. Browser acceptance caught an Options selection-reset regression from a
 whole-surface refresh; a decorative-only cue renderer repaired it and the rerun was green. Independent
-Terra re-review found no blocker, high, or medium issue. Commit/push, hosted CI, Pages deployment, and
-live verification are pending.
+Terra re-review found no blocker, high, or medium issue. Commit `55a4032` passed hosted CI run
+`31873371558` (`verify`, 08:00:07–08:13:59Z; both `check` and `validate:phase3fh` passed) and Pages
+run `31873371515` (`build`, 08:00:08–08:12:34Z; `deploy`, 08:12:39–08:12:49Z). A cache-busted live
+request returned HTTP/2 200 MISS with `Last-Modified: 2026-08-15 08:12:44 GMT`. The live bundled
+client completed two ready iterations with the visible whole-Hand white perimeter, one canvas, 48
+stable CardViews, and no layout diagnostics. A physical iPhone/WebKit check of perceived pulse motion
+and white-outline contrast remains supplemental.
 
 ## Next subphase
 

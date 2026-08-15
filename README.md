@@ -7,8 +7,8 @@ larger hand**, the player-facing **Phase 3F-B: unified tap-only interaction** ou
 capture choreography** is deployed and accepted. **Phase 3F-E: utility dock and capture cleanup**
 is deployed, live-verified, and accepted. **Phase 3F-F: interaction clarity and card inspection** is
 deployed, live-verified, and accepted. **Phase 3F-G: card inspector yaku reference/native gesture
-polish** is deployed, live-verified, and accepted. **Phase 3F-H: active-hand start cue** is in
-locally complete and accepted, with release pending. The repository contains the canonical rules
+polish** is deployed, live-verified, and accepted. **Phase 3F-H: active-hand start cue** is deployed,
+live-verified, and accepted. The repository contains the canonical rules
 authority, all
 48 artwork-independent card records, the complete
 deterministic headless match
@@ -268,9 +268,14 @@ focused files / 91 tests, Workshop, 14 root/Pages density viewports, and full ro
 Bank/restart. The independent Terra re-review found no blocker, high, or medium issue. Root/Pages
 390×844, selected, 844×390, three-theme, and reduced-motion screenshots under
 `output/phase-3f-h/e2e/` were inspected; the bundled web-game client completed three ready 1280×720
-iterations with one canvas, 48 unique CardViews, and no layout diagnostics. Commit/push, hosted CI,
-Pages deployment, and live verification remain pending. This does not begin Phase 5A result or
-match-progression work.
+iterations with one canvas, 48 unique CardViews, and no layout diagnostics. Commit `55a4032` passed
+hosted CI run `31873371558` (`verify`, 08:00:07–08:13:59Z; both `check` and
+`validate:phase3fh` passed) and Pages run `31873371515` (`build`, 08:00:08–08:12:34Z; `deploy`,
+08:12:39–08:12:49Z). A cache-busted live request returned HTTP/2 200 MISS with `Last-Modified:
+2026-08-15 08:12:44 GMT`. Two live bundled-client iterations were ready with the visible whole-Hand
+white perimeter, one canvas, 48 stable CardViews, and no layout diagnostics. A physical iPhone/WebKit
+check of perceived pulse motion and white-outline contrast remains supplemental. Phase 3F-H is
+deployed, live-verified, and accepted. This does not begin Phase 5A result or match-progression work.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot
