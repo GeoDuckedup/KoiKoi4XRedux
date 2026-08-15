@@ -633,7 +633,24 @@ Artifacts belong under `output/phase-3f-g/e2e/`. This is presentation/reference 
 change engine, protocol, rules, scoring, replay, public projection, result evidence, or CardView
 identity. Phase 5A alone records exact achieved-yaku card evidence in formation order.
 
-## 27. Approved-decision coverage matrix
+## 27. Phase 3F-H active-hand start-cue vectors
+
+| ID | Required expectation |
+|---|---|
+| `VISUAL-3FH-001-ACTIVE-HAND-START` | When the local player is idle in `awaitingHandPlay` with one or more legal local Hand cards and no selected source, the actual Player Hand zone has a restrained pulsing white start outline. It is visually distinct from yellow-gold selection/target cues and adds no card-specific pulse, copy, placeholder, confirmation control, or gameplay action. |
+| `VISUAL-3FH-002-CUE-LIFECYCLE` | Selecting any Hand source removes the start cue synchronously while the existing selected-source and legal-destination language remains intact. The cue remains absent through targeting, confirming, intent-pending, animation, Draw/Reveal, Yaku/critical decision, result, handoff, opponent turn, and any external input lock. Escape/cancel restores it only on return to the same idle local Hand state. |
+| `VISUAL-3FH-003-MOTION-THEME-RESPONSIVE` | The normal-motion cue pulses only as a Player Hand-zone affordance and remains legible but neutral across Ink & Parchment, Moonlit Indigo, and Warm Ivory at 390×844 and 844×390. With `prefers-reduced-motion: reduce`, it remains visible as a steady white outline with no repeating animation; containment and the current visual hierarchy remain intact. |
+| `VISUAL-3FH-004-INPUT-PRIVACY-AUTHORITY` | The `aria-hidden`, pointer-inert decorative DOM perimeter has no activation target and creates no semantic DOM control. Its creation, removal, or animation changes neither authoritative state/version/command count, legal actions, public observation, one canvas, nor the 48 persistent CardViews; it exposes no opponent-hand identity, Draw/deck identity or order, RNG, checkpoint, command ID, current/achieved yaku, or result evidence. |
+| `VISUAL-3FH-005-ROOT-PAGES` | Chromium root and repository-prefixed Pages smoke retains seven baseline viewports (320×568, 360×640, 390×844, 768×1024, 844×390, 1366×768, 1920×1080), zero browser/network errors, and the existing selection/Draw behavior. It adds targeted cue lifecycle, three-theme, and reduced-motion traces at 390×844 plus landscape containment at 844×390. |
+
+Phase 3F-H binding: `phase3fh-hand-start-cue.test.ts`, retained 3F-G input/board/animation/local
+runtime tests, Workshop, density review, and root/Pages production smoke prove cue eligibility,
+lifecycle, motion behavior, privacy/authority, and responsive theme containment. Artifacts belong
+under `output/phase-3f-h/e2e/`. This is presentation-only: no engine, protocol, rules, legal
+actions, scoring, replay, public projection, result evidence, semantic-card controls, or CardView
+identity changes. Phase 5A alone records exact achieved-yaku card evidence in formation order.
+
+## 28. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

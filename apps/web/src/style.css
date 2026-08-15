@@ -154,6 +154,28 @@ select:focus-visible {
   pointer-events: none;
 }
 
+.hand-play-attention {
+  position: absolute;
+  border: 2px solid #fff;
+  border-radius: clamp(9px, 3vw, 14px);
+  background: transparent;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 18%),
+    0 0 10px rgb(255 255 255 / 36%);
+  opacity: 0.56;
+  pointer-events: none;
+  animation: hand-play-attention-pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes hand-play-attention-pulse {
+  to {
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 18%),
+      0 0 18px rgb(255 255 255 / 68%);
+    opacity: 0.96;
+  }
+}
+
 /* Keep native long-press selection/callouts off the table controls only. Dialog prose remains selectable. */
 .game-host,
 .game-host canvas,
@@ -1111,6 +1133,11 @@ kbd {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+
+  .hand-play-attention {
+    opacity: 0.9;
+    animation: none !important;
   }
 }
 

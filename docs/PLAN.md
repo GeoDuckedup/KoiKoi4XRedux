@@ -4,8 +4,8 @@
 **Updated:** August 14, 2026
 **Current gate:** Phase 3F-E utility dock/capture cleanup is deployed and accepted; Phase 3F-F
 interaction clarity/card inspection is deployed and accepted; Phase 3F-G card inspector yaku
-reference/native gesture polish is deployed, live-verified, and accepted; Phase 5A full local match
-formats is next
+reference/native gesture polish is deployed, live-verified, and accepted; Phase 3F-H active-hand
+start cue is locally complete and accepted; Phase 5A full local match formats remains next
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -984,6 +984,40 @@ their exact example images and conditional copy.
 
 Architecture is recorded in [`ADR 0026`](./adr/0026-phase-3f-g-card-inspector-yaku-reference.md).
 
+### Phase 3F-H — Active-hand start cue
+
+Status: **locally complete and accepted; release pending**.
+
+This narrow presentation-only follow-up makes the beginning of a local Hand turn visually obvious:
+an `aria-hidden`, pointer-inert decorative DOM perimeter follows the canonical actual Player Hand
+zone while the player is idle and must choose a Hand card. It is neither a card selection nor a
+legal-target cue. Selecting a source removes it immediately; Pixi's existing gold
+selected-source/target language, no-match destination, and tap-only authority remain unchanged. It
+stays absent outside the idle local Hand step and becomes a steady white outline under reduced motion.
+
+Gate:
+
+- `VISUAL-3FH-001` through `VISUAL-3FH-005` bind eligibility, lifecycle, theme/reduced-motion
+  treatment, privacy/authority, and root/Pages evidence;
+- no engine, protocol, rules, legal-action, scoring, replay, projection, result, semantic-control,
+  or persistent-CardView semantics change; Phase 5A retains ordered completed-yaku result evidence;
+- `npm run validate:phase3fh` is the flattened successor gate. It retains the 3F-G relevant
+  release-deck, technical-deck, interaction/runtime, Workshop, density-review, and root/Pages smoke
+  checks while adding focused `phase3fh-hand-start-cue.test.ts` coverage. CI and Pages will use
+  `output/phase-3f-h/e2e/` evidence.
+
+Local evidence: `npm run check` passed 50 ordinary test files / 456 tests, all 10,002 generated
+seeds, deck validation, and the 775-module build. `npm run validate:phase3fh` passed the 48/48
+release deck, 100 technical artifacts, 9 focused files / 91 tests, Workshop, 14 root/Pages density
+viewports, and full root/Pages smoke through Bank/restart. The bundled web-game client completed
+three ready 1280×720 iterations with one canvas, 48 unique CardViews, and no layout diagnostics.
+Root/Pages 390×844, selected, 844×390, three-theme, and reduced-motion screenshots under
+`output/phase-3f-h/e2e/` were inspected. Initial browser evidence caught an Options path that reset a
+selected source by refreshing the whole interaction surface; it was repaired with a decorative-only
+cue renderer, preserving the existing selection lifecycle, and the rerun was green. Independent Terra
+re-review found no blocker, high, or medium issue. Commit/push, hosted CI, Pages deployment, and live
+verification remain pending.
+
 ## Later phases
 
 1. **Phase 5A — Full local match formats:** 3/6/12 rounds, full recap/rematch, and ordered
@@ -999,6 +1033,7 @@ Architecture is recorded in [`ADR 0026`](./adr/0026-phase-3f-g-card-inspector-ya
 No later phase may bypass the acceptance gate of the preceding phase.
 
 Phase 3F-E is deployed, live-verified, and accepted. Phase 3F-F interaction clarity/card inspection
-is deployed, live-verified, and accepted. Phase 3F-G is deployed, live-verified, and accepted. None
-of these presentation slices reopen 3F-D animation authority or transfer Phase 5A's
+is deployed, live-verified, and accepted. Phase 3F-G is deployed, live-verified, and accepted.
+Phase 3F-H is locally complete and accepted, with release pending. None of these presentation slices
+reopen 3F-D animation authority or transfer Phase 5A's
 ordered completed-yaku evidence into routine play.

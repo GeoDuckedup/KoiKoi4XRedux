@@ -22,13 +22,13 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run check
-      - run: npm run validate:phase3fg
+      - run: npm run validate:phase3fh
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-3f-g-card-inspector-yaku-reference-and-deck-workshop
+          name: phase-3f-h-active-hand-start-cue-and-deck-workshop
           path: |
-            output/phase-3f-g/e2e
+            output/phase-3f-h/e2e
             output/phase-3f-f/e2e
             output/phase-3f-e/e2e
             output/phase-3d-d/e2e

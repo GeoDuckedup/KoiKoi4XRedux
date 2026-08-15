@@ -32,6 +32,7 @@
 | Phase 3F-E utility dock/capture cleanup | `docs/adr/0024-phase-3f-e-utility-dock-and-capture-cleanup.md` |
 | Phase 3F-F interaction clarity/card inspection | `docs/adr/0025-phase-3f-f-interaction-clarity-and-card-inspection.md` |
 | Phase 3F-G card inspector yaku reference/native gesture polish | `docs/adr/0026-phase-3f-g-card-inspector-yaku-reference.md` |
+| Phase 3F-H active-hand start cue | `docs/adr/0027-phase-3f-h-active-hand-start-cue.md` |
 | Architectural decisions | `docs/adr/` |
 | Agent operating instructions | `AGENTS.md` |
 

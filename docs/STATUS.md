@@ -4,8 +4,9 @@
 
 **Overall state:** Greenfield rewrite through Phase 3F-E utility dock/capture cleanup is deployed,
 live-verified, and accepted; Phase 3F-F interaction clarity/card inspection is deployed,
-live-verified, and accepted; Phase 3F-G card inspector yaku reference/native gesture polish is in
-deployed, live-verified, and accepted; Phase 5A full local match formats is next
+live-verified, and accepted; Phase 3F-G card inspector yaku reference/native gesture polish is
+deployed, live-verified, and accepted; Phase 3F-H active-hand start cue is locally complete and
+accepted, with release pending; Phase 5A full local match formats remains next
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -133,6 +134,24 @@ diagnostics. Live Playwright semantic verification focused January Pine Plain B,
 the locked inspector with collapsed count 2, then expanded Current-Month Set and Plain Cards with
 their exact example images and conditional copy. Phase 3F-G is deployed, live-verified, and accepted.
 WebKit/iOS native touch-callout behavior remains a supplemental manual-device check.
+
+Phase 3F-H is a locally complete and accepted narrow presentation pass. It adds an `aria-hidden`,
+pointer-inert decorative DOM perimeter synchronized to the canonical Player Hand zone only while the local player is idle in
+`awaitingHandPlay` and needs to select a Hand card. The outline disappears as soon as the source is
+selected, remains absent during every other interaction/lock state, and becomes steady under reduced
+motion. Pixi continues to own yellow-gold selected-source or legal-destination feedback. The cue must
+not add instructions, placeholders, individual-card pulses, semantic controls, input intents, or any
+engine/protocol/rules/scoring/replay/projection/result authority. `npm run check` passed 50 ordinary
+test files / 456 tests, all 10,002 generated seeds, deck validation, and the 775-module build.
+`npm run validate:phase3fh` passed the 48/48 release deck, 100 technical artifacts, 9 focused files /
+91 tests, Workshop, 14 root/Pages density viewports, and full root/Pages smoke through Bank/restart.
+Root/Pages 390×844, selected, 844×390, three-theme, and reduced-motion screenshots under
+`output/phase-3f-h/e2e/` were inspected. The bundled web-game client completed three ready 1280×720
+iterations with one canvas, 48 unique CardViews, and no layout diagnostics. Browser evidence initially
+caught an Options selection-reset regression; replacing the whole-surface refresh with a
+decorative-only cue renderer preserved selection and the rerun was green. Independent Terra re-review
+found no blocker, high, or medium issue. Commit/push, hosted CI, Pages deployment, and live verification
+remain pending; Phase 5A remains the next substantive product phase.
 
 Release commit `51a1821` passed CI run `31742306302` and Pages run `31742306314`; the Pages deploy
 job completed successfully. A cache-busted live browser check reached ready state with the approved

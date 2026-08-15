@@ -3679,6 +3679,21 @@ Phase 3 acceptance:
 - Keep this as presentation/reference-only work: no tutorial, engine, protocol, rule, scoring,
   replay, projection, result, or CardView-identity change.
 
+### Phase 3F-H — Active-hand start cue
+
+- When the local player is idle and must choose a Hand card, give the actual Player Hand zone a
+  restrained, pulsing white start outline. It is an affordance for the next required interaction,
+  not a selected-card or legal-target indicator.
+- Remove the outline as soon as a Hand source is selected. It remains absent while resolving a
+  source, during animation, Draw/Reveal, decisions, results, handoff, opponent turns, and all input
+  locks; Escape/cancel restores it only when the same active idle Hand state returns.
+- Keep gold for selected sources and legal destinations. Do not pulse individual cards, restore
+  instruction copy, introduce placeholder slots, create a new action, or change the authoritative
+  Hand/Draw state machine.
+- Honor reduced motion with a steady visible white outline rather than a pulse. The cue remains
+  presentation-only: no tutorial, engine, protocol, rules, scoring, replay, projection, result,
+  semantic-control, or CardView-identity change.
+
 ## Phase 4 — Onboarding
 
 Phase 4 retains its numeric identity but is intentionally executed after full-match progression,

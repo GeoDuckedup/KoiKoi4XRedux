@@ -2,6 +2,27 @@ Original prompt: read the package and understand it, then let me know when we ar
 
 # KoiKoi4x Progress
 
+## 2026-08-15 — Phase 3F-H locally complete and accepted
+
+- Began the narrow presentation-only pass for a restrained white Player Hand start cue at the local
+  player's idle Hand step. The cue will clear as soon as a source is selected, remain absent during
+  non-Hand/locked states, and become steady under reduced motion; yellow-gold remains reserved for
+  selected sources and legal destinations.
+- `npm run check` passed 50 ordinary test files / 456 tests, all 10,002 generated seeds, deck
+  validation, and the 775-module build. `npm run validate:phase3fh` passed the 48/48 release deck,
+  100 technical artifacts, 9 focused files / 91 tests, Workshop, 14 root/Pages density viewports,
+  and full root/Pages smoke through Bank/restart.
+- The bundled web-game client completed three ready 1280×720 iterations with one canvas, 48 unique
+  CardViews, and no layout diagnostics. Root/Pages 390×844, selected, 844×390, three-theme, and
+  reduced-motion screenshots under `output/phase-3f-h/e2e/` were inspected. Independent Terra
+  re-review found no blocker, high, or medium issue.
+- Browser acceptance initially caught an Options selection-reset regression caused by refreshing the
+  whole interaction surface. A decorative-only cue renderer repaired it, preserving the selected
+  source, and the rerun was green. Commit/push, hosted CI, Pages deployment, and live verification
+  remain pending; Phase 5A is next.
+- No Phase 5A progression, result-detail, ordered yaku-evidence, engine, protocol, rules, scoring,
+  replay, projection, semantic-control, or CardView-identity authority is in scope.
+
 ## 2026-08-15 — Phase 3F-G deployed, live-verified, and accepted
 
 - Completed the optional card-inspector yaku reference and scoped native long-press

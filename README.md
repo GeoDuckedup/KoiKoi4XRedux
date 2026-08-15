@@ -7,7 +7,8 @@ larger hand**, the player-facing **Phase 3F-B: unified tap-only interaction** ou
 capture choreography** is deployed and accepted. **Phase 3F-E: utility dock and capture cleanup**
 is deployed, live-verified, and accepted. **Phase 3F-F: interaction clarity and card inspection** is
 deployed, live-verified, and accepted. **Phase 3F-G: card inspector yaku reference/native gesture
-polish** is deployed, live-verified, and accepted. The repository contains the canonical rules
+polish** is deployed, live-verified, and accepted. **Phase 3F-H: active-hand start cue** is in
+locally complete and accepted, with release pending. The repository contains the canonical rules
 authority, all
 48 artwork-independent card records, the complete
 deterministic headless match
@@ -255,6 +256,21 @@ verification focused January Pine Plain B, pressed `I`, opened the locked inspec
 count 2, then expanded Current-Month Set and Plain Cards with their exact example images and
 conditional copy. WebKit/iOS native touch-callout behavior remains a supplemental manual-device
 check.
+
+`npm run validate:phase3fh` is the locally accepted flattened successor gate for the active Player
+Hand start cue. It retains the 3F-G card-inspector and runtime checks while adding focused cue
+lifecycle coverage, Workshop, density review, and root/Pages smoke. The cue is a presentation-only
+pulsing white hand-zone affordance at the local player's idle Hand step; selection removes it, gold
+remains reserved for selection/targets, and reduced motion uses a steady outline. `npm run check`
+passed 50 ordinary test files / 456 tests, all 10,002 generated seeds, deck validation, and the
+775-module build. `validate:phase3fh` passed the 48/48 release deck, 100 technical artifacts, 9
+focused files / 91 tests, Workshop, 14 root/Pages density viewports, and full root/Pages smoke through
+Bank/restart. The independent Terra re-review found no blocker, high, or medium issue. Root/Pages
+390×844, selected, 844×390, three-theme, and reduced-motion screenshots under
+`output/phase-3f-h/e2e/` were inspected; the bundled web-game client completed three ready 1280×720
+iterations with one canvas, 48 unique CardViews, and no layout diagnostics. Commit/push, hosted CI,
+Pages deployment, and live verification remain pending. This does not begin Phase 5A result or
+match-progression work.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

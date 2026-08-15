@@ -62,6 +62,7 @@ import {
 } from "./presentation/deck/card-asset-manager";
 import { INSTALLED_DECKS, isInstalledDeckId } from "./presentation/deck/installed-decks";
 import { createDomCardBridge, type DomCardBridgeV1 } from "./presentation/input/dom-card-bridge";
+import { shouldShowHandPlayAttention } from "./presentation/input/hand-play-attention";
 import { buildSemanticCardControls } from "./presentation/input/hit-areas";
 import { createInteractionController } from "./presentation/input/input-controller";
 import type {
@@ -125,6 +126,7 @@ const themeOptions = Object.freeze([
 const fullscreenButton = queryRequired<HTMLButtonElement>("[data-fullscreen-button]");
 const deckSelect = queryRequired<HTMLSelectElement>("[data-deck-select]");
 const cardInputOverlay = queryRequired<HTMLElement>("[data-card-input-overlay]");
+const handPlayAttention = queryRequired<HTMLElement>("[data-hand-play-attention]");
 const fieldPlacementControl = queryRequired<HTMLButtonElement>("[data-input-field-placement]");
 const captureInspectControls = Object.freeze([
   ...document.querySelectorAll<HTMLButtonElement>("[data-capture-inspect]"),
@@ -703,6 +705,7 @@ function closeOptions(restoreFocus = true): void {
   if (!optionsDialog.open) return;
   optionsDialog.close();
   optionsTrigger.setAttribute("aria-expanded", "false");
+  renderHandPlayAttention();
   if (restoreFocus) optionsTrigger.focus();
 }
 
@@ -711,6 +714,7 @@ function openOptions(): void {
   optionsDialog.showModal();
   optionsTrigger.setAttribute("aria-expanded", "true");
   syncThemeControls();
+  renderHandPlayAttention();
   queueMicrotask(() => themeOptions.find(({ checked }) => checked)?.focus());
 }
 
@@ -764,9 +768,29 @@ function renderRecaps(): void {
   );
 }
 
+function renderHandPlayAttention(inspection = interactionController?.inspect()): void {
+  if (!currentLayout || !inspection) {
+    handPlayAttention.hidden = true;
+    return;
+  }
+  const showHandPlayAttention =
+    currentInputLock() === null &&
+    !optionsDialog.open &&
+    shouldShowHandPlayAttention({ inspection, observation });
+  handPlayAttention.hidden = !showHandPlayAttention;
+  if (showHandPlayAttention) {
+    const bounds = currentLayout.cardZones.playerHand;
+    handPlayAttention.style.left = `${bounds.x}px`;
+    handPlayAttention.style.top = `${bounds.y}px`;
+    handPlayAttention.style.width = `${bounds.width}px`;
+    handPlayAttention.style.height = `${bounds.height}px`;
+  }
+}
+
 function renderSemanticCardBridge(): void {
   if (!interactionController || !currentLayout) return;
   const inspection = interactionController.inspect();
+  renderHandPlayAttention(inspection);
   const controls = buildSemanticCardControls({
     inspection,
     layout: currentLayout,

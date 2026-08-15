@@ -8,7 +8,7 @@ const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = process.env.SMOKE_DIST_DIR
   ? resolve(process.env.SMOKE_DIST_DIR)
   : resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-3f-g/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-3f-h/e2e");
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
 const mountedBasePath = smokeBasePath === "/" ? "/" : `${smokeBasePath}/`;
@@ -567,6 +567,113 @@ async function assertCardInspection(
   await page.keyboard.press("Escape");
 }
 
+async function assertHandPlayAttention(page, { label, reducedMotion = false, screenshot = false }) {
+  const cue = page.locator("[data-hand-play-attention]");
+  await page.evaluate(
+    () =>
+      new Promise((resolvePromise) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolvePromise)),
+      ),
+  );
+  const before = await readState(page);
+  assert(
+    before.localRound.phase === "awaitingHandPlay" &&
+      before.input.status === "idle" &&
+      before.input.selectedCardId === null &&
+      before.input.selectableCardIds.length > 0,
+    `${label} did not begin at an idle actionable local Hand step.`,
+  );
+  assert(await cue.isVisible(), `${label} active-Hand attention perimeter is missing.`);
+  const evidence = await cue.evaluate((element) => {
+    const overlay = element.closest("[data-card-input-overlay]");
+    const canvas = document.querySelector(".game-host canvas");
+    if (!(overlay instanceof HTMLElement) || !(canvas instanceof HTMLCanvasElement)) {
+      throw new Error("Active-Hand attention is not attached to the game input overlay/canvas.");
+    }
+    const cueBox = element.getBoundingClientRect();
+    const overlayBox = overlay.getBoundingClientRect();
+    const canvasBox = canvas.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return {
+      animationDuration: style.animationDuration,
+      animationName: style.animationName,
+      ariaHidden: element.getAttribute("aria-hidden"),
+      borderTopColor: style.borderTopColor,
+      cueBox: { x: cueBox.x, y: cueBox.y, width: cueBox.width, height: cueBox.height },
+      canvasBox: {
+        x: canvasBox.x,
+        y: canvasBox.y,
+        width: canvasBox.width,
+        height: canvasBox.height,
+      },
+      overlayBox: {
+        x: overlayBox.x,
+        y: overlayBox.y,
+        width: overlayBox.width,
+        height: overlayBox.height,
+      },
+      pointerEvents: style.pointerEvents,
+      styleHeight: element.style.height,
+      styleLeft: element.style.left,
+      styleTop: element.style.top,
+      styleWidth: element.style.width,
+    };
+  });
+  const zone = before.layout.zones.playerHand;
+  assert(
+    evidence.ariaHidden === "true" && evidence.pointerEvents === "none",
+    `${label} attention perimeter is interactive or exposed to assistive technology: ${JSON.stringify(evidence)}.`,
+  );
+  assert(
+    evidence.borderTopColor === "rgb(255, 255, 255)" &&
+      !evidence.borderTopColor.includes("233") &&
+      (reducedMotion
+        ? evidence.animationName === "none"
+        : evidence.animationName === "hand-play-attention-pulse" &&
+          evidence.animationDuration === "1.2s"),
+    `${label} attention perimeter did not retain its white non-gold ${reducedMotion ? "steady" : "pulse"} treatment: ${JSON.stringify(evidence)}.`,
+  );
+  assert(
+    evidence.styleLeft === `${zone.x}px` &&
+      evidence.styleTop === `${zone.y}px` &&
+      evidence.styleWidth === `${zone.width}px` &&
+      evidence.styleHeight === `${zone.height}px` &&
+      evidence.cueBox.x >= evidence.canvasBox.x - 1 &&
+      evidence.cueBox.y >= evidence.canvasBox.y - 1 &&
+      evidence.cueBox.x + evidence.cueBox.width <=
+        evidence.canvasBox.x + evidence.canvasBox.width + 1 &&
+      evidence.cueBox.y + evidence.cueBox.height <=
+        evidence.canvasBox.y + evidence.canvasBox.height + 1,
+    `${label} attention perimeter did not synchronize to the canonical Player Hand zone: ${JSON.stringify({ evidence, zone })}.`,
+  );
+  assert(
+    (await page
+      .locator(
+        "[data-hand-play-attention][data-card-id], [data-hand-play-attention][data-actionable]",
+      )
+      .count()) === 0,
+    `${label} attention perimeter became a semantic card control.`,
+  );
+  if (screenshot) {
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `hand-start-cue-${label}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+  }
+  return before;
+}
+
+async function assertHandPlayAttentionHidden(page, label) {
+  const cue = page.locator("[data-hand-play-attention]");
+  assert(
+    !(await cue.isVisible()),
+    `${label} incorrectly retained the active-Hand attention perimeter.`,
+  );
+}
+
 async function assertUtilityDock(page, viewport) {
   const utilities = page.locator(".bottom-utilities > button");
   assert(
@@ -1036,6 +1143,7 @@ async function runPhysicalDrawTrace(page) {
   await configureSecondaryOptions(page, { animationMode: "normal", inputMode: "guided" });
   await page.evaluate(() => window.advanceTime(0));
   await submitOpeningHandForPhysicalDraw(page);
+  await assertHandPlayAttentionHidden(page, "Hand submission / Draw animation");
 
   const drawTravel = await advanceUntilAnimationClip(page, "draw", "drawCardRevealed");
   assert(
@@ -1096,6 +1204,7 @@ async function runPhysicalDrawTrace(page) {
     { timeout: 30_000 },
   );
   const settled = await readState(page);
+  await assertHandPlayAttentionHidden(page, "settled Draw Reveal");
   assert(
     settled.cards.visibleViews.filter(({ zone }) => zone === "reveal").length === 1,
     "The settled Draw state did not expose exactly one revealed card.",
@@ -1352,6 +1461,9 @@ try {
         state.input.selectableCardIds.length === 8,
         "The opening hand is not fully interactive.",
       );
+      await assertHandPlayAttention(page, {
+        label: `baseline-${viewport.width}x${viewport.height}`,
+      });
       assert(
         state.theme.activeId === "ink-parchment" && state.theme.optionsOpen === false,
         `The fresh production shell did not use its default Ink theme: ${JSON.stringify(state.theme)}.`,
@@ -1425,6 +1537,59 @@ try {
   }
 
   await page.setViewportSize({ width: 390, height: 844 });
+  const handCueBeforeOptions = await assertHandPlayAttention(page, {
+    label: "390x844",
+    screenshot: true,
+  });
+  const handCueSemanticCount = await actionableSemanticControlCount(page);
+  await openOptions(page);
+  await assertHandPlayAttentionHidden(page, "Options dialog");
+  await closeOptions(page);
+  const handCueAfterOptions = await assertHandPlayAttention(page, { label: "390x844-restored" });
+  assert(
+    handCueAfterOptions.localRound.stateVersion === handCueBeforeOptions.localRound.stateVersion &&
+      handCueAfterOptions.localRound.commandCount ===
+        handCueBeforeOptions.localRound.commandCount &&
+      handCueAfterOptions.cards.cardViewCount === handCueBeforeOptions.cards.cardViewCount &&
+      (await actionableSemanticControlCount(page)) === handCueSemanticCount,
+    "Opening or closing Options changed Hand attention authority or semantic controls.",
+  );
+  const handSource = page.locator(
+    '[data-input-role="selectable"][data-card-id="november-red-scroll"]',
+  );
+  await handSource.click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).input.selectedCardId === "november-red-scroll",
+  );
+  await assertHandPlayAttentionHidden(page, "selected Hand source");
+  const selectedHandCueState = await readState(page);
+  assert(
+    selectedHandCueState.localRound.stateVersion === handCueBeforeOptions.localRound.stateVersion &&
+      selectedHandCueState.localRound.commandCount ===
+        handCueBeforeOptions.localRound.commandCount &&
+      selectedHandCueState.cards.cardViewCount === handCueBeforeOptions.cards.cardViewCount &&
+      (await actionableSemanticControlCount(page)) === handCueSemanticCount,
+    "Selecting a Hand source changed authority or semantic control count before the existing move resolves.",
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `hand-start-cue-selected-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() => {
+    const state = JSON.parse(window.render_game_to_text());
+    return state.input.status === "idle" && state.input.selectedCardId === null;
+  });
+  const handCueAfterCancel = await assertHandPlayAttention(page, { label: "390x844-cancelled" });
+  assert(
+    handCueAfterCancel.localRound.stateVersion === handCueBeforeOptions.localRound.stateVersion &&
+      handCueAfterCancel.localRound.commandCount === handCueBeforeOptions.localRound.commandCount &&
+      handCueAfterCancel.cards.cardViewCount === handCueBeforeOptions.cards.cardViewCount,
+    "Cancelling a selected Hand source changed authority or persistent CardViews.",
+  );
   await assertUtilityDialogCycle(page, {
     trigger: "[data-context-help-trigger]",
     dialog: "[data-context-help-dialog]",
@@ -1464,11 +1629,13 @@ try {
   });
   for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
     await selectTheme(page, themeId);
+    await assertHandPlayAttention(page, { label: `theme-${themeId}-390x844`, screenshot: true });
     await assertYakuGuideLightFrames(page, themeId);
     await assertCardInspectorTheme(page, themeId);
   }
   await selectTheme(page, "ink-parchment");
   await page.setViewportSize({ width: 844, height: 390 });
+  await assertHandPlayAttention(page, { label: "844x390", screenshot: true });
   await assertUtilityDock(page, { width: 844, height: 390 });
   await assertUtilityDialogCycle(page, {
     trigger: "[data-history-trigger]",
@@ -1533,8 +1700,14 @@ try {
   await page.waitForFunction(
     () => JSON.parse(window.render_game_to_text()).animation.mode === "reducedMotion",
   );
+  await assertHandPlayAttention(page, {
+    label: "reduced-motion-390x844",
+    reducedMotion: true,
+    screenshot: true,
+  });
 
   await openOptions(page);
+  await assertHandPlayAttentionHidden(page, "reduced-motion Options dialog");
   for (const removedControl of [
     "[data-input-mode]",
     "[data-animation-mode]",
@@ -1571,10 +1744,15 @@ try {
         .evaluate((trigger) => document.activeElement === trigger)),
     "Escape did not close Options and return focus to its trigger.",
   );
+  await assertHandPlayAttention(page, {
+    label: "reduced-motion-390x844-restored",
+    reducedMotion: true,
+  });
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.waitForFunction(
     () => JSON.parse(window.render_game_to_text()).animation.mode === "normal",
   );
+  await assertHandPlayAttention(page, { label: "motion-restored-390x844" });
 
   await page.locator('[data-input-role="selectable"][data-card-id="november-red-scroll"]').click();
   await page.waitForFunction(
@@ -1987,6 +2165,7 @@ try {
     await page.locator("[data-round-result]").isVisible(),
     "End-of-Play result modal is not visible.",
   );
+  await assertHandPlayAttentionHidden(page, "End-of-Play result");
   assert(
     (await page.locator("[data-round-result-outcome]").textContent())?.includes(
       "last Koi-Koi caller",
@@ -2024,6 +2203,7 @@ try {
   const bankResult = await chooseYakuDecisionThroughResultBeat(page, "bank");
   await waitForResultVisualSettlement(page);
   const banked = bankResult.state;
+  await assertHandPlayAttentionHidden(page, "Bank result");
   assert(banked.localRound.phase === "roundComplete", "Hand Bank did not complete the round.");
   assert(
     !banked.localRound.latestRecap?.includes("Drew"),

@@ -182,6 +182,13 @@ does not query live scoring, result evidence, or trigger chronology. Scoped inte
 prevents browser-owned long-press selection/touch callouts without disabling normal dialog text
 selection or scrolling. See [`ADR 0026`](./adr/0026-phase-3f-g-card-inspector-yaku-reference.md).
 
+Phase 3F-H adds a presentation-owned decorative DOM perimeter around the canonical Player Hand zone.
+It synchronizes from recipient-safe input inspection and `layout.cardZones.playerHand`, is
+`aria-hidden` and pointer-inert, and does not create an input intent, legal action, semantic DOM
+control, CardView, or authoritative state transition. Pixi continues to own selected-source and
+legal-target feedback; the white perimeter is distinct and becomes steady under reduced motion. See
+[`ADR 0027`](./adr/0027-phase-3f-h-active-hand-start-cue.md).
+
 Phase 2E keeps deck authoring outside the production client. Portable package, transform,
 contact-sheet, and approval contracts live in `packages/deck-format/src`; Sharp, filesystem access,
 atomic writes, source decoding, and deterministic raster generation live only under
