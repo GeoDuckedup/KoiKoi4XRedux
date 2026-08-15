@@ -5,7 +5,8 @@
 **Current gate:** Phase 3F-E utility dock/capture cleanup is deployed and accepted; Phase 3F-F
 interaction clarity/card inspection is deployed and accepted; Phase 3F-G card inspector yaku
 reference/native gesture polish is deployed, live-verified, and accepted; Phase 3F-H active-hand
-start cue is deployed, live-verified, and accepted; Phase 5A full local match formats is current
+start cue is deployed, live-verified, and accepted; Phase 3F-I Reveal start cue is locally complete
+with commit, hosted, and live evidence pending; Phase 5A full local match formats remains the next substantive phase
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -1025,22 +1026,63 @@ ready iterations with the visible whole-Hand white perimeter, one canvas, 48 sta
 layout diagnostics. A physical iPhone/WebKit check of perceived pulse motion and white-outline
 contrast remains supplemental.
 
+### Phase 3F-I — Reveal start cue
+
+Status: **locally complete; commit, hosted, and live evidence pending**.
+
+This narrow presentation-only follow-up makes the settled Draw Reveal step visually obvious without
+using the already-reserved gold selection/target language. Once the physical Draw card has completed
+travel, flip, and reveal pause, an `aria-hidden`, pointer-inert white outer-edge perimeter will follow
+the actual public Reveal card while the local player must select it. It remains absent before that
+settled idle Draw state and during locks/utilities. Selecting Reveal removes white; existing gold
+selected-source and legal field target/no-match destination feedback then applies. Escape/cancel will
+restore the white affordance only when returning to the same idle Reveal state. No field pulse,
+movement, card scale, instructions, or new action is introduced.
+
+Gate:
+
+- `VISUAL-3FI-001` through `VISUAL-3FI-006` bind settled-state eligibility, lifecycle, four
+  resolution-family predicate coverage, motion/theme responsiveness, privacy/authority, and
+  root/Pages evidence;
+- no engine, protocol, rules, legal-action, scoring, replay, projection, result, semantic-control,
+  or persistent-CardView semantics change; Phase 5A retains ordered completed-yaku result evidence;
+- `npm run validate:phase3fi` is the flattened successor gate. It retains the 3F-H relevant
+  release-deck, technical-deck, interaction/runtime, Workshop, density-review, and root/Pages smoke
+  checks while adding focused `phase3fi-reveal-attention.test.ts` coverage. CI and Pages will use
+  `output/phase-3f-i/e2e/` evidence.
+
+`npm run check` passed 51 ordinary test files / 466 tests, all 10,002 generated seeds, deck
+validation, and the 776-module build. `npm run validate:phase3fi` passed the 48/48 release deck, 100
+technical artifacts, 10 focused files / 101 tests, Workshop, the Phase 3D-D 14 root/Pages density
+viewports, and full root/Pages smoke through Bank/restart. Screenshots in `output/phase-3f-i/e2e/`
+were inspected for white-before/gold-after source and legal-target/destination language.
+The bundled develop-web-game client completed two 1280×720 iterations against the final root
+production build: ready `state-0`/`state-1`, one canvas, 48 unique persistent CardViews, 8/8/24
+Hand/opponent/draw allocation, idle input, no diagnostics or clipped/invalid/overlap zones, and an
+inspected screenshot. Independent Terra review initially found three medium issues—face-up Reveal gating, an exact-bounds regression
+from `min-height`, and indirect family/render/selected-Options evidence. All were repaired; clean
+re-review found no blocker, high, or medium issue. Commit/push, hosted CI/Pages, and live
+verification remain pending.
+
 ## Later phases
 
-1. **Phase 5A — Full local match formats:** 3/6/12 rounds, full recap/rematch, and ordered
+1. **Phase 3F-I — Reveal start cue:** complete and accept the narrow post-settle white Reveal
+   affordance and its release evidence.
+2. **Phase 5A — Full local match formats:** 3/6/12 rounds, full recap/rematch, and ordered
    yaku-card evidence in expanded end-of-play details.
-2. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
-3. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
-4. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
-5. **Phase 9A — Product polish:** final interface, accessibility, performance, and reliability pass.
-6. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook,
+3. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
+4. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
+5. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
+6. **Phase 9A — Product polish:** final interface, accessibility, performance, and reliability pass.
+7. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook,
    deliberately executed after the final interaction and progression model stabilizes.
-7. **Phase 9B — Release acceptance:** final content, telemetry, cross-platform, and release checks.
+8. **Phase 9B — Release acceptance:** final content, telemetry, cross-platform, and release checks.
 
 No later phase may bypass the acceptance gate of the preceding phase.
 
 Phase 3F-E is deployed, live-verified, and accepted. Phase 3F-F interaction clarity/card inspection
 is deployed, live-verified, and accepted. Phase 3F-G is deployed, live-verified, and accepted.
-Phase 3F-H is deployed, live-verified, and accepted. None of these presentation slices reopen 3F-D
+Phase 3F-H is deployed, live-verified, and accepted. Phase 3F-I is locally complete with commit,
+hosted, and live evidence pending. None of these presentation slices reopen 3F-D
 animation authority or transfer Phase 5A's
 ordered completed-yaku evidence into routine play.

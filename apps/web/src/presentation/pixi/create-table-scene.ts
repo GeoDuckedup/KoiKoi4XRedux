@@ -400,32 +400,30 @@ function renderInteractionHighlights(
     const selected = state.selectedCardId === cardId;
     const target = legalTargets.has(cardId);
     const handCard = placement.zone === "playerHand";
-    const actionableReveal = placement.zone === "reveal" && selectable.has(cardId) && !selected;
     // Hand cards are deliberately adjacent on compact screens. Keep their selection
     // treatment inside the card instead of spilling a ring across a neighbour.
-    const padding = handCard ? 0 : selected || actionableReveal ? 0 : Math.max(2, 3 * layout.scale);
+    const padding = handCard ? 0 : selected ? 0 : Math.max(2, 3 * layout.scale);
     const bounds = {
       x: placement.bounds.x - padding,
       y: placement.bounds.y - padding,
       width: placement.bounds.width + padding * 2,
       height: placement.bounds.height + padding * 2,
     };
-    const color = target || actionableReveal || selected ? colors.gold : colors.creamMuted;
-    const alpha =
-      target || selected ? 1 : actionableReveal ? 0.82 : selectable.has(cardId) ? 0.36 : 0;
+    const treatment = resolveInteractionHighlightTreatment({
+      colors,
+      selected,
+      selectable: selectable.has(cardId),
+      target,
+      scale: layout.scale,
+    });
     layer.addChild(
       new Graphics()
         .roundRect(bounds.x, bounds.y, bounds.width, bounds.height, Math.max(4, 8 * layout.scale))
-        .fill({ color, alpha: target ? 0.09 : 0 })
+        .fill({ color: treatment.color, alpha: treatment.fillAlpha })
         .stroke({
-          color,
-          alpha,
-          width:
-            selected || target
-              ? Math.max(2.4, 3 * layout.scale)
-              : actionableReveal
-                ? Math.max(1.8, 2.4 * layout.scale)
-                : 1,
+          color: treatment.color,
+          alpha: treatment.strokeAlpha,
+          width: treatment.strokeWidth,
         }),
     );
     if (selected) {
@@ -447,6 +445,28 @@ function renderInteractionHighlights(
       );
     }
   }
+}
+
+/** Exact Pixi card-frame treatment, kept pure for presentation regression checks. */
+export function resolveInteractionHighlightTreatment(input: {
+  readonly colors: Pick<TableSceneColorsV1, "creamMuted" | "gold">;
+  readonly scale: number;
+  readonly selected: boolean;
+  readonly selectable: boolean;
+  readonly target: boolean;
+}): Readonly<{
+  readonly color: number;
+  readonly fillAlpha: number;
+  readonly strokeAlpha: number;
+  readonly strokeWidth: number;
+}> {
+  const gold = input.target || input.selected;
+  return Object.freeze({
+    color: gold ? input.colors.gold : input.colors.creamMuted,
+    fillAlpha: input.target ? 0.09 : 0,
+    strokeAlpha: gold ? 1 : input.selectable ? 0.36 : 0,
+    strokeWidth: gold ? Math.max(2.4, 3 * input.scale) : 1,
+  });
 }
 
 export function createTableScene(

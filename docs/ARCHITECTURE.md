@@ -189,6 +189,13 @@ control, CardView, or authoritative state transition. Pixi continues to own sele
 legal-target feedback; the white perimeter is distinct and becomes steady under reduced motion. See
 [`ADR 0027`](./adr/0027-phase-3f-h-active-hand-start-cue.md).
 
+Phase 3F-I extends the same presentation-only affordance pattern to the canonical public Reveal-card
+bounds after the physical Draw settles. It is derived from recipient-safe input inspection only when
+the unselected Reveal source is actionable; it is `aria-hidden` and pointer-inert, introduces no
+input intent, legal action, semantic DOM control, CardView, or authoritative transition, and remains
+absent until the Draw reveal pause completes. Pixi continues to own gold selected-source and legal-
+target feedback. See [`ADR 0028`](./adr/0028-phase-3f-i-reveal-start-cue.md).
+
 Phase 2E keeps deck authoring outside the production client. Portable package, transform,
 contact-sheet, and approval contracts live in `packages/deck-format/src`; Sharp, filesystem access,
 atomic writes, source decoding, and deterministic raster generation live only under

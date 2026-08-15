@@ -2,6 +2,35 @@ Original prompt: read the package and understand it, then let me know when we ar
 
 # KoiKoi4x Progress
 
+## 2026-08-15 — Phase 3F-I Reveal start cue locally complete
+
+- Completed a narrow presentation-only addition: after the physical Draw card has completed travel,
+  flip, and reveal pause, a restrained white outer-edge cue identifies the public Reveal card as
+  the next required tap. White means "interact next"; yellow-gold remains reserved for the selected
+  source and legal field target/no-match destination after Reveal is tapped.
+- The cue remains absent during travel, flip, reveal pause, animation/input locks, utilities,
+  decisions, results, handoff, and opponent turns. Escape/cancel restores it only at the same
+  settled idle Reveal state. It introduces no field pulse/movement, card scaling, copy, placeholder,
+  semantic control, new action, or authority change.
+- `VISUAL-3FI-001` through `VISUAL-3FI-006`, ADR 0028, `validate:phase3fi`, and the phase-3f-i
+  root/Pages artifact location are recorded. Focused coverage exercises no-match, unique-pair,
+  exact-two, and sweep families; one real deterministic physical Draw trace proves the browser
+  lifecycle.
+- `npm run check` passed 51 ordinary test files / 466 tests, all 10,002 generated seeds, deck
+  validation, and the 776-module build. `npm run validate:phase3fi` passed the 48/48 release deck,
+  100 technical artifacts, 10 focused files / 101 tests, Workshop, the Phase 3D-D 14 root/Pages
+  density viewports, and full root/Pages smoke through Bank/restart. Root/Pages screenshots under
+  `output/phase-3f-i/e2e/` were inspected for white-before/gold-after treatment.
+- The bundled develop-web-game client completed two 1280×720 iterations against the final root
+  production build. Ready authoritative-local-round `state-0`/`state-1` had one canvas, 48 unique
+  persistent CardViews, 8/8/24 Hand/opponent/draw allocation, idle input, no diagnostics or
+  clipped/invalid/overlap zones, and an inspected screenshot.
+- Independent Terra review initially found three medium issues—face-up eligibility, `min-height`
+  versus exact cue bounds, and indirect family/render/selected-Options evidence. All were repaired;
+  clean re-review found no blocker, high, or medium issue. Commit/push, hosted CI/Pages deployment,
+  and live verification are pending. Phase 5A remains the owner of ordered exact achieved-yaku-card
+  evidence and formation chronology.
+
 ## 2026-08-15 — Phase 3F-H deployed, live-verified, and accepted
 
 - Began the narrow presentation-only pass for a restrained white Player Hand start cue at the local

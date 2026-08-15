@@ -8,7 +8,8 @@ capture choreography** is deployed and accepted. **Phase 3F-E: utility dock and 
 is deployed, live-verified, and accepted. **Phase 3F-F: interaction clarity and card inspection** is
 deployed, live-verified, and accepted. **Phase 3F-G: card inspector yaku reference/native gesture
 polish** is deployed, live-verified, and accepted. **Phase 3F-H: active-hand start cue** is deployed,
-live-verified, and accepted. The repository contains the canonical rules
+live-verified, and accepted. **Phase 3F-I: Reveal start cue** is locally complete, with commit,
+hosted, and live evidence pending. The repository contains the canonical rules
 authority, all
 48 artwork-independent card records, the complete
 deterministic headless match
@@ -62,6 +63,8 @@ npm run validate:phase3fd
 npm run validate:phase3fe
 npm run validate:phase3ff
 npm run validate:phase3fg
+npm run validate:phase3fh
+npm run validate:phase3fi
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -276,6 +279,24 @@ hosted CI run `31873371558` (`verify`, 08:00:07–08:13:59Z; both `check` and
 white perimeter, one canvas, 48 stable CardViews, and no layout diagnostics. A physical iPhone/WebKit
 check of perceived pulse motion and white-outline contrast remains supplemental. Phase 3F-H is
 deployed, live-verified, and accepted. This does not begin Phase 5A result or match-progression work.
+
+`npm run validate:phase3fi` is the locally accepted flattened successor gate for the Reveal start
+cue. It retains the Phase 3F-H release-deck, technical-deck, interaction/runtime, Workshop,
+density-review, and root/Pages checks while adding focused settled-Reveal cue coverage. It passed
+the 48/48 release deck, 100 technical artifacts, 10 focused files / 101 tests, Workshop, the Phase
+3D-D 14 root/Pages density viewports, and full root/Pages smoke through Bank/restart. `npm run check`
+passed 51 ordinary test files / 466 tests, all 10,002 generated seeds, deck validation, and the
+776-module build. Screenshots under `output/phase-3f-i/e2e/` were inspected: white identifies the
+settled Reveal before selection, then gold identifies the source and legal target/destination.
+The bundled develop-web-game client completed two 1280×720 iterations against the final root
+production build: `state-0`/`state-1` reached the ready authoritative local round with one canvas,
+48 unique persistent CardViews, the 8/8/24 Hand/opponent/draw allocation, idle input, and no
+diagnostics or clipped/invalid/overlap zones; its screenshot was inspected.
+Independent Terra review initially found three medium issues—face-up eligibility, min-height versus
+exact bounds, and indirect family/render/selected-Options evidence—all repaired; re-review found no
+blocker, high, or medium issue. Commit/push, hosted CI/Pages, and live verification remain pending.
+The work remains presentation-only: Phase 5A owns ordered exact
+achieved-yaku-card evidence in expanded result details.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

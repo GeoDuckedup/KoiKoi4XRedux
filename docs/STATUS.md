@@ -6,7 +6,8 @@
 live-verified, and accepted; Phase 3F-F interaction clarity/card inspection is deployed,
 live-verified, and accepted; Phase 3F-G card inspector yaku reference/native gesture polish is
 deployed, live-verified, and accepted; Phase 3F-H active-hand start cue is deployed, live-verified,
-and accepted; Phase 5A full local match formats is current
+and accepted; Phase 3F-I Reveal start cue is locally complete with commit, hosted, and live evidence
+pending; Phase 5A full local match formats remains the next substantive phase
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -158,6 +159,29 @@ client completed two ready iterations with the visible whole-Hand white perimete
 stable CardViews, and no layout diagnostics. Phase 3F-H is deployed, live-verified, and accepted. A
 physical iPhone/WebKit check of perceived pulse motion and white-outline contrast remains
 supplemental; Phase 5A is the current substantive product phase.
+
+Phase 3F-I is a locally complete presentation-only follow-up. After a physical Draw card completes
+travel, flip, and reveal pause, the unselected public Reveal card will receive a restrained white
+outer-edge start cue. White means the next required interaction; gold remains reserved for the
+selected source and legal field target/no-match destination after the player taps Reveal. The cue
+will be absent during transit, locks, utility dialogs, decisions, results, handoff, and opponent
+turns, and it restores only if cancellation returns to the settled idle Reveal state. It adds no
+field pulse, movement, card scaling, instructions, semantic control, action, or authority. Focused
+unit coverage covers no-match, unique-pair, exact-two, and sweep predicate families, while one
+deterministic real physical Draw trace supplies browser evidence. `npm run check` passed 51 ordinary
+test files / 466 tests, all 10,002 generated seeds, deck validation, and the 776-module build.
+`npm run validate:phase3fi` passed the 48/48 release deck, 100 technical artifacts, 10 focused files
+/ 101 tests, Workshop, the Phase 3D-D 14 root/Pages density viewports, and full root/Pages smoke
+through Bank/restart. Inspected `output/phase-3f-i/e2e/` screenshots show the intended white-before/
+gold-after source and legal-target/destination language.
+The bundled develop-web-game client completed two 1280×720 iterations against the final root
+production build: ready authoritative local-round `state-0`/`state-1`, one canvas, 48 unique
+persistent CardViews, 8/8/24 Hand/opponent/draw allocation, idle input, no diagnostics or
+clipped/invalid/overlap zones, and an inspected screenshot. Independent Terra review initially found
+three medium findings—face-up eligibility, `min-height` exact-bounds expansion, and indirect
+family/render/selected-Options evidence—which were repaired; clean re-review found no blocker, high,
+or medium issue. Commit/push, hosted CI/Pages, and live verification are pending.
+Phase 5A retains ordered exact achieved-yaku cards and formation chronology.
 
 Release commit `51a1821` passed CI run `31742306302` and Pages run `31742306314`; the Pages deploy
 job completed successfully. A cache-busted live browser check reached ready state with the approved

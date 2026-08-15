@@ -65,6 +65,10 @@ import { createDomCardBridge, type DomCardBridgeV1 } from "./presentation/input/
 import { shouldShowHandPlayAttention } from "./presentation/input/hand-play-attention";
 import { buildSemanticCardControls } from "./presentation/input/hit-areas";
 import { createInteractionController } from "./presentation/input/input-controller";
+import {
+  findFaceUpRevealPlacement,
+  shouldShowRevealPlayAttention,
+} from "./presentation/input/reveal-play-attention";
 import type {
   InputCommandIntentV1,
   InputInteractionInspectionV1,
@@ -127,6 +131,7 @@ const fullscreenButton = queryRequired<HTMLButtonElement>("[data-fullscreen-butt
 const deckSelect = queryRequired<HTMLSelectElement>("[data-deck-select]");
 const cardInputOverlay = queryRequired<HTMLElement>("[data-card-input-overlay]");
 const handPlayAttention = queryRequired<HTMLElement>("[data-hand-play-attention]");
+const revealPlayAttention = queryRequired<HTMLElement>("[data-reveal-play-attention]");
 const fieldPlacementControl = queryRequired<HTMLButtonElement>("[data-input-field-placement]");
 const captureInspectControls = Object.freeze([
   ...document.querySelectorAll<HTMLButtonElement>("[data-capture-inspect]"),
@@ -706,6 +711,7 @@ function closeOptions(restoreFocus = true): void {
   optionsDialog.close();
   optionsTrigger.setAttribute("aria-expanded", "false");
   renderHandPlayAttention();
+  renderRevealPlayAttention();
   if (restoreFocus) optionsTrigger.focus();
 }
 
@@ -715,6 +721,7 @@ function openOptions(): void {
   optionsTrigger.setAttribute("aria-expanded", "true");
   syncThemeControls();
   renderHandPlayAttention();
+  renderRevealPlayAttention();
   queueMicrotask(() => themeOptions.find(({ checked }) => checked)?.focus());
 }
 
@@ -787,10 +794,45 @@ function renderHandPlayAttention(inspection = interactionController?.inspect()):
   }
 }
 
+function renderRevealPlayAttention(inspection = interactionController?.inspect()): void {
+  if (!currentLayout || !inspection) {
+    revealPlayAttention.hidden = true;
+    return;
+  }
+  const showRevealPlayAttention =
+    currentInputLock() === null &&
+    !optionsDialog.open &&
+    shouldShowRevealPlayAttention({ inspection, observation });
+  if (!showRevealPlayAttention) {
+    revealPlayAttention.hidden = true;
+    return;
+  }
+  const phase = observation.publicState.phase;
+  if (phase.kind !== "awaitingDrawResolution") {
+    revealPlayAttention.hidden = true;
+    return;
+  }
+  const placement = findFaceUpRevealPlacement({
+    layout: currentLayout,
+    projection,
+    drawnCardId: phase.drawnCardId,
+  });
+  if (!placement) {
+    revealPlayAttention.hidden = true;
+    return;
+  }
+  revealPlayAttention.hidden = false;
+  revealPlayAttention.style.left = `${placement.bounds.x}px`;
+  revealPlayAttention.style.top = `${placement.bounds.y}px`;
+  revealPlayAttention.style.width = `${placement.bounds.width}px`;
+  revealPlayAttention.style.height = `${placement.bounds.height}px`;
+}
+
 function renderSemanticCardBridge(): void {
   if (!interactionController || !currentLayout) return;
   const inspection = interactionController.inspect();
   renderHandPlayAttention(inspection);
+  renderRevealPlayAttention(inspection);
   const controls = buildSemanticCardControls({
     inspection,
     layout: currentLayout,

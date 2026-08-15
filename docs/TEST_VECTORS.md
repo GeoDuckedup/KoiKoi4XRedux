@@ -650,7 +650,29 @@ under `output/phase-3f-h/e2e/`. This is presentation-only: no engine, protocol, 
 actions, scoring, replay, public projection, result evidence, semantic-card controls, or CardView
 identity changes. Phase 5A alone records exact achieved-yaku card evidence in formation order.
 
-## 28. Approved-decision coverage matrix
+## 28. Phase 3F-I Reveal start-cue vectors
+
+| ID | Required expectation |
+|---|---|
+| `VISUAL-3FI-001-REVEAL-SETTLED-START` | After the physical Draw card has completed travel, flip, and reveal pause and the local player is idle in `awaitingDrawResolution` with the one public Reveal source selectable and no selected source, the actual Reveal card has a restrained pulsing white outer-edge start outline. It is visibly distinct from yellow-gold selected-source/target cues and adds no copy, placeholder, action, field motion, card scaling, or pre-tap target cue. |
+| `VISUAL-3FI-002-DRAW-LIFECYCLE` | The Reveal outline is absent during draw travel, flip, reveal pause, intent/animation locks, Hand play, decisions, results, handoff, opponent turn, and any utility dialog. Tapping the Reveal source removes it synchronously, after which the existing solid yellow-gold selected-source and legal field target/no-match destination treatment appears. Escape/cancel restores the white outline only on return to the same settled idle local Reveal state. |
+| `VISUAL-3FI-003-ALL-RESOLUTION-FAMILIES` | Focused presentation coverage proves that the start-cue eligibility predicate behaves equivalently for canonical Draw no-match, unique-pair, exact-two, and three-target sweep resolutions. Before the Reveal tap it derives no legal-target visual state; after the tap it consumes only the authoritative input inspection already used by the existing selected-source and target cues. |
+| `VISUAL-3FI-004-MOTION-THEME-RESPONSIVE` | The normal-motion Reveal outline pulses only around the public Reveal-card bounds and remains legible but neutral across Ink & Parchment, Moonlit Indigo, and Warm Ivory at 390×844 and 844×390. With `prefers-reduced-motion: reduce`, it remains visible as a steady white outline without repeating animation; containment and visual hierarchy remain intact. |
+| `VISUAL-3FI-005-INPUT-PRIVACY-AUTHORITY` | The `aria-hidden`, pointer-inert decorative DOM perimeter creates no semantic DOM control or activation target. Creation, removal, or animation changes neither authoritative state/version/command count, legal actions, public observation, one canvas, nor the 48 persistent CardViews; it exposes no opponent-hand identity, Draw/deck identity or order, RNG, checkpoint, command ID, current/achieved yaku, or result evidence. Options opening/closing suppresses/restores the idle cue without changing authority or CardView identity; when Reveal is already selected, it keeps the cue hidden and preserves selected-card, legal-target/field-placement, version, command-count, and CardView-token state. |
+| `VISUAL-3FI-006-ROOT-PAGES` | Chromium root and repository-prefixed Pages smoke retains seven baseline viewports (320×568, 360×640, 390×844, 768×1024, 844×390, 1366×768, 1920×1080), zero browser/network errors, and existing Hand/Draw selection behavior. It extends one deterministic real physical Draw trace with travel/flip/pause absence, settled exact bounds, select/cancel, and Options lifecycle evidence; it adds three-theme/reduced-motion checks at 390×844 and landscape containment at 844×390. |
+
+Phase 3F-I binding: `phase3fi-reveal-attention.test.ts`, retained 3F-H
+input/board/animation/local-runtime tests, Workshop, density review, and root/Pages production smoke
+prove the lifecycle, four Draw resolution families, direct Pixi muted-unselected/gold-selected-and-
+target treatment, motion/theme behavior, privacy/authority, and responsive containment. The
+flattened gate is `npm run validate:phase3fi`; Root and Pages artifacts belong under
+`output/phase-3f-i/e2e/`. Full release-gate, review, deployment, and live evidence are pending.
+This remains presentation-only: no engine,
+protocol, rules, legal actions, scoring, replay, public projection, result evidence, semantic-card
+controls, or CardView identity changes. Phase 5A alone records exact achieved-yaku card evidence in
+formation order.
+
+## 29. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

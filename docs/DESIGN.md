@@ -3694,6 +3694,22 @@ Phase 3 acceptance:
   presentation-only: no tutorial, engine, protocol, rules, scoring, replay, projection, result,
   semantic-control, or CardView-identity change.
 
+### Phase 3F-I — Reveal start cue
+
+- After a physical Draw has settled face-up in Reveal, give only that public Reveal card a restrained
+  pulsing white outer-edge start outline while the local player must tap it. It means "interact next,"
+  not selected or matched.
+- Keep the outline absent during Draw travel, flip, reveal pause, locks, utilities, decisions,
+  results, handoff, and opponent turns. On Reveal selection it disappears; gold then marks the
+  selected source and legal field target/no-match destination. Escape/cancel restores white only at
+  the same settled idle Reveal state.
+- Do not move/pulse field cards before selection, add copy/placeholder controls, create a new action,
+  or change the authoritative Draw state machine. All no-match, unique-pair, exact-two, and sweep
+  Draw families retain their existing behavior.
+- Honor reduced motion with a steady visible white outline. The cue is presentation-only: no tutorial,
+  engine, protocol, rules, scoring, replay, projection, result, semantic-control, or CardView-
+  identity change.
+
 ## Phase 4 — Onboarding
 
 Phase 4 retains its numeric identity but is intentionally executed after full-match progression,

@@ -8,7 +8,7 @@ const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = process.env.SMOKE_DIST_DIR
   ? resolve(process.env.SMOKE_DIST_DIR)
   : resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-3f-h/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-3f-i/e2e");
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
 const mountedBasePath = smokeBasePath === "/" ? "/" : `${smokeBasePath}/`;
@@ -674,6 +674,112 @@ async function assertHandPlayAttentionHidden(page, label) {
   );
 }
 
+async function assertRevealPlayAttention(
+  page,
+  { label, reducedMotion = false, screenshot = false },
+) {
+  const cue = page.locator("[data-reveal-play-attention]");
+  await page.evaluate(
+    () =>
+      new Promise((resolvePromise) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolvePromise)),
+      ),
+  );
+  const before = await readState(page);
+  assert(
+    before.localRound.phase === "awaitingDrawResolution" &&
+      before.input.status === "idle" &&
+      before.input.selectedCardId === null &&
+      before.input.selectableCardIds.length === 1 &&
+      before.input.legalTargetCardIds.length === 0,
+    `${label} did not begin at an idle actionable settled Reveal step.`,
+  );
+  assert(await cue.isVisible(), `${label} Reveal attention perimeter is missing.`);
+  const reveal = page.locator('[data-input-role="selectable"]').first();
+  const evidence = await cue.evaluate((element) => {
+    const overlay = element.closest("[data-card-input-overlay]");
+    const canvas = document.querySelector(".game-host canvas");
+    if (!(overlay instanceof HTMLElement) || !(canvas instanceof HTMLCanvasElement)) {
+      throw new Error("Reveal attention is not attached to the game input overlay/canvas.");
+    }
+    const cueBox = element.getBoundingClientRect();
+    const canvasBox = canvas.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return {
+      animationDuration: style.animationDuration,
+      animationName: style.animationName,
+      ariaHidden: element.getAttribute("aria-hidden"),
+      borderTopColor: style.borderTopColor,
+      cueBox: { x: cueBox.x, y: cueBox.y, width: cueBox.width, height: cueBox.height },
+      canvasBox: {
+        x: canvasBox.x,
+        y: canvasBox.y,
+        width: canvasBox.width,
+        height: canvasBox.height,
+      },
+      pointerEvents: style.pointerEvents,
+      styleHeight: element.style.height,
+      styleLeft: element.style.left,
+      styleTop: element.style.top,
+      styleWidth: element.style.width,
+    };
+  });
+  const revealBounds = await reveal.evaluate((element) => ({
+    height: element.style.height,
+    left: element.style.left,
+    top: element.style.top,
+    width: element.style.width,
+  }));
+  assert(
+    evidence.ariaHidden === "true" && evidence.pointerEvents === "none",
+    `${label} Reveal attention perimeter is interactive or exposed to assistive technology: ${JSON.stringify(evidence)}.`,
+  );
+  assert(
+    evidence.borderTopColor === "rgb(255, 255, 255)" &&
+      (reducedMotion
+        ? evidence.animationName === "none"
+        : evidence.animationName === "reveal-play-attention-pulse" &&
+          evidence.animationDuration === "1.2s"),
+    `${label} Reveal attention perimeter did not retain its white ${reducedMotion ? "steady" : "pulse"} treatment: ${JSON.stringify(evidence)}.`,
+  );
+  assert(
+    evidence.styleLeft === revealBounds.left &&
+      evidence.styleTop === revealBounds.top &&
+      evidence.styleWidth === revealBounds.width &&
+      evidence.styleHeight === revealBounds.height &&
+      evidence.cueBox.x >= evidence.canvasBox.x - 1 &&
+      evidence.cueBox.y >= evidence.canvasBox.y - 1 &&
+      evidence.cueBox.x + evidence.cueBox.width <=
+        evidence.canvasBox.x + evidence.canvasBox.width + 1 &&
+      evidence.cueBox.y + evidence.cueBox.height <=
+        evidence.canvasBox.y + evidence.canvasBox.height + 1,
+    `${label} Reveal attention perimeter did not synchronize to the actual settled Reveal-card bounds: ${JSON.stringify({ evidence, revealBounds })}.`,
+  );
+  assert(
+    (await page
+      .locator(
+        "[data-reveal-play-attention][data-card-id], [data-reveal-play-attention][data-actionable]",
+      )
+      .count()) === 0,
+    `${label} Reveal attention perimeter became a semantic card control.`,
+  );
+  if (screenshot) {
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `reveal-start-cue-${label}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+  }
+  return before;
+}
+
+async function assertRevealPlayAttentionHidden(page, label) {
+  const cue = page.locator("[data-reveal-play-attention]");
+  assert(!(await cue.isVisible()), `${label} incorrectly retained the Reveal attention perimeter.`);
+}
+
 async function assertUtilityDock(page, viewport) {
   const utilities = page.locator(".bottom-utilities > button");
   assert(
@@ -1144,6 +1250,7 @@ async function runPhysicalDrawTrace(page) {
   await page.evaluate(() => window.advanceTime(0));
   await submitOpeningHandForPhysicalDraw(page);
   await assertHandPlayAttentionHidden(page, "Hand submission / Draw animation");
+  await assertRevealPlayAttentionHidden(page, "Hand submission / Draw animation");
 
   const drawTravel = await advanceUntilAnimationClip(page, "draw", "drawCardRevealed");
   assert(
@@ -1158,6 +1265,7 @@ async function runPhysicalDrawTrace(page) {
     (await actionableSemanticControlCount(page)) === 0,
     "Draw input became actionable before the face-down card reached Reveal.",
   );
+  await assertRevealPlayAttentionHidden(page, "Draw travel");
   await page.screenshot({
     path: resolve(
       outputDirectory,
@@ -1171,6 +1279,7 @@ async function runPhysicalDrawTrace(page) {
     (await actionableSemanticControlCount(page)) === 0,
     "Draw input became actionable before the revealed card pause completed.",
   );
+  await assertRevealPlayAttentionHidden(page, "Draw flip");
   await page.evaluate(() => window.advanceTime(140));
   const revealPause = await advanceUntilAnimationClip(page, "revealPause", "drawCardRevealed");
   assert(
@@ -1181,6 +1290,7 @@ async function runPhysicalDrawTrace(page) {
     (await actionableSemanticControlCount(page)) === 0,
     "Reveal controls appeared before the identify pause completed.",
   );
+  await assertRevealPlayAttentionHidden(page, "Draw reveal pause");
   await page.screenshot({
     path: resolve(
       outputDirectory,
@@ -1205,6 +1315,10 @@ async function runPhysicalDrawTrace(page) {
   );
   const settled = await readState(page);
   await assertHandPlayAttentionHidden(page, "settled Draw Reveal");
+  const settledBeforeOptions = await assertRevealPlayAttention(page, {
+    label: "settled-390x844",
+    screenshot: true,
+  });
   assert(
     settled.cards.visibleViews.filter(({ zone }) => zone === "reveal").length === 1,
     "The settled Draw state did not expose exactly one revealed card.",
@@ -1213,6 +1327,51 @@ async function runPhysicalDrawTrace(page) {
     settled.animation.activeClip === null && settled.animation.transitCardCount === 0,
     "A Draw resolution manufactured movement before the player tapped Reveal.",
   );
+  assert(
+    (await page.locator('[data-input-role="target"]').count()) === 0,
+    "A settled unselected Reveal exposed field targets before the player tapped it.",
+  );
+  await openOptions(page);
+  await assertRevealPlayAttentionHidden(page, "settled Draw Options dialog");
+  const duringOptions = await readState(page);
+  assert(
+    duringOptions.localRound.stateVersion === settledBeforeOptions.localRound.stateVersion &&
+      duringOptions.localRound.commandCount === settledBeforeOptions.localRound.commandCount &&
+      duringOptions.cards.cardViewCount === settledBeforeOptions.cards.cardViewCount &&
+      JSON.stringify(
+        duringOptions.cards.visibleViews.map(({ cardId, token }) => [cardId, token]),
+      ) ===
+        JSON.stringify(
+          settledBeforeOptions.cards.visibleViews.map(({ cardId, token }) => [cardId, token]),
+        ),
+    "Options changed settled Reveal authority or persistent CardView identity.",
+  );
+  await closeOptions(page);
+  await assertRevealPlayAttention(page, { label: "settled-options-restored-390x844" });
+  for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
+    await selectTheme(page, themeId);
+    await assertRevealPlayAttention(page, {
+      label: `settled-theme-${themeId}-390x844`,
+      screenshot: true,
+    });
+  }
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await assertRevealPlayAttention(page, {
+    label: "settled-reduced-motion-390x844",
+    reducedMotion: true,
+    screenshot: true,
+  });
+  await page.setViewportSize({ width: 844, height: 390 });
+  await assertRevealPlayAttention(page, {
+    label: "settled-reduced-motion-844x390",
+    reducedMotion: true,
+    screenshot: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await assertRevealPlayAttention(page, { label: "settled-motion-restored-390x844" });
+  await selectTheme(page, "ink-parchment");
+  await assertRevealPlayAttention(page, { label: "settled-theme-restored-ink-390x844" });
   const revealControl = page.locator('[data-input-role="selectable"]').first();
   await revealControl.focus();
   await page.keyboard.press("Enter");
@@ -1225,6 +1384,12 @@ async function runPhysicalDrawTrace(page) {
     (await revealControl.getAttribute("aria-pressed")) === "true",
     "The actionable Reveal card did not retain its selected-source semantics.",
   );
+  await assertRevealPlayAttentionHidden(page, "selected Reveal source");
+  assert(
+    (await page.locator('[data-input-role="target"]').count()) > 0 ||
+      (await page.locator("[data-input-field-placement]").isVisible()),
+    "Selecting Reveal did not expose existing gold legal target or no-match destination semantics.",
+  );
   await page.screenshot({
     path: resolve(
       outputDirectory,
@@ -1232,6 +1397,63 @@ async function runPhysicalDrawTrace(page) {
     ),
     fullPage: true,
   });
+  const selectedBeforeOptions = await readState(page);
+  const selectedFieldPlacementVisible = await page
+    .locator("[data-input-field-placement]")
+    .isVisible();
+  const selectedTargetCount = await page.locator('[data-input-role="target"]').count();
+  await openOptions(page);
+  await assertRevealPlayAttentionHidden(page, "selected Reveal Options dialog");
+  const selectedDuringOptions = await readState(page);
+  assert(
+    selectedDuringOptions.input.status === selectedBeforeOptions.input.status &&
+      selectedDuringOptions.input.selectedCardId === selectedBeforeOptions.input.selectedCardId &&
+      JSON.stringify(selectedDuringOptions.input.legalTargetCardIds) ===
+        JSON.stringify(selectedBeforeOptions.input.legalTargetCardIds) &&
+      selectedDuringOptions.localRound.stateVersion ===
+        selectedBeforeOptions.localRound.stateVersion &&
+      selectedDuringOptions.localRound.commandCount ===
+        selectedBeforeOptions.localRound.commandCount &&
+      selectedDuringOptions.cards.cardViewCount === selectedBeforeOptions.cards.cardViewCount &&
+      JSON.stringify(
+        selectedDuringOptions.cards.visibleViews.map(({ cardId, token }) => [cardId, token]),
+      ) ===
+        JSON.stringify(
+          selectedBeforeOptions.cards.visibleViews.map(({ cardId, token }) => [cardId, token]),
+        ) &&
+      (await page.locator("[data-input-field-placement]").isVisible()) ===
+        selectedFieldPlacementVisible &&
+      (await page.locator('[data-input-role="target"]').count()) === selectedTargetCount,
+    "Options changed selected Reveal status, targets, field placement, authority, or persistent CardViews.",
+  );
+  await closeOptions(page);
+  await assertRevealPlayAttentionHidden(page, "selected Reveal Options restored");
+  const selectedAfterOptions = await readState(page);
+  assert(
+    selectedAfterOptions.input.status === selectedBeforeOptions.input.status &&
+      selectedAfterOptions.input.selectedCardId === selectedBeforeOptions.input.selectedCardId &&
+      JSON.stringify(selectedAfterOptions.input.legalTargetCardIds) ===
+        JSON.stringify(selectedBeforeOptions.input.legalTargetCardIds) &&
+      selectedAfterOptions.localRound.stateVersion ===
+        selectedBeforeOptions.localRound.stateVersion &&
+      selectedAfterOptions.localRound.commandCount ===
+        selectedBeforeOptions.localRound.commandCount &&
+      selectedAfterOptions.cards.cardViewCount === selectedBeforeOptions.cards.cardViewCount &&
+      JSON.stringify(
+        selectedAfterOptions.cards.visibleViews.map(({ cardId, token }) => [cardId, token]),
+      ) ===
+        JSON.stringify(
+          selectedBeforeOptions.cards.visibleViews.map(({ cardId, token }) => [cardId, token]),
+        ),
+    "Closing Options did not preserve the selected Reveal interaction state.",
+  );
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).input.status === "idle",
+    null,
+    { timeout: 30_000 },
+  );
+  await assertRevealPlayAttention(page, { label: "settled-cancel-restored-390x844" });
 }
 
 async function playHandCardById(page, cardId) {
