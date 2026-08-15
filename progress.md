@@ -2,7 +2,7 @@ Original prompt: read the package and understand it, then let me know when we ar
 
 # KoiKoi4x Progress
 
-## 2026-08-15 — Phase 3F-J legal destination pulse locally complete and accepted
+## 2026-08-15 — Phase 3F-J deployed, live-verified, and accepted
 
 - Approved presentation-only refinement: after a Hand or settled Reveal source is selected, existing
   legal matching Field targets should pulse yellow-gold; a no-match source should instead pulse the
@@ -19,8 +19,14 @@ Original prompt: read the package and understand it, then let me know when we ar
   A follow-up repair keeps the visual ring on exact CardPlacement bounds while checking browser
   containment inside the intentionally partitioned semantic touch territory. The full rerun was
   green. The bundled client completed three ready iterations with one canvas, 48 unique CardViews,
-  and no diagnostics. Commit/push, hosted CI/Pages, deployment, and live verification remain pending;
-  Phase 5A is next.
+  and no diagnostics. Commit `26828d4` passed CI `31899208391` (`verify`, 14m21s) and Pages
+  `31899208394` (build 12m29s; deploy 10s). The cache-busted live HTTP/2 response was 200 MISS,
+  `Last-Modified: Sat, 15 Aug 2026 17:58:05 GMT`, and supplied `assets/index-61Vc__HL.js` /
+  `assets/index-CTcqBr2T.css`; live JS contains the exact shipped visible and accessible strings.
+  Live client `state-0` showed loading, then `state-1`/`state-2` were ready with one canvas, 48 unique
+  CardViews, no clipped/invalid/overlap diagnostics, and an inspected live shot. Node 20 deprecation
+  is a nonblocking hosted-workflow annotation. Phase 3F-J is deployed, live-verified, and accepted;
+  Phase 5A is current.
 
 ## 2026-08-15 — Phase 3F-I deployed, live-verified, and accepted
 

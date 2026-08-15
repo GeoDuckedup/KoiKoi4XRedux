@@ -7,8 +7,8 @@ live-verified, and accepted; Phase 3F-F interaction clarity/card inspection is d
 live-verified, and accepted; Phase 3F-G card inspector yaku reference/native gesture polish is
 deployed, live-verified, and accepted; Phase 3F-H active-hand start cue is deployed, live-verified,
 and accepted; Phase 3F-I Reveal start cue is deployed, live-verified, and accepted; Phase 3F-J legal
-destination pulse is locally complete and accepted, pending deployment; Phase 5A full local match
-formats follows
+destination pulse is deployed, live-verified, and accepted; Phase 5A full local match formats is
+current
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -211,7 +211,14 @@ target. The browser assertion also now correctly checks the exact visual ring wi
 partitioned semantic target territory; focused tests retain the exact CardPlacement-bound guarantee.
 The full rerun passed. Terra independent review found no blocker, high, or medium finding. The final
 bundled client completed three ready iterations with one canvas, 48 unique CardViews, and no
-diagnostics. Commit/push, hosted CI/Pages, deployment, and live verification remain pending.
+diagnostics. Commit `26828d4` passed hosted CI run `31899208391` (`verify`, 14m21s) and Pages run
+`31899208394` (build 12m29s; deploy 10s). The cache-busted live response was HTTP/2 200 MISS,
+`Last-Modified: Sat, 15 Aug 2026 17:58:05 GMT`, with `assets/index-61Vc__HL.js` /
+`assets/index-CTcqBr2T.css`; live JS contains the exact shipped visible and accessible strings.
+Three live-client iterations recorded loading `state-0`, then ready `state-1`/`state-2`, one canvas,
+48 unique CardViews, no clipped/invalid/overlap diagnostics, and an inspected live shot. The hosted
+workflow's Node 20 deprecation annotation is nonblocking. Phase 3F-J is deployed, live-verified,
+and accepted; Phase 5A is current.
 
 Release commit `51a1821` passed CI run `31742306302` and Pages run `31742306314`; the Pages deploy
 job completed successfully. A cache-busted live browser check reached ready state with the approved

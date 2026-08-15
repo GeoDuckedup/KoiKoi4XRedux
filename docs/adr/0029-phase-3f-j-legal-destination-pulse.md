@@ -1,6 +1,6 @@
 # ADR 0029 — Phase 3F-J legal destination pulse
 
-**Status:** Locally complete and accepted; deployment pending
+**Status:** Deployed, live-verified, and accepted
 
 ## Context
 
@@ -56,8 +56,14 @@ repair recognizes that the visual ring follows exact CardPlacement bounds while 
 uses a deliberately partitioned touch territory; browser evidence checks containment and focused
 coverage verifies exact placement bounds. The complete rerun passed. Terra independent review found
 no blocker, high, or medium finding. The bundled client completed three ready iterations with one
-canvas, 48 unique CardViews, and no diagnostics. Commit/push, hosted validation, deployment, and
-live-browser evidence remain pending.
+canvas, 48 unique CardViews, and no diagnostics. Commit `26828d4` passed hosted CI run `31899208391`
+(`verify`, 14m21s) and Pages run `31899208394` (build 12m29s; deploy 10s). The cache-busted live
+response was HTTP/2 200 MISS, `Last-Modified: Sat, 15 Aug 2026 17:58:05 GMT`, with
+`assets/index-61Vc__HL.js` / `assets/index-CTcqBr2T.css`; live JavaScript contains the exact new
+visible and accessible strings. A three-iteration live client trace recorded loading `state-0`, then
+ready `state-1`/`state-2`, one canvas, 48 unique CardViews, no clipped/invalid/overlap diagnostics,
+and an inspected live shot. The hosted workflow's Node 20 deprecation annotation is nonblocking.
+Phase 3F-J is deployed, live-verified, and accepted; Phase 5A is current.
 
 ## Next subphase
 

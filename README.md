@@ -9,8 +9,8 @@ is deployed, live-verified, and accepted. **Phase 3F-F: interaction clarity and 
 deployed, live-verified, and accepted. **Phase 3F-G: card inspector yaku reference/native gesture
 polish** is deployed, live-verified, and accepted. **Phase 3F-H: active-hand start cue** is deployed,
 live-verified, and accepted. **Phase 3F-I: Reveal start cue** is deployed, live-verified, and
-accepted. **Phase 3F-J: legal destination pulse** is locally complete and accepted, pending
-deployment. The repository contains the canonical rules
+accepted. **Phase 3F-J: legal destination pulse** is deployed, live-verified, and accepted. The
+repository contains the canonical rules
 authority, all
 48 artwork-independent card records, the complete
 deterministic headless match
@@ -324,8 +324,14 @@ Target, no-match, Draw, Warm Ivory, reduced-landscape, and Pages screenshots und
 Field `april-cuckoo`. The follow-up assertion now correctly distinguishes the exact visual CardPlacement
 ring from the intentionally partitioned semantic target hit territory. Terra independent review found
 no blocker, high, or medium issue. The final bundled client completed three ready iterations with one
-canvas, 48 unique CardViews, and no diagnostics. Commit/push, hosted validation, deployment, and live
-verification remain pending.
+canvas, 48 unique CardViews, and no diagnostics. Commit `26828d4` passed CI run `31899208391`
+(`verify`, 14m21s) and Pages run `31899208394` (build 12m29s; deploy 10s). The cache-busted live
+response was HTTP/2 200 MISS, `Last-Modified: Sat, 15 Aug 2026 17:58:05 GMT`, with
+`assets/index-61Vc__HL.js` and `assets/index-CTcqBr2T.css`; live JavaScript contains the exact new
+visible and accessible no-match strings. Three live client iterations recorded loading `state-0`, then
+ready `state-1`/`state-2`, one canvas, 48 unique CardViews, no clipped/invalid/overlap diagnostics,
+and an inspected live screenshot. The hosted workflow emitted the Node 20 deprecation notice only;
+it is nonblocking. Phase 3F-J is deployed, live-verified, and accepted; Phase 5A is current.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot
