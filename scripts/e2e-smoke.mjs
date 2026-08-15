@@ -256,45 +256,32 @@ async function assertCardInspection(page, selector, label, screenshotId = "390x8
     (await control.getAttribute("data-inspectable")) === "true",
     `${label} was not marked as a privacy-safe inspectable card.`,
   );
-  await control.dispatchEvent("pointerdown", {
-    button: 0,
-    pointerId: 89,
-    clientX: 20,
-    clientY: 20,
-  });
-  await control.dispatchEvent("pointerup", { button: 0, pointerId: 89, clientX: 20, clientY: 20 });
+  const bounds = await control.boundingBox();
+  assert(bounds !== null, `${label} inspectable card has no browser bounds.`);
+  const point = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+  await page.mouse.move(point.x, point.y);
+  await page.mouse.down();
+  await page.mouse.up();
   await page.waitForTimeout(510);
   assert(
     !(await page.locator("[data-card-inspector]").evaluate((dialog) => dialog.open)),
     `${label} early pointer release incorrectly opened the inspector.`,
   );
-  await control.dispatchEvent("pointerdown", {
-    button: 0,
-    pointerId: 90,
-    clientX: 20,
-    clientY: 20,
-  });
-  await control.dispatchEvent("pointermove", {
-    button: 0,
-    pointerId: 90,
-    clientX: 30,
-    clientY: 20,
-  });
+  await page.mouse.move(point.x, point.y);
+  await page.mouse.down();
+  await page.mouse.move(point.x + 12, point.y);
+  await page.mouse.up();
   await page.waitForTimeout(510);
   assert(
     !(await page.locator("[data-card-inspector]").evaluate((dialog) => dialog.open)),
     `${label} drag cancellation incorrectly opened the inspector.`,
   );
   const before = await readState(page);
-  await control.dispatchEvent("pointerdown", {
-    button: 0,
-    pointerId: 91,
-    clientX: 20,
-    clientY: 20,
-  });
-  await page.waitForTimeout(510);
+  await page.mouse.move(point.x, point.y);
+  await page.mouse.down();
+  await page.waitForTimeout(550);
   await page.locator("[data-card-inspector]").waitFor({ state: "visible" });
-  await control.dispatchEvent("pointerup", { button: 0, pointerId: 91, clientX: 20, clientY: 20 });
+  await page.mouse.up();
   const imageMetrics = await page.locator("[data-card-inspector-image]").evaluate((image) => {
     const box = image.getBoundingClientRect();
     return { ratio: box.width / box.height, alt: image.getAttribute("alt") };
