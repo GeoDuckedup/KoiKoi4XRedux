@@ -1105,3 +1105,26 @@ Original prompt: read the package and understand it, then let me know when we ar
   48/48 unique CardViews, 8 field, 8 hand, 24 draw, and clean diagnostics. The states and screenshots
   under `output/phase-3f-e/live-ready/` were inspected.
 - Phase 3F-E is deployed, live-verified, and accepted. Next: Phase 5A full local match formats.
+
+## 2026-08-14 — Phase 3F-F interaction clarity/card inspection gate (in progress)
+
+- Added the Phase 3F-F acceptance boundary: stronger shared yellow-gold source/target/field cues,
+  optional read-only public-observation phase help, and privacy-safe card inspection. `VISUAL-3FF-001`
+  through `VISUAL-3FF-008`, ADR 0025, the manifest, and in-progress PLAN/STATUS/README records all
+  state that rules, engine/protocol/replay, scoring, result authority, and persistent CardViews remain
+  unchanged.
+- Exact yaku-card formation evidence remains Phase 5A. It cannot be reconstructed from a final
+  capture set because category upgrades and Bright replacements lose chronology; Phase 5A must persist
+  public trigger-time evidence in result/history/projection/protocol/replay data.
+- Added the flattened `validate:phase3ff` successor command, CI/Pages routing, and Phase 3F-F browser
+  artifact destination. UI selectors, focused test implementation, browser smoke extension, local
+  validation, independent review, deployment, and live verification are still pending; do not report
+  Phase 3F-F as complete until those evidence steps finish.
+- Local closure now passes: 48/48 release deck, 100 artifacts, 7 files / 83 tests, Workshop, 14 density
+  viewports, and root/Pages smoke; all-web validation passed 143 tests/build. Initial four-medium review
+  findings were repaired and cleanly re-reviewed. Commit, hosted CI/Pages, and live verification remain pending.
+- `npm run check` passed 48 files / 448 ordinary tests, all 10,002 deterministic seeds, and the
+  774-module production build. The final bundled skill client at 1280×720 reached ready with one canvas,
+  48 unique CardViews, 8 hand / 8 field / 24 draw, 8 actionable plus 8 inspect-only semantic controls,
+  closed utility surfaces, and no diagnostics; `output/phase-3f-f/game-client-final/shot-1.png` and
+  `state-1.json` were inspected.

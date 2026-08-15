@@ -5,8 +5,9 @@ has deployed and accepted **Phase 3E: playability corrections**, **Phase 3F-A: s
 larger hand**, the player-facing **Phase 3F-B: unified tap-only interaction** outcome, and **Phase
 3F-C: visual interaction cues** with an owner-approved primary deck. **Phase 3F-D: placement and
 capture choreography** is deployed and accepted. **Phase 3F-E: utility dock and capture cleanup**
-is deployed, live-verified, and accepted. It
-contains the canonical rules authority, all 48 artwork-independent card records, the complete
+is deployed, live-verified, and accepted. **Phase 3F-F: interaction clarity and card inspection** is
+locally complete, with deployment and live verification pending. The repository contains the canonical rules authority, all
+48 artwork-independent card records, the complete
 deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
 boundaries, and a responsive Pixi table with 48 persistent canonical CardViews, local atomic deck
@@ -56,6 +57,7 @@ npm run validate:phase3fa
 npm run validate:phase3fc
 npm run validate:phase3fd
 npm run validate:phase3fe
+npm run validate:phase3ff
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -216,6 +218,19 @@ client first recorded expected `ready:false` while textures loaded, then two `re
 the approved `new-primary-deck`, one canvas, 48/48 unique CardViews, 8 field cards, 8 hand cards, 24
 draw cards, and clean diagnostics. The states and screenshots under `output/phase-3f-e/live-ready/`
 were inspected. Phase 5A full local match formats is next.
+
+`npm run validate:phase3ff` is the flattened successor gate for the in-progress Phase 3F-F
+presentation/input pass. It will validate the stronger yellow-gold source/target/field-destination
+language, optional public-observation phase help, and privacy-safe card inspection without changing
+engine, protocol, scoring, replay, or result authority. Ordered exact yaku-card evidence remains
+Phase 5A. Root and Pages evidence is written under `output/phase-3f-f/e2e/`. Local validation is
+green: 48/48 release deck, 100 technical artifacts, 7 focused
+files / 83 tests, Workshop, 14 density viewports, root/Pages smoke, and all-web 143-test/build
+validation. `npm run check` also passed 48 files / 448 ordinary tests, all 10,002 deterministic seeds,
+and the 774-module build. The inspected bundled-client final state/screenshot under
+`output/phase-3f-f/game-client-final/` show one canvas, 48 unique CardViews, 8 hand / 8 field / 24
+draw, 8 actionable plus 8 inspect-only semantic controls, closed utility surfaces, and no diagnostics;
+commit, hosted CI/Pages, and live verification remain pending.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

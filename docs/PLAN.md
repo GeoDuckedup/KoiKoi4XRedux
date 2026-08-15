@@ -2,8 +2,8 @@
 
 **Plan version:** 1.1
 **Updated:** August 14, 2026
-**Current gate:** Phase 3F-D placement and capture choreography is deployed and accepted; Phase
-3F-E utility dock/capture cleanup is next, then Phase 5A full local match formats
+**Current gate:** Phase 3F-E utility dock/capture cleanup is deployed and accepted; Phase 3F-F
+interaction clarity/card inspection is locally complete with deployment pending, then Phase 5A full local match formats
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -906,6 +906,37 @@ the expected `ready:false` texture-loading state, then `state-1` and `state-2` a
 the approved `new-primary-deck`, one canvas, 48/48 unique CardViews, 8 field, 8 hand, 24 draw, and
 clean diagnostics. The states and screenshots under `output/phase-3f-e/live-ready/` were inspected.
 
+### Phase 3F-F — Interaction clarity and card inspection
+
+Status: **locally implemented and validated; commit, hosted CI/Pages, and live evidence pending**.
+
+This presentation/input pass makes selected Hand and settled Reveal sources, legal field targets,
+and legal no-match field destinations share a stronger yellow-gold language. It adds optional,
+read-only phase help and a privacy-safe card inspector for face-up public Field cards and the local
+player’s own Hand. Short taps retain their existing legal-action behavior; inspection never submits a
+move. Help is contextual but is not tutorial/onboarding or strategic advice.
+
+Gate:
+
+- `VISUAL-3FF-001` through `VISUAL-3FF-008` bind the gold cue family, 20% stronger normalized cue
+  tokens, no-match field destination, Reveal parity/no pre-tap movement, phase help, inspector
+  gesture cancellation, accessibility/modal behavior, and root/Pages privacy/containment;
+- no engine, protocol, scoring, replay, result, hidden-information, or persistent-CardView semantics
+  change; exact chronological yaku-card evidence remains Phase 5A;
+- CI/Pages will run the flattened `npm run validate:phase3ff` gate and upload
+  `output/phase-3f-f/e2e/` evidence after implementation is complete.
+
+Local evidence: `validate:phase3ff` passed release approval (48/48), 100 technical artifacts, 7
+focused files / 83 tests, Workshop, 14 root/Pages density viewports, and root/Pages smoke. All-web
+validation passed 143 tests and build. Initial independent review found four medium gesture/scope
+issues; repairs received clean re-review. `npm run check` passed 48 files / 448 ordinary tests, all
+10,002 deterministic seeds, and the 774-module production build. The inspected final bundled-client
+state/screenshot under `output/phase-3f-f/game-client-final/` show ready at 1280×720 with one canvas,
+48 unique CardViews, 8 hand / 8 field / 24 draw, 8 actionable plus 8 inspect-only semantic controls,
+closed utility surfaces, and no diagnostics. Commit/hosted/live remain pending.
+
+Architecture is recorded in [`ADR 0025`](./adr/0025-phase-3f-f-interaction-clarity-and-card-inspection.md).
+
 ## Later phases
 
 1. **Phase 5A — Full local match formats:** 3/6/12 rounds, full recap/rematch, and ordered
@@ -920,6 +951,7 @@ clean diagnostics. The states and screenshots under `output/phase-3f-e/live-read
 
 No later phase may bypass the acceptance gate of the preceding phase.
 
-Phase 3F-E is deployed, live-verified, and accepted. Phase 5A full local match formats is next. The
-accepted dock, public History/reference dialogs, and capture cleanup do not reopen 3F-D animation
-authority or transfer Phase 5A's ordered yaku evidence into routine play.
+Phase 3F-E is deployed, live-verified, and accepted. Phase 3F-F interaction clarity/card inspection
+is locally complete with deployment and live verification pending. The accepted dock, public
+History/reference dialogs, and capture cleanup do not reopen
+3F-D animation authority or transfer Phase 5A's ordered yaku evidence into routine play.

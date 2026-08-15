@@ -22,12 +22,13 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run check
-      - run: npm run validate:phase3fe
+      - run: npm run validate:phase3ff
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-3f-e-utility-dock-capture-cleanup-and-deck-workshop
+          name: phase-3f-f-interaction-clarity-card-inspection-and-deck-workshop
           path: |
+            output/phase-3f-f/e2e
             output/phase-3f-e/e2e
             output/phase-3d-d/e2e
             output/phase-3d-a/visual-directions

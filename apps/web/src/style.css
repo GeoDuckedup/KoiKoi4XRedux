@@ -711,6 +711,32 @@ select:focus-visible {
   line-height: 0.95;
 }
 
+.context-help-trigger {
+  display: grid;
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 76%, transparent);
+  border-radius: 999px;
+  color: var(--theme-text);
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+  background: color-mix(in srgb, var(--theme-surface-raised) 92%, transparent);
+  cursor: pointer;
+}
+
+.context-help-trigger:hover:not(:disabled) {
+  border-color: var(--theme-accent);
+}
+
+.context-help-trigger:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
 .eyebrow {
   margin: 0 0 0.28rem;
   color: #e9bb5a;
@@ -1801,6 +1827,16 @@ summary:focus-visible {
   transform: none;
 }
 
+.card-input-control,
+.card-input-control:hover {
+  /* All card controls are semantic hit areas. Pixi owns their ordinary visible treatment. */
+  border: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
 .card-input-control--target {
   /* The canvas owns target feedback; this remains only the semantic hit area. */
   border: 0;
@@ -1820,6 +1856,11 @@ summary:focus-visible {
 
 .card-input-control--selected:focus-visible,
 .card-input-control--target:focus-visible {
+  outline: 3px solid var(--theme-focus);
+  outline-offset: 3px;
+}
+
+.card-input-control:focus-visible {
   outline: 3px solid var(--theme-focus);
   outline-offset: 3px;
 }
@@ -2222,6 +2263,113 @@ body:has(.handoff:not([hidden])) .bottom-utilities {
 
 .utility-dialog__body {
   padding: 0.9rem;
+}
+
+.context-help-dialog {
+  width: min(calc(100% - 18px), 460px);
+}
+
+.context-help-dialog__body {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.context-help-dialog__body p,
+.context-help-dialog__body ol {
+  margin: 0;
+  color: var(--theme-text-muted);
+  line-height: 1.45;
+}
+
+.context-help-dialog__body ol {
+  display: grid;
+  gap: 0.45rem;
+  padding-left: 1.35rem;
+}
+
+.card-inspector {
+  width: min(calc(100% - 18px), 620px);
+  max-height: min(calc(100svh - 18px), 760px);
+  padding: 0;
+  overflow: auto;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 76%, transparent);
+  border-radius: 18px;
+  color: var(--theme-text);
+  background: var(--theme-surface);
+  box-shadow: 0 28px 80px color-mix(in srgb, #000 58%, transparent);
+}
+
+.card-inspector::backdrop {
+  background: color-mix(in srgb, var(--theme-page) 72%, #000 34%);
+}
+
+.card-inspector__body {
+  display: grid;
+  grid-template-columns: minmax(120px, 250px) minmax(0, 1fr);
+  gap: clamp(0.8rem, 3vw, 1.25rem);
+  padding: clamp(0.9rem, 3vw, 1.25rem);
+}
+
+.card-inspector__body img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 5 / 8;
+  box-sizing: border-box;
+  padding: max(2px, 2%);
+  border: 2px solid var(--theme-card-frame);
+  border-radius: 9px;
+  object-fit: contain;
+  background: var(--theme-page);
+  box-shadow: 2px 3px 0 color-mix(in srgb, var(--theme-page) 60%, #000 42%);
+}
+
+.card-inspector__facts {
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+}
+
+.card-inspector__facts > p,
+.card-inspector__facts section,
+.card-inspector__facts h3,
+.card-inspector__facts ul {
+  margin: 0;
+}
+
+.card-inspector__facts > p {
+  color: var(--theme-text-muted);
+}
+
+.card-inspector__facts section {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 40%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--theme-surface-raised) 38%, transparent);
+}
+
+.card-inspector__facts h3 {
+  color: var(--theme-text);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.92rem;
+}
+
+.card-inspector__facts ul {
+  display: grid;
+  gap: 0.24rem;
+  padding-left: 1.1rem;
+  color: var(--theme-text-muted);
+  line-height: 1.38;
+}
+
+@media (max-width: 520px) {
+  .card-inspector__body {
+    grid-template-columns: minmax(0, 150px) minmax(0, 1fr);
+    gap: 0.75rem;
+    padding: 0.8rem;
+  }
 }
 
 .history-dialog__body ol {

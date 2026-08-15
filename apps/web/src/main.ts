@@ -16,6 +16,8 @@ import {
   createCaptureInspectionPresentation,
   type CaptureInspectionOwnerV1,
 } from "./game/capture-inspection";
+import { createCardInspectionPresentation } from "./game/card-inspection";
+import { createContextualHelpPresentation } from "./game/contextual-help";
 import {
   createLocalRoundRuntime,
   PHASE_3A_MATCH_ID,
@@ -93,6 +95,12 @@ function queryRequired<T extends Element>(selector: string): T {
 
 const host = queryRequired<HTMLElement>("[data-game-host]");
 const status = queryRequired<HTMLElement>("[data-table-status]");
+const contextHelpTrigger = queryRequired<HTMLButtonElement>("[data-context-help-trigger]");
+const contextHelpDialog = queryRequired<HTMLDialogElement>("[data-context-help-dialog]");
+const contextHelpClose = queryRequired<HTMLButtonElement>("[data-context-help-close]");
+const contextHelpTitle = queryRequired<HTMLElement>("[data-context-help-title]");
+const contextHelpSummary = queryRequired<HTMLElement>("[data-context-help-summary]");
+const contextHelpSteps = queryRequired<HTMLOListElement>("[data-context-help-steps]");
 const historyTrigger = queryRequired<HTMLButtonElement>("[data-history-trigger]");
 const historyDialog = queryRequired<HTMLDialogElement>("[data-history-dialog]");
 const historyClose = queryRequired<HTMLButtonElement>("[data-history-close]");
@@ -120,6 +128,16 @@ const captureInspector = queryRequired<HTMLDialogElement>("[data-capture-inspect
 const captureInspectorTitle = queryRequired<HTMLElement>("[data-capture-inspector-title]");
 const captureInspectorGroups = queryRequired<HTMLElement>("[data-capture-inspector-groups]");
 const captureInspectorClose = queryRequired<HTMLButtonElement>("[data-capture-inspector-close]");
+const cardInspector = queryRequired<HTMLDialogElement>("[data-card-inspector]");
+const cardInspectorClose = queryRequired<HTMLButtonElement>("[data-card-inspector-close]");
+const cardInspectorTitle = queryRequired<HTMLElement>("[data-card-inspector-title]");
+const cardInspectorMonth = queryRequired<HTMLElement>("[data-card-inspector-month]");
+const cardInspectorImage = queryRequired<HTMLImageElement>("[data-card-inspector-image]");
+const cardInspectorCategory = queryRequired<HTMLElement>("[data-card-inspector-category]");
+const cardInspectorFlower = queryRequired<HTMLElement>("[data-card-inspector-flower]");
+const cardInspectorYaku = queryRequired<HTMLElement>("[data-card-inspector-yaku]");
+const cardInspectorYakuList = queryRequired<HTMLUListElement>("[data-card-inspector-yaku-list]");
+const cardInspectorNotes = queryRequired<HTMLUListElement>("[data-card-inspector-notes]");
 const inputInstruction = queryRequired<HTMLElement>("[data-input-instruction]");
 const newRoundButton = queryRequired<HTMLButtonElement>("[data-new-round]");
 const handoff = queryRequired<HTMLElement>("[data-handoff]");
@@ -199,6 +217,8 @@ let focusedYakuDecisionKey: string | null = null;
 let focusedRoundResultKey: string | null = null;
 let captureInspectionOwner: CaptureInspectionOwnerV1 | null = null;
 let captureInspectionTrigger: HTMLButtonElement | null = null;
+let cardInspectionCardId: Parameters<typeof getCardDefinition>[0] | null = null;
+let cardInspectionTrigger: HTMLElement | null = null;
 const recaps: string[] = [];
 
 function syncThemeControls(): void {
@@ -335,6 +355,11 @@ function snapshot() {
       activeId: activeTheme.id,
       optionsOpen: optionsDialog.open,
     },
+    utilitySurfaces: {
+      contextualHelpOpen: contextHelpDialog.open,
+      cardInspectorOpen: cardInspector.open,
+      cardInspectionCardId,
+    },
     simulationTimeMs,
     layout,
     fieldLayout: computeAdaptiveFieldLayout(
@@ -359,7 +384,15 @@ function currentInputLock(): InputLockReason | null {
   if (animationDirector?.isBusy()) return "animation";
   if (processingIntent) return "awaitingObservation";
   if (captureInspector.open) return "remoteReplay";
-  if (historyDialog.open || yakuGuideDialog.open) return "remoteReplay";
+  if (
+    historyDialog.open ||
+    yakuGuideDialog.open ||
+    optionsDialog.open ||
+    contextHelpDialog.open ||
+    cardInspector.open
+  ) {
+    return "remoteReplay";
+  }
   if (handoffPlayerId !== null) return "remoteReplay";
   return null;
 }
@@ -377,7 +410,15 @@ function isCaptureInspectionOpen(): boolean {
 }
 
 function isAnyUtilityDialogOpen(): boolean {
-  return historyDialog.open || yakuGuideDialog.open || optionsDialog.open;
+  return historyDialog.open || yakuGuideDialog.open || optionsDialog.open || contextHelpDialog.open;
+}
+
+function isCardInspectorOpen(): boolean {
+  return cardInspector.open;
+}
+
+function isAnyDialogOpen(): boolean {
+  return isAnyUtilityDialogOpen() || isCaptureInspectionOpen() || isCardInspectorOpen();
 }
 
 function isCriticalUtilityBlocked(): boolean {
@@ -392,7 +433,7 @@ function isCriticalUtilityBlocked(): boolean {
 }
 
 function isUtilityOpenerBlocked(): boolean {
-  return isCriticalUtilityBlocked() || isAnyUtilityDialogOpen();
+  return isCriticalUtilityBlocked() || isAnyDialogOpen();
 }
 
 function captureOwnerFromControl(control: HTMLButtonElement): CaptureInspectionOwnerV1 {
@@ -424,6 +465,73 @@ function activeCardFaceUrl(cardId: Parameters<typeof getCardDefinition>[0]): str
   const baseUrl = new URL(import.meta.env.BASE_URL, window.location.origin);
   const manifestUrl = new URL(descriptor.manifestPath, baseUrl);
   return new URL(bundle.manifest.cardFaces[cardId].path, manifestUrl).href;
+}
+
+function closeContextHelp(restoreFocus = true): void {
+  if (!contextHelpDialog.open) return;
+  contextHelpDialog.close();
+  contextHelpTrigger.setAttribute("aria-expanded", "false");
+  refreshInteractionSurface();
+  if (restoreFocus) queueMicrotask(() => contextHelpTrigger.focus());
+}
+
+function openContextHelp(): void {
+  if (isUtilityOpenerBlocked()) return;
+  const presentation = createContextualHelpPresentation({
+    observation,
+    inspection: interactionController?.inspect() ?? unavailableInput,
+  });
+  contextHelpTitle.textContent = presentation.title;
+  contextHelpSummary.textContent = presentation.summary;
+  contextHelpSteps.replaceChildren(
+    ...presentation.steps.map((step) =>
+      Object.assign(document.createElement("li"), { textContent: step }),
+    ),
+  );
+  contextHelpDialog.showModal();
+  contextHelpTrigger.setAttribute("aria-expanded", "true");
+  refreshInteractionSurface();
+  queueMicrotask(() => contextHelpClose.focus());
+}
+
+function closeCardInspection(restoreFocus = true): void {
+  if (!cardInspector.open) return;
+  const trigger = cardInspectionTrigger;
+  cardInspector.close();
+  cardInspectionCardId = null;
+  cardInspectionTrigger = null;
+  refreshInteractionSurface();
+  if (restoreFocus && trigger?.isConnected) queueMicrotask(() => trigger.focus());
+}
+
+function openCardInspection(
+  cardId: Parameters<typeof getCardDefinition>[0],
+  trigger: HTMLElement,
+): void {
+  if (isCriticalUtilityBlocked() || isAnyDialogOpen()) return;
+  const presentation = createCardInspectionPresentation(cardId);
+  cardInspectionCardId = cardId;
+  cardInspectionTrigger = trigger;
+  cardInspectorTitle.textContent = presentation.title;
+  cardInspectorMonth.textContent = presentation.month;
+  cardInspectorImage.src = activeCardFaceUrl(cardId);
+  cardInspectorImage.alt = `${presentation.month} ${presentation.title}`;
+  cardInspectorCategory.textContent = `${presentation.category} card`;
+  cardInspectorFlower.textContent = `${presentation.flower} month`;
+  cardInspectorYaku.hidden = presentation.fixedYaku.length === 0;
+  cardInspectorYakuList.replaceChildren(
+    ...presentation.fixedYaku.map((entry) =>
+      Object.assign(document.createElement("li"), { textContent: entry }),
+    ),
+  );
+  cardInspectorNotes.replaceChildren(
+    ...presentation.factualNotes.map((entry) =>
+      Object.assign(document.createElement("li"), { textContent: entry }),
+    ),
+  );
+  cardInspector.showModal();
+  refreshInteractionSurface();
+  queueMicrotask(() => cardInspectorClose.focus());
 }
 
 function closeCaptureInspection(restoreFocus = true): void {
@@ -533,7 +641,7 @@ function openYakuGuide(): void {
 
 function openCaptureInspection(control: HTMLButtonElement): void {
   if (
-    captureInspector.open ||
+    isAnyDialogOpen() ||
     processingIntent ||
     handoffPlayerId !== null ||
     isRoundResultOpen() ||
@@ -964,11 +1072,14 @@ function updateControls(): void {
   historyTrigger.disabled = utilityOpenersBlocked || deckStatus !== "ready";
   yakuGuideTrigger.disabled = utilityOpenersBlocked || deckStatus !== "ready";
   optionsTrigger.disabled = utilityOpenersBlocked;
+  contextHelpTrigger.disabled = utilityOpenersBlocked || deckStatus !== "ready";
   for (const option of themeOptions) option.disabled = isCriticalUtilityBlocked();
   if (isCriticalUtilityBlocked()) {
     closeOptions(false);
     closeHistory(false);
     closeYakuGuide(false);
+    closeContextHelp(false);
+    closeCardInspection(false);
   }
   renderCaptureInspectionControls();
 }
@@ -1241,6 +1352,24 @@ optionsDialog.addEventListener("cancel", (event) => {
 optionsDialog.addEventListener("close", () => {
   optionsTrigger.setAttribute("aria-expanded", "false");
 });
+contextHelpTrigger.addEventListener("click", openContextHelp);
+contextHelpClose.addEventListener("click", () => closeContextHelp());
+contextHelpDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeContextHelp();
+});
+contextHelpDialog.addEventListener("close", () => {
+  contextHelpTrigger.setAttribute("aria-expanded", "false");
+});
+cardInspectorClose.addEventListener("click", () => closeCardInspection());
+cardInspector.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeCardInspection();
+});
+cardInspector.addEventListener("close", () => {
+  cardInspectionCardId = null;
+  cardInspectionTrigger = null;
+});
 for (const control of captureInspectControls) {
   control.addEventListener("click", () => openCaptureInspection(control));
 }
@@ -1292,11 +1421,13 @@ handoffReady.addEventListener("click", () => void acceptHandoff());
 document.addEventListener("fullscreenchange", updateFullscreenLabel);
 window.addEventListener("keydown", (event) => {
   if (captureInspector.open) return;
-  if (historyDialog.open || yakuGuideDialog.open) {
-    if (event.key.toLowerCase() === "f") event.preventDefault();
-    return;
-  }
-  if (optionsDialog.open) {
+  if (
+    historyDialog.open ||
+    yakuGuideDialog.open ||
+    optionsDialog.open ||
+    contextHelpDialog.open ||
+    cardInspector.open
+  ) {
     if (event.key.toLowerCase() === "f") event.preventDefault();
     return;
   }
@@ -1401,6 +1532,7 @@ async function start(): Promise<void> {
       interactionController?.setFocusedCardId(cardId);
       refreshInteractionSurface();
     },
+    onInspect: (cardId, trigger) => openCardInspection(cardId, trigger),
   });
   new ResizeObserver(redraw).observe(host);
   ready = true;

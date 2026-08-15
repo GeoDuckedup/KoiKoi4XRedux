@@ -50,6 +50,11 @@ describe("Phase 2B table diagnostics", () => {
       diagnostics: inspectBoardLayout(layout),
       fullscreen: false,
       captureInspection: { open: false, owner: null, totalCards: 0 },
+      utilitySurfaces: {
+        contextualHelpOpen: false,
+        cardInspectorOpen: false,
+        cardInspectionCardId: null,
+      },
       input: {
         status: "idle",
         confirmationMode: "guided",

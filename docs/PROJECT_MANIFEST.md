@@ -30,6 +30,7 @@
 | Phase 3F-C visual interaction cues | `docs/adr/0022-phase-3f-c-visual-interaction-cues.md` |
 | Phase 3F-D placement/capture choreography | `docs/adr/0023-phase-3f-d-placement-capture-choreography.md` |
 | Phase 3F-E utility dock/capture cleanup | `docs/adr/0024-phase-3f-e-utility-dock-and-capture-cleanup.md` |
+| Phase 3F-F interaction clarity/card inspection | `docs/adr/0025-phase-3f-f-interaction-clarity-and-card-inspection.md` |
 | Architectural decisions | `docs/adr/` |
 | Agent operating instructions | `AGENTS.md` |
 

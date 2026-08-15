@@ -594,7 +594,27 @@ geometry/frame, decluttered DOM/canvas labels, privacy, persistent-card identity
 containment. Artifacts are written under `output/phase-3f-e/e2e/`. ADR 0024 records the
 presentation-only boundary; Phase 5A retains ordered per-yaku scoring evidence in expanded results.
 
-## 25. Approved-decision coverage matrix
+## 25. Phase 3F-F interaction-clarity and card-inspection vectors
+
+| ID | Required expectation |
+|---|---|
+| `VISUAL-3FF-001-GOLD-SEMANTICS` | An actively selected Hand or settled Reveal source and every legal field capture target use the same yellow-gold semantic family. Source and target remain distinguishable by geometry/layering, not by blue-versus-yellow meaning. |
+| `VISUAL-3FF-002-GLOW-STRENGTH` | Selected-source, legal-target, and legal field-destination cues are at least 20% stronger than the Phase 3F-C baseline through stable normalized cue tokens (opacity, blur/spread, or stroke), while noninteractive cards remain unchanged. |
+| `VISUAL-3FF-003-NO-MATCH-DESTINATION` | A selected no-match Hand or settled Reveal source makes the actual field an unambiguous yellow-gold placement destination. It restores neither empty slots/numbering nor routine text instructions, Confirm/Cancel, or unrelated-card overlay choreography. |
+| `VISUAL-3FF-004-REVEAL-PARITY` | A settled Draw Reveal source uses the same selected and gold-target language as a Hand source. Before the player selects Reveal, a pending Draw causes no target pulse or movement; the authoritative Draw-resolution flow remains unchanged. |
+| `VISUAL-3FF-005-PHASE-HELP` | A top-right optional help control opens a read-only contextual dialog derived solely from the current public observation, existing legal actions, and current presentation selection. It explains the next permitted interaction without creating an intent, evaluating strategy/current Yaku, or acting as onboarding. |
+| `VISUAL-3FF-006-CARD-INSPECT` | A 450–500ms press on a face-up public Field card or the local player’s Hand card opens a larger regular 5:8 inspector with only public factual card information. Short tap preserves normal play; early release, drag beyond 8px, cancellation, state/animation change, or dialog opening prevents inspection. |
+| `VISUAL-3FF-007-A11Y-INPUT` | Help and inspector controls have accessible names, native-dialog focus/Escape/focus-return behavior, and explicit mutual exclusion with History, Yaku Guide, Options, capture inspection, and critical decisions. Keyboard/context-menu inspection has the same zero-intent behavior as long press; existing source/target pointer and keyboard activation plus Escape cancellation remain equivalent. |
+| `VISUAL-3FF-008-THEME-RESPONSIVE-PRIVACY` | Root and repository-prefixed Pages traces cover seven baseline viewports plus focused 390×844 and 844×390 checks across all themes. They retain one canvas, 48 persistent CardViews, containment, no browser/network errors, and recipient-safe text: no opponent-hand identity, hidden Draw/deck identity or order, RNG, checkpoint, or command ID reaches help or inspector. |
+
+Phase 3F-F binding: cue-token/interaction tests and root/Pages production smoke prove selected-source
+and target gold semantics, stronger legal field destination, settled Reveal parity with no pre-tap
+movement, contextual help, and privacy-safe card inspection. Focused artifacts are written under
+`output/phase-3f-f/e2e/`. This remains presentation/input only: no engine, protocol, replay, scoring,
+or result-evidence authority changes. Phase 5A alone records ordered, exact yaku-card evidence at
+formation time for expanded end-of-play details.
+
+## 26. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

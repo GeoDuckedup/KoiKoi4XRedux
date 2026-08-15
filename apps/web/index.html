@@ -17,7 +17,37 @@
         <div>
           <h1 id="app-title">KoiKoi4x</h1>
         </div>
+        <button
+          class="context-help-trigger"
+          type="button"
+          data-context-help-trigger
+          aria-haspopup="dialog"
+          aria-controls="context-help-dialog"
+          aria-expanded="false"
+          aria-label="What can I do now?"
+        >
+          ?
+        </button>
       </header>
+
+      <dialog
+        class="utility-dialog context-help-dialog"
+        id="context-help-dialog"
+        data-context-help-dialog
+        aria-labelledby="context-help-dialog-title"
+      >
+        <header class="utility-dialog__header">
+          <div>
+            <p class="eyebrow">Current turn</p>
+            <h2 id="context-help-dialog-title" data-context-help-title>What can I do now?</h2>
+          </div>
+          <button type="button" data-context-help-close>Close</button>
+        </header>
+        <div class="utility-dialog__body context-help-dialog__body">
+          <p data-context-help-summary></p>
+          <ol data-context-help-steps></ol>
+        </div>
+      </dialog>
 
       <dialog
         class="options-dialog"
@@ -307,6 +337,30 @@
           <button type="button" data-capture-inspector-close>Close</button>
         </header>
         <div class="capture-inspector__groups" data-capture-inspector-groups></div>
+      </dialog>
+      <dialog class="card-inspector" data-card-inspector aria-labelledby="card-inspector-title">
+        <header class="utility-dialog__header">
+          <div>
+            <p class="eyebrow" data-card-inspector-month></p>
+            <h2 id="card-inspector-title" data-card-inspector-title>Card information</h2>
+          </div>
+          <button type="button" data-card-inspector-close>Close</button>
+        </header>
+        <div class="card-inspector__body">
+          <img data-card-inspector-image alt="" width="250" height="400" />
+          <div class="card-inspector__facts">
+            <p data-card-inspector-category></p>
+            <p data-card-inspector-flower></p>
+            <section data-card-inspector-yaku hidden>
+              <h3>Related yaku</h3>
+              <ul data-card-inspector-yaku-list></ul>
+            </section>
+            <section>
+              <h3>Card facts</h3>
+              <ul data-card-inspector-notes></ul>
+            </section>
+          </div>
+        </div>
       </dialog>
       <p class="visually-hidden" data-latest-recap aria-live="polite"></p>
       <p class="visually-hidden" id="input-instruction" data-input-instruction aria-live="polite">

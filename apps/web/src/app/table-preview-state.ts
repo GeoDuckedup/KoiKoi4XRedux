@@ -83,6 +83,11 @@ export interface TablePreviewSnapshot {
     readonly activeId: Phase3DVisualDirectionId;
     readonly optionsOpen: boolean;
   };
+  readonly utilitySurfaces: {
+    readonly cardInspectionCardId: string | null;
+    readonly cardInspectorOpen: boolean;
+    readonly contextualHelpOpen: boolean;
+  };
   readonly viewport: BoardViewport;
   readonly yaku: YakuPresentationStateV1;
   readonly result: RoundResultPresentationV1 | null;
@@ -115,6 +120,7 @@ export function createTablePreviewSnapshot(input: {
   readonly semanticControlCount: number;
   readonly simulationTimeMs: number;
   readonly theme: TablePreviewSnapshot["theme"];
+  readonly utilitySurfaces: TablePreviewSnapshot["utilitySurfaces"];
   readonly viewport: BoardViewport;
   readonly yaku: YakuPresentationStateV1;
   readonly result: RoundResultPresentationV1 | null;
@@ -159,6 +165,7 @@ export function createTablePreviewSnapshot(input: {
     localRound: Object.freeze({ ...input.localRound }),
     simulationTimeMs: input.simulationTimeMs,
     theme: Object.freeze({ ...input.theme }),
+    utilitySurfaces: Object.freeze({ ...input.utilitySurfaces }),
     animation: Object.freeze({
       ...input.animation,
       activeClip: input.animation.activeClip

@@ -1185,6 +1185,10 @@ A later tutorial should cover:
 - Capture lanes show yaku progress.
 - Newly completed yaku show exact point changes.
 - A “Why?” affordance explains a forced rule.
+
+The optional in-play `?` control is a narrow, read-only next-step aid, not a tutorial or strategy
+advisor. It may describe only the current public phase, legal interaction shape, and current visual
+selection; it must not evaluate the table, recommend a move, calculate live yaku, or submit an action.
 - The first occurrence of a special rule triggers one short explanation.
 - Explanations can be dismissed and reviewed later.
 - A beginner setting can keep month/category labels visible.
@@ -1308,11 +1312,12 @@ Tap-and-hold, right-click, or a dedicated info affordance opens:
 - large card image;
 - month and flower;
 - category;
-- named yaku participation;
-- current relevance to visible yaku;
+- named static yaku participation;
 - short cultural/card description if provided.
 
-Inspection must not submit a move.
+Inspection is available only for face-up public Field cards and the local player’s face-up Hand; it
+never exposes opponent-hand identity, face-down Draw/deck identity/order, or private engine state. It
+must not submit a move, and short taps preserve ordinary card interaction.
 
 ---
 

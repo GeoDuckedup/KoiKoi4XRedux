@@ -95,14 +95,18 @@ export interface InteractionVisualStateV1 {
 export interface CardHitAreaV1 {
   readonly cardId: CardId;
   readonly bounds: BoardRect;
-  readonly role: "selectable" | "target";
+  readonly role: "inspectable" | "selectable" | "target";
 }
 
 export interface SemanticCardControlV1 extends CardHitAreaV1 {
   readonly actionLabel: string;
+  readonly actionable: boolean;
   readonly ariaLabel: string;
   readonly category: string;
   readonly focused: boolean;
+  readonly inspectable: boolean;
+  readonly locked: boolean;
   readonly monthName: string;
+  readonly observationStateVersion: number;
   readonly selected: boolean;
 }

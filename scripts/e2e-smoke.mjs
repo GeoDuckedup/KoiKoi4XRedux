@@ -6,7 +6,7 @@ import { chromium } from "playwright";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-3f-e/e2e");
+const outputDirectory = resolve(repositoryRoot, "output/phase-3f-f/e2e");
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
 const mountedBasePath = smokeBasePath === "/" ? "/" : `${smokeBasePath}/`;
@@ -112,6 +112,10 @@ async function readState(page) {
   return page.evaluate(() => JSON.parse(window.render_game_to_text()));
 }
 
+async function actionableSemanticControlCount(page) {
+  return page.locator('[data-card-id][data-actionable="true"]').count();
+}
+
 async function openOptions(page) {
   if (!(await page.locator("[data-options-dialog]").evaluate((dialog) => dialog.open))) {
     await page.locator("[data-options-trigger]").click();
@@ -127,6 +131,7 @@ async function closeOptions(page) {
 
 async function assertUtilityDialogCycle(page, { trigger, dialog, close, focus = close, label }) {
   const utilities = [
+    { trigger: "[data-context-help-trigger]", dialog: "[data-context-help-dialog]" },
     { trigger: "[data-history-trigger]", dialog: "[data-history-dialog]" },
     { trigger: "[data-yaku-guide-trigger]", dialog: "[data-yaku-guide-dialog]" },
     { trigger: "[data-options-trigger]", dialog: "[data-options-dialog]" },
@@ -165,10 +170,15 @@ async function assertUtilityDialogCycle(page, { trigger, dialog, close, focus = 
   assert(
     (await page
       .locator(
-        "[data-history-dialog][open], [data-yaku-guide-dialog][open], [data-options-dialog][open]",
+        "[data-context-help-dialog][open], [data-history-dialog][open], [data-yaku-guide-dialog][open], [data-options-dialog][open]",
       )
       .count()) === 1,
     `${label} did not retain exactly one open utility dialog.`,
+  );
+  assert(
+    !(await page.locator("[data-context-help-dialog]").evaluate((element) => element.open)) ||
+      dialog === "[data-context-help-dialog]",
+    `${label} opened while contextual help was already visible.`,
   );
   assert(
     !(await page.locator("[data-history-dialog]").evaluate((element) => element.open)) ||
@@ -200,6 +210,132 @@ async function assertUtilityDialogCycle(page, { trigger, dialog, close, focus = 
       (element) => element instanceof HTMLDialogElement && element.open,
     )) && (await triggerLocator.evaluate((element) => document.activeElement === element)),
     `Escape did not close ${label} and restore focus to its trigger.`,
+  );
+}
+
+async function assertContextHelp(page, screenshotId = "390x844") {
+  const before = await readState(page);
+  await page.locator("[data-context-help-trigger]").click();
+  await page.locator("[data-context-help-dialog]").waitFor({ state: "visible" });
+  assert(
+    ((await page.locator("[data-context-help-title]").textContent()) ?? "").trim().length > 0 &&
+      ((await page.locator("[data-context-help-summary]").textContent()) ?? "").trim().length > 0 &&
+      ((await page.locator("[data-context-help-steps] li").count()) ?? 0) > 0,
+    "Contextual help did not explain the current public next step.",
+  );
+  const during = await readState(page);
+  assert(
+    during.localRound.stateVersion === before.localRound.stateVersion &&
+      during.localRound.commandCount === before.localRound.commandCount &&
+      during.cards.cardViewCount === before.cards.cardViewCount &&
+      !JSON.stringify(during).includes("drawPileOrdered") &&
+      !JSON.stringify(during).includes("commandId"),
+    "Contextual help changed authority, persistent card identity, or public privacy boundaries.",
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `context-help-${screenshotId}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await page.keyboard.press("Escape");
+  assert(
+    !(await page.locator("[data-context-help-dialog]").evaluate((dialog) => dialog.open)) &&
+      (await page
+        .locator("[data-context-help-trigger]")
+        .evaluate((trigger) => document.activeElement === trigger)),
+    "Escape did not close contextual help and restore focus to its trigger.",
+  );
+}
+
+async function assertCardInspection(page, selector, label, screenshotId = "390x844") {
+  const control = page.locator(selector);
+  assert(await control.isVisible(), `${label} inspectable card control is missing.`);
+  assert(
+    (await control.getAttribute("data-inspectable")) === "true",
+    `${label} was not marked as a privacy-safe inspectable card.`,
+  );
+  await control.dispatchEvent("pointerdown", {
+    button: 0,
+    pointerId: 89,
+    clientX: 20,
+    clientY: 20,
+  });
+  await control.dispatchEvent("pointerup", { button: 0, pointerId: 89, clientX: 20, clientY: 20 });
+  await page.waitForTimeout(510);
+  assert(
+    !(await page.locator("[data-card-inspector]").evaluate((dialog) => dialog.open)),
+    `${label} early pointer release incorrectly opened the inspector.`,
+  );
+  await control.dispatchEvent("pointerdown", {
+    button: 0,
+    pointerId: 90,
+    clientX: 20,
+    clientY: 20,
+  });
+  await control.dispatchEvent("pointermove", {
+    button: 0,
+    pointerId: 90,
+    clientX: 30,
+    clientY: 20,
+  });
+  await page.waitForTimeout(510);
+  assert(
+    !(await page.locator("[data-card-inspector]").evaluate((dialog) => dialog.open)),
+    `${label} drag cancellation incorrectly opened the inspector.`,
+  );
+  const before = await readState(page);
+  await control.dispatchEvent("pointerdown", {
+    button: 0,
+    pointerId: 91,
+    clientX: 20,
+    clientY: 20,
+  });
+  await page.waitForTimeout(510);
+  await page.locator("[data-card-inspector]").waitFor({ state: "visible" });
+  await control.dispatchEvent("pointerup", { button: 0, pointerId: 91, clientX: 20, clientY: 20 });
+  const imageMetrics = await page.locator("[data-card-inspector-image]").evaluate((image) => {
+    const box = image.getBoundingClientRect();
+    return { ratio: box.width / box.height, alt: image.getAttribute("alt") };
+  });
+  assert(
+    Math.abs(imageMetrics.ratio - 0.625) < 0.03 && (imageMetrics.alt ?? "").length > 0,
+    `${label} inspector did not present a regular 5:8 face-up card image.`,
+  );
+  const during = await readState(page);
+  assert(
+    during.utilitySurfaces.cardInspectorOpen === true &&
+      before.utilitySurfaces.cardInspectorOpen === false &&
+      during.utilitySurfaces.cardInspectionCardId !== null,
+    `${label} inspector state is not represented as a non-authoritative visible surface.`,
+  );
+  assert(
+    during.localRound.stateVersion === before.localRound.stateVersion &&
+      during.localRound.commandCount === before.localRound.commandCount &&
+      during.cards.cardViewCount === before.cards.cardViewCount,
+    `${label} long press changed authoritative state or persistent CardView identity.`,
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `card-inspector-${label.replaceAll(/[^a-z0-9]+/giu, "-").toLowerCase()}-${screenshotId}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await page.keyboard.press("Escape");
+  assert(
+    !(await page.locator("[data-card-inspector]").evaluate((dialog) => dialog.open)) &&
+      (await control.evaluate((element) => document.activeElement === element)),
+    `${label} inspector did not close with Escape and restore focus.`,
+  );
+  await control.focus();
+  await page.keyboard.press("I");
+  await page.locator("[data-card-inspector]").waitFor({ state: "visible" });
+  await page.keyboard.press("Escape");
+  assert(
+    !(await page.locator("[data-card-inspector]").evaluate((dialog) => dialog.open)),
+    `${label} keyboard inspection did not close cleanly.`,
   );
 }
 
@@ -652,7 +788,7 @@ async function runPhysicalDrawTrace(page) {
     "A face-down Draw card identity entered the recipient-visible text surface.",
   );
   assert(
-    drawTravel.input.semanticControlCount === 0,
+    (await actionableSemanticControlCount(page)) === 0,
     "Draw input became actionable before the face-down card reached Reveal.",
   );
   await page.screenshot({
@@ -663,9 +799,9 @@ async function runPhysicalDrawTrace(page) {
     fullPage: true,
   });
 
-  const flip = await advanceUntilAnimationClip(page, "flip", "drawCardRevealed");
+  await advanceUntilAnimationClip(page, "flip", "drawCardRevealed");
   assert(
-    flip.input.semanticControlCount === 0,
+    (await actionableSemanticControlCount(page)) === 0,
     "Draw input became actionable before the revealed card pause completed.",
   );
   await page.evaluate(() => window.advanceTime(140));
@@ -675,7 +811,7 @@ async function runPhysicalDrawTrace(page) {
     "The revealed card did not become visible in the Reveal zone after the flip.",
   );
   assert(
-    revealPause.input.semanticControlCount === 0,
+    (await actionableSemanticControlCount(page)) === 0,
     "Reveal controls appeared before the identify pause completed.",
   );
   await page.screenshot({
@@ -1031,6 +1167,13 @@ try {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await assertUtilityDialogCycle(page, {
+    trigger: "[data-context-help-trigger]",
+    dialog: "[data-context-help-dialog]",
+    close: "[data-context-help-close]",
+    label: "Contextual help",
+  });
+  await assertContextHelp(page);
+  await assertUtilityDialogCycle(page, {
     trigger: "[data-history-trigger]",
     dialog: "[data-history-dialog]",
     close: "[data-history-close]",
@@ -1093,6 +1236,25 @@ try {
     ),
     fullPage: true,
   });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await assertCardInspection(
+    page,
+    '[data-card-id="january-pine-plain-b"][data-inspectable="true"]',
+    "field-card",
+  );
+  await assertCardInspection(
+    page,
+    '[data-card-id="november-red-scroll"][data-inspectable="true"]',
+    "own-hand-card",
+  );
+  await page.setViewportSize({ width: 844, height: 390 });
+  await assertContextHelp(page, "844x390");
+  await assertCardInspection(
+    page,
+    '[data-card-id="january-pine-plain-b"][data-inspectable="true"]',
+    "field-card",
+    "844x390",
+  );
   await page.setViewportSize({ width: 390, height: 844 });
   await runPhysicalDrawTrace(page);
   await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
@@ -1368,7 +1530,7 @@ try {
   );
   assert(handAnimals.input.status === "decision", "Card input was not locked for the decision.");
   assert(
-    handAnimals.input.semanticControlCount === 0,
+    (await actionableSemanticControlCount(page)) === 0,
     "Hand-card semantic controls remained active during the decision.",
   );
   assert(await page.locator("[data-yaku-decision]").isVisible(), "Yaku decision tray is missing.");
@@ -1656,7 +1818,10 @@ try {
   ]) {
     assert(await page.locator(selector).isDisabled(), `${selector} escaped the result modal lock.`);
   }
-  assert(banked.input.semanticControlCount === 0, "The committed result did not lock card input.");
+  assert(
+    (await actionableSemanticControlCount(page)) === 0,
+    "The committed result did not lock actionable card input.",
+  );
   assert(
     (await page.locator("[data-latest-recap]").textContent())?.includes("banked 3 × 1× = 3 points"),
     "The compact shell did not retain the latest authoritative event.",

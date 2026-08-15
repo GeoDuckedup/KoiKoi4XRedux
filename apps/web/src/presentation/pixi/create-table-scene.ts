@@ -363,20 +363,20 @@ function renderInteractionHighlights(
     };
     layer.addChild(
       panel(field, {
-        fill: colors.legal,
-        fillAlpha: 0.045,
+        fill: colors.gold,
+        fillAlpha: 0.054,
         radius: Math.max(8, 14 * layout.scale),
-        stroke: colors.legal,
-        strokeAlpha: 0.78,
-        strokeWidth: Math.max(1.5, 2.25 * layout.scale),
+        stroke: colors.gold,
+        strokeAlpha: 0.94,
+        strokeWidth: Math.max(1.8, 2.7 * layout.scale),
       }),
       panel(badge, {
-        fill: colors.legal,
-        fillAlpha: 0.18,
+        fill: colors.gold,
+        fillAlpha: 0.216,
         radius: Math.max(5, 6 * layout.scale),
-        stroke: colors.legal,
-        strokeAlpha: 0.78,
-        strokeWidth: Math.max(1, layout.scale),
+        stroke: colors.gold,
+        strokeAlpha: 0.94,
+        strokeWidth: Math.max(1.2, 1.2 * layout.scale),
       }),
       label("PLACE HERE", badge.x + badge.width / 2, badge.y + badge.height / 2, {
         anchorX: 0.5,
@@ -410,22 +410,21 @@ function renderInteractionHighlights(
       width: placement.bounds.width + padding * 2,
       height: placement.bounds.height + padding * 2,
     };
-    const color =
-      target || actionableReveal ? colors.legal : selected ? colors.gold : colors.creamMuted;
+    const color = target || actionableReveal || selected ? colors.gold : colors.creamMuted;
     const alpha =
-      target || selected ? 0.96 : actionableReveal ? 0.68 : selectable.has(cardId) ? 0.3 : 0;
+      target || selected ? 1 : actionableReveal ? 0.82 : selectable.has(cardId) ? 0.36 : 0;
     layer.addChild(
       new Graphics()
         .roundRect(bounds.x, bounds.y, bounds.width, bounds.height, Math.max(4, 8 * layout.scale))
-        .fill({ color, alpha: target ? 0.075 : 0 })
+        .fill({ color, alpha: target ? 0.09 : 0 })
         .stroke({
           color,
           alpha,
           width:
             selected || target
-              ? Math.max(2, 2.5 * layout.scale)
+              ? Math.max(2.4, 3 * layout.scale)
               : actionableReveal
-                ? Math.max(1.5, 2 * layout.scale)
+                ? Math.max(1.8, 2.4 * layout.scale)
                 : 1,
         }),
     );
@@ -442,8 +441,8 @@ function renderInteractionHighlights(
           )
           .stroke({
             color: colors.gold,
-            alpha: 0.52,
-            width: Math.max(1, 1.25 * layout.scale),
+            alpha: 0.624,
+            width: Math.max(1.2, 1.5 * layout.scale),
           }),
       );
     }

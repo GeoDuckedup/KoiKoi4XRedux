@@ -171,6 +171,11 @@ labels. A newer observation is required after intent emission. The current techn
 a real recipient projection or command sink. See
 [`ADR 0010`](./adr/0010-phase-2d-input-intent-boundary.md).
 
+Phase 3F-F extends that presentation boundary with read-only contextual help and a semantic-card
+inspection gesture. Both consume only recipient-safe observation/card metadata; neither evaluates
+rules, emits an intent, creates a CardView, or expands hidden-information visibility. See
+[`ADR 0025`](./adr/0025-phase-3f-f-interaction-clarity-and-card-inspection.md).
+
 Phase 2E keeps deck authoring outside the production client. Portable package, transform,
 contact-sheet, and approval contracts live in `packages/deck-format/src`; Sharp, filesystem access,
 atomic writes, source decoding, and deterministic raster generation live only under

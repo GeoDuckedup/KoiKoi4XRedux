@@ -3,7 +3,8 @@
 **Updated:** August 15, 2026
 
 **Overall state:** Greenfield rewrite through Phase 3F-E utility dock/capture cleanup is deployed,
-live-verified, and accepted
+live-verified, and accepted; Phase 3F-F interaction clarity/card inspection is locally complete,
+with deployment and live verification pending
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -91,6 +92,21 @@ URL returned HTTP/2 200 with a cache MISS, `Last-Modified: Sat, 15 Aug 2026 01:1
 `new-primary-deck`, one canvas, 48/48 unique CardViews, 8 field, 8 hand, 24 draw, and clean
 diagnostics. The live states and screenshots under `output/phase-3f-e/live-ready/` were inspected.
 Phase 3F-E is deployed and accepted.
+
+Phase 3F-F is a locally complete presentation/input clarification pass. It unifies selected Hand and
+settled Reveal sources, legal field targets, and legal no-match field destinations around a stronger
+yellow-gold cue; add optional read-only phase help; and add a privacy-safe long-press/card-inspection
+surface for public Field cards and the local Hand. It must preserve short-tap move behavior, public
+authority, animation choreography, one canvas, and 48 persistent CardViews. Exact yaku-card formation
+evidence remains a Phase 5A engine/protocol/history/result responsibility rather than a Phase 3F-F
+browser reconstruction. Local validation passed `validate:phase3ff`: 48/48 release deck, 100 technical
+artifacts, 7 files / 83 tests, Workshop, 14 density viewports, and root/Pages smoke; all-web validation
+also passed 143 tests/build. Initial independent review found four medium issues, repaired before clean
+re-review. `npm run check` passed 48 files / 448 ordinary tests, all 10,002 deterministic seeds, and
+the 774-module production build. The bundled skill client was ready at 1280×720 with one canvas, 48
+unique CardViews, 8 hand / 8 field / 24 draw, 8 actionable plus 8 inspect-only semantic controls,
+closed utility surfaces, and no diagnostics; its final screenshot/state were inspected under
+`output/phase-3f-f/game-client-final/`. Commit, hosted CI/Pages, and live evidence remain pending.
 
 Release commit `51a1821` passed CI run `31742306302` and Pages run `31742306314`; the Pages deploy
 job completed successfully. A cache-busted live browser check reached ready state with the approved

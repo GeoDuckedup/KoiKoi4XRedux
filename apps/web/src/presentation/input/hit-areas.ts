@@ -161,6 +161,58 @@ export function computeCardHitAreas(input: {
   return Object.freeze(areas);
 }
 
+/** Face-up own Hand and public field cards are safe to inspect. */
+export function computeInspectableCardHitAreas(input: {
+  layout: BoardLayout;
+  projection: PresentationBoardProjection;
+}): readonly CardHitAreaV1[] {
+  const placements = computeCardPlacements(input.layout, input.projection);
+  const fieldBounds = partitionedFieldBounds(placements, input.layout);
+  const handPlacements = placements
+    .filter(({ faceUp, zone }) => faceUp && zone === "playerHand")
+    .sort((left, right) => left.bounds.x - right.bounds.x);
+  const handBounds = new Map<CardId, BoardRect>();
+  for (const [index, placement] of handPlacements.entries()) {
+    const previous = handPlacements[index - 1];
+    const next = handPlacements[index + 1];
+    const center = placement.bounds.x + placement.bounds.width / 2;
+    const left = previous
+      ? (previous.bounds.x + previous.bounds.width / 2 + center) / 2
+      : placement.bounds.x;
+    const right = next
+      ? (center + next.bounds.x + next.bounds.width / 2) / 2
+      : placement.bounds.x + placement.bounds.width;
+    handBounds.set(
+      placement.cardId,
+      containedHandRect(
+        freezeRect({
+          x: left,
+          y: placement.bounds.y,
+          width: right - left,
+          height: placement.bounds.height,
+        }),
+        input.layout,
+      ),
+    );
+  }
+  return Object.freeze(
+    placements
+      .filter(({ faceUp, zone }) => faceUp && (zone === "playerHand" || zone === "field"))
+      .map((placement) =>
+        Object.freeze({
+          cardId: placement.cardId,
+          role: "inspectable" as const,
+          bounds:
+            placement.zone === "playerHand"
+              ? (handBounds.get(placement.cardId) ?? freezeRect(placement.bounds))
+              : placement.zone === "field"
+                ? (fieldBounds.get(placement.cardId) ?? freezeRect(placement.bounds))
+                : freezeRect(placement.bounds),
+        }),
+      ),
+  );
+}
+
 export function buildSemanticCardControls(input: {
   inspection: InputInteractionInspectionV1;
   layout: BoardLayout;
@@ -172,13 +224,28 @@ export function buildSemanticCardControls(input: {
     selectableCardIds: input.inspection.selectableCardIds,
     legalTargetCardIds: input.inspection.legalTargetCardIds,
   });
+  const actionableByCardId = new Map(areas.map((area) => [area.cardId, area]));
+  const inspectable = computeInspectableCardHitAreas({
+    layout: input.layout,
+    projection: input.projection,
+  });
+  // Preserve the existing roving/action order first.  Inspection-only cards follow it so the first
+  // tab stop and arrow traversal continue to prioritise the currently legal engine actions.
+  const orderedAreas = [
+    ...areas,
+    ...inspectable.filter((area) => !actionableByCardId.has(area.cardId)),
+  ];
   return Object.freeze(
-    areas.map((area) => {
+    orderedAreas.map((inspectArea) => {
+      const area = actionableByCardId.get(inspectArea.cardId) ?? inspectArea;
+      const canInspect = inspectable.some((area) => area.cardId === inspectArea.cardId);
       const card = getCardDefinition(area.cardId);
       const month = getMonthDefinition(card.month);
       const selected = input.inspection.selectedCardId === area.cardId;
-      const actionLabel =
-        area.role === "target"
+      const actionable = actionableByCardId.has(area.cardId);
+      const actionLabel = !actionable
+        ? "inspect card"
+        : area.role === "target"
           ? targetActionLabel(input.inspection.handResolutionKind)
           : selected
             ? "selected card; activate again to cancel"
@@ -186,10 +253,14 @@ export function buildSemanticCardControls(input: {
       return Object.freeze({
         ...area,
         actionLabel,
-        ariaLabel: `${month.name} ${card.displayName}, ${month.flower}, ${card.category}. ${actionLabel}.`,
+        actionable,
+        ariaLabel: `${month.name} ${card.displayName}, ${month.flower}, ${card.category}. ${actionLabel}.${canInspect ? " Long press or press I for card information." : ""}`,
         category: card.category,
         focused: input.inspection.focusedCardId === area.cardId,
+        inspectable: canInspect,
+        locked: input.inspection.status === "locked" || input.inspection.status === "intentPending",
         monthName: month.name,
+        observationStateVersion: input.inspection.observationStateVersion,
         selected,
       });
     }),

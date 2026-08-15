@@ -103,6 +103,7 @@ const bridge = createDomCardBridge({
     focusedCardId = cardId;
     render();
   },
+  onInspect: () => undefined,
 });
 
 function render(): void {
@@ -148,7 +149,9 @@ function render(): void {
       ),
     }),
     targets: Object.freeze(
-      controls.map(({ cardId, bounds, ariaLabel }) => Object.freeze({ cardId, bounds, ariaLabel })),
+      controls
+        .filter(({ actionable, role }) => actionable && role === "target")
+        .map(({ cardId, bounds, ariaLabel }) => Object.freeze({ cardId, bounds, ariaLabel })),
     ),
     activatedCardId,
     focusedCardId,
