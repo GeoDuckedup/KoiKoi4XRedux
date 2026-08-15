@@ -1,6 +1,6 @@
 # ADR 0025 — Phase 3F-F interaction clarity and card inspection
 
-**Status:** Locally implemented and validated; review/hosted release pending
+**Status:** Accepted, deployed, and live-verified
 
 ## Context
 
@@ -51,8 +51,11 @@ inspected. `npm run check` also passed 48 files / 448 ordinary tests, all 10,002
 and the 774-module production build. The bundled skill client reached ready at 1280×720 with one
 canvas, 48 unique CardViews, 8 hand / 8 field / 24 draw, 8 actionable plus 8 inspect-only semantic
 controls, closed utility surfaces, and no diagnostics; its screenshot/state under
-`output/phase-3f-f/game-client-final/` were inspected. Commit, hosted CI/Pages, and live verification
-remain pending.
+`output/phase-3f-f/game-client-final/` were inspected. Feature commit `876e6e6` and browser-harness
+repairs `1163938` / `b787faa` are deployed. CI `31865103301` and Pages `31865103302` passed; the
+cache-busted live build returned HTTP/2 200 MISS. Live-client evidence is ready with one canvas, 48
+unique CardViews, 24 draw / 8 opponent hand / 8 field / 8 own hand, 8 actionable plus 8 inspect-only
+controls, closed utilities, and no diagnostics. Phase 3F-F is deployed, live-verified, and accepted.
 
 ## Next subphase
 

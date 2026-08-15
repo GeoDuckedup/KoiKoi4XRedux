@@ -3,8 +3,8 @@
 **Updated:** August 15, 2026
 
 **Overall state:** Greenfield rewrite through Phase 3F-E utility dock/capture cleanup is deployed,
-live-verified, and accepted; Phase 3F-F interaction clarity/card inspection is locally complete,
-with deployment and live verification pending
+live-verified, and accepted; Phase 3F-F interaction clarity/card inspection is deployed,
+live-verified, and accepted
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -106,7 +106,11 @@ re-review. `npm run check` passed 48 files / 448 ordinary tests, all 10,002 dete
 the 774-module production build. The bundled skill client was ready at 1280×720 with one canvas, 48
 unique CardViews, 8 hand / 8 field / 24 draw, 8 actionable plus 8 inspect-only semantic controls,
 closed utility surfaces, and no diagnostics; its final screenshot/state were inspected under
-`output/phase-3f-f/game-client-final/`. Commit, hosted CI/Pages, and live evidence remain pending.
+`output/phase-3f-f/game-client-final/`. Deployed head `b787faa158dd1b62fb98f085d0c6020f00889d9d`
+passed CI `31865103301` and Pages `31865103302`. The cache-busted live build returned HTTP/2 200 MISS,
+and the inspected final live client was ready with one canvas, 48 unique CardViews, 24/8/8/8 zones,
+16 semantic controls (8 actionable + 8 inspect-only), closed utilities, and no diagnostics. Phase 3F-F
+is deployed, live-verified, and accepted.
 
 Release commit `51a1821` passed CI run `31742306302` and Pages run `31742306314`; the Pages deploy
 job completed successfully. A cache-busted live browser check reached ready state with the approved

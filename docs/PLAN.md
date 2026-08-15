@@ -3,7 +3,7 @@
 **Plan version:** 1.1
 **Updated:** August 14, 2026
 **Current gate:** Phase 3F-E utility dock/capture cleanup is deployed and accepted; Phase 3F-F
-interaction clarity/card inspection is locally complete with deployment pending, then Phase 5A full local match formats
+interaction clarity/card inspection is deployed and accepted; Phase 5A full local match formats is next
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -908,7 +908,7 @@ clean diagnostics. The states and screenshots under `output/phase-3f-e/live-read
 
 ### Phase 3F-F — Interaction clarity and card inspection
 
-Status: **locally implemented and validated; commit, hosted CI/Pages, and live evidence pending**.
+Status: **deployed, live-verified, and accepted**.
 
 This presentation/input pass makes selected Hand and settled Reveal sources, legal field targets,
 and legal no-match field destinations share a stronger yellow-gold language. It adds optional,
@@ -923,8 +923,8 @@ Gate:
   gesture cancellation, accessibility/modal behavior, and root/Pages privacy/containment;
 - no engine, protocol, scoring, replay, result, hidden-information, or persistent-CardView semantics
   change; exact chronological yaku-card evidence remains Phase 5A;
-- CI/Pages will run the flattened `npm run validate:phase3ff` gate and upload
-  `output/phase-3f-f/e2e/` evidence after implementation is complete.
+- CI/Pages ran the flattened `npm run validate:phase3ff` gate and uploaded
+  `output/phase-3f-f/e2e/` evidence.
 
 Local evidence: `validate:phase3ff` passed release approval (48/48), 100 technical artifacts, 7
 focused files / 83 tests, Workshop, 14 root/Pages density viewports, and root/Pages smoke. All-web
@@ -933,7 +933,7 @@ issues; repairs received clean re-review. `npm run check` passed 48 files / 448 
 10,002 deterministic seeds, and the 774-module production build. The inspected final bundled-client
 state/screenshot under `output/phase-3f-f/game-client-final/` show ready at 1280×720 with one canvas,
 48 unique CardViews, 8 hand / 8 field / 24 draw, 8 actionable plus 8 inspect-only semantic controls,
-closed utility surfaces, and no diagnostics. Commit/hosted/live remain pending.
+closed utility surfaces, and no diagnostics. CI/Pages and live verification are complete.
 
 Architecture is recorded in [`ADR 0025`](./adr/0025-phase-3f-f-interaction-clarity-and-card-inspection.md).
 
@@ -952,6 +952,6 @@ Architecture is recorded in [`ADR 0025`](./adr/0025-phase-3f-f-interaction-clari
 No later phase may bypass the acceptance gate of the preceding phase.
 
 Phase 3F-E is deployed, live-verified, and accepted. Phase 3F-F interaction clarity/card inspection
-is locally complete with deployment and live verification pending. The accepted dock, public
+is deployed, live-verified, and accepted. The accepted dock, public
 History/reference dialogs, and capture cleanup do not reopen
 3F-D animation authority or transfer Phase 5A's ordered yaku evidence into routine play.

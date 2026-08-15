@@ -1069,6 +1069,11 @@ Original prompt: read the package and understand it, then let me know when we ar
   Two bundled live-client iterations were ready with the approved deck, one canvas, 48/48 CardViews,
   8 field / 8 hand / 24 draw, and clean diagnostics; `output/phase-3f-d/live-ready/shot-1.png` and
   `state-1.json` were inspected.
+- Phase 3F-F deployed/live accepted at `b787faa158dd1b62fb98f085d0c6020f00889d9d`: CI `31865103301`
+  and Pages `31865103302` passed, and the live cache-busted build returned HTTP/2 200 MISS. Earlier
+  hosted browser failures were test-harness scroll/primary-pointer receipt issues repaired without
+  production changes. Final live client evidence is ready with one canvas, 48 unique CardViews, 24/8/8/8
+  zones, 16 semantic controls, closed utilities, and no diagnostics. Next: Phase 5A.
 - Phase 3F-D is deployed and accepted. Next: Phase 3F-E utility dock/capture cleanup, then Phase 5A
   full local match formats and ordered yaku-card evidence.
 

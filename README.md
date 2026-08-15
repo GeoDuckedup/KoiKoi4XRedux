@@ -6,7 +6,7 @@ larger hand**, the player-facing **Phase 3F-B: unified tap-only interaction** ou
 3F-C: visual interaction cues** with an owner-approved primary deck. **Phase 3F-D: placement and
 capture choreography** is deployed and accepted. **Phase 3F-E: utility dock and capture cleanup**
 is deployed, live-verified, and accepted. **Phase 3F-F: interaction clarity and card inspection** is
-locally complete, with deployment and live verification pending. The repository contains the canonical rules authority, all
+deployed, live-verified, and accepted. The repository contains the canonical rules authority, all
 48 artwork-independent card records, the complete
 deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
@@ -230,7 +230,8 @@ validation. `npm run check` also passed 48 files / 448 ordinary tests, all 10,00
 and the 774-module build. The inspected bundled-client final state/screenshot under
 `output/phase-3f-f/game-client-final/` show one canvas, 48 unique CardViews, 8 hand / 8 field / 24
 draw, 8 actionable plus 8 inspect-only semantic controls, closed utility surfaces, and no diagnostics;
-commit, hosted CI/Pages, and live verification remain pending.
+CI `31865103301`, Pages `31865103302`, and cache-busted live verification passed; Phase 3F-F is
+deployed and accepted.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot
