@@ -5,7 +5,7 @@ has deployed and accepted **Phase 3E: playability corrections**, **Phase 3F-A: s
 larger hand**, the player-facing **Phase 3F-B: unified tap-only interaction** outcome, and **Phase
 3F-C: visual interaction cues** with an owner-approved primary deck. **Phase 3F-D: placement and
 capture choreography** is deployed and accepted. **Phase 3F-E: utility dock and capture cleanup**
-is locally accepted and awaits commit/deployment. It
+is deployed, live-verified, and accepted. It
 contains the canonical rules authority, all 48 artwork-independent card records, the complete
 deterministic headless match
 engine, privacy-safe projections and replay, a versioned deck authoring contract, strict workspace
@@ -206,8 +206,16 @@ root plus repository-prefixed Pages browser suites. The bundled web-game client 
 with one canvas and 48 persistent CardViews; Guide, landscape dock, and capture-gallery screenshots
 were inspected. Independent Terra review initially found two medium issues—cross-theme light-frame
 proof and complete utility-dialog mutual exclusion—and the repaired implementation received no
-remaining blocker, high, or medium finding. Commit/push and hosted CI/Pages/live verification remain;
-this is not yet a hosted or live acceptance claim.
+remaining blocker, high, or medium finding.
+
+Phase 3F-E release commit `f8358d8` passed CI run `31855285354` (`verify`, 01:00:16–01:11:13 UTC)
+and Pages run `31855285349` (`build`, 01:00:17–01:13:15; `deploy`, 01:13:19–01:13:27). The
+cache-busted live URL returned HTTP/2 200 with a cache MISS, `Last-Modified: Sat, 15 Aug 2026
+01:13:23 GMT`, and production assets `index-DMr_DIMH.js` / `index-DwN18UTX.css`. The bundled live
+client first recorded expected `ready:false` while textures loaded, then two `ready:true` states with
+the approved `new-primary-deck`, one canvas, 48/48 unique CardViews, 8 field cards, 8 hand cards, 24
+draw cards, and clean diagnostics. The states and screenshots under `output/phase-3f-e/live-ready/`
+were inspected. Phase 5A full local match formats is next.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

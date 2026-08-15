@@ -1096,5 +1096,12 @@ Original prompt: read the package and understand it, then let me know when we ar
   light-frame token, complete one-dialog-at-a-time guards, and strengthened browser assertions repair
   both. Root and Pages smokes pass after repair, and post-repair review reports no blocker, high, or
   medium finding.
-- Phase 3F-E is locally accepted. Next: commit/push, verify hosted CI and Pages, then inspect the
-  cache-busted live runtime. No hosted/live acceptance is claimed yet.
+- Release commit `f8358d8` passed CI run `31855285354` (`verify`, 01:00:16–01:11:13 UTC) and Pages
+  run `31855285349` (`build`, 01:00:17–01:13:15; `deploy`, 01:13:19–01:13:27). The cache-busted
+  live URL returned HTTP/2 200 with a cache MISS, `Last-Modified: Sat, 15 Aug 2026 01:13:23 GMT`,
+  and production assets `index-DMr_DIMH.js` / `index-DwN18UTX.css`.
+- The bundled live client recorded expected `ready:false` in `state-0` while textures loaded, then
+  `state-1` and `state-2` reached `ready:true` with the approved `new-primary-deck`, one canvas,
+  48/48 unique CardViews, 8 field, 8 hand, 24 draw, and clean diagnostics. The states and screenshots
+  under `output/phase-3f-e/live-ready/` were inspected.
+- Phase 3F-E is deployed, live-verified, and accepted. Next: Phase 5A full local match formats.

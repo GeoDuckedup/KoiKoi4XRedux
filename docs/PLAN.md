@@ -854,7 +854,7 @@ live screenshot and state are `output/phase-3f-d/live-ready/shot-1.png` and `sta
 
 ### Phase 3F-E — Utility dock and capture cleanup
 
-Status: **implemented, independently reviewed, and locally accepted; deployment pending**.
+Status: **implemented, independently reviewed, deployed, live-verified, and accepted**.
 
 This is a presentation-only refinement of the established local-table shell. The bottom-safe utility
 row contains exactly **History**, **Yaku Guide**, and **Options**, in that order. History exposes the
@@ -896,8 +896,15 @@ The bundled skill client reached ready state with one canvas and 48 persistent C
 inspected under `output/phase-3f-e/e2e/`. Independent Terra review initially found two medium issues:
 the frame test did not prove a clearly light border in every theme, and Options was missing from the
 complete utility-dialog mutual-exclusion guard. Both were repaired; the post-repair review reports no
-blocker, high, or medium finding. Commit/push and hosted CI/Pages/live verification remain; no hosted
-or live acceptance is claimed.
+blocker, high, or medium finding.
+
+Release commit `f8358d8` passed CI run `31855285354` (`verify`, 01:00:16–01:11:13 UTC) and Pages
+run `31855285349` (`build`, 01:00:17–01:13:15; `deploy`, 01:13:19–01:13:27). The cache-busted live
+URL returned HTTP/2 200 with a cache MISS, `Last-Modified: Sat, 15 Aug 2026 01:13:23 GMT`, and
+production assets `index-DMr_DIMH.js` / `index-DwN18UTX.css`. The bundled live client first captured
+the expected `ready:false` texture-loading state, then `state-1` and `state-2` at `ready:true` with
+the approved `new-primary-deck`, one canvas, 48/48 unique CardViews, 8 field, 8 hand, 24 draw, and
+clean diagnostics. The states and screenshots under `output/phase-3f-e/live-ready/` were inspected.
 
 ## Later phases
 
@@ -913,6 +920,6 @@ or live acceptance is claimed.
 
 No later phase may bypass the acceptance gate of the preceding phase.
 
-Phase 3F-E is locally accepted and awaiting deployment. Its bottom dock, public History/reference
-dialogs, and capture cleanup do not reopen 3F-D animation authority or transfer Phase 5A's ordered
-yaku evidence into routine play.
+Phase 3F-E is deployed, live-verified, and accepted. Phase 5A full local match formats is next. The
+accepted dock, public History/reference dialogs, and capture cleanup do not reopen 3F-D animation
+authority or transfer Phase 5A's ordered yaku evidence into routine play.

@@ -1,10 +1,9 @@
 # KoiKoi4x Project Status
 
-**Updated:** August 14, 2026
+**Updated:** August 15, 2026
 
-**Overall state:** Greenfield rewrite through Phase 3F-D placement/capture choreography deployed and
-accepted; Phase 3F-E utility dock/capture cleanup is independently reviewed and locally accepted,
-with deployment pending
+**Overall state:** Greenfield rewrite through Phase 3F-E utility dock/capture cleanup is deployed,
+live-verified, and accepted
 
 **Runtime state:** Complete deterministic headless match engine plus a playable browser-local first
 round using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -69,7 +68,7 @@ HTTP/2 200 with `x-cache: MISS`, `Last-Modified: Fri, 14 Aug 2026 22:09:56 GMT`,
 clipped/invalid/overlap diagnostics. `output/phase-3f-d/live-ready/shot-1.png` and `state-1.json`
 were inspected. Phase 3F-D is deployed and accepted.
 
-Phase 3F-E is a presentation-only local integration. It moves the full public recap into a History
+Phase 3F-E is a presentation-only refinement. It moves the full public recap into a History
 dialog, adds a static thirteen-yaku reference dialog with canonical example cards, and fixes the
 bottom utility row to History, Yaku Guide, then Options. Capture inspection remains public-only but
 uses regular 5:8, light-framed cards. The table removes redundant hand score/count suffixes,
@@ -84,7 +83,14 @@ client reached ready state with one canvas and 48 persistent CardViews. Guide, l
 capture-gallery screenshots under `output/phase-3f-e/e2e/` were inspected. Independent Terra review
 initially found two medium issues around cross-theme frame evidence and complete utility-dialog mutual
 exclusion. Both were repaired; post-repair review reports no blocker, high, or medium finding.
-Commit/push and hosted CI/Pages/live verification remain before deployed acceptance.
+Release commit `f8358d8` passed CI run `31855285354` (`verify`, 01:00:16–01:11:13 UTC) and Pages
+run `31855285349` (`build`, 01:00:17–01:13:15; `deploy`, 01:13:19–01:13:27). The cache-busted live
+URL returned HTTP/2 200 with a cache MISS, `Last-Modified: Sat, 15 Aug 2026 01:13:23 GMT`, and assets
+`index-DMr_DIMH.js` / `index-DwN18UTX.css`. The bundled live client recorded the expected initial
+`ready:false` texture-loading state before `state-1` and `state-2` reached `ready:true`, approved
+`new-primary-deck`, one canvas, 48/48 unique CardViews, 8 field, 8 hand, 24 draw, and clean
+diagnostics. The live states and screenshots under `output/phase-3f-e/live-ready/` were inspected.
+Phase 3F-E is deployed and accepted.
 
 Release commit `51a1821` passed CI run `31742306302` and Pages run `31742306314`; the Pages deploy
 job completed successfully. A cache-busted live browser check reached ready state with the approved
@@ -536,12 +542,8 @@ projection, recap, and handoff are recorded in
 The deployed baseline is
 [`https://geoduckedup.github.io/KoiKoi4XRedux/`](https://geoduckedup.github.io/KoiKoi4XRedux/).
 
-## Deployment next
+## Next subphase
 
-**Phase 3F-E — utility dock and capture cleanup:** History, Yaku Guide, and Options occupy the
-bottom dock; routine redundant labels are removed; capture cards preserve regular proportion and a
-light frame. The local release prerequisites—`npm run check`, `npm run validate:phase3fe`,
-root/Pages responsive browser evidence, and independent review—are complete. Commit and push the
-local closure, then verify hosted CI, Pages deployment, and the cache-busted live runtime. After live
-acceptance, proceed to **Phase 5A** for approved 3/6/12-round formats and ordered yaku-card evidence.
-Tutorial work remains deferred.
+**Phase 5A — full local match formats:** implement approved 3/6/12-round progression, complete
+recap/rematch, and ordered yaku-card evidence in expanded end-of-play details. Tutorial work remains
+deferred.

@@ -1,6 +1,6 @@
 # ADR 0024 — Phase 3F-E utility dock and capture cleanup
 
-**Status:** Locally accepted and validated; deployment pending
+**Status:** Accepted, deployed, and live-verified
 
 ## Context
 
@@ -45,8 +45,14 @@ tall, while routine card/count labels repeat information already communicated by
   incomplete, and the utility mutual-exclusion guard omitted Options. The repair introduced a clearly
   light card-frame token across all themes, complete one-dialog-at-a-time guards, and corresponding
   browser assertions. Post-repair review reports no blocker, high, or medium finding.
-- This evidence is local. Commit/push, hosted CI, Pages deployment, and cache-busted live verification
-  remain before deployed/live acceptance.
+- Release commit `f8358d8` passed CI run `31855285354` (`verify`, 01:00:16–01:11:13 UTC) and Pages
+  run `31855285349` (`build`, 01:00:17–01:13:15; `deploy`, 01:13:19–01:13:27).
+- The cache-busted live URL returned HTTP/2 200 with a cache MISS, `Last-Modified: Sat, 15 Aug 2026
+  01:13:23 GMT`, and production assets `index-DMr_DIMH.js` / `index-DwN18UTX.css`.
+- The bundled live client first recorded expected `ready:false` while textures loaded, then `state-1`
+  and `state-2` at `ready:true` with the approved `new-primary-deck`, one canvas, 48/48 unique
+  CardViews, 8 field, 8 hand, 24 draw, and clean diagnostics. The live screenshots and states under
+  `output/phase-3f-e/live-ready/` were inspected.
 
 ## Owner verification and deployment steps
 
@@ -58,8 +64,8 @@ tall, while routine card/count labels repeat information already communicated by
    It should explain rules, not tell the player what currently matches.
 4. Capture cards should stay proportioned like normal Hanafuda cards with light borders. Routine hand
    number suffixes, capture zeros, Reveal label, and an inline recap should be absent.
-5. Local checks are complete. Commit and push the closure; pushing `main` runs CI and Pages. Verify
-   those hosted runs and inspect the cache-busted live page before declaring deployed/live acceptance.
+5. Hosted CI, Pages deployment, and cache-busted live verification are complete. No additional
+   hosting configuration, secret, migration, or deployment action is required for Phase 3F-E.
 
 ## Next subphase
 
