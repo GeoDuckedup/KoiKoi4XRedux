@@ -1284,6 +1284,25 @@ kbd {
   }
 }
 
+/* A visible persistence warning is an auto-height status row. Without this
+   adjustment it would occupy the flexible table row and shove the canvas below
+   the viewport on small screens. */
+.app-shell:has(.persistence-warning:not([hidden])) {
+  grid-template-rows: auto auto minmax(420px, 1fr) auto auto auto auto;
+}
+
+@media (max-width: 520px) {
+  .app-shell:has(.persistence-warning:not([hidden])) {
+    grid-template-rows: auto auto minmax(565px, 1fr) auto auto auto auto auto;
+  }
+}
+
+@media (max-height: 480px) and (orientation: landscape) {
+  .app-shell:has(.persistence-warning:not([hidden])) {
+    grid-template-rows: 40px auto minmax(304px, 1fr) auto auto auto auto auto;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -2022,6 +2041,53 @@ summary:focus-visible {
 
 .options-dialog .new-round-button {
   border-color: color-mix(in srgb, var(--theme-escalation) 72%, var(--theme-border));
+}
+
+.persistence-warning {
+  width: min(calc(100% - 1.5rem), 720px);
+  margin: 0.35rem auto 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--theme-escalation) 70%, var(--theme-border));
+  border-radius: 10px;
+  color: var(--theme-text);
+  background: color-mix(in srgb, var(--theme-escalation) 13%, var(--theme-surface));
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.local-save-dialog__meta,
+.local-save-dialog__warning {
+  margin: 0;
+  color: var(--theme-text-muted);
+}
+
+.local-save-dialog__warning {
+  padding: 0.65rem;
+  border-radius: 10px;
+  color: var(--theme-text);
+  background: color-mix(in srgb, var(--theme-escalation) 14%, var(--theme-surface-raised));
+}
+
+.local-save-dialog__body,
+.local-save-dialog__actions {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.local-save-dialog__actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.local-save-dialog__actions button:first-child {
+  border-color: var(--theme-accent);
+  background: var(--theme-accent);
+  color: var(--theme-page);
+}
+
+@media (max-width: 520px) {
+  .local-save-dialog__actions {
+    grid-template-columns: 1fr;
+  }
 }
 
 .card-input-control--selected {

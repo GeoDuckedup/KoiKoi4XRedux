@@ -36,6 +36,7 @@
 | Phase 3F-I Reveal start cue | `docs/adr/0028-phase-3f-i-reveal-start-cue.md` |
 | Phase 3F-J legal destination pulse | `docs/adr/0029-phase-3f-j-legal-destination-pulse.md` |
 | Phase 5A formation evidence and local progression | `docs/adr/0030-phase-5a-formation-evidence-and-local-match-progression.md` |
+| Phase 5B local persistence boundary | `docs/adr/0031-phase-5b-local-persistence-boundary.md` |
 | Architectural decisions | `docs/adr/` |
 | Agent operating instructions | `AGENTS.md` |
 

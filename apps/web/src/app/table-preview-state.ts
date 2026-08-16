@@ -76,6 +76,14 @@ export interface TablePreviewSnapshot {
   };
   readonly localRound: LocalRoundSnapshotV1;
   readonly presentationMode: typeof TABLE_PRESENTATION_MODE;
+  readonly persistence: {
+    readonly available: boolean;
+    readonly lastSavedAt: number | null;
+    readonly promptKind: "corrupt" | "delete" | "fresh" | "resume" | null;
+    readonly saveMonth: number | null;
+    readonly saveRound: number | null;
+    readonly status: "error" | "idle" | "saving" | "unavailable";
+  };
   readonly ready: boolean;
   readonly scene: BoardSceneInspection;
   readonly screen: typeof TABLE_SCREEN_ID;
@@ -116,6 +124,8 @@ export function createTablePreviewSnapshot(input: {
   readonly layout: BoardLayout;
   readonly fieldLayout: AdaptiveFieldLayoutV1;
   readonly localRound: LocalRoundSnapshotV1;
+  readonly persistence: TablePreviewSnapshot["persistence"];
+  readonly redactPrivateHand: boolean;
   readonly ready: boolean;
   readonly scene: BoardSceneInspection & { readonly cards: CardRuntimeInspection };
   readonly semanticControlCount: number;
@@ -138,7 +148,7 @@ export function createTablePreviewSnapshot(input: {
     overlapViolations: Object.freeze([...input.diagnostics.overlapViolations]),
   });
   const visibleViews = input.scene.cards.views
-    .filter(({ faceUp }) => faceUp)
+    .filter(({ faceUp, zone }) => faceUp && (!input.redactPrivateHand || zone !== "playerHand"))
     .map((view) => Object.freeze({ ...view }));
   const cards = Object.freeze({
     activeDeckId: input.scene.cards.activeDeckId,
@@ -157,13 +167,18 @@ export function createTablePreviewSnapshot(input: {
     fullscreen: input.fullscreen,
     input: Object.freeze({
       ...input.input,
-      selectableCardIds: Object.freeze([...input.input.selectableCardIds]),
+      selectedCardId: input.redactPrivateHand ? null : input.input.selectedCardId,
+      selectableCardIds: Object.freeze(
+        input.redactPrivateHand ? [] : [...input.input.selectableCardIds],
+      ),
       legalTargetCardIds: Object.freeze([...input.input.legalTargetCardIds]),
       decisionChoices: Object.freeze([...input.input.decisionChoices]),
+      focusedCardId: input.redactPrivateHand ? null : input.input.focusedCardId,
       semanticControlCount: input.semanticControlCount,
       intentExecution: "executedLocally" as const,
     }),
     localRound: Object.freeze({ ...input.localRound }),
+    persistence: Object.freeze({ ...input.persistence }),
     simulationTimeMs: input.simulationTimeMs,
     theme: Object.freeze({ ...input.theme }),
     utilitySurfaces: Object.freeze({ ...input.utilitySurfaces }),

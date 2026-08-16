@@ -29,6 +29,7 @@
           ?
         </button>
       </header>
+      <p class="persistence-warning" data-persistence-warning hidden role="status"></p>
 
       <dialog
         class="utility-dialog context-help-dialog"
@@ -106,6 +107,30 @@
             <button type="button" class="new-round-button" data-new-round>Start fresh match</button>
           </div>
         </section>
+      </dialog>
+
+      <dialog
+        class="utility-dialog local-save-dialog"
+        data-local-save-dialog
+        aria-labelledby="local-save-dialog-title"
+        aria-describedby="local-save-dialog-copy"
+      >
+        <header class="utility-dialog__header">
+          <div>
+            <p class="eyebrow" data-local-save-dialog-eyebrow>Saved game</p>
+            <h2 id="local-save-dialog-title" data-local-save-dialog-title>Continue saved match?</h2>
+          </div>
+        </header>
+        <div class="utility-dialog__body local-save-dialog__body">
+          <p id="local-save-dialog-copy" data-local-save-dialog-copy></p>
+          <p class="local-save-dialog__meta" data-local-save-dialog-meta></p>
+          <p class="local-save-dialog__warning" data-local-save-dialog-warning hidden></p>
+          <div class="local-save-dialog__actions">
+            <button type="button" data-local-save-primary>Continue</button>
+            <button type="button" data-local-save-delete>Delete saved game</button>
+            <button type="button" data-local-save-secondary hidden>Back</button>
+          </div>
+        </div>
       </dialog>
 
       <section
@@ -391,6 +416,7 @@
         Loading keyboard-accessible card controls.
       </p>
       <p class="visually-hidden" data-table-status aria-live="polite">Loading the local round.</p>
+      <p class="visually-hidden" data-persistence-status aria-live="polite"></p>
       <p class="visually-hidden" data-options-announcement aria-live="polite"></p>
     </main>
     <script type="module" src="/src/main.ts"></script>

@@ -6,6 +6,8 @@ import {
   projectPlayerObservation,
   projectPublicEvents,
   startMatch,
+  assertValidAuthoritativeState,
+  validateRngSnapshot,
   type AuthoritativeGameStateV1,
   type EngineCheckpointV1,
   type GameplayCommandV1,
@@ -63,6 +65,26 @@ export interface LocalRoundRuntimeV1 {
   observe: () => PlayerObservationV1;
   submit: (intent: InputCommandIntentV1) => LocalRoundTransitionV1;
   switchViewer: (playerId: PlayerId) => PlayerObservationV1;
+  snapshot: () => LocalRoundSnapshotV1;
+}
+
+/** The complete private engine checkpoint required to resume a local match. */
+export interface LocalRoundSnapshotV1 {
+  readonly checkpoint: EngineCheckpointV1;
+  readonly state: AuthoritativeGameStateV1;
+}
+
+/** Input sources only need replacement when their observation scope advances. */
+export function shouldReplaceLocalInteractionSource(input: {
+  readonly afterStateVersion: number;
+  readonly afterViewerId: PlayerId;
+  readonly beforeStateVersion: number;
+  readonly beforeViewerId: PlayerId;
+}): boolean {
+  return (
+    input.beforeViewerId !== input.afterViewerId ||
+    input.beforeStateVersion !== input.afterStateVersion
+  );
 }
 
 function commandFromIntent(intent: InputCommandIntentV1, commandId: string): GameplayCommandV1 {
@@ -98,31 +120,41 @@ function commandFromIntent(intent: InputCommandIntentV1, commandId: string): Gam
   });
 }
 
-export function createLocalRoundRuntime(input?: {
-  readonly matchId?: string;
-  readonly matchLength?: MatchLength;
-  readonly seed?: string;
-}): LocalRoundRuntimeV1 {
-  const matchId = input?.matchId ?? PHASE_3B_MATCH_ID;
-  const started = startMatch(
-    {
-      type: "startMatch",
-      commandId: `${matchId}:start`,
-      matchId,
-      expectedStateVersion: 0,
-      matchLength: input?.matchLength ?? 3,
-      starterPolicy: { kind: "provided", playerId: "player-a" },
-    },
-    createSeededRandomSource(input?.seed ?? PHASE_3B_LOCAL_SEED),
-  );
-  let state = started.state;
-  let checkpoint = started.checkpoint;
-  let viewerId: PlayerId =
-    started.state.phase.kind === "awaitingHandPlay" ? started.state.phase.playerId : "player-a";
-  let commandSequence = 0;
+function activeViewerForState(state: AuthoritativeGameStateV1): PlayerId {
+  return state.phase.kind === "roundComplete" || state.phase.kind === "matchComplete"
+    ? "player-a"
+    : state.phase.playerId;
+}
 
+function createLocalRoundRuntimeFromSnapshot(snapshot: LocalRoundSnapshotV1): LocalRoundRuntimeV1 {
+  const state = deepFreeze(snapshot.state);
+  const checkpoint = deepFreeze(snapshot.checkpoint);
+  assertValidAuthoritativeState(state);
+  if (checkpoint.version !== 1 || checkpoint.matchId !== state.matchId) {
+    throw new Error("LOCAL_SNAPSHOT_CHECKPOINT_INVALID: checkpoint does not belong to this match.");
+  }
+  validateRngSnapshot(checkpoint.rng);
+  return createLocalRoundRuntimeInternal({
+    checkpoint,
+    commandSequence: Math.max(0, state.stateVersion - 1),
+    state,
+    viewerId: activeViewerForState(state),
+  });
+}
+
+function createLocalRoundRuntimeInternal(input: {
+  readonly checkpoint: EngineCheckpointV1;
+  readonly commandSequence: number;
+  readonly state: AuthoritativeGameStateV1;
+  readonly viewerId: PlayerId;
+}): LocalRoundRuntimeV1 {
+  const matchId = input.state.matchId;
+  let state = input.state;
+  let checkpoint = input.checkpoint;
+  let viewerId = input.viewerId;
+  let commandSequence = input.commandSequence;
   const observe = (): PlayerObservationV1 => projectPlayerObservation(state, viewerId);
-  const runtime: LocalRoundRuntimeV1 = {
+  return {
     get checkpoint() {
       return checkpoint;
     },
@@ -133,6 +165,7 @@ export function createLocalRoundRuntime(input?: {
       return viewerId;
     },
     observe,
+    snapshot: () => deepFreeze({ state, checkpoint }),
     createSource: () => createInteractionSourceFromObservation(observe()),
     advanceRound: () => {
       const before = observe();
@@ -205,5 +238,33 @@ export function createLocalRoundRuntime(input?: {
       return observe();
     },
   };
-  return runtime;
+}
+
+export function restoreLocalRoundRuntime(snapshot: LocalRoundSnapshotV1): LocalRoundRuntimeV1 {
+  return createLocalRoundRuntimeFromSnapshot(snapshot);
+}
+
+export function createLocalRoundRuntime(input?: {
+  readonly matchId?: string;
+  readonly matchLength?: MatchLength;
+  readonly seed?: string;
+}): LocalRoundRuntimeV1 {
+  const matchId = input?.matchId ?? PHASE_3B_MATCH_ID;
+  const started = startMatch(
+    {
+      type: "startMatch",
+      commandId: `${matchId}:start`,
+      matchId,
+      expectedStateVersion: 0,
+      matchLength: input?.matchLength ?? 3,
+      starterPolicy: { kind: "provided", playerId: "player-a" },
+    },
+    createSeededRandomSource(input?.seed ?? PHASE_3B_LOCAL_SEED),
+  );
+  return createLocalRoundRuntimeInternal({
+    checkpoint: started.checkpoint,
+    commandSequence: 0,
+    state: started.state,
+    viewerId: activeViewerForState(started.state),
+  });
 }

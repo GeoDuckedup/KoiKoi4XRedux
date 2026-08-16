@@ -2,6 +2,24 @@ Original prompt: read the package and understand it, then let me know when we ar
 
 # KoiKoi4x Progress
 
+## 2026-08-15 — Phase 5B locally complete and accepted
+
+- Phase 5B now has local acceptance for one strict private `mode: "local"` IndexedDB checkpoint:
+  post-settlement autosave, strict decode/RNG provenance without migration, Continue plus
+  privacy/Ready, corrupt Download/Delete/Start New, decision/round-complete/match-complete-rematch
+  restoration, and session-only IndexedDB open-denial/write-conflict recovery.
+- `npm run check` passed 54 files / 513 ordinary tests, 10,002 generated seeds (3/6/12 = 3,334 each),
+  the 48/48 deck, and the 781-module production build. The final uninterrupted
+  `npm run validate:phase5b` exited 0: 48/48 release deck, 100 technical artifacts, 17 Phase 5A
+  focused files / 247 tests, Workshop, 14 Root/Pages density viewports, full retained Root/Pages
+  smoke through 3F/3B/End-of-Play/Bank/real three-round rematch, 3 persistence focused files / 38
+  tests, and dedicated Root/Pages persistence smoke with 18 artifacts (nine per base).
+- Independent Terra review found no blocker, high, or medium issue. A transient density `appReady`
+  timeout passed isolated and uninterrupted reruns. The Pages click-readiness harness was repaired
+  with strict authoritative/control checks and without weakening product assertions.
+- Commit, push, hosted CI/Pages, deployment, and live verification remain pending. Next: complete
+  those release steps before declaring Phase 5B deployed or selecting another product subphase.
+
 ## 2026-08-15 — Phase 5A deployed, live-verified, and accepted
 
 - Added the pending release contract only: ADR 0030 and `MATCH-5A-001`–`MATCH-5A-011` define

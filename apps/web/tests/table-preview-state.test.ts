@@ -32,7 +32,7 @@ describe("Phase 2B table diagnostics", () => {
       number
     >;
     for (const placement of placements) zoneCounts[placement.zone] += 1;
-    const snapshot = createTablePreviewSnapshot({
+    const input = {
       animation: {
         status: "completed",
         mode: "normal",
@@ -87,6 +87,15 @@ describe("Phase 2B table diagnostics", () => {
         matchLength: 3,
         commandCount: 0,
       },
+      persistence: {
+        status: "idle",
+        promptKind: null,
+        available: true,
+        lastSavedAt: null,
+        saveRound: null,
+        saveMonth: null,
+      },
+      redactPrivateHand: false,
       layout,
       fieldLayout: computeAdaptiveFieldLayout(
         layout,
@@ -126,7 +135,8 @@ describe("Phase 2B table diagnostics", () => {
         observation: getTechnicalInputFixture("handPlay").source.observation,
       }),
       result: null,
-    });
+    } satisfies Parameters<typeof createTablePreviewSnapshot>[0];
+    const snapshot = createTablePreviewSnapshot(input);
     const serialized = serializeTablePreviewSnapshot(snapshot);
     const decoded = JSON.parse(serialized) as Record<string, unknown>;
 
@@ -204,6 +214,14 @@ describe("Phase 2B table diagnostics", () => {
     expect(Object.isFrozen(snapshot.cards)).toBe(true);
     expect(Object.isFrozen(snapshot.cards.visibleViews)).toBe(true);
     expect(Object.isFrozen(snapshot.deck.availableDeckIds)).toBe(true);
+
+    const redacted = createTablePreviewSnapshot({ ...input, redactPrivateHand: true });
+    const redactedText = serializeTablePreviewSnapshot(redacted);
+    expect(redacted.cards.visibleViews.some(({ zone }) => zone === "playerHand")).toBe(false);
+    expect(redacted.input.selectableCardIds).toEqual([]);
+    expect(redacted.input.selectedCardId).toBeNull();
+    expect(redacted.input.focusedCardId).toBeNull();
+    expect(redactedText).not.toContain("march-curtain");
   });
 
   it("shrinks legal field overflow into distinct adaptive slots", () => {

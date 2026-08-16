@@ -20,5 +20,6 @@ export * from "./serialization/canonical-json";
 export * from "./state/errors";
 export * from "./state/freeze";
 export * from "./state/projection";
+export * from "./state/persistence";
 export * from "./state/types";
 export * from "./state/validation";

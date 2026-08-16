@@ -716,7 +716,28 @@ result details, responsive privacy, and real advance/rematch. The flattened gate
 engine-owned chronology and render-only browser boundary. Release, deployment, and live evidence are
 pending.
 
-## 31. Approved-decision coverage matrix
+## 31. Phase 5B local-persistence vectors
+
+| ID | Required expectation |
+|---|---|
+| `SAVE-5B-001-STABLE-AUTOSAVE` | Phase 5B writes one active `mode: "local"` save only after an accepted authoritative transition and its public presentation settles. Eligible saved phases are `awaitingHandPlay`, `awaitingDrawResolution`, `awaitingYakuDecision`, `roundComplete`, and `matchComplete`; no write occurs during an intent or tween. Writes are serialized, coalesced, and monotonic, so an older completion cannot replace a newer checkpoint. |
+| `SAVE-5B-002-STRICT-DECODE` | The decoder accepts only the exact supported version-1 `LocalSaveV1` shape: format/game revisions, save ID, local mode, timestamps, authoritative state, and checkpoint/RNG are exact, consistent, and invariant-valid. Missing, extra, malformed, mismatched, or unsupported-version/schema fields reject. No command log is persisted in Phase 5B. |
+| `SAVE-5B-003-NO-MIGRATION-ATOMIC-RECOVERY` | Unsupported, malformed, invariant-invalid, card-ownership-invalid, or checkpoint-mismatched records never partially instantiate a runtime. There is no legacy/future migration. Recovery shows a clear corrupt-save state with Delete, Start New, and explicit sanitized diagnostic export; Delete targets only the active save. |
+| `SAVE-5B-004-CONTINUE-DETERMINISTIC` | Reloading a saved Hand checkpoint and applying the same legal commands as an uninterrupted trace produces the same authoritative state/checkpoint and public events/observation. Command sequencing is restored or safely rebased without replaying or duplicating an accepted command. |
+| `SAVE-5B-005-PRIVATE-RESUME` | Saved authoritative state and RNG remain private. Continue restores behind a newly derived active-player privacy/Ready gate before any private hand can render. Recipient-facing DOM, `render_game_to_text`, logs, and diagnostic export contain neither raw save payload nor hidden hand/draw/RNG/checkpoint/command data. |
+| `SAVE-5B-006-DECISION-RESULT-PROGRESSION` | Resume is exact at `awaitingYakuDecision`, nonfinal `roundComplete`, and `matchComplete`: Bank/Koi-Koi happens once and preserves its Hand/Draw or End-of-Play continuation; result advancement preserves real scores/history/month/starter; completed-match rematch starts a fresh authoritative match. Match-complete remains saved until explicit replacement or delete. |
+| `SAVE-5B-007-HANDOFF-ANIMATION-BOUNDARY` | A reload during or after a completed-turn animation restores only the most recent settled checkpoint. If another local player is active, the derived handoff cover requires Ready and prevents underlying controls from unlocking. No tween progress, open dialog, selection, animation replay, duplicate command, or double score is serialized. |
+| `SAVE-5B-008-STORAGE-FAILURE-SESSION-ONLY` | IndexedDB open/read/write/blocked/quota failure leaves the live match usable, displays a truthful session-only/save-unavailable warning, and never reports a save as durable. Recovery/delete controls remain keyboard operable. |
+| `SAVE-5B-009-ROOT-PAGES-A11Y` | Root and repository-prefixed Pages builds retain seven baseline viewports plus focused 390×844 and 844×390 saved, private-resume, corrupt-recovery, and result states. They retain one canvas/48 CardViews, containment, zero browser/network errors, labelled/focus-managed Continue/Delete/Start New/diagnostic controls, and modal/handoff/result input locks. |
+
+Phase 5B binding (in progress): `packages/engine/tests/local-persistence.test.ts`,
+`apps/web/tests/local-save.test.ts`, retained `apps/web/tests/local-round-runtime.test.ts`, and
+Root/Pages persistence smoke must execute the literal vectors without production-state injection.
+The flattened release gate is `npm run validate:phase5b`; artifacts belong under
+`output/phase-5b/e2e/`. ADR 0031 locks the private authoritative-save boundary. This phase does not
+add Firebase, online authority, CPU/practice saves, or legacy-save migration.
+
+## 32. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

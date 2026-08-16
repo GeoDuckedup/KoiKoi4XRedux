@@ -2300,11 +2300,15 @@ Online match authority remains on Firebase.
 Autosave only at stable engine checkpoints, such as:
 
 - awaiting a hand play;
+- awaiting draw resolution;
 - awaiting a player choice that can be reconstructed;
 - round complete;
 - match complete.
 
-Do not save halfway through a tween.
+Do not save halfway through a tween. A browser write occurs only after the corresponding public
+presentation has settled; writes are serialized, coalesced, and monotonic so an older completion
+cannot overwrite a newer checkpoint. A completed match remains the active save until explicit
+replacement or deletion.
 
 ## 22.3 New format
 
@@ -2321,6 +2325,16 @@ interface LocalSaveV1 {
   commandLog?: SerializedGameCommand[];
 }
 ```
+
+Phase 5B produces only one active `mode: "local"` save. The union reserves future modes; it does
+not authorize CPU, practice, online, Firebase, or legacy-save behavior in this phase. `commandLog`
+is not persisted in Phase 5B. The checkpoint contains private authoritative state and RNG data and
+is never a public projection, DOM/debug payload, console payload, or default diagnostic export.
+
+The local save decoder is a strict versioned boundary: it accepts only the exact supported
+`LocalSaveV1` shape and supported nested state/checkpoint revisions, validates match/checkpoint
+identity and authoritative invariants, and rejects unknown, missing, malformed, or unsupported
+fields/versions. Phase 5B performs no migration of old or future save formats.
 
 Do not include:
 
@@ -2341,7 +2355,12 @@ On startup:
 - validate card ownership invariants;
 - reject corrupt saves with a clear message;
 - never partially load;
-- offer delete/export-diagnostic options for corrupted local saves.
+- offer Continue/Delete for a valid active save;
+- offer Delete, Start New, and a sanitized diagnostic export for a corrupt save;
+- keep a live match usable with an explicit session-only warning when storage is unavailable or a
+  write fails;
+- derive the active viewer and privacy/Ready cover from restored authority rather than serializing
+  an open modal, tween, selection, or other presentation state.
 
 ---
 
@@ -3778,6 +3797,12 @@ Phase 4 acceptance:
 - autosave;
 - continue/delete;
 - schema validation.
+- one active local authoritative save only; strict decode/no migration; private state and RNG never
+  enter recipient-facing output;
+- saved checkpoints are written after presentation settlement, resume deterministically behind a
+  derived privacy/Ready gate, and recover atomically through Continue/Delete or corrupt-save
+  Delete/Start New/sanitized diagnostic export;
+- storage failure is visible session-only degradation, never a false durable-save claim.
 
 ### Phase 5C — Local pass-and-play
 

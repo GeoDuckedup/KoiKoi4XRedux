@@ -22,12 +22,12 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run check
-      - run: npm run validate:phase5a
+      - run: npm run validate:phase5b
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-5a-local-match-and-result-evidence
+          name: phase-5b-local-persistence
           path: |
-            output/phase-5a/e2e
+            output/phase-5b/e2e
             decks/new-primary-deck/generated/contact-sheets
           if-no-files-found: error

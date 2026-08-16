@@ -134,6 +134,22 @@ resulting public hash. Future Firebase transaction storage/publication remains P
 - Phase 3D-C owns a presentation-only runtime theme store. It persists only a versioned allowlisted
   theme ID in IndexedDB and repaints existing DOM/Pixi/card chrome; it cannot recreate or modify the
   canvas, CardViews, deck, projection, interaction controller, observation, command, Yaku, or result.
+- Phase 5B adds one local IndexedDB checkpoint at the web/runtime boundary, not as an engine
+  persistence side effect. Its
+  exact versioned decoder validates the private authoritative state and engine checkpoint/RNG before
+  constructing a runtime, including state invariants and matching identity; unsupported versions,
+  extra/missing fields, and corrupt records reject without migration or partial load. The one active
+  save contains `mode: "local"` only and no command log, presentation state, or replay/tween data.
+- A Phase 5B checkpoint is requested only after public-event presentation settlement at stable
+  authority phases (`awaitingHandPlay`, `awaitingDrawResolution`, `awaitingYakuDecision`,
+  `roundComplete`, or `matchComplete`). Serialized/coalesced monotonic writes prevent a late old
+  completion from replacing newer authority. `matchComplete` is retained until explicit replacement
+  or deletion; storage denial leaves the in-memory match live with a session-only warning.
+- Resume never publishes a raw save or private state/RNG/checkpoint to DOM, text diagnostics, logs,
+  or default diagnostic export. The active viewer and pass-the-device Ready cover are derived anew
+  from restored authority before private observation is rendered. Corrupt recovery is an explicit
+  Delete/Start New/sanitized-export surface, not a browser-side reconstruction. Firebase, online
+  authority, CPU/practice saves, and legacy-save migration remain out of Phase 5B.
 - The compact Options shell owns secondary browser controls. Critical turn instruction/actions,
   public Yaku names/totals, and latest history remain visible, while Yaku/result/handoff modals keep
   focus priority and prevent unrelated option changes.

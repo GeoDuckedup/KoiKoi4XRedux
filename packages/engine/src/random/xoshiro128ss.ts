@@ -60,6 +60,13 @@ export function validateRngSnapshot(snapshot: RngSnapshotV1): void {
   }
 }
 
+/**
+ * Verifies that a snapshot's claimed state is the canonical state produced by
+ * this generator from its initial seed after exactly `drawCount` draws.
+ *
+ * This deliberately advances the authoritative implementation instead of
+ * reimplementing its transition in a persistence-specific validator.
+ */
 export class Xoshiro128StarStar implements RandomSource {
   readonly #initialSeed: RngSeedV1;
   #state: [number, number, number, number];
@@ -134,4 +141,87 @@ export function createSeededRandomSource(seed: RngSeedV1 | string): Xoshiro128St
 
 export function restoreRandomSource(snapshot: RngSnapshotV1): Xoshiro128StarStar {
   return new Xoshiro128StarStar(snapshot);
+}
+
+type LinearTransition = readonly bigint[];
+
+const RNG_STATE_WORDS = 4;
+const RNG_STATE_BITS = RNG_STATE_WORDS * 32;
+let oneDrawTransition: LinearTransition | undefined;
+
+function stateVector(words: readonly [number, number, number, number]): bigint {
+  return words.reduce((vector, word, index) => vector | (BigInt(word) << BigInt(index * 32)), 0n);
+}
+
+function wordsFromStateVector(vector: bigint): [number, number, number, number] {
+  const word = (index: number): number => Number((vector >> BigInt(index * 32)) & 0xffff_ffffn);
+  return [word(0), word(1), word(2), word(3)];
+}
+
+function transformVector(transition: LinearTransition, vector: bigint): bigint {
+  let transformed = 0n;
+  for (let bit = 0; bit < RNG_STATE_BITS; bit += 1) {
+    if ((vector & (1n << BigInt(bit))) === 0n) continue;
+    const image = transition[bit];
+    if (image === undefined) throw new Error("RNG_TRANSITION_INVALID: missing basis image.");
+    transformed ^= image;
+  }
+  return transformed;
+}
+
+function composeTransitions(after: LinearTransition, before: LinearTransition): LinearTransition {
+  return Object.freeze(before.map((image) => transformVector(after, image)));
+}
+
+function identityTransition(): LinearTransition {
+  return Object.freeze(Array.from({ length: RNG_STATE_BITS }, (_, bit) => 1n << BigInt(bit)));
+}
+
+function canonicalOneDrawTransition(): LinearTransition {
+  if (oneDrawTransition !== undefined) return oneDrawTransition;
+  const initialSeed = createRngSeed("00000000000000000000000000000001");
+  oneDrawTransition = Object.freeze(
+    Array.from({ length: RNG_STATE_BITS }, (_, bit) => {
+      const random = new Xoshiro128StarStar({
+        version: RNG_SNAPSHOT_VERSION,
+        algorithm: RNG_ALGORITHM_V1,
+        initialSeed,
+        state: wordsFromStateVector(1n << BigInt(bit)),
+        drawCount: 0,
+      });
+      random.nextUint32();
+      return stateVector(random.snapshot().state);
+    }),
+  );
+  return oneDrawTransition;
+}
+
+function canonicalStateAfterDraws(initialSeed: RngSeedV1, drawCount: number): bigint {
+  let transition = canonicalOneDrawTransition();
+  let accumulated = identityTransition();
+  let remaining = drawCount;
+  while (remaining > 0) {
+    if (remaining % 2 === 1) accumulated = composeTransitions(transition, accumulated);
+    remaining = Math.floor(remaining / 2);
+    if (remaining > 0) transition = composeTransitions(transition, transition);
+  }
+  const initial = stateVector(parseSeedWords(initialSeed.hex));
+  return transformVector(accumulated, initial);
+}
+
+/**
+ * Verifies that a snapshot's claimed state is the canonical state produced by
+ * this generator from its initial seed after exactly `drawCount` draws.
+ *
+ * The transition basis is sampled through this implementation's own
+ * `nextUint32`, then exponentiated over GF(2). That makes validation exact for
+ * every safe integer draw count without an unbounded replay loop over an
+ * untrusted persisted counter.
+ */
+export function validateRngSnapshotProvenance(snapshot: RngSnapshotV1): void {
+  validateRngSnapshot(snapshot);
+  const canonical = canonicalStateAfterDraws(snapshot.initialSeed, snapshot.drawCount);
+  if (canonical !== stateVector(snapshot.state)) {
+    throw new Error("RNG_SNAPSHOT_INVALID: state does not match the initial seed and draw count.");
+  }
 }

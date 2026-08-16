@@ -8,7 +8,11 @@ const repositoryRoot = resolve(import.meta.dirname, "..");
 const distributionDirectory = process.env.SMOKE_DIST_DIR
   ? resolve(process.env.SMOKE_DIST_DIR)
   : resolve(repositoryRoot, "apps/web/dist");
-const outputDirectory = resolve(repositoryRoot, "output/phase-5a/e2e");
+const phase5BOnly = process.env.SMOKE_PHASE5B_ONLY === "1";
+const outputDirectory = resolve(
+  repositoryRoot,
+  phase5BOnly ? "output/phase-5b/e2e" : "output/phase-5a/e2e",
+);
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
 const mountedBasePath = smokeBasePath === "/" ? "/" : `${smokeBasePath}/`;
@@ -116,6 +120,451 @@ async function waitForApplicationReady(page, browserErrors, networkErrors) {
 
 async function readState(page) {
   return page.evaluate(() => JSON.parse(window.render_game_to_text()));
+}
+
+const LOCAL_SAVE_OUTER_KEYS = Object.freeze([
+  "authoritativeState",
+  "createdAt",
+  "formatVersion",
+  "gameVersion",
+  "mode",
+  "rng",
+  "saveId",
+  "updatedAt",
+]);
+
+/**
+ * Inspects the active IndexedDB record without returning it to the Node process.
+ * The test needs only safe structural metadata; private state, RNG, and raw fields
+ * must never be printed in smoke output.
+ */
+async function inspectActiveLocalSave(page) {
+  return page.evaluate(
+    () =>
+      new Promise((resolvePromise, rejectPromise) => {
+        const request = indexedDB.open("koikoi4x-local-saves", 1);
+        request.addEventListener("error", () => rejectPromise(new Error("IDB_OPEN_FAILED")), {
+          once: true,
+        });
+        request.addEventListener(
+          "success",
+          () => {
+            const database = request.result;
+            try {
+              if (!database.objectStoreNames.contains("active-save")) {
+                database.close();
+                resolvePromise({ exists: false });
+                return;
+              }
+              const transaction = database.transaction("active-save", "readonly");
+              const get = transaction.objectStore("active-save").get("current");
+              get.addEventListener(
+                "success",
+                () => {
+                  const value = get.result;
+                  database.close();
+                  if (value === undefined || value === null || typeof value !== "object") {
+                    resolvePromise({ exists: false });
+                    return;
+                  }
+                  const record = value;
+                  const state = record.authoritativeState;
+                  resolvePromise({
+                    exists: true,
+                    keys: Object.keys(record).sort(),
+                    saveId: typeof record.saveId === "string" ? record.saveId : null,
+                    matchId:
+                      state !== null &&
+                      typeof state === "object" &&
+                      typeof state.matchId === "string"
+                        ? state.matchId
+                        : null,
+                    stateVersion:
+                      state !== null &&
+                      typeof state === "object" &&
+                      typeof state.stateVersion === "number"
+                        ? state.stateVersion
+                        : null,
+                  });
+                },
+                { once: true },
+              );
+              get.addEventListener(
+                "error",
+                () => {
+                  database.close();
+                  rejectPromise(new Error("IDB_GET_FAILED"));
+                },
+                { once: true },
+              );
+            } catch (error) {
+              database.close();
+              rejectPromise(error);
+            }
+          },
+          { once: true },
+        );
+      }),
+  );
+}
+
+/**
+ * Restores the legacy smoke's deterministic no-save opening state. This is
+ * explicit browser-test setup: it removes only the active LocalSaveV1 record,
+ * never injects or modifies runtime state.
+ */
+async function clearLegacyActiveLocalSave(page) {
+  await page.evaluate(
+    () =>
+      new Promise((resolvePromise, rejectPromise) => {
+        const request = indexedDB.open("koikoi4x-local-saves", 1);
+        request.addEventListener("error", () => rejectPromise(new Error("IDB_OPEN_FAILED")), {
+          once: true,
+        });
+        request.addEventListener(
+          "success",
+          () => {
+            const database = request.result;
+            try {
+              if (!database.objectStoreNames.contains("active-save")) {
+                database.close();
+                resolvePromise();
+                return;
+              }
+              const transaction = database.transaction("active-save", "readwrite");
+              transaction.objectStore("active-save").delete("current");
+              transaction.addEventListener(
+                "complete",
+                () => {
+                  database.close();
+                  resolvePromise();
+                },
+                { once: true },
+              );
+              transaction.addEventListener(
+                "abort",
+                () => {
+                  database.close();
+                  rejectPromise(new Error("IDB_DELETE_ABORTED"));
+                },
+                { once: true },
+              );
+              transaction.addEventListener(
+                "error",
+                () => {
+                  database.close();
+                  rejectPromise(new Error("IDB_DELETE_FAILED"));
+                },
+                { once: true },
+              );
+            } catch (error) {
+              database.close();
+              rejectPromise(error);
+            }
+          },
+          { once: true },
+        );
+      }),
+  );
+}
+
+async function waitForPersistedCheckpoint(page, minimumStateVersion = null) {
+  await page.waitForFunction(
+    (minimumVersion) => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
+        state.persistence.status === "idle" &&
+        state.persistence.lastSavedAt !== null &&
+        (minimumVersion === null || state.localRound.stateVersion >= minimumVersion)
+      );
+    },
+    minimumStateVersion,
+    { timeout: 30_000 },
+  );
+  return inspectActiveLocalSave(page);
+}
+
+async function overwriteActiveLocalSaveWithCorruptRecord(page, sentinel) {
+  await page.evaluate(
+    (marker) =>
+      new Promise((resolvePromise, rejectPromise) => {
+        const request = indexedDB.open("koikoi4x-local-saves", 1);
+        request.addEventListener("error", () => rejectPromise(new Error("IDB_OPEN_FAILED")), {
+          once: true,
+        });
+        request.addEventListener(
+          "success",
+          () => {
+            const database = request.result;
+            try {
+              const transaction = database.transaction("active-save", "readwrite");
+              transaction.objectStore("active-save").put(
+                {
+                  corruptionSentinel: marker,
+                  privateCardSentinel: "november-rain",
+                  shape: "intentionally-invalid",
+                },
+                "current",
+              );
+              transaction.addEventListener(
+                "complete",
+                () => {
+                  database.close();
+                  resolvePromise();
+                },
+                { once: true },
+              );
+              transaction.addEventListener(
+                "abort",
+                () => {
+                  database.close();
+                  rejectPromise(new Error("IDB_WRITE_ABORTED"));
+                },
+                { once: true },
+              );
+            } catch (error) {
+              database.close();
+              rejectPromise(error);
+            }
+          },
+          { once: true },
+        );
+      }),
+    sentinel,
+  );
+}
+
+async function readDownloadText(download) {
+  const stream = await download.createReadStream();
+  if (stream === null) throw new Error("Diagnostic download stream is unavailable.");
+  let text = "";
+  for await (const chunk of stream) text += chunk.toString();
+  return text;
+}
+
+/**
+ * Keeps actual private CardIds inside the page realm: only the privacy verdict
+ * crosses into test output. This prevents a smoke failure from becoming a leak.
+ */
+async function savedActiveHandIsRedacted(page) {
+  return page.evaluate(
+    () =>
+      new Promise((resolvePromise, rejectPromise) => {
+        const request = indexedDB.open("koikoi4x-local-saves", 1);
+        request.addEventListener("error", () => rejectPromise(new Error("IDB_OPEN_FAILED")), {
+          once: true,
+        });
+        request.addEventListener(
+          "success",
+          () => {
+            const database = request.result;
+            try {
+              const transaction = database.transaction("active-save", "readonly");
+              const get = transaction.objectStore("active-save").get("current");
+              get.addEventListener(
+                "success",
+                () => {
+                  database.close();
+                  const record = get.result;
+                  const state = record?.authoritativeState;
+                  const activePlayerId = state?.phase?.playerId;
+                  const activePlayer = state?.players?.find(
+                    (player) => player?.id === activePlayerId,
+                  );
+                  const privateHand = Array.isArray(activePlayer?.hand) ? activePlayer.hand : [];
+                  if (privateHand.length === 0) {
+                    resolvePromise(true);
+                    return;
+                  }
+                  const snapshotText = window.render_game_to_text();
+                  const documentText = document.body.textContent ?? "";
+                  const snapshot = JSON.parse(snapshotText);
+                  const exposed = privateHand.some(
+                    (cardId) =>
+                      snapshotText.includes(cardId) ||
+                      documentText.includes(cardId) ||
+                      snapshot.cards.visibleViews.some((view) => view.cardId === cardId),
+                  );
+                  resolvePromise(!exposed);
+                },
+                { once: true },
+              );
+              get.addEventListener(
+                "error",
+                () => {
+                  database.close();
+                  rejectPromise(new Error("IDB_GET_FAILED"));
+                },
+                { once: true },
+              );
+            } catch (error) {
+              database.close();
+              rejectPromise(error);
+            }
+          },
+          { once: true },
+        );
+      }),
+  );
+}
+
+async function readyHandoffDiagnostics(page) {
+  return page.evaluate(() => {
+    const state = JSON.parse(window.render_game_to_text());
+    const ready = document.querySelector("[data-handoff-ready]");
+    const actionableControlCount = document.querySelectorAll(
+      '[data-card-id][data-actionable="true"]',
+    ).length;
+    return {
+      phase: state.localRound.phase,
+      stateVersion: state.localRound.stateVersion,
+      handoffPending: state.localRound.handoffPending,
+      inputStatus: state.input.status,
+      inputLockReason: state.input.lockReason,
+      semanticControlCount: state.input.semanticControlCount,
+      actionableControlCount,
+      promptKind: state.persistence.promptKind,
+      dialogOpen:
+        document.querySelector("[data-local-save-dialog]") instanceof HTMLDialogElement
+          ? document.querySelector("[data-local-save-dialog]").open
+          : null,
+      animationStatus: state.animation.status,
+      readyHidden: ready instanceof HTMLElement ? ready.hidden : null,
+      readyDisabled: ready instanceof HTMLButtonElement ? ready.disabled : null,
+      readyClickReceived: document.documentElement.dataset.phase5bReadyClickReceived === "true",
+    };
+  });
+}
+
+async function waitForSavedResumeHandoffReady(page) {
+  await page.waitForFunction(
+    () => {
+      const state = JSON.parse(window.render_game_to_text());
+      const dialog = document.querySelector("[data-local-save-dialog]");
+      const ready = document.querySelector("[data-handoff-ready]");
+      return (
+        state.localRound.handoffPending &&
+        state.persistence.promptKind === null &&
+        !(dialog instanceof HTMLDialogElement && dialog.open) &&
+        state.animation.status !== "playing" &&
+        ready instanceof HTMLButtonElement &&
+        !ready.hidden &&
+        !ready.disabled
+      );
+    },
+    null,
+    { timeout: 30_000 },
+  );
+}
+
+async function clickSettledResumeHandoffReady(page) {
+  await waitForSavedResumeHandoffReady(page);
+  await page.evaluate(() => {
+    document.documentElement.dataset.phase5bReadyClickReceived = "false";
+    const ready = document.querySelector("[data-handoff-ready]");
+    if (!(ready instanceof HTMLButtonElement)) throw new Error("PHASE5B_READY_BUTTON_MISSING");
+    ready.addEventListener(
+      "click",
+      () => {
+        document.documentElement.dataset.phase5bReadyClickReceived = "true";
+      },
+      { once: true, capture: true },
+    );
+  });
+  await page.locator("[data-handoff-ready]").click({ noWaitAfter: true });
+  await page.waitForFunction(
+    () => document.documentElement.dataset.phase5bReadyClickReceived === "true",
+    null,
+    { timeout: 30_000 },
+  );
+}
+
+async function createIsolatedPhase5BPage(browser, options = {}) {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  if (options.rejectIndexedDbOpen === true) {
+    await context.addInitScript(() => {
+      IDBFactory.prototype.open = function rejectKoiKoiPersistenceOpen() {
+        throw new DOMException("Phase 5B storage open denied.", "InvalidStateError");
+      };
+    });
+  }
+  const page = await context.newPage();
+  const browserErrors = [];
+  const networkErrors = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") browserErrors.push(`console: ${message.text()}`);
+  });
+  page.on("pageerror", (error) => browserErrors.push(`pageerror: ${error.message}`));
+  page.on("requestfailed", (request) => {
+    networkErrors.push(
+      `requestfailed: ${request.url()} ${request.failure()?.errorText ?? "unknown"}`,
+    );
+  });
+  page.on("response", (response) => {
+    if (response.status() >= 400)
+      networkErrors.push(`response: ${response.status()} ${response.url()}`);
+  });
+  return { context, page, browserErrors, networkErrors };
+}
+
+async function externallyAdvanceActiveSaveTimestamp(page) {
+  await page.evaluate(
+    () =>
+      new Promise((resolvePromise, rejectPromise) => {
+        const request = indexedDB.open("koikoi4x-local-saves", 1);
+        request.addEventListener("error", () => rejectPromise(new Error("IDB_OPEN_FAILED")), {
+          once: true,
+        });
+        request.addEventListener(
+          "success",
+          () => {
+            const database = request.result;
+            try {
+              const transaction = database.transaction("active-save", "readwrite");
+              const store = transaction.objectStore("active-save");
+              const get = store.get("current");
+              get.addEventListener(
+                "success",
+                () => {
+                  const record = get.result;
+                  if (
+                    record === null ||
+                    typeof record !== "object" ||
+                    typeof record.updatedAt !== "number"
+                  ) {
+                    database.close();
+                    rejectPromise(new Error("IDB_ACTIVE_SAVE_MISSING"));
+                    return;
+                  }
+                  store.put({ ...record, updatedAt: record.updatedAt + 1 }, "current");
+                },
+                { once: true },
+              );
+              transaction.addEventListener(
+                "complete",
+                () => {
+                  database.close();
+                  resolvePromise();
+                },
+                { once: true },
+              );
+              transaction.addEventListener(
+                "abort",
+                () => {
+                  database.close();
+                  rejectPromise(new Error("IDB_WRITE_ABORTED"));
+                },
+                { once: true },
+              );
+            } catch (error) {
+              database.close();
+              rejectPromise(error);
+            }
+          },
+          { once: true },
+        );
+      }),
+  );
 }
 
 async function waitForViewportSettlement(page, { width, height }) {
@@ -1155,10 +1604,17 @@ async function assertPointerQuietInteractionControl(page, selector, description)
   );
 }
 
+async function reloadFreshLegacyPage(page, pageUrl, browserErrors, networkErrors) {
+  // Legacy Phase 5A flows predate LocalSaveV1 and deliberately begin a new
+  // deterministic game; leave preference stores, including the theme, intact.
+  if (!phase5BOnly) await clearLegacyActiveLocalSave(page);
+  await page.goto(pageUrl, { waitUntil: "domcontentloaded" });
+  await waitForApplicationReady(page, browserErrors, networkErrors);
+}
+
 async function resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors) {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto(pageUrl, { waitUntil: "networkidle" });
-  await waitForApplicationReady(page, browserErrors, networkErrors);
+  await reloadFreshLegacyPage(page, pageUrl, browserErrors, networkErrors);
 }
 
 async function waitForAcceptedHandIntent(page, previousVersion) {
@@ -1300,10 +1756,105 @@ async function finishNonVisualGameplayPlan(page) {
   await page.evaluate(() => window.advanceTime(5_000));
 }
 
+async function activateSettledFieldPlacement(page, label) {
+  const placement = page.locator("[data-input-field-placement]");
+  assert((await placement.count()) === 1, `${label} has no field-placement control.`);
+  const state = await readState(page);
+  assert(
+    state.input.status === "confirming" &&
+      state.input.fieldPlacementAvailable === true &&
+      state.input.selectedCardId !== null,
+    `${label} did not retain an authoritative selected no-match placement.`,
+  );
+  assert(
+    (await placement.isVisible()) && !(await placement.isDisabled()),
+    `${label} field-placement control is not visible and enabled.`,
+  );
+  await placement.evaluate((control) => {
+    control.focus({ preventScroll: true });
+  });
+  assert(
+    await placement.evaluate((control) => document.activeElement === control),
+    `${label} field-placement control could not receive keyboard focus.`,
+  );
+  await page.keyboard.press("Enter");
+}
+
+async function pendingDrawRevealDiagnostics(page) {
+  return page.evaluate(() => {
+    const state = JSON.parse(window.render_game_to_text());
+    const expectedSelectableId =
+      state.input.selectableCardIds.length === 1 ? state.input.selectableCardIds[0] : null;
+    const controls = [...document.querySelectorAll('[data-input-role="selectable"]')];
+    const exactControl = controls.find(
+      (control) => control.getAttribute("data-card-id") === expectedSelectableId,
+    );
+    return {
+      phase: state.localRound.phase,
+      stateVersion: state.localRound.stateVersion,
+      handoffPending: state.localRound.handoffPending,
+      inputStatus: state.input.status,
+      inputLockReason: state.input.lockReason,
+      selectableCount: state.input.selectableCardIds.length,
+      selectedCardPresent: state.input.selectedCardId !== null,
+      semanticControlCount: state.input.semanticControlCount,
+      animationStatus: state.animation.status,
+      promptKind: state.persistence.promptKind,
+      dialogOpen:
+        document.querySelector("[data-local-save-dialog]") instanceof HTMLDialogElement
+          ? document.querySelector("[data-local-save-dialog]").open
+          : null,
+      selectableControlCount: controls.length,
+      exactSelectableControlPresent: exactControl !== undefined,
+      exactSelectableControlVisible:
+        exactControl instanceof HTMLButtonElement && exactControl.checkVisibility(),
+      exactSelectableControlEnabled:
+        exactControl instanceof HTMLButtonElement && !exactControl.disabled,
+    };
+  });
+}
+
 async function resolvePendingDrawIfNeeded(page) {
   const pending = await readState(page);
   if (pending.localRound.phase !== "awaitingDrawResolution") return pending;
   const beforeVersion = pending.localRound.stateVersion;
+  await finishNonVisualGameplayPlan(page);
+  try {
+    await page.waitForFunction(
+      () => {
+        const state = JSON.parse(window.render_game_to_text());
+        if (
+          state.localRound.phase !== "awaitingDrawResolution" ||
+          state.localRound.handoffPending ||
+          state.animation.status === "playing" ||
+          state.input.status !== "idle" ||
+          state.input.selectedCardId !== null ||
+          state.input.selectableCardIds.length !== 1
+        ) {
+          return false;
+        }
+        const expectedSelectableId = state.input.selectableCardIds[0];
+        const controls = [...document.querySelectorAll('[data-input-role="selectable"]')];
+        const exactControl = controls.find(
+          (control) => control.getAttribute("data-card-id") === expectedSelectableId,
+        );
+        return (
+          controls.length === 1 &&
+          exactControl instanceof HTMLButtonElement &&
+          exactControl.checkVisibility() &&
+          !exactControl.disabled
+        );
+      },
+      null,
+      { timeout: 30_000 },
+    );
+  } catch (error) {
+    const diagnostic = await pendingDrawRevealDiagnostics(page);
+    throw new Error(
+      `Pending Draw Reveal did not settle to its exact selectable control: ${JSON.stringify(diagnostic)}.`,
+      { cause: error },
+    );
+  }
   const reveal = page.locator('[data-input-role="selectable"]');
   assert(
     (await reveal.count()) === 1,
@@ -1358,7 +1909,7 @@ async function resolvePendingDrawIfNeeded(page) {
   } else {
     const placement = page.locator("[data-input-field-placement]");
     assert(await placement.isVisible(), "An unmatched pending Draw must expose the field.");
-    await placement.click({ noWaitAfter: true });
+    await activateSettledFieldPlacement(page, "An unmatched pending Draw");
   }
   await finishNonVisualGameplayPlan(page);
   await page.waitForFunction(
@@ -1748,6 +2299,596 @@ async function playProductionRoundToResult(page, label) {
   );
 }
 
+async function runPhase5BPersistenceSmoke(page, browserErrors, networkErrors) {
+  const suffix = smokeBasePath === "/" ? "" : "-pages";
+  const corruptionSentinel = "PHASE5B_PRIVATE_SAVE_SENTINEL";
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(pageUrl, { waitUntil: "domcontentloaded" });
+  await waitForApplicationReady(page, browserErrors, networkErrors);
+  const opening = await readState(page);
+  assert(
+    opening.persistence.promptKind === null,
+    "A fresh browser context unexpectedly offered resume.",
+  );
+  assert(opening.localRound.phase === "awaitingHandPlay", "Fresh local match is not playable.");
+  const initialSave = await waitForPersistedCheckpoint(page, opening.localRound.stateVersion);
+  assert(initialSave.exists, "Fresh local match did not create an active IndexedDB save.");
+  assert(
+    JSON.stringify(initialSave.keys) === JSON.stringify(LOCAL_SAVE_OUTER_KEYS),
+    "Active local save did not use the strict LocalSaveV1 outer shape.",
+  );
+  assert(
+    initialSave.saveId !== null &&
+      initialSave.matchId !== null &&
+      initialSave.stateVersion !== null,
+    "Active local save omitted safe identity metadata.",
+  );
+
+  const openingVersion = opening.localRound.stateVersion;
+  await playHandCardById(page, "april-red-scroll");
+  const settled = await readState(page);
+  assert(
+    settled.localRound.stateVersion > openingVersion,
+    "A real production interaction did not advance authoritative state.",
+  );
+  const advancedSave = await waitForPersistedCheckpoint(page, settled.localRound.stateVersion);
+  assert(
+    advancedSave.exists && advancedSave.stateVersion === settled.localRound.stateVersion,
+    "Settled production interaction did not persist its exact advanced checkpoint.",
+  );
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await waitForApplicationReady(page, browserErrors, networkErrors);
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).persistence.promptKind === "resume",
+    null,
+    { timeout: 30_000 },
+  );
+  const resumePrompt = await readState(page);
+  const resumePromptActionableControls = await actionableSemanticControlCount(page);
+  assert(
+    resumePrompt.input.semanticControlCount === 0 && resumePromptActionableControls === 0,
+    `Saved-game resume prompt left gameplay actions available beneath its modal lock: ${JSON.stringify({ semanticControlCount: resumePrompt.input.semanticControlCount, actionableControlCount: resumePromptActionableControls })}.`,
+  );
+  assert(
+    !resumePrompt.cards.visibleViews.some(({ zone }) => zone === "playerHand") &&
+      (await savedActiveHandIsRedacted(page)),
+    "Resume prompt exposed player-hand identities in recipient-facing text before Continue/Ready.",
+  );
+  assert(
+    (await page
+      .locator("[data-local-save-primary]")
+      .evaluate((button) => document.activeElement === button)) === true,
+    "Resume prompt did not focus Continue.",
+  );
+  await page.screenshot({
+    path: resolve(outputDirectory, `resume-prompt-390x844${suffix}.png`),
+    fullPage: true,
+  });
+
+  await page.locator("[data-local-save-primary]").click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).localRound.handoffPending,
+    null,
+    { timeout: 30_000 },
+  );
+  await waitForSavedResumeHandoffReady(page);
+  const privateHandoff = await readState(page);
+  assert(
+    privateHandoff.input.semanticControlCount === 0 &&
+      !privateHandoff.cards.visibleViews.some(({ zone }) => zone === "playerHand") &&
+      (await savedActiveHandIsRedacted(page)),
+    "Continue did not retain the private handoff cover before Ready.",
+  );
+  await page.screenshot({
+    path: resolve(outputDirectory, `resume-private-handoff-390x844${suffix}.png`),
+    fullPage: true,
+  });
+  await clickSettledResumeHandoffReady(page);
+  try {
+    await page.waitForFunction(
+      (expected) => {
+        const state = JSON.parse(window.render_game_to_text());
+        return (
+          !state.localRound.handoffPending &&
+          state.localRound.stateVersion === expected.stateVersion &&
+          state.localRound.phase === expected.phase &&
+          state.input.semanticControlCount > 0
+        );
+      },
+      { stateVersion: settled.localRound.stateVersion, phase: settled.localRound.phase },
+      { timeout: 30_000 },
+    );
+  } catch (error) {
+    const diagnostic = await readyHandoffDiagnostics(page);
+    throw new Error(
+      `Resume Ready did not settle to an actionable saved checkpoint: ${JSON.stringify(diagnostic)}.`,
+      { cause: error },
+    );
+  }
+  const continued = await readState(page);
+  assert(
+    continued.canvasCount === 1 && continued.cards.cardViewCount === 48,
+    "Continue/Ready did not restore one canvas and 48 persistent CardViews.",
+  );
+
+  await openOptions(page);
+  await page.locator("[data-new-round]").click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).persistence.promptKind === "fresh",
+    null,
+    { timeout: 30_000 },
+  );
+  assert(
+    (await page.locator("[data-local-save-secondary]").isVisible()) === true,
+    "Fresh replacement confirmation omitted Back.",
+  );
+  await page.locator("[data-local-save-secondary]").click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).persistence.promptKind === null,
+    null,
+    { timeout: 30_000 },
+  );
+  const backState = await readState(page);
+  assert(
+    backState.localRound.stateVersion === continued.localRound.stateVersion,
+    "Back from fresh replacement changed the active match.",
+  );
+  await openOptions(page);
+  await page.locator("[data-new-round]").click();
+  await page.locator("[data-local-save-primary]").click();
+  await page.waitForFunction(
+    (oldMatchId) => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
+        state.localRound.stateVersion === 1 &&
+        state.localRound.phase === "awaitingHandPlay" &&
+        state.persistence.lastSavedAt !== null &&
+        state.localRound.viewerId === "player-a" &&
+        state.localRound.matchLength === 3 &&
+        state.localRound.recapCount === 0 &&
+        state.localRound.activePlayerId === "player-a" &&
+        state.localRound.handoffPending === false &&
+        state.localRound.commandCount === 0 &&
+        state.localRound.phase === "awaitingHandPlay" &&
+        !state.result &&
+        state.localRound.roundNumber === 1 &&
+        state.localRound.scheduledMonth === 1 &&
+        oldMatchId !== null
+      );
+    },
+    initialSave.matchId,
+    { timeout: 30_000 },
+  );
+  const replacementSave = await waitForPersistedCheckpoint(page);
+  assert(
+    replacementSave.exists &&
+      replacementSave.saveId !== initialSave.saveId &&
+      replacementSave.matchId !== initialSave.matchId,
+    "Confirmed fresh replacement did not create a distinct persisted match.",
+  );
+
+  await overwriteActiveLocalSaveWithCorruptRecord(page, corruptionSentinel);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await waitForApplicationReady(page, browserErrors, networkErrors);
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).persistence.promptKind === "corrupt",
+    null,
+    { timeout: 30_000 },
+  );
+  await page.setViewportSize({ width: 844, height: 390 });
+  await waitForViewportSettlement(page, { width: 844, height: 390 });
+  const corruptState = await readState(page);
+  const corruptText = await page.locator("body").innerText();
+  assert(
+    !JSON.stringify(corruptState).includes(corruptionSentinel) &&
+      !corruptText.includes(corruptionSentinel) &&
+      !corruptText.includes("november-rain") &&
+      !browserErrors.some((entry) => entry.includes(corruptionSentinel)),
+    "Corrupt-save recovery exposed raw persisted sentinel data.",
+  );
+  assert(
+    (await page.locator("[data-local-save-primary]").textContent())?.includes(
+      "Download diagnostic",
+    ) === true &&
+      (await page.locator("[data-local-save-delete]").textContent())?.includes(
+        "Delete saved game",
+      ) === true &&
+      (await page.locator("[data-local-save-secondary]").textContent())?.includes(
+        "Start new match",
+      ) === true,
+    "Corrupt recovery did not expose named Download diagnostic, Delete saved game, and Start new match controls.",
+  );
+  await page.screenshot({
+    path: resolve(outputDirectory, `corrupt-save-recovery-844x390${suffix}.png`),
+    fullPage: true,
+  });
+  const diagnosticDownload = page.waitForEvent("download");
+  await page.locator("[data-local-save-primary]").click();
+  const diagnostic = JSON.parse(await readDownloadText(await diagnosticDownload));
+  assert(
+    diagnostic.kind === "local-save-recovery" &&
+      diagnostic.category === "local-save-invalid" &&
+      !JSON.stringify(diagnostic).includes(corruptionSentinel) &&
+      !JSON.stringify(diagnostic).includes("november-rain"),
+    "Corrupt-save diagnostic was not sanitized to its allowed category.",
+  );
+  await page.locator("[data-local-save-secondary]").click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).persistence.promptKind === "fresh",
+    null,
+    { timeout: 30_000 },
+  );
+  await page.locator("[data-local-save-secondary]").click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).persistence.promptKind === "corrupt",
+    null,
+    { timeout: 30_000 },
+  );
+  await page.locator("[data-local-save-delete]").click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).persistence.promptKind === "delete",
+    null,
+    { timeout: 30_000 },
+  );
+  await page.locator("[data-local-save-secondary]").click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).persistence.promptKind === "corrupt",
+    null,
+    { timeout: 30_000 },
+  );
+  await page.locator("[data-local-save-secondary]").click();
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).persistence.promptKind === "fresh",
+    null,
+    { timeout: 30_000 },
+  );
+  await page.locator("[data-local-save-primary]").click();
+  await page.waitForFunction(
+    () => {
+      const state = JSON.parse(window.render_game_to_text());
+      return state.persistence.promptKind === null && state.localRound.phase === "awaitingHandPlay";
+    },
+    null,
+    { timeout: 30_000 },
+  );
+  await waitForPersistedCheckpoint(page);
+  await overwriteActiveLocalSaveWithCorruptRecord(page, corruptionSentinel);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await waitForApplicationReady(page, browserErrors, networkErrors);
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).persistence.promptKind === "corrupt",
+    null,
+    { timeout: 30_000 },
+  );
+  await page.locator("[data-local-save-delete]").click();
+  await page.locator("[data-local-save-primary]").click();
+  await page.waitForFunction(
+    () => {
+      const state = JSON.parse(window.render_game_to_text());
+      return state.persistence.promptKind === null && state.localRound.phase === "awaitingHandPlay";
+    },
+    null,
+    { timeout: 30_000 },
+  );
+  const cleanSave = await waitForPersistedCheckpoint(page);
+  assert(
+    cleanSave.exists && cleanSave.keys !== undefined,
+    "Corrupt-save Delete did not replace the exact record with a clean persisted match.",
+  );
+  await page.screenshot({
+    path: resolve(outputDirectory, `delete-clean-844x390${suffix}.png`),
+    fullPage: true,
+  });
+
+  // Existing Phase 5A production helpers reach a real committed round result before reload.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await waitForViewportSettlement(page, { width: 390, height: 844 });
+  const result = await playProductionRoundToResult(page, "Phase 5B persisted round");
+  assert(
+    result.localRound.phase === "roundComplete",
+    "Production trace did not reach roundComplete.",
+  );
+  await waitForPersistedCheckpoint(page, result.localRound.stateVersion);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await waitForApplicationReady(page, browserErrors, networkErrors);
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).persistence.promptKind === "resume",
+    null,
+    { timeout: 30_000 },
+  );
+  assert(
+    (await page.locator("[data-local-save-primary]").textContent())?.includes("Continue") === true,
+    "Round-complete reload did not retain a review/Continue action.",
+  );
+  await page.screenshot({
+    path: resolve(outputDirectory, `round-complete-resume-390x844${suffix}.png`),
+    fullPage: true,
+  });
+  const roundCompleteBeforeContinue = await readState(page);
+  await page.locator("[data-local-save-primary]").click();
+  await page.waitForFunction(
+    () => {
+      const state = JSON.parse(window.render_game_to_text());
+      return state.persistence.promptKind === null && state.result !== null;
+    },
+    null,
+    { timeout: 30_000 },
+  );
+  await page.locator("[data-round-result-action]").click();
+  await page.waitForFunction(
+    (expected) => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
+        state.localRound.roundNumber === expected.roundNumber + 1 &&
+        state.localRound.stateVersion === expected.stateVersion + 1 &&
+        state.result === null
+      );
+    },
+    {
+      roundNumber: roundCompleteBeforeContinue.localRound.roundNumber,
+      stateVersion: roundCompleteBeforeContinue.localRound.stateVersion,
+    },
+    { timeout: 30_000 },
+  );
+}
+
+async function runPhase5BDecisionResumeSmoke(browser) {
+  const { context, page, browserErrors, networkErrors } = await createIsolatedPhase5BPage(browser);
+  try {
+    await page.goto(pageUrl, { waitUntil: "domcontentloaded" });
+    await waitForApplicationReady(page, browserErrors, networkErrors);
+    await playLockedHandSequence(page, PHASE_3B_HAND_DECISION_SEQUENCE);
+    const pendingDecision = await readState(page);
+    assert(
+      pendingDecision.localRound.phase === "awaitingYakuDecision",
+      "Production decision-resume trace did not reach an authoritative Yaku decision.",
+    );
+    await waitForPersistedCheckpoint(page, pendingDecision.localRound.stateVersion);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await waitForApplicationReady(page, browserErrors, networkErrors);
+    await page.waitForFunction(
+      () => JSON.parse(window.render_game_to_text()).persistence.promptKind === "resume",
+      null,
+      { timeout: 30_000 },
+    );
+    const prompt = await readState(page);
+    assert(
+      prompt.input.semanticControlCount === 0 && (await savedActiveHandIsRedacted(page)),
+      "Decision resume prompt leaked private state or unlocked gameplay before Continue.",
+    );
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `resume-decision-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+    await page.locator("[data-local-save-primary]").click();
+    await page.waitForFunction(
+      () => JSON.parse(window.render_game_to_text()).localRound.handoffPending,
+      null,
+      { timeout: 30_000 },
+    );
+    await clickSettledResumeHandoffReady(page);
+    await page.waitForFunction(
+      (version) => {
+        const state = JSON.parse(window.render_game_to_text());
+        return (
+          state.localRound.phase === "awaitingYakuDecision" &&
+          state.localRound.stateVersion === version
+        );
+      },
+      pendingDecision.localRound.stateVersion,
+      { timeout: 30_000 },
+    );
+    await chooseYakuDecision(page, "koiKoi");
+    const resolved = await readState(page);
+    assert(
+      resolved.localRound.stateVersion === pendingDecision.localRound.stateVersion + 1 &&
+        resolved.localRound.phase !== "awaitingYakuDecision",
+      "Resumed Yaku decision was not consumed exactly once by the real Koi-Koi action.",
+    );
+    assert(browserErrors.length === 0, "Decision-resume browser console reported errors.");
+    assert(networkErrors.length === 0, "Decision-resume browser network reported errors.");
+  } finally {
+    await context.close();
+  }
+}
+
+async function runPhase5BMatchCompleteResumeSmoke(browser) {
+  const { context, page, browserErrors, networkErrors } = await createIsolatedPhase5BPage(browser);
+  try {
+    await page.goto(pageUrl, { waitUntil: "domcontentloaded" });
+    await waitForApplicationReady(page, browserErrors, networkErrors);
+    const openingSignature = publicOpeningDealSignature(await readState(page));
+    for (let roundNumber = 1; roundNumber <= 3; roundNumber += 1) {
+      const completed = await playProductionRoundToResult(
+        page,
+        `Phase 5B match round ${roundNumber}`,
+      );
+      assert(
+        completed.result !== null,
+        `Phase 5B match round ${roundNumber} did not reach a real result.`,
+      );
+      if (roundNumber < 3) {
+        await page.locator("[data-round-result-action]").click();
+        await page.waitForFunction(
+          (expectedRound) => {
+            const state = JSON.parse(window.render_game_to_text());
+            return state.localRound.roundNumber === expectedRound && state.result === null;
+          },
+          roundNumber + 1,
+          { timeout: 30_000 },
+        );
+        await acceptHandoffIfPending(page);
+      }
+    }
+    const complete = await readState(page);
+    assert(
+      complete.localRound.phase === "matchComplete" && complete.result !== null,
+      "Production three-round trace did not reach matchComplete.",
+    );
+    const completeSave = await waitForPersistedCheckpoint(page, complete.localRound.stateVersion);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await waitForApplicationReady(page, browserErrors, networkErrors);
+    await page.waitForFunction(
+      () => JSON.parse(window.render_game_to_text()).persistence.promptKind === "resume",
+      null,
+      { timeout: 30_000 },
+    );
+    assert(
+      (await page.locator("[data-local-save-primary]").textContent())?.includes(
+        "Review completed match",
+      ) === true,
+      "Match-complete reload did not expose Review completed match.",
+    );
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `match-complete-resume-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+    await page.locator("[data-local-save-primary]").click();
+    await page.waitForFunction(
+      () => {
+        const state = JSON.parse(window.render_game_to_text());
+        return state.persistence.promptKind === null && state.result !== null;
+      },
+      null,
+      { timeout: 30_000 },
+    );
+    await page.locator("[data-round-result-action]").click();
+    await page.waitForFunction(
+      () => JSON.parse(window.render_game_to_text()).persistence.promptKind === "fresh",
+      null,
+      { timeout: 30_000 },
+    );
+    await page.locator("[data-local-save-primary]").click();
+    await page.waitForFunction(
+      () => {
+        const state = JSON.parse(window.render_game_to_text());
+        return state.localRound.roundNumber === 1 && state.result === null;
+      },
+      null,
+      { timeout: 30_000 },
+    );
+    const rematch = await readState(page);
+    const rematchSave = await waitForPersistedCheckpoint(page, rematch.localRound.stateVersion);
+    assert(
+      rematchSave.saveId !== completeSave.saveId &&
+        rematchSave.matchId !== completeSave.matchId &&
+        publicOpeningDealSignature(rematch) !== openingSignature,
+      "Match-complete rematch did not create a distinct authoritative match, save, and deal.",
+    );
+    assert(browserErrors.length === 0, "Match-complete resume browser console reported errors.");
+    assert(networkErrors.length === 0, "Match-complete resume browser network reported errors.");
+  } finally {
+    await context.close();
+  }
+}
+
+async function runPhase5BStorageFailureSmoke(browser) {
+  const { context, page, browserErrors, networkErrors } = await createIsolatedPhase5BPage(browser);
+  try {
+    await page.goto(pageUrl, { waitUntil: "domcontentloaded" });
+    await waitForApplicationReady(page, browserErrors, networkErrors);
+    const before = await readState(page);
+    await waitForPersistedCheckpoint(page, before.localRound.stateVersion);
+    await externallyAdvanceActiveSaveTimestamp(page);
+    await playHandCardById(page, "april-red-scroll");
+    await page.waitForFunction(
+      () => JSON.parse(window.render_game_to_text()).persistence.status === "unavailable",
+      null,
+      { timeout: 30_000 },
+    );
+    const unavailable = await readState(page);
+    assert(
+      unavailable.localRound.stateVersion > before.localRound.stateVersion &&
+        unavailable.persistence.status === "unavailable" &&
+        unavailable.persistence.available === false &&
+        (await page.locator("[data-persistence-warning]").isVisible()) &&
+        (await page.locator("[data-persistence-warning]").textContent())?.includes(
+          "will not be available after reload",
+        ) === true,
+      "Actual IndexedDB write conflict did not yield a truthful, usable session-only warning.",
+    );
+    assert(
+      unavailable.input.semanticControlCount > 0 || unavailable.localRound.handoffPending,
+      "Storage write failure incorrectly made the live game unusable.",
+    );
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `storage-unavailable-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+    const stored = await inspectActiveLocalSave(page);
+    assert(
+      stored.exists && stored.stateVersion < unavailable.localRound.stateVersion,
+      "Storage failure falsely reported the newer in-memory checkpoint as durable.",
+    );
+    assert(browserErrors.length === 0, "Storage-failure browser console reported errors.");
+    assert(networkErrors.length === 0, "Storage-failure browser network reported errors.");
+  } finally {
+    await context.close();
+  }
+}
+
+async function runPhase5BStorageOpenFailureSmoke(browser) {
+  const { context, page, browserErrors, networkErrors } = await createIsolatedPhase5BPage(browser, {
+    rejectIndexedDbOpen: true,
+  });
+  try {
+    await page.goto(pageUrl, { waitUntil: "domcontentloaded" });
+    await waitForApplicationReady(page, browserErrors, networkErrors);
+    await page.waitForFunction(
+      () => JSON.parse(window.render_game_to_text()).persistence.status === "unavailable",
+      null,
+      { timeout: 30_000 },
+    );
+    const unavailable = await readState(page);
+    assert(
+      unavailable.persistence.available === false &&
+        unavailable.persistence.lastSavedAt === null &&
+        unavailable.localRound.phase === "awaitingHandPlay" &&
+        unavailable.input.semanticControlCount > 0 &&
+        (await page.locator("[data-persistence-warning]").isVisible()) &&
+        (await page.locator("[data-persistence-warning]").textContent())?.includes(
+          "will not be available after reload",
+        ) === true,
+      "IndexedDB open failure did not retain an actionable session-only game without a false save claim.",
+    );
+    const keyboardHand = page.locator('[data-input-role="selectable"]').first();
+    await keyboardHand.focus();
+    assert(
+      (await keyboardHand.evaluate((element) => document.activeElement === element)) === true,
+      "Session-only warning state left legal gameplay controls unreachable by keyboard.",
+    );
+    await page.keyboard.press("Enter");
+    await page.waitForFunction(
+      () => JSON.parse(window.render_game_to_text()).input.status !== "idle",
+      null,
+      { timeout: 30_000 },
+    );
+    await page.keyboard.press("Escape");
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `storage-open-unavailable-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+    assert(browserErrors.length === 0, "Storage-open-failure browser console reported errors.");
+    assert(networkErrors.length === 0, "Storage-open-failure browser network reported errors.");
+  } finally {
+    await context.close();
+  }
+}
+
 async function playHandCardThroughFeedbackBeat(page, cardId) {
   await acceptHandoffIfPending(page);
   await resolvePendingDrawIfNeeded(page);
@@ -1856,7 +2997,9 @@ assert(
   densityReviewResponse.status === 404,
   "The non-shipping Phase 3D-D density harness entered the production build.",
 );
-process.stdout.write(`Phase 5A smoke server ready at ${pageUrl}.\n`);
+process.stdout.write(
+  `${phase5BOnly ? "Phase 5B" : "Phase 5A"} smoke server ready at ${pageUrl}.\n`,
+);
 
 let browser;
 try {
@@ -1881,662 +3024,937 @@ try {
       networkErrors.push(`response: ${response.status()} ${response.url()}`);
   });
 
-  if (process.env.SMOKE_SKIP_BASELINE !== "1") {
-    for (const [viewportIndex, viewport] of viewports.entries()) {
-      await page.setViewportSize(viewport);
-      if (viewportIndex === 0) {
-        await page.goto(pageUrl, { waitUntil: "networkidle" });
-        await waitForApplicationReady(page, browserErrors, networkErrors);
-      } else {
-        await page.waitForFunction(
-          (expectedMode) => JSON.parse(window.render_game_to_text()).layout.mode === expectedMode,
-          viewport.mode,
-        );
-      }
-      const state = await readState(page);
-      assert(state.screen === "localRound", "Phase 5A must identify the local round screen.");
-      assert(
-        state.presentationMode === "authoritativeLocalRound",
-        "The technical fixture must be replaced by an authoritative local round.",
-      );
-      assert(
-        state.deck.activeDeckId === "new-primary-deck",
-        "The approved primary deck is not active.",
-      );
-      assert(state.deck.approvalStatus === "approved", "The runtime deck is not owner-approved.");
-      assert(state.localRound.phase === "awaitingHandPlay", "The opening round is not playable.");
-      assert(
-        state.localRound.viewerId === "player-a",
-        "Player A must receive the opening observation.",
-      );
-      assert(
-        state.input.selectableCardIds.length === 8,
-        "The opening hand is not fully interactive.",
-      );
-      await assertHandPlayAttention(page, {
-        label: `baseline-${viewport.width}x${viewport.height}`,
-      });
-      assert(
-        state.theme.activeId === "ink-parchment" && state.theme.optionsOpen === false,
-        `The fresh production shell did not use its default Ink theme: ${JSON.stringify(state.theme)}.`,
-      );
-      assert(
-        (await page.locator("[data-turn-context]").count()) === 0 &&
-          !(await page.locator(".turn-recap").isVisible()),
-        "The removed turn/status scaffolding remained visible on a fresh round.",
-      );
-      assert(state.cards.cardViewCount === 48, "The persistent 48-card registry changed.");
-      assert(
-        state.scene.emptyFieldPlaceholderCount === 0,
-        "The table rendered numbered or outlined empty field-card placeholders.",
-      );
-      const minimumPlayerHandHeights = new Map([
-        ["320x568", 108],
-        ["390x844", 120],
-        ["844x390", 88],
-        ["1366x768", 120],
-      ]);
-      const minimumHandHeight = minimumPlayerHandHeights.get(
-        `${viewport.width}x${viewport.height}`,
-      );
-      if (minimumHandHeight !== undefined) {
-        assert(
-          state.layout.zones.playerHand.height >= minimumHandHeight,
-          `The enlarged player hand regressed at ${viewport.width}×${viewport.height}: ${state.layout.zones.playerHand.height}.`,
-        );
-      }
-      assert(
-        state.cards.visibleViews.every(({ faceUp }) => faceUp),
-        "Text projection exposed a face-down card identity.",
-      );
-      assert(
-        state.layout.mode === viewport.mode,
-        `${viewport.width}×${viewport.height} layout mode changed: expected ${viewport.mode}, received ${state.layout.mode}.`,
-      );
-      assert(
-        JSON.stringify(state.layerOrder) === JSON.stringify(expectedLayerOrder),
-        "The prescribed layer order changed.",
-      );
-      assert(
-        state.diagnostics.clippedZones.length === 0,
-        `A supported viewport clips a board zone: ${JSON.stringify({ viewport, diagnostics: state.diagnostics })}`,
-      );
-      if (viewport.width === 844 && viewport.height === 390) {
-        for (const selector of ["[data-yaku-progress]"]) {
-          assert(await page.locator(selector).isVisible(), `${selector} disappeared in landscape.`);
-        }
-      }
-      const optionsBox = await page.locator("[data-options-trigger]").boundingBox();
-      const frameBox = await page.locator(".game-frame").boundingBox();
-      assert(
-        optionsBox !== null && frameBox !== null && optionsBox.y >= frameBox.y + frameBox.height,
-        `Options overlaps the card table at ${viewport.width}×${viewport.height}: ${JSON.stringify({ optionsBox, frameBox })}.`,
-      );
-      await assertUtilityDock(page, viewport);
-      await page.screenshot({
-        path: resolve(
-          outputDirectory,
-          `local-round-${viewport.width}x${viewport.height}${smokeBasePath === "/" ? "" : "-pages"}.png`,
-        ),
-        fullPage: true,
-      });
-    }
-    process.stdout.write("Phase 5A seven-viewport baseline passed.\n");
+  if (phase5BOnly) {
+    await runPhase5BPersistenceSmoke(page, browserErrors, networkErrors);
+    await runPhase5BDecisionResumeSmoke(browser);
+    await runPhase5BMatchCompleteResumeSmoke(browser);
+    await runPhase5BStorageFailureSmoke(browser);
+    await runPhase5BStorageOpenFailureSmoke(browser);
+    assert(
+      !browserErrors.some((entry) => entry.includes("PHASE5B_PRIVATE_SAVE_SENTINEL")),
+      "Browser console leaked the corrupt saved-record sentinel.",
+    );
+    assert(browserErrors.length === 0, "Phase 5B browser console reported errors.");
+    assert(networkErrors.length === 0, "Phase 5B browser network reported errors.");
+    process.stdout.write("Phase 5B Root/Pages persistence smoke passed.\n");
   } else {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(pageUrl, { waitUntil: "networkidle" });
-    await waitForApplicationReady(page, browserErrors, networkErrors);
-  }
-
-  if (process.env.SMOKE_PHASE5A_ONLY !== "1") {
-    await page.setViewportSize({ width: 390, height: 844 });
-    const handCueBeforeOptions = await assertHandPlayAttention(page, {
-      label: "390x844",
-      screenshot: true,
-    });
-    await assertNoLegalDestinationAttention(page, "idle Hand");
-    const handCueSemanticCount = await actionableSemanticControlCount(page);
-    await openOptions(page);
-    await assertHandPlayAttentionHidden(page, "Options dialog");
-    await closeOptions(page);
-    const handCueAfterOptions = await assertHandPlayAttention(page, { label: "390x844-restored" });
-    assert(
-      handCueAfterOptions.localRound.stateVersion ===
-        handCueBeforeOptions.localRound.stateVersion &&
-        handCueAfterOptions.localRound.commandCount ===
-          handCueBeforeOptions.localRound.commandCount &&
-        handCueAfterOptions.cards.cardViewCount === handCueBeforeOptions.cards.cardViewCount &&
-        (await actionableSemanticControlCount(page)) === handCueSemanticCount,
-      "Opening or closing Options changed Hand attention authority or semantic controls.",
-    );
-    const handSource = page.locator(
-      '[data-input-role="selectable"][data-card-id="april-red-scroll"]',
-    );
-    await handSource.click();
-    await page.waitForFunction(
-      () => JSON.parse(window.render_game_to_text()).input.selectedCardId === "april-red-scroll",
-    );
-    await assertHandPlayAttentionHidden(page, "selected Hand source");
-    const selectedHandCueState = await readState(page);
-    assert(
-      selectedHandCueState.localRound.stateVersion ===
-        handCueBeforeOptions.localRound.stateVersion &&
-        selectedHandCueState.localRound.commandCount ===
-          handCueBeforeOptions.localRound.commandCount &&
-        selectedHandCueState.cards.cardViewCount === handCueBeforeOptions.cards.cardViewCount &&
-        (await handSource.getAttribute("aria-pressed")) === "true",
-      "Selecting a Hand source changed authority, persistent CardViews, or selected-source semantics before the existing move resolves.",
-    );
-    await assertLegalDestinationAttention(page, {
-      label: "hand-target-selected-390x844",
-      kind: selectedHandCueState.input.fieldPlacementAvailable ? "fieldPlacement" : "targets",
-      screenshot: true,
-    });
-    for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
-      await selectTheme(page, themeId);
-      await assertLegalDestinationAttention(page, {
-        label: `hand-target-${themeId}-390x844`,
-        kind: "targets",
-        screenshot: true,
-      });
-    }
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    await assertLegalDestinationAttention(page, {
-      label: "hand-target-reduced-motion-390x844",
-      kind: "targets",
-      reducedMotion: true,
-      screenshot: true,
-    });
-    await page.setViewportSize({ width: 844, height: 390 });
-    await waitForViewportSettlement(page, { width: 844, height: 390 });
-    await assertLegalDestinationAttention(page, {
-      label: "hand-target-reduced-motion-844x390",
-      kind: "targets",
-      reducedMotion: true,
-      screenshot: true,
-    });
-    await page.setViewportSize({ width: 390, height: 844 });
-    await waitForViewportSettlement(page, { width: 390, height: 844 });
-    await page.emulateMedia({ reducedMotion: "no-preference" });
-    await selectTheme(page, "ink-parchment");
-    await assertLegalDestinationAttention(page, {
-      label: "hand-target-motion-restored-390x844",
-      kind: "targets",
-    });
-    await page.screenshot({
-      path: resolve(
-        outputDirectory,
-        `hand-start-cue-selected-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-      ),
-      fullPage: true,
-    });
-    await page.keyboard.press("Escape");
-    await page.waitForFunction(() => {
-      const state = JSON.parse(window.render_game_to_text());
-      return state.input.status === "idle" && state.input.selectedCardId === null;
-    });
-    const handCueAfterCancel = await assertHandPlayAttention(page, { label: "390x844-cancelled" });
-    await assertNoLegalDestinationAttention(page, "cancelled Hand source");
-    assert(
-      handCueAfterCancel.localRound.stateVersion === handCueBeforeOptions.localRound.stateVersion &&
-        handCueAfterCancel.localRound.commandCount ===
-          handCueBeforeOptions.localRound.commandCount &&
-        handCueAfterCancel.cards.cardViewCount === handCueBeforeOptions.cards.cardViewCount,
-      "Cancelling a selected Hand source changed authority or persistent CardViews.",
-    );
-    await assertUtilityDialogCycle(page, {
-      trigger: "[data-context-help-trigger]",
-      dialog: "[data-context-help-dialog]",
-      close: "[data-context-help-close]",
-      label: "Contextual help",
-    });
-    await assertContextHelp(page);
-    await assertUtilityDialogCycle(page, {
-      trigger: "[data-history-trigger]",
-      dialog: "[data-history-dialog]",
-      close: "[data-history-close]",
-      label: "History",
-    });
-    await assertUtilityDialogCycle(page, {
-      trigger: "[data-yaku-guide-trigger]",
-      dialog: "[data-yaku-guide-dialog]",
-      close: "[data-yaku-guide-close]",
-      label: "Yaku Guide",
-    });
-    await page.locator("[data-yaku-guide-trigger]").click();
-    await page.locator("[data-yaku-guide-dialog]").waitFor({ state: "visible" });
-    await assertYakuGuideContents(page);
-    await page.screenshot({
-      path: resolve(
-        outputDirectory,
-        `yaku-guide-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-      ),
-      fullPage: true,
-    });
-    await page.keyboard.press("Escape");
-    await assertUtilityDialogCycle(page, {
-      trigger: "[data-options-trigger]",
-      dialog: "[data-options-dialog]",
-      close: "[data-options-close]",
-      focus: '[data-theme-option][value="ink-parchment"]',
-      label: "Options",
-    });
-    for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
-      await selectTheme(page, themeId);
-      await assertHandPlayAttention(page, { label: `theme-${themeId}-390x844`, screenshot: true });
-      await assertYakuGuideLightFrames(page, themeId);
-      await assertCardInspectorTheme(page, themeId);
-    }
-    await selectTheme(page, "ink-parchment");
-    await page.setViewportSize({ width: 844, height: 390 });
-    await assertHandPlayAttention(page, { label: "844x390", screenshot: true });
-    await assertUtilityDock(page, { width: 844, height: 390 });
-    await assertUtilityDialogCycle(page, {
-      trigger: "[data-history-trigger]",
-      dialog: "[data-history-dialog]",
-      close: "[data-history-close]",
-      label: "History landscape",
-    });
-    await assertUtilityDialogCycle(page, {
-      trigger: "[data-yaku-guide-trigger]",
-      dialog: "[data-yaku-guide-dialog]",
-      close: "[data-yaku-guide-close]",
-      label: "Yaku Guide landscape",
-    });
-    await assertUtilityDialogCycle(page, {
-      trigger: "[data-options-trigger]",
-      dialog: "[data-options-dialog]",
-      close: "[data-options-close]",
-      focus: '[data-theme-option][value="ink-parchment"]',
-      label: "Options landscape",
-    });
-    await page.screenshot({
-      path: resolve(
-        outputDirectory,
-        `utility-dock-844x390${smokeBasePath === "/" ? "" : "-pages"}.png`,
-      ),
-      fullPage: true,
-    });
-    await page.setViewportSize({ width: 390, height: 844 });
-    await assertCardInspection(
-      page,
-      '[data-card-id="january-pine-plain-b"][data-inspectable="true"]',
-      "field-card",
-      ["currentMonthSet", "plainCards"],
-    );
-    await assertCardInspection(
-      page,
-      '[data-card-id="november-red-scroll"][data-inspectable="true"]',
-      "own-hand-card",
-      ["currentMonthSet", "scrolls"],
-    );
-    await page.setViewportSize({ width: 844, height: 390 });
-    await assertContextHelp(page, "844x390");
-    await assertCardInspection(
-      page,
-      '[data-card-id="january-pine-plain-b"][data-inspectable="true"]',
-      "field-card",
-      ["currentMonthSet", "plainCards"],
-      "844x390",
-    );
-    await assertCardInspection(
-      page,
-      '[data-card-id="december-phoenix"][data-inspectable="true"]',
-      "high-entry-field-card",
-      ["fiveBrights", "fourBrights", "fourBrightsWithRain", "threeBrights", "currentMonthSet"],
-      "844x390",
-      { assertScroll: true },
-    );
-    await page.setViewportSize({ width: 390, height: 844 });
-    await runPhysicalDrawTrace(page);
-    await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
-    await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
-    await page.waitForFunction(
-      () => JSON.parse(window.render_game_to_text()).animation.mode === "reducedMotion",
-    );
-    await assertHandPlayAttention(page, {
-      label: "reduced-motion-390x844",
-      reducedMotion: true,
-      screenshot: true,
-    });
-
-    await openOptions(page);
-    await assertHandPlayAttentionHidden(page, "reduced-motion Options dialog");
-    for (const removedControl of [
-      "[data-input-mode]",
-      "[data-animation-mode]",
-      "[data-animation-accelerate]",
-      "[data-animation-finish]",
-    ]) {
-      assert(
-        (await page.locator(removedControl).count()) === 0,
-        `${removedControl} remained in the simplified Options dialog.`,
-      );
-    }
-    assert(
-      await page.locator('[data-theme-option][value="ink-parchment"]').isChecked(),
-      "Options did not identify the selected Ink theme.",
-    );
-    assert(
-      await page
-        .locator('[data-theme-option][value="ink-parchment"]')
-        .evaluate((option) => document.activeElement === option),
-      "Options did not focus the selected theme.",
-    );
-    await page.screenshot({
-      path: resolve(
-        outputDirectory,
-        `options-ink-parchment-mobile${smokeBasePath === "/" ? "" : "-pages"}.png`,
-      ),
-      fullPage: true,
-    });
-    await page.keyboard.press("Escape");
-    assert(
-      !(await page.locator("[data-options-dialog]").evaluate((dialog) => dialog.open)) &&
-        (await page
-          .locator("[data-options-trigger]")
-          .evaluate((trigger) => document.activeElement === trigger)),
-      "Escape did not close Options and return focus to its trigger.",
-    );
-    await assertHandPlayAttention(page, {
-      label: "reduced-motion-390x844-restored",
-      reducedMotion: true,
-    });
-    await page.emulateMedia({ reducedMotion: "no-preference" });
-    await page.waitForFunction(
-      () => JSON.parse(window.render_game_to_text()).animation.mode === "normal",
-    );
-    await assertHandPlayAttention(page, { label: "motion-restored-390x844" });
-
-    await page
-      .locator('[data-input-role="selectable"][data-card-id="november-red-scroll"]')
-      .click();
-    await page.waitForFunction(
-      () => JSON.parse(window.render_game_to_text()).input.selectedCardId === "november-red-scroll",
-    );
-    const beforeThemeSwitch = await readState(page);
-    const persistentTokens = beforeThemeSwitch.cards.visibleViews.map(({ cardId, token }) => [
-      cardId,
-      token,
-    ]);
-    for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
-      await selectTheme(page, themeId);
-      const themed = await readState(page);
-      assert(
-        themed.theme.activeId === themeId &&
-          themed.theme.optionsOpen === false &&
-          themed.canvasCount === 1 &&
-          themed.cards.cardViewCount === 48 &&
-          themed.deck.activeDeckId === beforeThemeSwitch.deck.activeDeckId &&
-          themed.localRound.stateVersion === beforeThemeSwitch.localRound.stateVersion &&
-          themed.localRound.commandCount === beforeThemeSwitch.localRound.commandCount &&
-          themed.input.selectedCardId === beforeThemeSwitch.input.selectedCardId &&
-          JSON.stringify(themed.input.legalTargetCardIds) ===
-            JSON.stringify(beforeThemeSwitch.input.legalTargetCardIds) &&
-          JSON.stringify(themed.cards.visibleViews.map(({ cardId, token }) => [cardId, token])) ===
-            JSON.stringify(persistentTokens),
-        `${themeId} changed gameplay state or persistent CardView identity.`,
-      );
-      assert(
-        (await page.locator("[data-input-instruction]").textContent())?.includes(
-          "highlighted field",
-        ),
-        `${themeId} replaced the selected-card accessibility instruction.`,
-      );
-      await assertPointerQuietInteractionControl(
-        page,
-        "[data-input-field-placement]",
-        `${themeId} no-match field destination`,
-      );
-      for (const viewport of [
-        { id: "mobile", width: 390, height: 844 },
-        { id: "desktop", width: 1366, height: 768 },
-      ]) {
+    if (process.env.SMOKE_SKIP_BASELINE !== "1") {
+      for (const [viewportIndex, viewport] of viewports.entries()) {
         await page.setViewportSize(viewport);
-        await page.waitForFunction(
-          (width) => JSON.parse(window.render_game_to_text()).viewport.width === width,
-          viewport.width,
+        if (viewportIndex === 0) {
+          await page.goto(pageUrl, { waitUntil: "networkidle" });
+          await waitForApplicationReady(page, browserErrors, networkErrors);
+        } else {
+          await page.waitForFunction(
+            (expectedMode) => JSON.parse(window.render_game_to_text()).layout.mode === expectedMode,
+            viewport.mode,
+          );
+        }
+        const state = await readState(page);
+        assert(state.screen === "localRound", "Phase 5A must identify the local round screen.");
+        assert(
+          state.presentationMode === "authoritativeLocalRound",
+          "The technical fixture must be replaced by an authoritative local round.",
         );
+        assert(
+          state.deck.activeDeckId === "new-primary-deck",
+          "The approved primary deck is not active.",
+        );
+        assert(state.deck.approvalStatus === "approved", "The runtime deck is not owner-approved.");
+        assert(state.localRound.phase === "awaitingHandPlay", "The opening round is not playable.");
+        assert(
+          state.localRound.viewerId === "player-a",
+          "Player A must receive the opening observation.",
+        );
+        assert(
+          state.input.selectableCardIds.length === 8,
+          "The opening hand is not fully interactive.",
+        );
+        await assertHandPlayAttention(page, {
+          label: `baseline-${viewport.width}x${viewport.height}`,
+        });
+        assert(
+          state.theme.activeId === "ink-parchment" && state.theme.optionsOpen === false,
+          `The fresh production shell did not use its default Ink theme: ${JSON.stringify(state.theme)}.`,
+        );
+        assert(
+          (await page.locator("[data-turn-context]").count()) === 0 &&
+            !(await page.locator(".turn-recap").isVisible()),
+          "The removed turn/status scaffolding remained visible on a fresh round.",
+        );
+        assert(state.cards.cardViewCount === 48, "The persistent 48-card registry changed.");
+        assert(
+          state.scene.emptyFieldPlaceholderCount === 0,
+          "The table rendered numbered or outlined empty field-card placeholders.",
+        );
+        const minimumPlayerHandHeights = new Map([
+          ["320x568", 108],
+          ["390x844", 120],
+          ["844x390", 88],
+          ["1366x768", 120],
+        ]);
+        const minimumHandHeight = minimumPlayerHandHeights.get(
+          `${viewport.width}x${viewport.height}`,
+        );
+        if (minimumHandHeight !== undefined) {
+          assert(
+            state.layout.zones.playerHand.height >= minimumHandHeight,
+            `The enlarged player hand regressed at ${viewport.width}×${viewport.height}: ${state.layout.zones.playerHand.height}.`,
+          );
+        }
+        assert(
+          state.cards.visibleViews.every(({ faceUp }) => faceUp),
+          "Text projection exposed a face-down card identity.",
+        );
+        assert(
+          state.layout.mode === viewport.mode,
+          `${viewport.width}×${viewport.height} layout mode changed: expected ${viewport.mode}, received ${state.layout.mode}.`,
+        );
+        assert(
+          JSON.stringify(state.layerOrder) === JSON.stringify(expectedLayerOrder),
+          "The prescribed layer order changed.",
+        );
+        assert(
+          state.diagnostics.clippedZones.length === 0,
+          `A supported viewport clips a board zone: ${JSON.stringify({ viewport, diagnostics: state.diagnostics })}`,
+        );
+        if (viewport.width === 844 && viewport.height === 390) {
+          for (const selector of ["[data-yaku-progress]"]) {
+            assert(
+              await page.locator(selector).isVisible(),
+              `${selector} disappeared in landscape.`,
+            );
+          }
+        }
+        const optionsBox = await page.locator("[data-options-trigger]").boundingBox();
+        const frameBox = await page.locator(".game-frame").boundingBox();
+        assert(
+          optionsBox !== null && frameBox !== null && optionsBox.y >= frameBox.y + frameBox.height,
+          `Options overlaps the card table at ${viewport.width}×${viewport.height}: ${JSON.stringify({ optionsBox, frameBox })}.`,
+        );
+        await assertUtilityDock(page, viewport);
         await page.screenshot({
           path: resolve(
             outputDirectory,
-            `theme-${themeId}-${viewport.id}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+            `local-round-${viewport.width}x${viewport.height}${smokeBasePath === "/" ? "" : "-pages"}.png`,
           ),
           fullPage: true,
         });
       }
+      process.stdout.write("Phase 5A seven-viewport baseline passed.\n");
+    } else {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto(pageUrl, { waitUntil: "networkidle" });
+      await waitForApplicationReady(page, browserErrors, networkErrors);
     }
-    await page.setViewportSize({ width: 390, height: 844 });
-    await selectTheme(page, "moonlit-indigo");
-    await page.reload({ waitUntil: "networkidle" });
-    await waitForApplicationReady(page, browserErrors, networkErrors);
-    const restoredTheme = await readState(page);
-    assert(
-      restoredTheme.theme.activeId === "moonlit-indigo" &&
-        (await page.locator('meta[name="theme-color"]').getAttribute("content")) === "#080f1b",
-      "The IndexedDB theme preference did not restore after reload.",
-    );
-    await selectTheme(page, "ink-parchment");
-    await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
-    process.stdout.write(
-      "Phase 3D-C runtime theme, persistence, and Options focus trace passed.\n",
-    );
 
-    await configureSecondaryOptions(page, { animationMode: "normal" });
-    await page.waitForFunction(
-      () => JSON.parse(window.render_game_to_text()).animation.mode === "normal",
-    );
-    const placementBefore = await readState(page);
-    await page
-      .locator('[data-input-role="selectable"][data-card-id="november-red-scroll"]')
-      .click();
-    await page.waitForFunction(() => {
-      const state = JSON.parse(window.render_game_to_text());
-      return (
-        state.input.status === "confirming" &&
-        state.input.handResolutionKind === "placeOnField" &&
-        state.input.fieldPlacementAvailable === true
-      );
-    });
-    const placementSelected = await readState(page);
-    assert(
-      placementSelected.localRound.stateVersion === placementBefore.localRound.stateVersion &&
-        placementSelected.input.selectedCardId === "november-red-scroll" &&
-        placementSelected.input.legalTargetCardIds.length === 0,
-      "No-match source selection mutated state or invented a capture target.",
-    );
-    await assertLegalDestinationAttention(page, {
-      label: "hand-no-match-selected-390x844",
-      kind: "fieldPlacement",
-      screenshot: true,
-    });
-    const placementControl = page.locator("[data-input-field-placement]");
-    assert(await placementControl.isVisible(), "The no-match field destination is missing.");
-    assert(
-      (await placementControl.getAttribute("aria-label")) === "No match. Place card on the field.",
-      "The field destination does not retain its exact no-match accessible wording.",
-    );
-    await assertPointerQuietInteractionControl(
-      page,
-      "[data-input-field-placement]",
-      "No-match field destination",
-    );
-    await page.screenshot({
-      path: resolve(
-        outputDirectory,
-        `no-match-field-destination-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-      ),
-      fullPage: true,
-    });
-    await page.evaluate(() => window.advanceTime(0));
-    await placementControl.click({ noWaitAfter: true });
-    const noMatchTravel = await advanceUntilAnimationClip(page, "travel", "cardPlacedOnField");
-    assert(
-      noMatchTravel.animation.activeClip?.kind === "travel" &&
-        noMatchTravel.animation.activeClip?.eventType === "cardPlacedOnField",
-      "No-match placement did not enter its direct field-travel clip.",
-    );
-    const activeNoMatchTravel = noMatchTravel.animation.activeClip;
-    if (!activeNoMatchTravel) throw new Error("No-match travel clip disappeared before evidence.");
-    const remainingNoMatchTravelMs = activeNoMatchTravel.durationMs - activeNoMatchTravel.elapsedMs;
-    const midTravelAdvanceMs = Math.max(1, Math.floor(remainingNoMatchTravelMs / 2));
-    assert(
-      midTravelAdvanceMs < remainingNoMatchTravelMs,
-      `No-match travel has no safe mid-clip evidence interval: ${JSON.stringify(activeNoMatchTravel)}.`,
-    );
-    await page.evaluate((durationMs) => window.advanceTime(durationMs), midTravelAdvanceMs);
-    const noMatchMidTravel = await readState(page);
-    assert(
-      noMatchMidTravel.animation.activeClip?.kind === "travel" &&
-        noMatchMidTravel.animation.activeClip?.eventType === "cardPlacedOnField",
-      "No-match placement settled before its mid-travel evidence frame.",
-    );
-    await page.screenshot({
-      path: resolve(
-        outputDirectory,
-        `no-match-direct-field-travel-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-      ),
-      fullPage: true,
-    });
-    await page.evaluate(() => window.advanceTime(1_000));
-    await waitForAcceptedHandIntent(page, placementBefore.localRound.stateVersion);
-
-    await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
-    const pairBefore = await readState(page);
-    await page
-      .locator('[data-input-role="selectable"][data-card-id="january-pine-plain-a"]')
-      .click();
-    await page.waitForFunction(() => {
-      const state = JSON.parse(window.render_game_to_text());
-      return (
-        state.input.status === "confirming" &&
-        state.input.handResolutionKind === "capturePair" &&
-        state.input.legalTargetCardIds.length === 1
-      );
-    });
-    const pairSelected = await readState(page);
-    assert(
-      pairSelected.localRound.stateVersion === pairBefore.localRound.stateVersion &&
-        pairSelected.input.legalTargetCardIds[0] === "january-pine-plain-b",
-      "Unique-match source selection did not expose exactly its authoritative match.",
-    );
-    const pairTarget = page.locator(
-      '[data-input-role="target"][data-card-id="january-pine-plain-b"]',
-    );
-    assert(await pairTarget.isVisible(), "The unique-match target is missing.");
-    assert(
-      (await pairTarget.getAttribute("aria-label"))?.includes("confirm matching capture"),
-      "The unique-match target does not expose capture-confirmation semantics.",
-    );
-    assert(
-      (await page
-        .locator('[data-input-role="selectable"][data-card-id="january-pine-plain-a"]')
-        .getAttribute("aria-pressed")) === "true",
-      "The unique-match hand source did not retain selected-source semantics.",
-    );
-    await assertPointerQuietInteractionControl(
-      page,
-      '[data-input-role="target"][data-card-id="january-pine-plain-b"]',
-      "Unique-match target",
-    );
-    await page.screenshot({
-      path: resolve(
-        outputDirectory,
-        `source-selected-pair-target-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-      ),
-      fullPage: true,
-    });
-    await page.evaluate(() => window.advanceTime(0));
-    await pairTarget.click({ noWaitAfter: true });
-    const pairHold = await advanceUntilAnimationClip(page, "alignment", "captureStarted");
-    assert(
-      pairHold.animation.activeClip?.kind === "alignment" &&
-        pairHold.animation.activeClip?.eventType === "captureStarted",
-      "Pair capture did not enter its source-over-target hold.",
-    );
-    await page.screenshot({
-      path: resolve(
-        outputDirectory,
-        `hand-pair-overlap-hold-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-      ),
-      fullPage: true,
-    });
-    await page.evaluate(() => window.advanceTime(1_000));
-    await waitForAcceptedHandIntent(page, pairBefore.localRound.stateVersion);
-    process.stdout.write("Phase 3F-C source, target, and no-match field-cue trace passed.\n");
-
-    await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
-    await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
-
-    await playLockedHandSequence(page, PHASE_3B_HAND_DECISION_SEQUENCE.slice(0, -1));
-    const lastHandDecisionCard = PHASE_3B_HAND_DECISION_SEQUENCE.at(-1);
-    assert(lastHandDecisionCard, "The locked Hand decision sequence is empty.");
-    const handAnimals = await playHandCardThroughFeedbackBeat(page, lastHandDecisionCard);
-    assert(
-      handAnimals.localRound.phase === "awaitingYakuDecision" &&
-        handAnimals.yaku?.decision?.phase === "hand" &&
-        hasYaku(handAnimals, "animals"),
-      "The locked Hand Animals decision did not appear.",
-    );
-    assert(handAnimals.yaku.decision.currentYakuTotal === 3, "Hand Animals did not total 3.");
-    assert(handAnimals.yaku.decision.bank?.awardedPoints === 3, "Hand Bank was not 3 at 1×.");
-    assert(
-      handAnimals.yaku.decision.koiKoi?.resultingTableMultiplier === 2,
-      "Hand Koi-Koi did not raise 1× to 2×.",
-    );
-    assert(handAnimals.input.status === "decision", "Card input was not locked for the decision.");
-    assert(
-      (await actionableSemanticControlCount(page)) === 0,
-      "Hand-card semantic controls remained active during the decision.",
-    );
-    assert(
-      await page.locator("[data-yaku-decision]").isVisible(),
-      "Yaku decision tray is missing.",
-    );
-    const decisionBox = await page.locator("[data-yaku-decision]").boundingBox();
-    const gameBox = await page.locator(".game-frame").boundingBox();
-    assert(
-      decisionBox !== null && gameBox !== null && decisionBox.y >= gameBox.y + gameBox.height - 1,
-      `The Yaku decision surface obscures the table: ${JSON.stringify({ decisionBox, gameBox })}.`,
-    );
-    for (const selector of [
-      "[data-deck-select]",
-      "[data-fullscreen-button]",
-      "[data-new-round]",
-      "[data-options-trigger]",
-    ]) {
+    if (process.env.SMOKE_PHASE5A_ONLY !== "1") {
+      await page.setViewportSize({ width: 390, height: 844 });
+      const handCueBeforeOptions = await assertHandPlayAttention(page, {
+        label: "390x844",
+        screenshot: true,
+      });
+      await assertNoLegalDestinationAttention(page, "idle Hand");
+      const handCueSemanticCount = await actionableSemanticControlCount(page);
+      await openOptions(page);
+      await assertHandPlayAttentionHidden(page, "Options dialog");
+      await closeOptions(page);
+      const handCueAfterOptions = await assertHandPlayAttention(page, {
+        label: "390x844-restored",
+      });
       assert(
-        await page.locator(selector).isDisabled(),
-        `${selector} escaped the modal decision lock.`,
+        handCueAfterOptions.localRound.stateVersion ===
+          handCueBeforeOptions.localRound.stateVersion &&
+          handCueAfterOptions.localRound.commandCount ===
+            handCueBeforeOptions.localRound.commandCount &&
+          handCueAfterOptions.cards.cardViewCount === handCueBeforeOptions.cards.cardViewCount &&
+          (await actionableSemanticControlCount(page)) === handCueSemanticCount,
+        "Opening or closing Options changed Hand attention authority or semantic controls.",
       );
-    }
-    assert(
-      (await page.locator("[data-yaku-bank]").textContent())?.includes("3 points"),
-      "Hand Bank button omitted its authoritative 3-point award.",
-    );
-    assert(
-      (await page.locator("[data-yaku-koi-koi]").textContent())?.includes("2×"),
-      "Hand Koi-Koi button omitted the 2× consequence.",
-    );
-    const captureCount =
-      handAnimals.cards.zoneCounts.playerBrights +
-      handAnimals.cards.zoneCounts.playerAnimals +
-      handAnimals.cards.zoneCounts.playerScrolls +
-      handAnimals.cards.zoneCounts.playerPlains;
-    const stateBeforeCaptureInspection = handAnimals.localRound.stateVersion;
-    await page.locator('[data-capture-inspect="player"]').click();
-    await page.waitForFunction(
-      () => JSON.parse(window.render_game_to_text()).captureInspection.open === true,
-    );
-    assert(
-      (await page.locator("[data-capture-inspector] img").count()) === captureCount &&
-        (await page.locator("[data-capture-inspector-title]").textContent())?.includes(
-          String(captureCount),
+      const handSource = page.locator(
+        '[data-input-role="selectable"][data-card-id="april-red-scroll"]',
+      );
+      await handSource.click();
+      await page.waitForFunction(
+        () => JSON.parse(window.render_game_to_text()).input.selectedCardId === "april-red-scroll",
+      );
+      await assertHandPlayAttentionHidden(page, "selected Hand source");
+      const selectedHandCueState = await readState(page);
+      assert(
+        selectedHandCueState.localRound.stateVersion ===
+          handCueBeforeOptions.localRound.stateVersion &&
+          selectedHandCueState.localRound.commandCount ===
+            handCueBeforeOptions.localRound.commandCount &&
+          selectedHandCueState.cards.cardViewCount === handCueBeforeOptions.cards.cardViewCount &&
+          (await handSource.getAttribute("aria-pressed")) === "true",
+        "Selecting a Hand source changed authority, persistent CardViews, or selected-source semantics before the existing move resolves.",
+      );
+      await assertLegalDestinationAttention(page, {
+        label: "hand-target-selected-390x844",
+        kind: selectedHandCueState.input.fieldPlacementAvailable ? "fieldPlacement" : "targets",
+        screenshot: true,
+      });
+      for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
+        await selectTheme(page, themeId);
+        await assertLegalDestinationAttention(page, {
+          label: `hand-target-${themeId}-390x844`,
+          kind: "targets",
+          screenshot: true,
+        });
+      }
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await assertLegalDestinationAttention(page, {
+        label: "hand-target-reduced-motion-390x844",
+        kind: "targets",
+        reducedMotion: true,
+        screenshot: true,
+      });
+      await page.setViewportSize({ width: 844, height: 390 });
+      await waitForViewportSettlement(page, { width: 844, height: 390 });
+      await assertLegalDestinationAttention(page, {
+        label: "hand-target-reduced-motion-844x390",
+        kind: "targets",
+        reducedMotion: true,
+        screenshot: true,
+      });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await waitForViewportSettlement(page, { width: 390, height: 844 });
+      await page.emulateMedia({ reducedMotion: "no-preference" });
+      await selectTheme(page, "ink-parchment");
+      await assertLegalDestinationAttention(page, {
+        label: "hand-target-motion-restored-390x844",
+        kind: "targets",
+      });
+      await page.screenshot({
+        path: resolve(
+          outputDirectory,
+          `hand-start-cue-selected-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
         ),
-      "Capture inspection did not show exactly the current player's public captured cards.",
+        fullPage: true,
+      });
+      await page.keyboard.press("Escape");
+      await page.waitForFunction(() => {
+        const state = JSON.parse(window.render_game_to_text());
+        return state.input.status === "idle" && state.input.selectedCardId === null;
+      });
+      const handCueAfterCancel = await assertHandPlayAttention(page, {
+        label: "390x844-cancelled",
+      });
+      await assertNoLegalDestinationAttention(page, "cancelled Hand source");
+      assert(
+        handCueAfterCancel.localRound.stateVersion ===
+          handCueBeforeOptions.localRound.stateVersion &&
+          handCueAfterCancel.localRound.commandCount ===
+            handCueBeforeOptions.localRound.commandCount &&
+          handCueAfterCancel.cards.cardViewCount === handCueBeforeOptions.cards.cardViewCount,
+        "Cancelling a selected Hand source changed authority or persistent CardViews.",
+      );
+      await assertUtilityDialogCycle(page, {
+        trigger: "[data-context-help-trigger]",
+        dialog: "[data-context-help-dialog]",
+        close: "[data-context-help-close]",
+        label: "Contextual help",
+      });
+      await assertContextHelp(page);
+      await assertUtilityDialogCycle(page, {
+        trigger: "[data-history-trigger]",
+        dialog: "[data-history-dialog]",
+        close: "[data-history-close]",
+        label: "History",
+      });
+      await assertUtilityDialogCycle(page, {
+        trigger: "[data-yaku-guide-trigger]",
+        dialog: "[data-yaku-guide-dialog]",
+        close: "[data-yaku-guide-close]",
+        label: "Yaku Guide",
+      });
+      await page.locator("[data-yaku-guide-trigger]").click();
+      await page.locator("[data-yaku-guide-dialog]").waitFor({ state: "visible" });
+      await assertYakuGuideContents(page);
+      await page.screenshot({
+        path: resolve(
+          outputDirectory,
+          `yaku-guide-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+        ),
+        fullPage: true,
+      });
+      await page.keyboard.press("Escape");
+      await assertUtilityDialogCycle(page, {
+        trigger: "[data-options-trigger]",
+        dialog: "[data-options-dialog]",
+        close: "[data-options-close]",
+        focus: '[data-theme-option][value="ink-parchment"]',
+        label: "Options",
+      });
+      for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
+        await selectTheme(page, themeId);
+        await assertHandPlayAttention(page, {
+          label: `theme-${themeId}-390x844`,
+          screenshot: true,
+        });
+        await assertYakuGuideLightFrames(page, themeId);
+        await assertCardInspectorTheme(page, themeId);
+      }
+      await selectTheme(page, "ink-parchment");
+      await page.setViewportSize({ width: 844, height: 390 });
+      await assertHandPlayAttention(page, { label: "844x390", screenshot: true });
+      await assertUtilityDock(page, { width: 844, height: 390 });
+      await assertUtilityDialogCycle(page, {
+        trigger: "[data-history-trigger]",
+        dialog: "[data-history-dialog]",
+        close: "[data-history-close]",
+        label: "History landscape",
+      });
+      await assertUtilityDialogCycle(page, {
+        trigger: "[data-yaku-guide-trigger]",
+        dialog: "[data-yaku-guide-dialog]",
+        close: "[data-yaku-guide-close]",
+        label: "Yaku Guide landscape",
+      });
+      await assertUtilityDialogCycle(page, {
+        trigger: "[data-options-trigger]",
+        dialog: "[data-options-dialog]",
+        close: "[data-options-close]",
+        focus: '[data-theme-option][value="ink-parchment"]',
+        label: "Options landscape",
+      });
+      await page.screenshot({
+        path: resolve(
+          outputDirectory,
+          `utility-dock-844x390${smokeBasePath === "/" ? "" : "-pages"}.png`,
+        ),
+        fullPage: true,
+      });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await assertCardInspection(
+        page,
+        '[data-card-id="january-pine-plain-b"][data-inspectable="true"]',
+        "field-card",
+        ["currentMonthSet", "plainCards"],
+      );
+      await assertCardInspection(
+        page,
+        '[data-card-id="november-red-scroll"][data-inspectable="true"]',
+        "own-hand-card",
+        ["currentMonthSet", "scrolls"],
+      );
+      await page.setViewportSize({ width: 844, height: 390 });
+      await assertContextHelp(page, "844x390");
+      await assertCardInspection(
+        page,
+        '[data-card-id="january-pine-plain-b"][data-inspectable="true"]',
+        "field-card",
+        ["currentMonthSet", "plainCards"],
+        "844x390",
+      );
+      await assertCardInspection(
+        page,
+        '[data-card-id="december-phoenix"][data-inspectable="true"]',
+        "high-entry-field-card",
+        ["fiveBrights", "fourBrights", "fourBrightsWithRain", "threeBrights", "currentMonthSet"],
+        "844x390",
+        { assertScroll: true },
+      );
+      await page.setViewportSize({ width: 390, height: 844 });
+      await runPhysicalDrawTrace(page);
+      await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
+      await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
+      await page.waitForFunction(
+        () => JSON.parse(window.render_game_to_text()).animation.mode === "reducedMotion",
+      );
+      await assertHandPlayAttention(page, {
+        label: "reduced-motion-390x844",
+        reducedMotion: true,
+        screenshot: true,
+      });
+
+      await openOptions(page);
+      await assertHandPlayAttentionHidden(page, "reduced-motion Options dialog");
+      for (const removedControl of [
+        "[data-input-mode]",
+        "[data-animation-mode]",
+        "[data-animation-accelerate]",
+        "[data-animation-finish]",
+      ]) {
+        assert(
+          (await page.locator(removedControl).count()) === 0,
+          `${removedControl} remained in the simplified Options dialog.`,
+        );
+      }
+      assert(
+        await page.locator('[data-theme-option][value="ink-parchment"]').isChecked(),
+        "Options did not identify the selected Ink theme.",
+      );
+      assert(
+        await page
+          .locator('[data-theme-option][value="ink-parchment"]')
+          .evaluate((option) => document.activeElement === option),
+        "Options did not focus the selected theme.",
+      );
+      await page.screenshot({
+        path: resolve(
+          outputDirectory,
+          `options-ink-parchment-mobile${smokeBasePath === "/" ? "" : "-pages"}.png`,
+        ),
+        fullPage: true,
+      });
+      await page.keyboard.press("Escape");
+      assert(
+        !(await page.locator("[data-options-dialog]").evaluate((dialog) => dialog.open)) &&
+          (await page
+            .locator("[data-options-trigger]")
+            .evaluate((trigger) => document.activeElement === trigger)),
+        "Escape did not close Options and return focus to its trigger.",
+      );
+      await assertHandPlayAttention(page, {
+        label: "reduced-motion-390x844-restored",
+        reducedMotion: true,
+      });
+      await page.emulateMedia({ reducedMotion: "no-preference" });
+      await page.waitForFunction(
+        () => JSON.parse(window.render_game_to_text()).animation.mode === "normal",
+      );
+      await assertHandPlayAttention(page, { label: "motion-restored-390x844" });
+
+      await page
+        .locator('[data-input-role="selectable"][data-card-id="november-red-scroll"]')
+        .click();
+      await page.waitForFunction(
+        () =>
+          JSON.parse(window.render_game_to_text()).input.selectedCardId === "november-red-scroll",
+      );
+      const beforeThemeSwitch = await readState(page);
+      const persistentTokens = beforeThemeSwitch.cards.visibleViews.map(({ cardId, token }) => [
+        cardId,
+        token,
+      ]);
+      for (const themeId of ["ink-parchment", "moonlit-indigo", "warm-ivory"]) {
+        await selectTheme(page, themeId);
+        const themed = await readState(page);
+        assert(
+          themed.theme.activeId === themeId &&
+            themed.theme.optionsOpen === false &&
+            themed.canvasCount === 1 &&
+            themed.cards.cardViewCount === 48 &&
+            themed.deck.activeDeckId === beforeThemeSwitch.deck.activeDeckId &&
+            themed.localRound.stateVersion === beforeThemeSwitch.localRound.stateVersion &&
+            themed.localRound.commandCount === beforeThemeSwitch.localRound.commandCount &&
+            themed.input.selectedCardId === beforeThemeSwitch.input.selectedCardId &&
+            JSON.stringify(themed.input.legalTargetCardIds) ===
+              JSON.stringify(beforeThemeSwitch.input.legalTargetCardIds) &&
+            JSON.stringify(
+              themed.cards.visibleViews.map(({ cardId, token }) => [cardId, token]),
+            ) === JSON.stringify(persistentTokens),
+          `${themeId} changed gameplay state or persistent CardView identity.`,
+        );
+        assert(
+          (await page.locator("[data-input-instruction]").textContent())?.includes(
+            "highlighted field",
+          ),
+          `${themeId} replaced the selected-card accessibility instruction.`,
+        );
+        await assertPointerQuietInteractionControl(
+          page,
+          "[data-input-field-placement]",
+          `${themeId} no-match field destination`,
+        );
+        for (const viewport of [
+          { id: "mobile", width: 390, height: 844 },
+          { id: "desktop", width: 1366, height: 768 },
+        ]) {
+          await page.setViewportSize(viewport);
+          await page.waitForFunction(
+            (width) => JSON.parse(window.render_game_to_text()).viewport.width === width,
+            viewport.width,
+          );
+          await page.screenshot({
+            path: resolve(
+              outputDirectory,
+              `theme-${themeId}-${viewport.id}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+      await page.setViewportSize({ width: 390, height: 844 });
+      await selectTheme(page, "moonlit-indigo");
+      await reloadFreshLegacyPage(page, pageUrl, browserErrors, networkErrors);
+      const restoredTheme = await readState(page);
+      assert(
+        restoredTheme.theme.activeId === "moonlit-indigo" &&
+          (await page.locator('meta[name="theme-color"]').getAttribute("content")) === "#080f1b",
+        "The IndexedDB theme preference did not restore after reload.",
+      );
+      await selectTheme(page, "ink-parchment");
+      await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
+      process.stdout.write(
+        "Phase 3D-C runtime theme, persistence, and Options focus trace passed.\n",
+      );
+
+      await configureSecondaryOptions(page, { animationMode: "normal" });
+      await page.waitForFunction(
+        () => JSON.parse(window.render_game_to_text()).animation.mode === "normal",
+      );
+      const placementBefore = await readState(page);
+      await page
+        .locator('[data-input-role="selectable"][data-card-id="november-red-scroll"]')
+        .click();
+      await page.waitForFunction(() => {
+        const state = JSON.parse(window.render_game_to_text());
+        return (
+          state.input.status === "confirming" &&
+          state.input.handResolutionKind === "placeOnField" &&
+          state.input.fieldPlacementAvailable === true
+        );
+      });
+      const placementSelected = await readState(page);
+      assert(
+        placementSelected.localRound.stateVersion === placementBefore.localRound.stateVersion &&
+          placementSelected.input.selectedCardId === "november-red-scroll" &&
+          placementSelected.input.legalTargetCardIds.length === 0,
+        "No-match source selection mutated state or invented a capture target.",
+      );
+      await assertLegalDestinationAttention(page, {
+        label: "hand-no-match-selected-390x844",
+        kind: "fieldPlacement",
+        screenshot: true,
+      });
+      const placementControl = page.locator("[data-input-field-placement]");
+      assert(await placementControl.isVisible(), "The no-match field destination is missing.");
+      assert(
+        (await placementControl.getAttribute("aria-label")) ===
+          "No match. Place card on the field.",
+        "The field destination does not retain its exact no-match accessible wording.",
+      );
+      await assertPointerQuietInteractionControl(
+        page,
+        "[data-input-field-placement]",
+        "No-match field destination",
+      );
+      await page.screenshot({
+        path: resolve(
+          outputDirectory,
+          `no-match-field-destination-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+        ),
+        fullPage: true,
+      });
+      await page.evaluate(() => window.advanceTime(0));
+      await placementControl.click({ noWaitAfter: true });
+      const noMatchTravel = await advanceUntilAnimationClip(page, "travel", "cardPlacedOnField");
+      assert(
+        noMatchTravel.animation.activeClip?.kind === "travel" &&
+          noMatchTravel.animation.activeClip?.eventType === "cardPlacedOnField",
+        "No-match placement did not enter its direct field-travel clip.",
+      );
+      const activeNoMatchTravel = noMatchTravel.animation.activeClip;
+      if (!activeNoMatchTravel)
+        throw new Error("No-match travel clip disappeared before evidence.");
+      const remainingNoMatchTravelMs =
+        activeNoMatchTravel.durationMs - activeNoMatchTravel.elapsedMs;
+      const midTravelAdvanceMs = Math.max(1, Math.floor(remainingNoMatchTravelMs / 2));
+      assert(
+        midTravelAdvanceMs < remainingNoMatchTravelMs,
+        `No-match travel has no safe mid-clip evidence interval: ${JSON.stringify(activeNoMatchTravel)}.`,
+      );
+      await page.evaluate((durationMs) => window.advanceTime(durationMs), midTravelAdvanceMs);
+      const noMatchMidTravel = await readState(page);
+      assert(
+        noMatchMidTravel.animation.activeClip?.kind === "travel" &&
+          noMatchMidTravel.animation.activeClip?.eventType === "cardPlacedOnField",
+        "No-match placement settled before its mid-travel evidence frame.",
+      );
+      await page.screenshot({
+        path: resolve(
+          outputDirectory,
+          `no-match-direct-field-travel-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+        ),
+        fullPage: true,
+      });
+      await page.evaluate(() => window.advanceTime(1_000));
+      await waitForAcceptedHandIntent(page, placementBefore.localRound.stateVersion);
+
+      await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
+      const pairBefore = await readState(page);
+      await page
+        .locator('[data-input-role="selectable"][data-card-id="january-pine-plain-a"]')
+        .click();
+      await page.waitForFunction(() => {
+        const state = JSON.parse(window.render_game_to_text());
+        return (
+          state.input.status === "confirming" &&
+          state.input.handResolutionKind === "capturePair" &&
+          state.input.legalTargetCardIds.length === 1
+        );
+      });
+      const pairSelected = await readState(page);
+      assert(
+        pairSelected.localRound.stateVersion === pairBefore.localRound.stateVersion &&
+          pairSelected.input.legalTargetCardIds[0] === "january-pine-plain-b",
+        "Unique-match source selection did not expose exactly its authoritative match.",
+      );
+      const pairTarget = page.locator(
+        '[data-input-role="target"][data-card-id="january-pine-plain-b"]',
+      );
+      assert(await pairTarget.isVisible(), "The unique-match target is missing.");
+      assert(
+        (await pairTarget.getAttribute("aria-label"))?.includes("confirm matching capture"),
+        "The unique-match target does not expose capture-confirmation semantics.",
+      );
+      assert(
+        (await page
+          .locator('[data-input-role="selectable"][data-card-id="january-pine-plain-a"]')
+          .getAttribute("aria-pressed")) === "true",
+        "The unique-match hand source did not retain selected-source semantics.",
+      );
+      await assertPointerQuietInteractionControl(
+        page,
+        '[data-input-role="target"][data-card-id="january-pine-plain-b"]',
+        "Unique-match target",
+      );
+      await page.screenshot({
+        path: resolve(
+          outputDirectory,
+          `source-selected-pair-target-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+        ),
+        fullPage: true,
+      });
+      await page.evaluate(() => window.advanceTime(0));
+      await pairTarget.click({ noWaitAfter: true });
+      const pairHold = await advanceUntilAnimationClip(page, "alignment", "captureStarted");
+      assert(
+        pairHold.animation.activeClip?.kind === "alignment" &&
+          pairHold.animation.activeClip?.eventType === "captureStarted",
+        "Pair capture did not enter its source-over-target hold.",
+      );
+      await page.screenshot({
+        path: resolve(
+          outputDirectory,
+          `hand-pair-overlap-hold-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+        ),
+        fullPage: true,
+      });
+      await page.evaluate(() => window.advanceTime(1_000));
+      await waitForAcceptedHandIntent(page, pairBefore.localRound.stateVersion);
+      process.stdout.write("Phase 3F-C source, target, and no-match field-cue trace passed.\n");
+
+      await resetLocalRoundPage(page, pageUrl, browserErrors, networkErrors);
+      await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
+
+      await playLockedHandSequence(page, PHASE_3B_HAND_DECISION_SEQUENCE.slice(0, -1));
+      const lastHandDecisionCard = PHASE_3B_HAND_DECISION_SEQUENCE.at(-1);
+      assert(lastHandDecisionCard, "The locked Hand decision sequence is empty.");
+      const handAnimals = await playHandCardThroughFeedbackBeat(page, lastHandDecisionCard);
+      assert(
+        handAnimals.localRound.phase === "awaitingYakuDecision" &&
+          handAnimals.yaku?.decision?.phase === "hand" &&
+          hasYaku(handAnimals, "animals"),
+        "The locked Hand Animals decision did not appear.",
+      );
+      assert(handAnimals.yaku.decision.currentYakuTotal === 3, "Hand Animals did not total 3.");
+      assert(handAnimals.yaku.decision.bank?.awardedPoints === 3, "Hand Bank was not 3 at 1×.");
+      assert(
+        handAnimals.yaku.decision.koiKoi?.resultingTableMultiplier === 2,
+        "Hand Koi-Koi did not raise 1× to 2×.",
+      );
+      assert(
+        handAnimals.input.status === "decision",
+        "Card input was not locked for the decision.",
+      );
+      assert(
+        (await actionableSemanticControlCount(page)) === 0,
+        "Hand-card semantic controls remained active during the decision.",
+      );
+      assert(
+        await page.locator("[data-yaku-decision]").isVisible(),
+        "Yaku decision tray is missing.",
+      );
+      const decisionBox = await page.locator("[data-yaku-decision]").boundingBox();
+      const gameBox = await page.locator(".game-frame").boundingBox();
+      assert(
+        decisionBox !== null && gameBox !== null && decisionBox.y >= gameBox.y + gameBox.height - 1,
+        `The Yaku decision surface obscures the table: ${JSON.stringify({ decisionBox, gameBox })}.`,
+      );
+      for (const selector of [
+        "[data-deck-select]",
+        "[data-fullscreen-button]",
+        "[data-new-round]",
+        "[data-options-trigger]",
+      ]) {
+        assert(
+          await page.locator(selector).isDisabled(),
+          `${selector} escaped the modal decision lock.`,
+        );
+      }
+      assert(
+        (await page.locator("[data-yaku-bank]").textContent())?.includes("3 points"),
+        "Hand Bank button omitted its authoritative 3-point award.",
+      );
+      assert(
+        (await page.locator("[data-yaku-koi-koi]").textContent())?.includes("2×"),
+        "Hand Koi-Koi button omitted the 2× consequence.",
+      );
+      const captureCount =
+        handAnimals.cards.zoneCounts.playerBrights +
+        handAnimals.cards.zoneCounts.playerAnimals +
+        handAnimals.cards.zoneCounts.playerScrolls +
+        handAnimals.cards.zoneCounts.playerPlains;
+      const stateBeforeCaptureInspection = handAnimals.localRound.stateVersion;
+      await page.locator('[data-capture-inspect="player"]').click();
+      await page.waitForFunction(
+        () => JSON.parse(window.render_game_to_text()).captureInspection.open === true,
+      );
+      assert(
+        (await page.locator("[data-capture-inspector] img").count()) === captureCount &&
+          (await page.locator("[data-capture-inspector-title]").textContent())?.includes(
+            String(captureCount),
+          ),
+        "Capture inspection did not show exactly the current player's public captured cards.",
+      );
+      const captureGalleryFrames = await page
+        .locator("[data-capture-inspector] img")
+        .evaluateAll((images) =>
+          images.map((image) => {
+            const bounds = image.getBoundingClientRect();
+            const style = getComputedStyle(image);
+            return {
+              ratio: bounds.width / bounds.height,
+              borderWidth: Number.parseFloat(style.borderTopWidth),
+              borderColor: style.borderTopColor,
+              objectFit: style.objectFit,
+            };
+          }),
+        );
+      assert(
+        captureGalleryFrames.length === captureCount &&
+          captureGalleryFrames.every(
+            ({ ratio, borderWidth, borderColor, objectFit }) =>
+              Math.abs(ratio - 0.625) < 0.03 &&
+              borderWidth >= 2 &&
+              borderColor !== "rgba(0, 0, 0, 0)" &&
+              objectFit === "contain",
+          ),
+        `Capture gallery no longer preserves a strong framed 5:8 card treatment: ${JSON.stringify(captureGalleryFrames)}.`,
+      );
+      assertClearlyLightFrames(
+        await inspectCardImageFrames(page, "[data-capture-inspector] img"),
+        "Capture gallery",
+      );
+      const captureInspectionState = await readState(page);
+      assert(
+        captureInspectionState.localRound.stateVersion === stateBeforeCaptureInspection &&
+          captureInspectionState.cards.cardViewCount === 48 &&
+          !JSON.stringify(captureInspectionState).includes("drawPileOrdered") &&
+          !JSON.stringify(captureInspectionState).includes("commandId"),
+        "Capture inspection changed authoritative state, CardView identity, or exposed private data.",
+      );
+      await page.screenshot({
+        path: resolve(
+          outputDirectory,
+          `capture-inspection-koi-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+        ),
+        fullPage: true,
+      });
+      await page.keyboard.press("Escape");
+      await page.waitForFunction(
+        () => JSON.parse(window.render_game_to_text()).captureInspection.open === false,
+      );
+      assert(
+        await page.locator("[data-yaku-decision]").isVisible(),
+        "Closing capture inspection lost the unresolved Yaku decision.",
+      );
+      assert(
+        await page
+          .locator('[data-capture-inspect="player"]')
+          .evaluate((element) => document.activeElement === element),
+        "Closing capture inspection did not restore focus to its public capture trigger.",
+      );
+      await page.screenshot({
+        path: resolve(
+          outputDirectory,
+          `hand-animals-decision-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+        ),
+        fullPage: true,
+      });
+      process.stdout.write("Phase 3B Hand Animals decision passed.\n");
+
+      await chooseYakuDecision(page, "koiKoi");
+      const afterHandKoi = await readState(page);
+      assert(
+        afterHandKoi.yaku.tableMultiplier === 2,
+        "Koi-Koi did not preserve the public 2× table.",
+      );
+      assert(
+        afterHandKoi.yaku.feedback?.chosenDecision?.choice === "koiKoi" &&
+          afterHandKoi.yaku.feedback?.koiKoi?.currentTableMultiplier === 2,
+        "Koi-Koi feedback omitted its authoritative continuation event.",
+      );
+      assert(
+        afterHandKoi.localRound.latestRecap?.includes("Drew"),
+        "Hand Koi-Koi did not resume Draw before its handoff boundary.",
+      );
+      await page.screenshot({
+        path: resolve(
+          outputDirectory,
+          `hand-koi-draw-resumed-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+        ),
+        fullPage: true,
+      });
+      process.stdout.write("Phase 3B Hand Koi-Koi Draw continuation passed.\n");
+
+      await playLockedHandSequence(page, PHASE_3B_FINAL_DRAW_SEQUENCE);
+      const finalDraw = await resolvePendingDrawIfNeeded(page);
+      assert(
+        finalDraw.localRound.phase === "awaitingYakuDecision" &&
+          finalDraw.yaku?.decision?.phase === "draw" &&
+          hasYaku(finalDraw, "blueScrolls") &&
+          hasYaku(finalDraw, "scrolls"),
+        "The locked combined final-Draw decision did not appear.",
+      );
+      assert(finalDraw.yaku.tableMultiplier === 2, "Final Draw decision was not at 2×.");
+      assert(finalDraw.yaku.decision.currentYakuTotal === 11, "Final Draw total was not 11.");
+      assert(finalDraw.yaku.decision.bank?.awardedPoints === 22, "Final Draw Bank was not 22.");
+      assert(
+        finalDraw.yaku.decision.koiKoi?.resultingTableMultiplier === 3,
+        "Final Draw Koi-Koi did not raise 2× to 3×.",
+      );
+      assert(
+        (await page.locator("[data-yaku-decision-summary]").textContent())?.includes(
+          "Blue Scrolls",
+        ) &&
+          (await page.locator("[data-yaku-decision-summary]").textContent())?.includes("Scrolls"),
+        "Combined final-Draw yaku are not presented together.",
+      );
+      await page.screenshot({
+        path: resolve(
+          outputDirectory,
+          `final-draw-combined-decision-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+        ),
+        fullPage: true,
+      });
+      process.stdout.write("Phase 3B final-Draw combined decision passed.\n");
+
+      assert(
+        await page.locator("[data-new-round]").isDisabled(),
+        "New Round can discard an unresolved final-Draw decision.",
+      );
+      const finalKoiResult = await chooseYakuDecisionThroughResultBeat(page, "koiKoi");
+      await waitForResultVisualSettlement(page);
+      assert(
+        finalKoiResult.state.localRound.phase === "roundComplete" &&
+          finalKoiResult.state.result?.kind === "endOfPlayLastKoiCaller",
+        "Final-Draw Koi-Koi did not produce the committed End-of-Play result.",
+      );
+      assert(
+        finalKoiResult.state.result.scorerId === "player-b" &&
+          finalKoiResult.state.result.scoring?.basePoints === 11 &&
+          finalKoiResult.state.result.scoring?.scoringMultiplier === 3 &&
+          finalKoiResult.state.result.scoring?.awardedPoints === 33,
+        `Final-Draw result arithmetic changed: ${JSON.stringify(finalKoiResult.state.result)}.`,
+      );
+      assert(
+        await page.locator("[data-round-result]").isVisible(),
+        "End-of-Play result modal is not visible.",
+      );
+      await assertHandPlayAttentionHidden(page, "End-of-Play result");
+      assert(
+        (await page.locator("[data-round-result-outcome]").textContent())?.includes(
+          "last Koi-Koi caller",
+        ) &&
+          (await page.locator("[data-round-result-arithmetic]").textContent())?.includes(
+            "11 points × 3× = 33 points",
+          ),
+        "End-of-Play result copy omitted the authoritative caller/arithmetic.",
+      );
+      assert(
+        !(await page.locator("[data-round-result-details]").evaluate((details) => details.open)) &&
+          !(await page.locator("[data-round-result-transition]").isVisible()) &&
+          (await page.locator("[data-round-result-action]").isVisible()),
+        "End-of-Play did not open as a concise outcome/points/action summary.",
+      );
+      await page.screenshot({
+        path: resolve(
+          outputDirectory,
+          `end-of-play-result-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+        ),
+        fullPage: true,
+      });
+      process.stdout.write("Phase 5A End-of-Play result passed.\n");
+    }
+
+    await reloadFreshLegacyPage(page, pageUrl, browserErrors, networkErrors);
+    await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
+    const initialDealSignature = publicOpeningDealSignature(await readState(page));
+    const freshHandAnimals = await playLockedHandSequence(page, PHASE_3B_HAND_DECISION_SEQUENCE);
+    assert(
+      freshHandAnimals.localRound.phase === "awaitingYakuDecision" &&
+        freshHandAnimals.yaku?.decision?.phase === "hand" &&
+        hasYaku(freshHandAnimals, "animals"),
+      "The fresh Bank trace did not reach Hand Animals.",
     );
-    const captureGalleryFrames = await page
-      .locator("[data-capture-inspector] img")
+    const bankResult = await chooseYakuDecisionThroughResultBeat(page, "bank");
+    await waitForResultVisualSettlement(page);
+    const banked = bankResult.state;
+    await assertHandPlayAttentionHidden(page, "Bank result");
+    assert(banked.localRound.phase === "roundComplete", "Hand Bank did not complete the round.");
+    assert(
+      !banked.localRound.latestRecap?.includes("Drew"),
+      "Hand Bank incorrectly revealed a Draw card.",
+    );
+    assert(
+      banked.yaku.feedback?.chosenDecision?.choice === "bank",
+      "Bank award feedback omitted the authoritative Bank choice.",
+    );
+    assert(
+      banked.yaku.feedback?.bankAward?.awardedPoints === 3 &&
+        bankResult.trace.some((entry) => entry.feedbackVisible && !entry.resultVisible),
+      "Bank award feedback did not precede the authoritative result.",
+    );
+    assert(
+      (await page.locator("[data-turn-recaps]").textContent())?.includes(
+        "banked 3 × 1× = 3 points",
+      ),
+      "Bank award recap omitted the authoritative scoring arithmetic.",
+    );
+    assert(
+      banked.result?.kind === "bankedScore" &&
+        banked.result.scorerId === "player-b" &&
+        banked.result.scoring?.arithmeticLabel === "3 points × 1× = 3 points." &&
+        banked.result.matchScoresAfter["player-b"] === 3,
+      `Bank result snapshot changed: ${JSON.stringify(banked.result)}.`,
+    );
+    assert(
+      banked.result.action.actionLabel === "Continue to next round" &&
+        banked.result.action.plan?.scheduledMonth === 2 &&
+        banked.result.action.plan?.starterId === "player-a",
+      "The real continuation action or authoritative February plan is missing.",
+    );
+    assert(
+      (await page.locator("[data-round-result-context]").textContent())?.includes("January") &&
+        (await page.locator("[data-round-result-transition-copy]").textContent())?.includes(
+          "February",
+        ),
+      "The result modal omitted its month context or next-round plan.",
+    );
+    assert(
+      !(await page.locator("[data-round-result-details]").evaluate((details) => details.open)) &&
+        !(await page.locator("[data-round-result-transition]").isVisible()) &&
+        (await page.evaluate(() =>
+          document.activeElement?.matches("[data-round-result-action]"),
+        )) === true,
+      "The Bank result exposed secondary scoring/transition details before request.",
+    );
+    await page.locator("[data-round-result-details] > summary").click();
+    assert(
+      (await page.locator("[data-round-result-transition]").isVisible()) &&
+        (await page.locator("[data-round-result-multipliers]").isVisible()) &&
+        (await page.locator("[data-round-result-yaku] .round-result__yaku-row").count()) ===
+          banked.result.scoredYaku.length &&
+        (await page.locator("[data-round-result-yaku] .round-result__yaku-cards img").count()) ===
+          banked.result.scoredYaku.reduce((sum, row) => sum + row.contributingCardIds.length, 0),
+      "The result Details disclosure did not reveal authoritative scoring, transition, and exact yaku-card evidence.",
+    );
+    const expandedGallery = await page
+      .locator("[data-round-result-yaku] .round-result__yaku-cards img")
       .evaluateAll((images) =>
         images.map((image) => {
           const bounds = image.getBoundingClientRect();
@@ -2546,496 +3964,290 @@ try {
             borderWidth: Number.parseFloat(style.borderTopWidth),
             borderColor: style.borderTopColor,
             objectFit: style.objectFit,
+            alt: image.alt,
+            caption: image.parentElement?.querySelector("figcaption")?.textContent?.trim() ?? "",
           };
         }),
       );
     assert(
-      captureGalleryFrames.length === captureCount &&
-        captureGalleryFrames.every(
-          ({ ratio, borderWidth, borderColor, objectFit }) =>
+      expandedGallery.length > 0 &&
+        expandedGallery.every(
+          ({ ratio, borderWidth, borderColor, objectFit, alt, caption }) =>
             Math.abs(ratio - 0.625) < 0.03 &&
-            borderWidth >= 2 &&
+            borderWidth >= 1 &&
             borderColor !== "rgba(0, 0, 0, 0)" &&
-            objectFit === "contain",
+            objectFit === "contain" &&
+            !/^[a-z]+-[a-z0-9-]+$/u.test(alt) &&
+            !/^[a-z]+-[a-z0-9-]+$/u.test(caption),
         ),
-      `Capture gallery no longer preserves a strong framed 5:8 card treatment: ${JSON.stringify(captureGalleryFrames)}.`,
-    );
-    assertClearlyLightFrames(
-      await inspectCardImageFrames(page, "[data-capture-inspector] img"),
-      "Capture gallery",
-    );
-    const captureInspectionState = await readState(page);
-    assert(
-      captureInspectionState.localRound.stateVersion === stateBeforeCaptureInspection &&
-        captureInspectionState.cards.cardViewCount === 48 &&
-        !JSON.stringify(captureInspectionState).includes("drawPileOrdered") &&
-        !JSON.stringify(captureInspectionState).includes("commandId"),
-      "Capture inspection changed authoritative state, CardView identity, or exposed private data.",
+      `Expanded scored-Yaku gallery lost its framed 5:8 card treatment: ${JSON.stringify(expandedGallery)}.`,
     );
     await page.screenshot({
       path: resolve(
         outputDirectory,
-        `capture-inspection-koi-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
+        `bank-expanded-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
       ),
       fullPage: true,
     });
-    await page.keyboard.press("Escape");
-    await page.waitForFunction(
-      () => JSON.parse(window.render_game_to_text()).captureInspection.open === false,
-    );
-    assert(
-      await page.locator("[data-yaku-decision]").isVisible(),
-      "Closing capture inspection lost the unresolved Yaku decision.",
-    );
-    assert(
-      await page
-        .locator('[data-capture-inspect="player"]')
-        .evaluate((element) => document.activeElement === element),
-      "Closing capture inspection did not restore focus to its public capture trigger.",
-    );
-    await page.screenshot({
-      path: resolve(
-        outputDirectory,
-        `hand-animals-decision-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-      ),
-      fullPage: true,
-    });
-    process.stdout.write("Phase 3B Hand Animals decision passed.\n");
-
-    await chooseYakuDecision(page, "koiKoi");
-    const afterHandKoi = await readState(page);
-    assert(
-      afterHandKoi.yaku.tableMultiplier === 2,
-      "Koi-Koi did not preserve the public 2× table.",
-    );
-    assert(
-      afterHandKoi.yaku.feedback?.chosenDecision?.choice === "koiKoi" &&
-        afterHandKoi.yaku.feedback?.koiKoi?.currentTableMultiplier === 2,
-      "Koi-Koi feedback omitted its authoritative continuation event.",
-    );
-    assert(
-      afterHandKoi.localRound.latestRecap?.includes("Drew"),
-      "Hand Koi-Koi did not resume Draw before its handoff boundary.",
-    );
-    await page.screenshot({
-      path: resolve(
-        outputDirectory,
-        `hand-koi-draw-resumed-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-      ),
-      fullPage: true,
-    });
-    process.stdout.write("Phase 3B Hand Koi-Koi Draw continuation passed.\n");
-
-    await playLockedHandSequence(page, PHASE_3B_FINAL_DRAW_SEQUENCE);
-    const finalDraw = await resolvePendingDrawIfNeeded(page);
-    assert(
-      finalDraw.localRound.phase === "awaitingYakuDecision" &&
-        finalDraw.yaku?.decision?.phase === "draw" &&
-        hasYaku(finalDraw, "blueScrolls") &&
-        hasYaku(finalDraw, "scrolls"),
-      "The locked combined final-Draw decision did not appear.",
-    );
-    assert(finalDraw.yaku.tableMultiplier === 2, "Final Draw decision was not at 2×.");
-    assert(finalDraw.yaku.decision.currentYakuTotal === 11, "Final Draw total was not 11.");
-    assert(finalDraw.yaku.decision.bank?.awardedPoints === 22, "Final Draw Bank was not 22.");
-    assert(
-      finalDraw.yaku.decision.koiKoi?.resultingTableMultiplier === 3,
-      "Final Draw Koi-Koi did not raise 2× to 3×.",
-    );
-    assert(
-      (await page.locator("[data-yaku-decision-summary]").textContent())?.includes(
-        "Blue Scrolls",
-      ) && (await page.locator("[data-yaku-decision-summary]").textContent())?.includes("Scrolls"),
-      "Combined final-Draw yaku are not presented together.",
-    );
-    await page.screenshot({
-      path: resolve(
-        outputDirectory,
-        `final-draw-combined-decision-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-      ),
-      fullPage: true,
-    });
-    process.stdout.write("Phase 3B final-Draw combined decision passed.\n");
-
-    assert(
-      await page.locator("[data-new-round]").isDisabled(),
-      "New Round can discard an unresolved final-Draw decision.",
-    );
-    const finalKoiResult = await chooseYakuDecisionThroughResultBeat(page, "koiKoi");
-    await waitForResultVisualSettlement(page);
-    assert(
-      finalKoiResult.state.localRound.phase === "roundComplete" &&
-        finalKoiResult.state.result?.kind === "endOfPlayLastKoiCaller",
-      "Final-Draw Koi-Koi did not produce the committed End-of-Play result.",
-    );
-    assert(
-      finalKoiResult.state.result.scorerId === "player-b" &&
-        finalKoiResult.state.result.scoring?.basePoints === 11 &&
-        finalKoiResult.state.result.scoring?.scoringMultiplier === 3 &&
-        finalKoiResult.state.result.scoring?.awardedPoints === 33,
-      `Final-Draw result arithmetic changed: ${JSON.stringify(finalKoiResult.state.result)}.`,
-    );
-    assert(
-      await page.locator("[data-round-result]").isVisible(),
-      "End-of-Play result modal is not visible.",
-    );
-    await assertHandPlayAttentionHidden(page, "End-of-Play result");
-    assert(
-      (await page.locator("[data-round-result-outcome]").textContent())?.includes(
-        "last Koi-Koi caller",
-      ) &&
-        (await page.locator("[data-round-result-arithmetic]").textContent())?.includes(
-          "11 points × 3× = 33 points",
-        ),
-      "End-of-Play result copy omitted the authoritative caller/arithmetic.",
-    );
-    assert(
-      !(await page.locator("[data-round-result-details]").evaluate((details) => details.open)) &&
-        !(await page.locator("[data-round-result-transition]").isVisible()) &&
-        (await page.locator("[data-round-result-action]").isVisible()),
-      "End-of-Play did not open as a concise outcome/points/action summary.",
-    );
-    await page.screenshot({
-      path: resolve(
-        outputDirectory,
-        `end-of-play-result-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-      ),
-      fullPage: true,
-    });
-    process.stdout.write("Phase 5A End-of-Play result passed.\n");
-  }
-
-  await page.goto(pageUrl, { waitUntil: "networkidle" });
-  await waitForApplicationReady(page, browserErrors, networkErrors);
-  await configureSecondaryOptions(page, { animationMode: "reducedMotion" });
-  const initialDealSignature = publicOpeningDealSignature(await readState(page));
-  const freshHandAnimals = await playLockedHandSequence(page, PHASE_3B_HAND_DECISION_SEQUENCE);
-  assert(
-    freshHandAnimals.localRound.phase === "awaitingYakuDecision" &&
-      freshHandAnimals.yaku?.decision?.phase === "hand" &&
-      hasYaku(freshHandAnimals, "animals"),
-    "The fresh Bank trace did not reach Hand Animals.",
-  );
-  const bankResult = await chooseYakuDecisionThroughResultBeat(page, "bank");
-  await waitForResultVisualSettlement(page);
-  const banked = bankResult.state;
-  await assertHandPlayAttentionHidden(page, "Bank result");
-  assert(banked.localRound.phase === "roundComplete", "Hand Bank did not complete the round.");
-  assert(
-    !banked.localRound.latestRecap?.includes("Drew"),
-    "Hand Bank incorrectly revealed a Draw card.",
-  );
-  assert(
-    banked.yaku.feedback?.chosenDecision?.choice === "bank",
-    "Bank award feedback omitted the authoritative Bank choice.",
-  );
-  assert(
-    banked.yaku.feedback?.bankAward?.awardedPoints === 3 &&
-      bankResult.trace.some((entry) => entry.feedbackVisible && !entry.resultVisible),
-    "Bank award feedback did not precede the authoritative result.",
-  );
-  assert(
-    (await page.locator("[data-turn-recaps]").textContent())?.includes("banked 3 × 1× = 3 points"),
-    "Bank award recap omitted the authoritative scoring arithmetic.",
-  );
-  assert(
-    banked.result?.kind === "bankedScore" &&
-      banked.result.scorerId === "player-b" &&
-      banked.result.scoring?.arithmeticLabel === "3 points × 1× = 3 points." &&
-      banked.result.matchScoresAfter["player-b"] === 3,
-    `Bank result snapshot changed: ${JSON.stringify(banked.result)}.`,
-  );
-  assert(
-    banked.result.action.actionLabel === "Continue to next round" &&
-      banked.result.action.plan?.scheduledMonth === 2 &&
-      banked.result.action.plan?.starterId === "player-a",
-    "The real continuation action or authoritative February plan is missing.",
-  );
-  assert(
-    (await page.locator("[data-round-result-context]").textContent())?.includes("January") &&
-      (await page.locator("[data-round-result-transition-copy]").textContent())?.includes(
-        "February",
-      ),
-    "The result modal omitted its month context or next-round plan.",
-  );
-  assert(
-    !(await page.locator("[data-round-result-details]").evaluate((details) => details.open)) &&
-      !(await page.locator("[data-round-result-transition]").isVisible()) &&
-      (await page.evaluate(() => document.activeElement?.matches("[data-round-result-action]"))) ===
-        true,
-    "The Bank result exposed secondary scoring/transition details before request.",
-  );
-  await page.locator("[data-round-result-details] > summary").click();
-  assert(
-    (await page.locator("[data-round-result-transition]").isVisible()) &&
-      (await page.locator("[data-round-result-multipliers]").isVisible()) &&
-      (await page.locator("[data-round-result-yaku] .round-result__yaku-row").count()) ===
-        banked.result.scoredYaku.length &&
-      (await page.locator("[data-round-result-yaku] .round-result__yaku-cards img").count()) ===
-        banked.result.scoredYaku.reduce((sum, row) => sum + row.contributingCardIds.length, 0),
-    "The result Details disclosure did not reveal authoritative scoring, transition, and exact yaku-card evidence.",
-  );
-  const expandedGallery = await page
-    .locator("[data-round-result-yaku] .round-result__yaku-cards img")
-    .evaluateAll((images) =>
-      images.map((image) => {
-        const bounds = image.getBoundingClientRect();
-        const style = getComputedStyle(image);
-        return {
-          ratio: bounds.width / bounds.height,
-          borderWidth: Number.parseFloat(style.borderTopWidth),
-          borderColor: style.borderTopColor,
-          objectFit: style.objectFit,
-          alt: image.alt,
-          caption: image.parentElement?.querySelector("figcaption")?.textContent?.trim() ?? "",
-        };
-      }),
-    );
-  assert(
-    expandedGallery.length > 0 &&
-      expandedGallery.every(
-        ({ ratio, borderWidth, borderColor, objectFit, alt, caption }) =>
-          Math.abs(ratio - 0.625) < 0.03 &&
-          borderWidth >= 1 &&
-          borderColor !== "rgba(0, 0, 0, 0)" &&
-          objectFit === "contain" &&
-          !/^[a-z]+-[a-z0-9-]+$/u.test(alt) &&
-          !/^[a-z]+-[a-z0-9-]+$/u.test(caption),
-      ),
-    `Expanded scored-Yaku gallery lost its framed 5:8 card treatment: ${JSON.stringify(expandedGallery)}.`,
-  );
-  await page.screenshot({
-    path: resolve(
-      outputDirectory,
-      `bank-expanded-390x844${smokeBasePath === "/" ? "" : "-pages"}.png`,
-    ),
-    fullPage: true,
-  });
-  await page.setViewportSize({ width: 844, height: 390 });
-  const expandedContainment = await page.locator("[data-round-result]").evaluate((result) => {
-    const card = result.querySelector(".round-result__card");
-    if (!(card instanceof HTMLElement)) throw new Error("Expanded result card disappeared.");
-    const bounds = result.getBoundingClientRect();
-    const cardBounds = card.getBoundingClientRect();
-    card.scrollTop = 0;
-    const header = result.querySelector("[data-round-result-title]");
-    const action = result.querySelector("[data-round-result-action]");
-    card.scrollTop = card.scrollHeight;
-    const detailsReachBottom =
-      card.scrollTop >= Math.max(0, card.scrollHeight - card.clientHeight) - 1;
-    card.scrollTop = 0;
-    return {
-      outer: {
-        width: bounds.width,
-        height: bounds.height,
-        overflowY: getComputedStyle(result).overflowY,
-      },
-      card: {
-        x: cardBounds.x,
-        y: cardBounds.y,
-        width: cardBounds.width,
-        height: cardBounds.height,
-        scrollHeight: card.scrollHeight,
-        clientHeight: card.clientHeight,
-        overflowY: getComputedStyle(card).overflowY,
-      },
-      headerVisible: header instanceof HTMLElement && header.getBoundingClientRect().height > 0,
-      actionVisible: action instanceof HTMLElement && action.getBoundingClientRect().height > 0,
-      detailsReachBottom,
-    };
-  });
-  assert(
-    expandedContainment.outer.width <= 845 &&
-      expandedContainment.outer.height <= 391 &&
-      expandedContainment.outer.overflowY === "hidden" &&
-      expandedContainment.card.x >= -1 &&
-      expandedContainment.card.y >= -1 &&
-      expandedContainment.card.x + expandedContainment.card.width <= 845 &&
-      expandedContainment.card.y + expandedContainment.card.height <= 391 &&
-      (expandedContainment.card.overflowY === "auto" ||
-        expandedContainment.card.overflowY === "scroll") &&
-      expandedContainment.card.scrollHeight >= expandedContainment.card.clientHeight &&
-      expandedContainment.headerVisible &&
-      expandedContainment.actionVisible &&
-      expandedContainment.detailsReachBottom,
-    `Expanded result escaped landscape containment: ${JSON.stringify(expandedContainment)}.`,
-  );
-  await page.screenshot({
-    path: resolve(
-      outputDirectory,
-      `bank-expanded-844x390${smokeBasePath === "/" ? "" : "-pages"}.png`,
-    ),
-    fullPage: true,
-  });
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.locator("[data-round-result-details] > summary").click();
-  assert(
-    (await page.locator("[data-round-result-action]").textContent()) === "Continue to February",
-    "The nonfinal result did not offer real local-round advancement.",
-  );
-  for (const selector of [
-    "[data-deck-select]",
-    "[data-fullscreen-button]",
-    "[data-new-round]",
-    "[data-options-trigger]",
-  ]) {
-    assert(await page.locator(selector).isDisabled(), `${selector} escaped the result modal lock.`);
-  }
-  assert(
-    (await actionableSemanticControlCount(page)) === 0,
-    "The committed result did not lock actionable card input.",
-  );
-  assert(
-    (await page.locator("[data-latest-recap]").textContent())?.includes("banked 3 × 1× = 3 points"),
-    "The compact shell did not retain the latest authoritative event.",
-  );
-  assert(
-    (await page.locator("[data-turn-recaps]").textContent())?.includes("banked 3 × 1× = 3 points"),
-    "The compact History disclosure did not retain the complete ordered recap data.",
-  );
-  for (const viewport of process.env.SMOKE_PHASE5A_ONLY === "1"
-    ? focusedPhase5AResultViewports
-    : viewports) {
-    await page.setViewportSize(viewport);
-    const {
-      resultBox,
-      cardBox,
-      outerOverflowY,
-      cardOverflowY,
-      cardScrollHeight,
-      cardClientHeight,
-    } = await page.locator("[data-round-result]").evaluate((result) => {
+    await page.setViewportSize({ width: 844, height: 390 });
+    const expandedContainment = await page.locator("[data-round-result]").evaluate((result) => {
       const card = result.querySelector(".round-result__card");
-      if (!(card instanceof HTMLElement)) throw new Error("The result card disappeared.");
-      const resultBounds = result.getBoundingClientRect();
+      if (!(card instanceof HTMLElement)) throw new Error("Expanded result card disappeared.");
+      const bounds = result.getBoundingClientRect();
       const cardBounds = card.getBoundingClientRect();
+      card.scrollTop = 0;
+      const header = result.querySelector("[data-round-result-title]");
+      const action = result.querySelector("[data-round-result-action]");
+      card.scrollTop = card.scrollHeight;
+      const detailsReachBottom =
+        card.scrollTop >= Math.max(0, card.scrollHeight - card.clientHeight) - 1;
+      card.scrollTop = 0;
       return {
-        resultBox: {
-          x: resultBounds.x,
-          y: resultBounds.y,
-          width: resultBounds.width,
-          height: resultBounds.height,
+        outer: {
+          width: bounds.width,
+          height: bounds.height,
+          overflowY: getComputedStyle(result).overflowY,
         },
-        cardBox: {
+        card: {
           x: cardBounds.x,
           y: cardBounds.y,
           width: cardBounds.width,
           height: cardBounds.height,
+          scrollHeight: card.scrollHeight,
+          clientHeight: card.clientHeight,
+          overflowY: getComputedStyle(card).overflowY,
         },
-        outerOverflowY: getComputedStyle(result).overflowY,
-        cardOverflowY: getComputedStyle(card).overflowY,
-        cardScrollHeight: card.scrollHeight,
-        cardClientHeight: card.clientHeight,
+        headerVisible: header instanceof HTMLElement && header.getBoundingClientRect().height > 0,
+        actionVisible: action instanceof HTMLElement && action.getBoundingClientRect().height > 0,
+        detailsReachBottom,
       };
     });
-    assert(resultBox !== null, `${viewport.width}×${viewport.height} result modal disappeared.`);
-    const landscapeCardScroll = viewport.width === 844 && viewport.height === 390;
     assert(
-      resultBox.x >= 0 &&
-        resultBox.y >= 0 &&
-        resultBox.x + resultBox.width <= viewport.width + 1 &&
-        (landscapeCardScroll
-          ? outerOverflowY === "hidden" &&
-            (cardOverflowY === "auto" || cardOverflowY === "scroll") &&
-            cardScrollHeight >= cardClientHeight
-          : outerOverflowY === "auto" || outerOverflowY === "scroll"),
-      `${viewport.width}×${viewport.height} result overlay lost its expected scroll owner: ${JSON.stringify({ resultBox, landscapeCardScroll, outerOverflowY, cardOverflowY, cardScrollHeight, cardClientHeight })}.`,
-    );
-    assert(
-      cardBox.x >= resultBox.x - 3 &&
-        cardBox.y >= resultBox.y - 3 &&
-        cardBox.x + cardBox.width <= resultBox.x + resultBox.width + 3 &&
-        cardBox.y + cardBox.height <= resultBox.y + resultBox.height + 3,
-      `${viewport.width}×${viewport.height} result card is clipped: ${JSON.stringify({ resultBox, cardBox })}.`,
+      expandedContainment.outer.width <= 845 &&
+        expandedContainment.outer.height <= 391 &&
+        expandedContainment.outer.overflowY === "hidden" &&
+        expandedContainment.card.x >= -1 &&
+        expandedContainment.card.y >= -1 &&
+        expandedContainment.card.x + expandedContainment.card.width <= 845 &&
+        expandedContainment.card.y + expandedContainment.card.height <= 391 &&
+        (expandedContainment.card.overflowY === "auto" ||
+          expandedContainment.card.overflowY === "scroll") &&
+        expandedContainment.card.scrollHeight >= expandedContainment.card.clientHeight &&
+        expandedContainment.headerVisible &&
+        expandedContainment.actionVisible &&
+        expandedContainment.detailsReachBottom,
+      `Expanded result escaped landscape containment: ${JSON.stringify(expandedContainment)}.`,
     );
     await page.screenshot({
       path: resolve(
         outputDirectory,
-        `bank-result-${viewport.width}x${viewport.height}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+        `bank-expanded-844x390${smokeBasePath === "/" ? "" : "-pages"}.png`,
       ),
       fullPage: true,
     });
-  }
-  process.stdout.write("Phase 5A Bank result seven-viewport modal passed.\n");
-  assert(
-    !JSON.stringify(banked).includes("drawPileOrdered") &&
-      !JSON.stringify(banked).includes("rng") &&
-      !JSON.stringify(banked).includes("checkpoint") &&
-      !JSON.stringify(banked).includes("commandId"),
-    "The browser text surface leaked server-only state.",
-  );
-  const recapCountBeforeAdvance = banked.localRound.recapCount;
-  await page.locator("[data-round-result-action]").click();
-  await page.waitForFunction(() => {
-    const state = JSON.parse(window.render_game_to_text());
-    return (
-      state.localRound.phase === "awaitingHandPlay" &&
-      state.localRound.roundNumber === 2 &&
-      state.localRound.scheduledMonth === 2 &&
-      state.result === null
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator("[data-round-result-details] > summary").click();
+    assert(
+      (await page.locator("[data-round-result-action]").textContent()) === "Continue to February",
+      "The nonfinal result did not offer real local-round advancement.",
     );
-  });
-  assert(
-    !(await page.locator("[data-round-result]").isVisible()),
-    "The real local round advance did not dismiss the result shell.",
-  );
-  const advanced = await readState(page);
-  assert(
-    advanced.localRound.recapCount >= recapCountBeforeAdvance &&
-      advanced.localRound.matchLength === 3 &&
+    for (const selector of [
+      "[data-deck-select]",
+      "[data-fullscreen-button]",
+      "[data-new-round]",
+      "[data-options-trigger]",
+    ]) {
+      assert(
+        await page.locator(selector).isDisabled(),
+        `${selector} escaped the result modal lock.`,
+      );
+    }
+    assert(
+      (await actionableSemanticControlCount(page)) === 0,
+      "The committed result did not lock actionable card input.",
+    );
+    assert(
+      (await page.locator("[data-latest-recap]").textContent())?.includes(
+        "banked 3 × 1× = 3 points",
+      ),
+      "The compact shell did not retain the latest authoritative event.",
+    );
+    assert(
       (await page.locator("[data-turn-recaps]").textContent())?.includes(
         "banked 3 × 1× = 3 points",
       ),
-    `Real Phase 5A advancement lost match recap or format: ${JSON.stringify(advanced.localRound)}.`,
-  );
-  await acceptHandoffIfPending(page);
-  const roundTwo = await playProductionRoundToResult(page, "Round 2");
-  assert(
-    roundTwo.localRound.roundNumber === 2 && roundTwo.result !== null,
-    "Round 2 did not finish.",
-  );
-  await page.locator("[data-round-result-action]").click();
-  await page.waitForFunction(() => {
-    const state = JSON.parse(window.render_game_to_text());
-    return state.localRound.roundNumber === 3 && state.result === null;
-  });
-  await acceptHandoffIfPending(page);
-  const terminal = await playProductionRoundToResult(page, "Round 3");
-  assert(
-    terminal.localRound.phase === "matchComplete" &&
-      terminal.localRound.roundNumber === 3 &&
-      terminal.result?.action.actionLabel === "Start rematch",
-    `The real 3-round production trace did not reach a terminal rematch result: ${JSON.stringify(terminal.result)}.`,
-  );
-  assert(
-    (await page.locator("[data-round-result-action]").textContent()) === "Start rematch",
-    "The terminal result did not offer a real rematch.",
-  );
-  await page.locator("[data-round-result-action]").click();
-  await page.waitForFunction(() => {
-    const state = JSON.parse(window.render_game_to_text());
-    return (
-      state.localRound.phase === "awaitingHandPlay" &&
-      state.localRound.roundNumber === 1 &&
-      state.localRound.scheduledMonth === 1 &&
-      state.localRound.recapCount === 0 &&
-      state.localRound.matchLength === 3 &&
-      state.result === null
+      "The compact History disclosure did not retain the complete ordered recap data.",
     );
-  });
-  const rematched = await readState(page);
-  assert(
-    publicOpeningDealSignature(rematched) !== initialDealSignature &&
-      !JSON.stringify(rematched).includes("seed") &&
-      !JSON.stringify(rematched).includes("checkpoint"),
-    "The real rematch reused the first public deal or leaked server-only seed/checkpoint state.",
-  );
-  process.stdout.write("Phase 5A real 3-round advance and rematch trace passed.\n");
-  assert(browserErrors.length === 0, `Browser errors: ${browserErrors.join("\n")}`);
-  assert(networkErrors.length === 0, `Network errors: ${networkErrors.join("\n")}`);
-  process.stdout.write(
-    "Phase 5A root/Pages yaku, End-of-Play, Bank result, progression, and rematch smoke passed.\n",
-  );
+    for (const viewport of process.env.SMOKE_PHASE5A_ONLY === "1"
+      ? focusedPhase5AResultViewports
+      : viewports) {
+      await page.setViewportSize(viewport);
+      const {
+        resultBox,
+        cardBox,
+        outerOverflowY,
+        cardOverflowY,
+        cardScrollHeight,
+        cardClientHeight,
+      } = await page.locator("[data-round-result]").evaluate((result) => {
+        const card = result.querySelector(".round-result__card");
+        if (!(card instanceof HTMLElement)) throw new Error("The result card disappeared.");
+        const resultBounds = result.getBoundingClientRect();
+        const cardBounds = card.getBoundingClientRect();
+        return {
+          resultBox: {
+            x: resultBounds.x,
+            y: resultBounds.y,
+            width: resultBounds.width,
+            height: resultBounds.height,
+          },
+          cardBox: {
+            x: cardBounds.x,
+            y: cardBounds.y,
+            width: cardBounds.width,
+            height: cardBounds.height,
+          },
+          outerOverflowY: getComputedStyle(result).overflowY,
+          cardOverflowY: getComputedStyle(card).overflowY,
+          cardScrollHeight: card.scrollHeight,
+          cardClientHeight: card.clientHeight,
+        };
+      });
+      assert(resultBox !== null, `${viewport.width}×${viewport.height} result modal disappeared.`);
+      const landscapeCardScroll = viewport.width === 844 && viewport.height === 390;
+      assert(
+        resultBox.x >= 0 &&
+          resultBox.y >= 0 &&
+          resultBox.x + resultBox.width <= viewport.width + 1 &&
+          (landscapeCardScroll
+            ? outerOverflowY === "hidden" &&
+              (cardOverflowY === "auto" || cardOverflowY === "scroll") &&
+              cardScrollHeight >= cardClientHeight
+            : outerOverflowY === "auto" || outerOverflowY === "scroll"),
+        `${viewport.width}×${viewport.height} result overlay lost its expected scroll owner: ${JSON.stringify({ resultBox, landscapeCardScroll, outerOverflowY, cardOverflowY, cardScrollHeight, cardClientHeight })}.`,
+      );
+      assert(
+        cardBox.x >= resultBox.x - 3 &&
+          cardBox.y >= resultBox.y - 3 &&
+          cardBox.x + cardBox.width <= resultBox.x + resultBox.width + 3 &&
+          cardBox.y + cardBox.height <= resultBox.y + resultBox.height + 3,
+        `${viewport.width}×${viewport.height} result card is clipped: ${JSON.stringify({ resultBox, cardBox })}.`,
+      );
+      await page.screenshot({
+        path: resolve(
+          outputDirectory,
+          `bank-result-${viewport.width}x${viewport.height}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+        ),
+        fullPage: true,
+      });
+    }
+    process.stdout.write("Phase 5A Bank result seven-viewport modal passed.\n");
+    assert(
+      !JSON.stringify(banked).includes("drawPileOrdered") &&
+        !JSON.stringify(banked).includes("rng") &&
+        !JSON.stringify(banked).includes("checkpoint") &&
+        !JSON.stringify(banked).includes("commandId"),
+      "The browser text surface leaked server-only state.",
+    );
+    const recapCountBeforeAdvance = banked.localRound.recapCount;
+    await page.locator("[data-round-result-action]").click();
+    await page.waitForFunction(() => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
+        state.localRound.phase === "awaitingHandPlay" &&
+        state.localRound.roundNumber === 2 &&
+        state.localRound.scheduledMonth === 2 &&
+        state.result === null
+      );
+    });
+    assert(
+      !(await page.locator("[data-round-result]").isVisible()),
+      "The real local round advance did not dismiss the result shell.",
+    );
+    const advanced = await readState(page);
+    assert(
+      advanced.localRound.recapCount >= recapCountBeforeAdvance &&
+        advanced.localRound.matchLength === 3 &&
+        (await page.locator("[data-turn-recaps]").textContent())?.includes(
+          "banked 3 × 1× = 3 points",
+        ),
+      `Real Phase 5A advancement lost match recap or format: ${JSON.stringify(advanced.localRound)}.`,
+    );
+    await acceptHandoffIfPending(page);
+    const roundTwo = await playProductionRoundToResult(page, "Round 2");
+    assert(
+      roundTwo.localRound.roundNumber === 2 && roundTwo.result !== null,
+      "Round 2 did not finish.",
+    );
+    await page.locator("[data-round-result-action]").click();
+    await page.waitForFunction(() => {
+      const state = JSON.parse(window.render_game_to_text());
+      return state.localRound.roundNumber === 3 && state.result === null;
+    });
+    await acceptHandoffIfPending(page);
+    const terminal = await playProductionRoundToResult(page, "Round 3");
+    assert(
+      terminal.localRound.phase === "matchComplete" &&
+        terminal.localRound.roundNumber === 3 &&
+        terminal.result?.action.actionLabel === "Start rematch",
+      `The real 3-round production trace did not reach a terminal rematch result: ${JSON.stringify(terminal.result)}.`,
+    );
+    assert(
+      (await page.locator("[data-round-result-action]").textContent()) === "Start rematch",
+      "The terminal result did not offer a real rematch.",
+    );
+    await page.locator("[data-round-result-action]").click();
+    await page.waitForFunction(
+      () => JSON.parse(window.render_game_to_text()).persistence.promptKind === "fresh",
+      null,
+      { timeout: 30_000 },
+    );
+    const rematchConfirmation = await page.evaluate(() => ({
+      eyebrow: document.querySelector("[data-local-save-dialog-eyebrow]")?.textContent?.trim(),
+      title: document.querySelector("[data-local-save-dialog-title]")?.textContent?.trim(),
+      copy: document.querySelector("[data-local-save-dialog-copy]")?.textContent?.trim(),
+      metadata: document.querySelector("[data-local-save-dialog-meta]")?.textContent?.trim(),
+      primary: document.querySelector("[data-local-save-primary]")?.textContent?.trim(),
+      secondary: document.querySelector("[data-local-save-secondary]")?.textContent?.trim(),
+      deleteHidden: document.querySelector("[data-local-save-delete]")?.hidden,
+    }));
+    assert(
+      rematchConfirmation.eyebrow === "Start fresh match" &&
+        rematchConfirmation.title === "Replace saved game?" &&
+        rematchConfirmation.copy ===
+          "Starting a fresh match replaces the current local checkpoint." &&
+        rematchConfirmation.metadata === "3-round match · Round 3 · March · Result ready" &&
+        rematchConfirmation.primary === "Start fresh match" &&
+        rematchConfirmation.secondary === "Back" &&
+        rematchConfirmation.deleteHidden === true,
+      `Terminal rematch replacement confirmation changed: ${JSON.stringify(rematchConfirmation)}.`,
+    );
+    await page.locator("[data-local-save-primary]").click();
+    await page.waitForFunction(() => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
+        state.localRound.phase === "awaitingHandPlay" &&
+        state.localRound.roundNumber === 1 &&
+        state.localRound.scheduledMonth === 1 &&
+        state.localRound.recapCount === 0 &&
+        state.localRound.matchLength === 3 &&
+        state.result === null
+      );
+    });
+    const rematched = await readState(page);
+    assert(
+      publicOpeningDealSignature(rematched) !== initialDealSignature &&
+        !JSON.stringify(rematched).includes("seed") &&
+        !JSON.stringify(rematched).includes("checkpoint"),
+      "The real rematch reused the first public deal or leaked server-only seed/checkpoint state.",
+    );
+    process.stdout.write("Phase 5A real 3-round advance and rematch trace passed.\n");
+    assert(browserErrors.length === 0, `Browser errors: ${browserErrors.join("\n")}`);
+    assert(networkErrors.length === 0, `Network errors: ${networkErrors.join("\n")}`);
+    process.stdout.write(
+      "Phase 5A root/Pages yaku, End-of-Play, Bank result, progression, and rematch smoke passed.\n",
+    );
+  }
 } finally {
   if (browser) await browser.close();
   await stopStaticServer(staticServer);

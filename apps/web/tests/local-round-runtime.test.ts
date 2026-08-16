@@ -1,11 +1,18 @@
-import { CARD_IDS, type LegalActionV1, type PlayerObservationV1 } from "@koikoi4x/engine";
+import {
+  CARD_IDS,
+  type LegalActionV1,
+  type PlayerId,
+  type PlayerObservationV1,
+} from "@koikoi4x/engine";
 import { describe, expect, it } from "vitest";
 
 import {
   createFreshLocalMatchSeed,
   createLocalRoundRuntime,
   PHASE_3B_LOCAL_SEED,
+  restoreLocalRoundRuntime,
   resolveFreshLocalMatchLength,
+  shouldReplaceLocalInteractionSource,
 } from "../src/game/local-round-runtime";
 import {
   createInteractionSourceFromObservation,
@@ -79,6 +86,20 @@ function completeCurrentRound(runtime: ReturnType<typeof createLocalRoundRuntime
   }
 }
 
+function reachYakuDecision(
+  runtime: ReturnType<typeof createLocalRoundRuntime>,
+): PlayerObservationV1 {
+  for (let step = 0; step < 48; step += 1) {
+    const observation = runtime.observe();
+    if (observation.publicState.phase.kind === "awaitingYakuDecision") return observation;
+    const action = observation.legalActions[0];
+    if (!action) throw new Error("LOCAL_RESTORE_DECISION_MISSING_ACTION");
+    const transition = runtime.submit(intentFromAction(observation, action));
+    if (transition.handoffPlayerId) runtime.switchViewer(transition.handoffPlayerId);
+  }
+  throw new Error("LOCAL_RESTORE_DECISION_NOT_REACHED");
+}
+
 describe("Phase 3A local authoritative round", () => {
   it("LOCAL-001 installs the approved primary runtime descriptor first", () => {
     expect(INSTALLED_DECKS[0]).toEqual({
@@ -118,6 +139,132 @@ describe("Phase 3A local authoritative round", () => {
     expect(JSON.stringify(source)).not.toContain("drawPileOrdered");
     expect(JSON.stringify(source)).not.toContain("commandId");
     expect(Object.isFrozen(projection)).toBe(true);
+  });
+
+  it("PHASE-5B restores a stable snapshot with the authoritative active viewer and safe command ordinal", () => {
+    const runtime = createLocalRoundRuntime({ matchId: "phase5b-restore" });
+    const first = runtime.observe();
+    const firstAction = first.legalActions[0];
+    if (!firstAction) throw new Error("Opening action is missing.");
+    const transition = runtime.submit(intentFromAction(first, firstAction));
+    const restored = restoreLocalRoundRuntime(runtime.snapshot());
+
+    expect(restored.state).toEqual(runtime.state);
+    expect(restored.checkpoint).toEqual(runtime.checkpoint);
+    expect(restored.state.phase.kind).not.toMatch(/Complete/u);
+    if (
+      restored.state.phase.kind === "roundComplete" ||
+      restored.state.phase.kind === "matchComplete"
+    ) {
+      throw new Error("The opening transition unexpectedly completed the match.");
+    }
+    expect(restored.viewerId).toBe(restored.state.phase.playerId);
+    expect(restored.observe().legalActions).toEqual(runtime.observe().legalActions);
+    if (transition.handoffPlayerId) {
+      expect(restored.observe().playerId).toBe(transition.handoffPlayerId);
+    }
+    const nextAction = restored.observe().legalActions[0];
+    if (!nextAction) throw new Error("Restored Draw action is missing.");
+    const next = restored.submit(intentFromAction(restored.observe(), nextAction));
+    expect(next.after.publicState.stateVersion).toBe(runtime.state.stateVersion + 1);
+  });
+
+  it("PHASE-5B restores awaiting Draw and match-complete checkpoints without replaying progression", () => {
+    const drawRuntime = createLocalRoundRuntime({ matchId: "phase5b-draw" });
+    const opening = drawRuntime.observe();
+    const openingAction = opening.legalActions[0];
+    if (!openingAction) throw new Error("Opening action is missing.");
+    drawRuntime.submit(intentFromAction(opening, openingAction));
+    expect(drawRuntime.state.phase.kind).toBe("awaitingDrawResolution");
+    const restoredDraw = restoreLocalRoundRuntime(drawRuntime.snapshot());
+    expect(restoredDraw.state.phase).toEqual(drawRuntime.state.phase);
+    expect(restoredDraw.observe().legalActions).toEqual(drawRuntime.observe().legalActions);
+
+    const matchRuntime = createLocalRoundRuntime({ matchId: "phase5b-complete", matchLength: 3 });
+    while (matchRuntime.state.phase.kind !== "matchComplete") {
+      completeCurrentRound(matchRuntime);
+      if (matchRuntime.state.phase.kind === "roundComplete") {
+        const advanced = matchRuntime.advanceRound();
+        if (advanced.handoffPlayerId) matchRuntime.switchViewer(advanced.handoffPlayerId);
+      }
+    }
+    const restoredMatch = restoreLocalRoundRuntime(matchRuntime.snapshot());
+    expect(restoredMatch.state.phase).toEqual(matchRuntime.state.phase);
+    expect(restoredMatch.viewerId).toBe("player-a");
+    expect(restoredMatch.observe().legalActions).toEqual([]);
+    expect(() => restoredMatch.advanceRound()).toThrow("LOCAL_ROUND_ADVANCE_INVALID");
+
+    const rematch = createLocalRoundRuntime({ matchId: "phase5b-rematch", matchLength: 3 });
+    expect(rematch.state.matchLength).toBe(restoredMatch.state.matchLength);
+    expect(rematch.state.history).toEqual([]);
+    expect(rematch.checkpoint.matchId).toBe("phase5b-rematch");
+  });
+
+  it("PHASE-5B restores Yaku and nonfinal result checkpoints with exactly one advance", () => {
+    const runtime = createLocalRoundRuntime({ matchId: "phase5b-yaku-round" });
+    const decision = reachYakuDecision(runtime);
+    expect(decision.publicState.phase.kind).toBe("awaitingYakuDecision");
+    const restoredDecision = restoreLocalRoundRuntime(runtime.snapshot());
+    expect(restoredDecision.observe().publicState.phase).toEqual(decision.publicState.phase);
+    expect(restoredDecision.observe().legalActions).toEqual(decision.legalActions);
+
+    const bank = restoredDecision
+      .observe()
+      .legalActions.find(
+        (action) => action.type === "chooseYakuDecision" && action.choice === "bank",
+      );
+    if (!bank) throw new Error("LOCAL_RESTORE_BANK_MISSING");
+    restoredDecision.submit(intentFromAction(restoredDecision.observe(), bank));
+    expect(restoredDecision.state.phase.kind).toBe("roundComplete");
+    const restoredResult = restoreLocalRoundRuntime(restoredDecision.snapshot());
+    const advanced = restoredResult.advanceRound();
+    expect(advanced.after.publicState.round.roundNumber).toBe(2);
+    expect(() => restoredResult.advanceRound()).toThrow("LOCAL_ROUND_ADVANCE_INVALID");
+  });
+
+  it("PHASE-5B preserves a same-viewer restored source but replaces it for a real next-player handoff", () => {
+    const resumed = createLocalRoundRuntime({ matchId: "phase5b-resume-ready" });
+    expect(
+      shouldReplaceLocalInteractionSource({
+        beforeViewerId: resumed.viewerId,
+        beforeStateVersion: resumed.state.stateVersion,
+        afterViewerId: resumed.viewerId,
+        afterStateVersion: resumed.state.stateVersion,
+      }),
+    ).toBe(false);
+
+    const opening = resumed.observe();
+    const action = opening.legalActions[0];
+    if (!action) throw new Error("LOCAL_RESUME_HANDOFF_ACTION_MISSING");
+    const transition = resumed.submit(intentFromAction(opening, action));
+    if (transition.handoffPlayerId === null) {
+      // Finish the current turn deterministically until the normal private handoff appears.
+      let handoffPlayerId: PlayerId | null = null;
+      for (let step = 0; step < 4 && handoffPlayerId === null; step += 1) {
+        const current = resumed.observe();
+        const next = current.legalActions[0];
+        if (!next) throw new Error("LOCAL_RESUME_HANDOFF_NEXT_ACTION_MISSING");
+        handoffPlayerId = resumed.submit(intentFromAction(current, next)).handoffPlayerId;
+      }
+      if (handoffPlayerId === null) throw new Error("LOCAL_RESUME_HANDOFF_NOT_REACHED");
+      expect(
+        shouldReplaceLocalInteractionSource({
+          beforeViewerId: resumed.viewerId,
+          beforeStateVersion: resumed.state.stateVersion,
+          afterViewerId: handoffPlayerId,
+          afterStateVersion: resumed.state.stateVersion,
+        }),
+      ).toBe(true);
+      return;
+    }
+    expect(
+      shouldReplaceLocalInteractionSource({
+        beforeViewerId: resumed.viewerId,
+        beforeStateVersion: resumed.state.stateVersion,
+        afterViewerId: transition.handoffPlayerId,
+        afterStateVersion: resumed.state.stateVersion,
+      }),
+    ).toBe(true);
   });
 
   it.each([3, 6, 12] as const)(

@@ -1,14 +1,15 @@
 # KoiKoi4x Implementation Plan
 
 **Plan version:** 1.1
-**Updated:** August 14, 2026
+**Updated:** August 15, 2026
 **Current gate:** Phase 3F-E utility dock/capture cleanup is deployed and accepted; Phase 3F-F
 interaction clarity/card inspection is deployed and accepted; Phase 3F-G card inspector yaku
 reference/native gesture polish is deployed, live-verified, and accepted; Phase 3F-H active-hand
 start cue is deployed, live-verified, and accepted; Phase 3F-I Reveal start cue is deployed,
 live-verified, and accepted; Phase 3F-J legal destination pulse is deployed, live-verified, and
 accepted; Phase 5A full local match formats is deployed, live-verified, and accepted; Phase 5B local
-persistence is next
+persistence is locally complete and accepted, with commit/push/hosted CI/Pages/deployment/live
+verification pending
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -51,7 +52,37 @@ Status: **deployed, live-verified, and accepted**.
   reached `ready:true` with one canvas, 48/48 unique CardViews, 24/0/8/8/8 draw/reveal/player-Hand/
   opponent-Hand/field counts, match length 3, idle `awaitingHandPlay`, no locks, and no
   clipped/invalid/overlap diagnostics. `output/phase-5a/live-ready/shot-2.png` was inspected with no
-  error artifact. Phase 5A is deployed, live-verified, and accepted. Next: Phase 5B local persistence.
+  error artifact. Phase 5A is deployed, live-verified, and accepted.
+
+## Phase 5B contract — local persistence
+
+Status: **locally complete and accepted; commit/push/hosted CI/Pages/deployment/live verification
+pending**.
+
+- One active `mode: "local"` IndexedDB save stores private authoritative state plus checkpoint/RNG,
+  required version/identity/timestamp metadata, and no command log or presentation state.
+- Strict exact-shape/schema/invariant decode performs no legacy or future migration. A valid save
+  offers Continue/Delete; corrupt recovery offers Delete, Start New, and a sanitized diagnostic
+  export without raw private save data.
+- Autosave occurs only after presentation settlement at `awaitingHandPlay`,
+  `awaitingDrawResolution`, `awaitingYakuDecision`, `roundComplete`, or `matchComplete`. Writes are
+  serialized/coalesced/monotonic; match-complete remains saved until explicit replacement or delete.
+- Resume derives the active viewer and privacy/Ready handoff gate from authority and must remain
+  deterministic through decisions, progression, results, and rematches. Storage failure is a visible
+  session-only state, never a durability claim.
+- `SAVE-5B-001` through `SAVE-5B-009`, ADR 0031, and `npm run validate:phase5b` are the accepted
+  local release contract. Root/Pages artifacts are under `output/phase-5b/e2e/`.
+- `npm run check` passed 54 files / 513 ordinary tests, 10,002 generated seeds (3/6/12 = 3,334
+  each), the 48/48 deck, and the 781-module production build. The final uninterrupted
+  `validate:phase5b` exited 0 with the 48/48 release deck, 100 technical artifacts, 17 Phase 5A
+  focused files / 247 tests, Workshop, 14 Root/Pages density viewports, full retained Root/Pages
+  smoke through 3F/3B/End-of-Play/Bank/real three-round rematch, 3 persistence focused files / 38
+  tests, and dedicated Root/Pages persistence smoke with 18 artifacts (nine per base).
+- Acceptance includes strict autosave/decode/RNG provenance; Continue plus privacy/Ready; corrupt
+  Download/Delete/Start New; decision, round-complete, and match-complete/rematch restore; IndexedDB
+  open denial and write conflict. Independent Terra review found no blocker, high, or medium issue.
+  A transient density `appReady` timeout passed isolated and uninterrupted reruns; the Pages
+  click-readiness harness repair did not weaken product assertions.
 
 ## Phase 0 — Rule lock and foundation
 
@@ -1148,11 +1179,15 @@ visible and accessible strings. A three-iteration live client trace recorded loa
 ready `state-1`/`state-2`, one canvas, 48 unique CardViews, no clipped/invalid/overlap diagnostics,
 and an inspected live screenshot. The hosted workflow's Node 20 deprecation notice is nonblocking.
 Phase 3F-J and Phase 5A are deployed, live-verified, and accepted; Phase 5B local persistence is
-next.
+locally accepted and awaiting release close-out.
 
 ## Later phases
 
-1. **Phase 5B — Local persistence:** IndexedDB autosave, continue/delete, and schema validation.
+1. **Phase 5B — Local persistence (locally accepted; release pending):** one active local IndexedDB
+   save with strict version/schema/invariant validation and no migration; post-settlement
+   serialized/coalesced autosave; Continue/Delete; corrupt-save Delete/Start New/sanitized diagnostic
+   export; derived privacy/Ready resume; session-only storage-failure warning; Root/Pages
+   accessibility evidence.
 2. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
 3. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
 4. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.

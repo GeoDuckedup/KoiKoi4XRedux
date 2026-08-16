@@ -8,7 +8,8 @@ live-verified, and accepted; Phase 3F-G card inspector yaku reference/native ges
 deployed, live-verified, and accepted; Phase 3F-H active-hand start cue is deployed, live-verified,
 and accepted; Phase 3F-I Reveal start cue is deployed, live-verified, and accepted; Phase 3F-J legal
 destination pulse is deployed, live-verified, and accepted; Phase 5A full local match formats is
-deployed, live-verified, and accepted; Phase 5B local persistence is next
+deployed, live-verified, and accepted; Phase 5B local persistence is locally complete and accepted,
+with commit/push/hosted CI/Pages/deployment/live verification pending
 
 **Runtime state:** Complete deterministic headless match engine plus playable browser-local 3/6/12-round
 formats using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -36,8 +37,28 @@ GitHub Actions deprecation. The cache-busted live HTTP/2 response was 200 MISS, 
 was `ready:true` with one canvas, 48/48 unique CardViews, 24/0/8/8/8 draw/reveal/player-Hand/
 opponent-Hand/field counts, match length 3, idle `awaitingHandPlay`, no locks, and no
 clipped/invalid/overlap diagnostics. `output/phase-5a/live-ready/shot-2.png` was visually inspected;
-no error artifact was produced. Phase 5A is deployed, live-verified, and accepted. Next: Phase 5B
-local persistence.
+no error artifact was produced. Phase 5A is deployed, live-verified, and accepted.
+
+## Phase 5B — locally complete and accepted
+
+Phase 5B implements the local authoritative-save contract. ADR 0031 and `SAVE-5B-001` through
+`SAVE-5B-009` lock one active local IndexedDB checkpoint, strict no-migration decode,
+post-presentation-settlement serialized/coalesced autosave, Continue/Delete, corrupt-save
+Download/Delete/Start New recovery, derived privacy/Ready resume, and a visible session-only storage
+warning. Acceptance covers autosave, strict decode/RNG provenance, decision, round-complete,
+match-complete/rematch, IndexedDB open denial, and write conflict without raw save/private-state
+leakage.
+
+`npm run check` passed 54 files / 513 ordinary tests, 10,002 generated seeds (3/6/12 = 3,334 each),
+the 48/48 deck, and the 781-module production build. The final uninterrupted
+`npm run validate:phase5b` exited 0: 48/48 release deck, 100 technical artifacts, 17 Phase 5A
+focused files / 247 tests, Workshop, 14 Phase-3D-D Root/Pages viewports, full retained Root/Pages
+smoke through 3F/3B/End-of-Play/Bank/real three-round rematch, 3 persistence focused files / 38
+tests, and dedicated Root/Pages persistence smoke. The persistence smoke produced 18 artifacts
+(nine per base) under `output/phase-5b/e2e/`. Independent Terra review found no blocker, high, or
+medium issue. One transient density-review `appReady` timeout passed isolated and then uninterrupted
+reruns; the Pages click-readiness harness repair retained every product assertion. Commit, push,
+hosted CI/Pages, deployment, and live verification remain pending.
 
 ## Current result
 
@@ -241,8 +262,9 @@ diagnostics. Commit `26828d4` passed hosted CI run `31899208391` (`verify`, 14m2
 `assets/index-CTcqBr2T.css`; live JS contains the exact shipped visible and accessible strings.
 Three live-client iterations recorded loading `state-0`, then ready `state-1`/`state-2`, one canvas,
 48 unique CardViews, no clipped/invalid/overlap diagnostics, and an inspected live shot. The hosted
-workflow's Node 20 deprecation annotation is nonblocking. Phase 3F-J and Phase 5A are deployed,
-live-verified, and accepted; Phase 5B local persistence is next.
+workflow's Node 20 deprecation annotation is nonblocking. At that release point, Phase 3F-J and
+Phase 5A were deployed, live-verified, and accepted; Phase 5B local persistence was the next
+product phase.
 
 Release commit `51a1821` passed CI run `31742306302` and Pages run `31742306314`; the Pages deploy
 job completed successfully. A cache-busted live browser check reached ready state with the approved
@@ -694,8 +716,8 @@ projection, recap, and handoff are recorded in
 The deployed baseline is
 [`https://geoduckedup.github.io/KoiKoi4XRedux/`](https://geoduckedup.github.io/KoiKoi4XRedux/).
 
-## Next subphase
+## Next release step
 
-**Phase 5A — full local match formats:** implement approved 3/6/12-round progression, complete
-recap/rematch, and ordered yaku-card evidence in expanded end-of-play details. Tutorial work remains
-deferred.
+**Phase 5B release close-out:** commit and push the locally accepted work, confirm hosted CI and
+GitHub Pages, then perform deployment and live verification before marking Phase 5B deployed. Do not
+select another product subphase until those steps are complete.

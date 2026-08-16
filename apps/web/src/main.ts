@@ -13,6 +13,7 @@ import {
   createTablePreviewSnapshot,
   serializeTablePreviewSnapshot,
 } from "./app/table-preview-state";
+import { shouldClearSemanticControlsForPrivacy } from "./app/semantic-control-privacy";
 import {
   createCaptureInspectionPresentation,
   type CaptureInspectionOwnerV1,
@@ -23,10 +24,21 @@ import {
   createLocalRoundRuntime,
   createFreshLocalMatchSeed,
   PHASE_3A_MATCH_ID,
+  restoreLocalRoundRuntime,
   resolveFreshLocalMatchLength,
+  shouldReplaceLocalInteractionSource,
   type LocalRoundRuntimeV1,
   type LocalRoundTransitionV1,
 } from "./game/local-round-runtime";
+import {
+  createIndexedDbLocalSaveRepository,
+  createLocalSaveStore,
+  createSanitizedLocalSaveDiagnostic,
+  decodeLocalSaveV1,
+  localSaveSnapshot,
+  type LocalSaveV1,
+  type LocalSaveStoreV1,
+} from "./game/local-save";
 import {
   createInteractionSourceFromObservation,
   projectObservationToBoard,
@@ -131,6 +143,17 @@ const optionsTrigger = queryRequired<HTMLButtonElement>("[data-options-trigger]"
 const optionsDialog = queryRequired<HTMLDialogElement>("[data-options-dialog]");
 const optionsClose = queryRequired<HTMLButtonElement>("[data-options-close]");
 const optionsAnnouncement = queryRequired<HTMLElement>("[data-options-announcement]");
+const persistenceStatus = queryRequired<HTMLElement>("[data-persistence-status]");
+const persistenceWarning = queryRequired<HTMLElement>("[data-persistence-warning]");
+const localSaveDialog = queryRequired<HTMLDialogElement>("[data-local-save-dialog]");
+const localSaveDialogEyebrow = queryRequired<HTMLElement>("[data-local-save-dialog-eyebrow]");
+const localSaveDialogTitle = queryRequired<HTMLElement>("[data-local-save-dialog-title]");
+const localSaveDialogCopy = queryRequired<HTMLElement>("[data-local-save-dialog-copy]");
+const localSaveDialogMeta = queryRequired<HTMLElement>("[data-local-save-dialog-meta]");
+const localSaveDialogWarning = queryRequired<HTMLElement>("[data-local-save-dialog-warning]");
+const localSavePrimary = queryRequired<HTMLButtonElement>("[data-local-save-primary]");
+const localSaveDelete = queryRequired<HTMLButtonElement>("[data-local-save-delete]");
+const localSaveSecondary = queryRequired<HTMLButtonElement>("[data-local-save-secondary]");
 const themeOptions = Object.freeze([
   ...document.querySelectorAll<HTMLInputElement>("[data-theme-option]"),
 ]);
@@ -246,6 +269,18 @@ let captureInspectionTrigger: HTMLButtonElement | null = null;
 let cardInspectionCardId: Parameters<typeof getCardDefinition>[0] | null = null;
 let cardInspectionTrigger: HTMLElement | null = null;
 const recaps: string[] = [];
+const localSaveRepository = createIndexedDbLocalSaveRepository();
+const localSaveStore: LocalSaveStoreV1 = createLocalSaveStore(localSaveRepository);
+let persistenceStatusKind: "error" | "idle" | "saving" | "unavailable" = "idle";
+let persistenceAvailable = true;
+let persistencePromptKind: "corrupt" | "delete" | "fresh" | "resume" | null = null;
+let pendingResumeSave: LocalSaveV1 | null = null;
+let pendingSaveDiagnostic: string | null = null;
+let pendingFreshRequest: {
+  readonly completedMatchLength: MatchLength | null;
+  readonly fromResult: boolean;
+} | null = null;
+let localSavePromptOrigin: "corrupt" | null = null;
 
 function syncThemeControls(): void {
   for (const option of themeOptions) option.checked = option.value === activeTheme.id;
@@ -364,6 +399,7 @@ function snapshot() {
       totalCards: activeCaptureInspection?.totalCards ?? 0,
     },
     input: interactionController?.inspect() ?? unavailableInput,
+    redactPrivateHand: localSaveDialog.open || handoffPlayerId !== null,
     semanticControlCount,
     localRound: {
       viewerId: observation.playerId,
@@ -377,6 +413,14 @@ function snapshot() {
       latestRecap: recaps.at(-1) ?? null,
       commandCount,
       matchLength: observation.publicState.matchLength,
+    },
+    persistence: {
+      status: persistenceStatusKind,
+      promptKind: persistencePromptKind,
+      available: persistenceAvailable,
+      lastSavedAt: localSaveStore.current()?.updatedAt ?? null,
+      saveRound: localSaveStore.current()?.authoritativeState.round.roundNumber ?? null,
+      saveMonth: localSaveStore.current()?.authoritativeState.round.scheduledMonth ?? null,
     },
     theme: {
       activeId: activeTheme.id,
@@ -411,6 +455,7 @@ function currentInputLock(): InputLockReason | null {
   if (animationDirector?.isBusy()) return "animation";
   if (processingIntent) return "awaitingObservation";
   if (captureInspector.open) return "remoteReplay";
+  if (localSaveDialog.open) return "remoteReplay";
   if (
     historyDialog.open ||
     yakuGuideDialog.open ||
@@ -445,7 +490,12 @@ function isCardInspectorOpen(): boolean {
 }
 
 function isAnyDialogOpen(): boolean {
-  return isAnyUtilityDialogOpen() || isCaptureInspectionOpen() || isCardInspectorOpen();
+  return (
+    isAnyUtilityDialogOpen() ||
+    isCaptureInspectionOpen() ||
+    isCardInspectorOpen() ||
+    localSaveDialog.open
+  );
 }
 
 function isCriticalUtilityBlocked(): boolean {
@@ -744,6 +794,227 @@ function openOptions(): void {
   queueMicrotask(() => themeOptions.find(({ checked }) => checked)?.focus());
 }
 
+function setPersistenceStatus(
+  kind: "error" | "idle" | "saving" | "unavailable",
+  message = "",
+): void {
+  persistenceStatusKind = kind;
+  persistenceStatus.textContent = message;
+  persistenceWarning.hidden = kind !== "error" && kind !== "unavailable";
+  persistenceWarning.textContent = persistenceWarning.hidden ? "" : message;
+}
+
+function saveMetadata(save: LocalSaveV1): string {
+  const round = save.authoritativeState.round;
+  const resultReady =
+    save.authoritativeState.phase.kind === "roundComplete" ||
+    save.authoritativeState.phase.kind === "matchComplete";
+  return `${save.authoritativeState.matchLength}-round match · Round ${round.roundNumber} · ${getMonthDefinition(round.scheduledMonth).name}${resultReady ? " · Result ready" : ""}`;
+}
+
+function renderLocalSavePrompt(kind: "corrupt" | "delete" | "fresh" | "resume"): void {
+  if (kind === "corrupt") localSavePromptOrigin = "corrupt";
+  if (kind === "resume") localSavePromptOrigin = null;
+  persistencePromptKind = kind;
+  const save = pendingResumeSave ?? localSaveStore.current();
+  localSaveDialogWarning.hidden = true;
+  localSaveDialogWarning.textContent = "";
+  localSaveSecondary.hidden = true;
+  localSaveDelete.hidden = false;
+  if (kind === "resume" && save) {
+    const complete = save.authoritativeState.phase.kind === "matchComplete";
+    localSaveDialogEyebrow.textContent = complete ? "Completed match" : "Saved game";
+    localSaveDialogTitle.textContent = complete
+      ? "Review completed match?"
+      : "Continue saved match?";
+    localSaveDialogCopy.textContent = complete
+      ? "Your final result is saved locally. Review it before starting a rematch."
+      : "Your local match is saved and ready to continue.";
+    localSaveDialogMeta.textContent = saveMetadata(save);
+    localSavePrimary.textContent = complete ? "Review completed match" : "Continue";
+    localSaveDelete.textContent = "Delete saved game";
+  } else if (kind === "corrupt") {
+    localSaveDialogEyebrow.textContent = "Saved game unavailable";
+    localSaveDialogTitle.textContent = "This saved game cannot be opened";
+    localSaveDialogCopy.textContent =
+      "No part of the saved game was loaded. You can remove it or download a safe diagnostic.";
+    localSaveDialogMeta.textContent = "";
+    localSavePrimary.textContent = "Download diagnostic";
+    localSaveDelete.textContent = "Delete saved game";
+    localSaveSecondary.hidden = false;
+    localSaveSecondary.textContent = "Start new match";
+  } else if (kind === "delete") {
+    localSaveDialogEyebrow.textContent = "Delete saved game";
+    localSaveDialogTitle.textContent = "Delete this saved game?";
+    localSaveDialogCopy.textContent = "This removes the local checkpoint and cannot be undone.";
+    localSaveDialogMeta.textContent = save ? saveMetadata(save) : "";
+    localSavePrimary.textContent = "Delete saved game";
+    localSaveDelete.hidden = true;
+    localSaveSecondary.hidden = false;
+  } else {
+    const replacingCorruptSave = localSavePromptOrigin === "corrupt";
+    localSaveDialogEyebrow.textContent = replacingCorruptSave
+      ? "Replace unavailable save"
+      : "Start fresh match";
+    localSaveDialogTitle.textContent = replacingCorruptSave
+      ? "Start a new match instead?"
+      : "Replace saved game?";
+    localSaveDialogCopy.textContent = replacingCorruptSave
+      ? "This removes the unavailable local save and starts a new match."
+      : "Starting a fresh match replaces the current local checkpoint.";
+    localSaveDialogMeta.textContent = save ? saveMetadata(save) : "";
+    localSavePrimary.textContent = "Start fresh match";
+    localSaveDelete.hidden = true;
+    localSaveSecondary.hidden = false;
+  }
+  if (!localSaveDialog.open) localSaveDialog.showModal();
+  refreshInteractionSurface();
+  queueMicrotask(() => localSavePrimary.focus());
+}
+
+function openLocalSavePrompt(kind: "corrupt" | "fresh" | "resume"): void {
+  renderLocalSavePrompt(kind);
+}
+
+function closeLocalSavePrompt(): void {
+  if (!localSaveDialog.open) return;
+  localSaveDialog.close();
+  persistencePromptKind = null;
+  localSavePromptOrigin = null;
+  refreshInteractionSurface();
+}
+
+async function persistStableRuntime(): Promise<void> {
+  if (!ready || !persistenceAvailable || processingIntent || animationDirector?.isBusy()) return;
+  persistenceStatusKind = "saving";
+  try {
+    await localSaveStore.queueSnapshot(runtime.snapshot());
+    setPersistenceStatus("idle");
+  } catch {
+    persistenceAvailable = false;
+    setPersistenceStatus(
+      "unavailable",
+      "Saving is unavailable. This game will not be available after reload.",
+    );
+  } finally {
+    refreshInteractionSurface();
+  }
+}
+
+async function prepareLocalSave(): Promise<void> {
+  let raw: unknown;
+  try {
+    raw = await localSaveRepository.read();
+  } catch {
+    persistenceAvailable = false;
+    setPersistenceStatus(
+      "unavailable",
+      "Saving is unavailable. This game will not be available after reload.",
+    );
+    return;
+  }
+  if (raw === undefined) return;
+  try {
+    const save = decodeLocalSaveV1(raw);
+    localSaveStore.hydrate(save);
+    pendingResumeSave = save;
+  } catch (error: unknown) {
+    persistenceStatusKind = "error";
+    pendingSaveDiagnostic = createSanitizedLocalSaveDiagnostic(error);
+  }
+}
+
+function downloadLocalSaveDiagnostic(): void {
+  const blob = new Blob([pendingSaveDiagnostic ?? createSanitizedLocalSaveDiagnostic(null)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "koikoi4x-local-save-diagnostic.json";
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function showPrivateResumeHandoff(): void {
+  if (
+    observation.publicState.phase.kind === "roundComplete" ||
+    observation.publicState.phase.kind === "matchComplete"
+  ) {
+    handoffPlayerId = null;
+    handoff.hidden = true;
+    return;
+  }
+  handoffPlayerId = observation.playerId;
+  handoffTitle.textContent = `Pass to ${playerName(observation.playerId)}`;
+  handoffDescription.textContent = "Your private hand stays covered until you are ready.";
+  handoffReady.textContent = `${playerName(observation.playerId)} ready`;
+  handoff.hidden = false;
+}
+
+async function continueSavedMatch(): Promise<void> {
+  if (pendingResumeSave === null || !animationDirector) return;
+  try {
+    runtime = restoreLocalRoundRuntime(localSaveSnapshot(pendingResumeSave));
+    observation = runtime.observe();
+    projection = projectObservationToBoard(observation);
+    refreshYakuPresentation();
+    refreshRoundResultPresentation();
+    interactionController = createController();
+    showPrivateResumeHandoff();
+    pendingResumeSave = null;
+    closeLocalSavePrompt();
+    await animationDirector.cancelAndSnapTo(projection);
+    redraw();
+    status.textContent =
+      resultPresentation === null
+        ? "Saved match restored. Pass the device to the active player."
+        : "Saved result restored. Review the committed outcome.";
+    refreshInteractionSurface();
+  } catch (error: unknown) {
+    pendingSaveDiagnostic = createSanitizedLocalSaveDiagnostic(error);
+    renderLocalSavePrompt("corrupt");
+  }
+}
+
+async function deleteSavedGame(): Promise<void> {
+  try {
+    if (localSavePromptOrigin === "corrupt") {
+      await localSaveRepository.clearRecovery();
+    } else {
+      await localSaveStore.delete();
+    }
+    pendingResumeSave = null;
+    closeLocalSavePrompt();
+    const freshRequest = pendingFreshRequest;
+    pendingFreshRequest = null;
+    await startFreshLocalMatch(
+      freshRequest?.fromResult ?? true,
+      freshRequest?.completedMatchLength ?? null,
+    );
+  } catch {
+    persistenceAvailable = false;
+    setPersistenceStatus("unavailable", "Saved game could not be removed. Storage is unavailable.");
+    localSaveDialogWarning.hidden = false;
+    localSaveDialogWarning.textContent =
+      "The saved game could not be removed. Try again when storage is available.";
+  }
+}
+
+function requestFreshLocalMatch(
+  fromResult = false,
+  completedMatchLength: MatchLength | null = null,
+): void {
+  pendingFreshRequest = { fromResult, completedMatchLength };
+  if (localSaveStore.current() !== null || pendingResumeSave !== null) {
+    renderLocalSavePrompt("fresh");
+    return;
+  }
+  const freshRequest = pendingFreshRequest;
+  pendingFreshRequest = null;
+  void startFreshLocalMatch(freshRequest.fromResult, freshRequest.completedMatchLength);
+}
+
 function inputMessage(inspection: InputInteractionInspectionV1): string {
   if (handoffPlayerId) return `Pass the device to ${playerName(handoffPlayerId)}.`;
   if (inspection.status === "intentPending") return "Move accepted. Updating the local round.";
@@ -902,6 +1173,18 @@ function renderSemanticCardBridge(): void {
   renderHandPlayAttention(inspection);
   renderRevealPlayAttention(inspection);
   renderFieldDestinationAttention(inspection);
+  if (
+    shouldClearSemanticControlsForPrivacy({
+      localSavePromptOpen: localSaveDialog.open,
+      privateHandoffPending: handoffPlayerId !== null,
+    })
+  ) {
+    domCardBridge?.render([]);
+    fieldPlacementControl.hidden = true;
+    semanticControlCount = 0;
+    renderCaptureInspectionControls();
+    return;
+  }
   const controls = buildSemanticCardControls({
     inspection,
     layout: currentLayout,
@@ -928,6 +1211,7 @@ function renderCaptureInspectionControls(): void {
   const blocked =
     processingIntent ||
     handoffPlayerId !== null ||
+    localSaveDialog.open ||
     isRoundResultOpen() ||
     (animationDirector?.isBusy() ?? false);
   for (const control of captureInspectControls) {
@@ -1391,6 +1675,7 @@ async function executeIntent(intent: InputCommandIntentV1): Promise<void> {
   } finally {
     processingIntent = false;
     refreshInteractionSurface();
+    await persistStableRuntime();
   }
 }
 
@@ -1405,11 +1690,22 @@ function createController(): InteractionControllerV1 {
 async function acceptHandoff(): Promise<void> {
   if (!handoffPlayerId || !animationDirector) return;
   const nextPlayer = handoffPlayerId;
+  const beforeViewerId = runtime.viewerId;
+  const beforeStateVersion = runtime.state.stateVersion;
   observation = runtime.switchViewer(nextPlayer);
   const nextProjection = projectObservationToBoard(observation);
   await animationDirector.cancelAndSnapTo(nextProjection);
   projection = nextProjection;
-  interactionController?.replaceSource(createInteractionSourceFromObservation(observation));
+  if (
+    shouldReplaceLocalInteractionSource({
+      beforeViewerId,
+      beforeStateVersion,
+      afterViewerId: runtime.viewerId,
+      afterStateVersion: runtime.state.stateVersion,
+    })
+  ) {
+    interactionController?.replaceSource(createInteractionSourceFromObservation(observation));
+  }
   handoffPlayerId = null;
   refreshYakuPresentation();
   handoff.hidden = true;
@@ -1449,12 +1745,14 @@ async function startFreshLocalMatch(
   await animationDirector.cancelAndSnapTo(projection);
   interactionController = createController();
   renderRecaps();
+  redraw();
   status.textContent =
     observation.publicState.phase.kind === "roundComplete" ||
     observation.publicState.phase.kind === "matchComplete"
       ? `New ${matchLength}-round match. An opening result is ready to review.`
       : `New ${matchLength}-round match. Player A may select a hand card.`;
   refreshInteractionSurface();
+  await persistStableRuntime();
 }
 
 async function advanceLocalRound(): Promise<void> {
@@ -1489,6 +1787,7 @@ async function advanceLocalRound(): Promise<void> {
   } finally {
     processingIntent = false;
     refreshInteractionSurface();
+    await persistStableRuntime();
   }
 }
 
@@ -1659,14 +1958,41 @@ yakuKoiKoiButton.addEventListener("click", () => {
 });
 newRoundButton.addEventListener("click", () => {
   closeOptions(false);
-  void startFreshLocalMatch();
+  requestFreshLocalMatch();
 });
 roundResultAction.addEventListener("click", () => {
   if (resultPresentation && "plan" in resultPresentation.action) {
     void advanceLocalRound();
   } else if (resultPresentation && "result" in resultPresentation.action) {
-    void startFreshLocalMatch(true, resultPresentation.action.result.matchLength);
+    requestFreshLocalMatch(true, resultPresentation.action.result.matchLength);
   }
+});
+localSavePrimary.addEventListener("click", () => {
+  if (persistencePromptKind === "resume") {
+    void continueSavedMatch();
+  } else if (persistencePromptKind === "corrupt") {
+    downloadLocalSaveDiagnostic();
+  } else if (persistencePromptKind === "delete" || persistencePromptKind === "fresh") {
+    void deleteSavedGame();
+  }
+});
+localSaveDelete.addEventListener("click", () => {
+  if (persistencePromptKind === "resume" || persistencePromptKind === "corrupt") {
+    renderLocalSavePrompt("delete");
+  }
+});
+localSaveSecondary.addEventListener("click", () => {
+  if (persistencePromptKind === "corrupt") renderLocalSavePrompt("fresh");
+  else if (localSavePromptOrigin === "corrupt") renderLocalSavePrompt("corrupt");
+  else if (pendingResumeSave !== null) renderLocalSavePrompt("resume");
+  else closeLocalSavePrompt();
+});
+localSaveDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  if (persistencePromptKind === "delete" && localSavePromptOrigin === "corrupt")
+    renderLocalSavePrompt("corrupt");
+  else if (persistencePromptKind === "delete" && pendingResumeSave !== null)
+    renderLocalSavePrompt("resume");
 });
 handoffReady.addEventListener("click", () => void acceptHandoff());
 document.addEventListener("fullscreenchange", updateFullscreenLabel);
@@ -1731,6 +2057,16 @@ window.addEventListener("keydown", (event) => {
 
 async function start(): Promise<void> {
   applyActiveTheme(await themeStore.hydrate());
+  await prepareLocalSave();
+  if (pendingResumeSave !== null) {
+    runtime = restoreLocalRoundRuntime(localSaveSnapshot(pendingResumeSave));
+    observation = runtime.observe();
+    projection = projectObservationToBoard(observation);
+    selectedMatchLength = observation.publicState.matchLength;
+    matchLengthSelect.value = String(selectedMatchLength);
+    refreshYakuPresentation();
+    refreshRoundResultPresentation();
+  }
   const app = new Application();
   await app.init({
     antialias: true,
@@ -1791,10 +2127,19 @@ async function start(): Promise<void> {
   deckSelect.value = initialActivation.bundle.manifest.packageId;
   window.__KOIKOI4X_READY__ = true;
   document.documentElement.dataset.appReady = "true";
-  status.textContent = "Player A may select a hand card.";
   renderRecaps();
-  redraw();
-  refreshInteractionSurface();
+  if (pendingResumeSave !== null) {
+    status.textContent = "A saved local match is ready to continue.";
+    openLocalSavePrompt("resume");
+  } else if (pendingSaveDiagnostic !== null) {
+    status.textContent = "Saved game recovery is required before a local match can start.";
+    openLocalSavePrompt("corrupt");
+  } else {
+    status.textContent = "Player A may select a hand card.";
+    redraw();
+    refreshInteractionSurface();
+    await persistStableRuntime();
+  }
 }
 
 void start().catch((error: unknown) => {

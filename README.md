@@ -68,6 +68,7 @@ npm run validate:phase3fh
 npm run validate:phase3fi
 npm run validate:phase3fj
 npm run validate:phase5a
+npm run validate:phase5b
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -360,7 +361,23 @@ GMT` and `assets/index-DQO4OPuh.js`, which contains `See winning yaku & score`, 
 with one canvas, 48/48 unique CardViews, draw/reveal/player-Hand/opponent-Hand/field counts of
 24/0/8/8/8, match length 3, idle `awaitingHandPlay`, no locks, and no clipped/invalid/overlap
 diagnostics. [`shot-2.png`](output/phase-5a/live-ready/shot-2.png) was inspected and no error artifact
-was produced. Phase 5A is deployed, live-verified, and accepted. Next: Phase 5B local persistence.
+was produced. Phase 5A is deployed, live-verified, and accepted.
+
+`npm run validate:phase5b` is locally complete and accepted for the strict private local IndexedDB
+checkpoint boundary. It covers post-settlement autosave, exact decode and RNG provenance, Continue
+plus recipient-safe Ready resume, corrupt Download/Delete/Start New recovery, decision,
+round-complete, match-complete/rematch restoration, IndexedDB open denial and optimistic write
+conflict, and Root/Pages accessibility/privacy evidence. `npm run check` passed 54 files / 513
+ordinary tests, all 10,002 generated seeds (3/6/12 = 3,334 each), the 48/48 deck, and the
+781-module production build. The final uninterrupted `npm run validate:phase5b` exited 0: 48/48
+release deck, 100 technical artifacts, 17 files / 247 Phase 5A focused tests, Workshop, 14
+Phase-3D-D Root/Pages viewports, full retained Root/Pages smoke through 3F/3B/End-of-Play/Bank/real
+three-round rematch, 3 persistence files / 38 focused tests, and dedicated Root plus Pages
+persistence smoke. The latter wrote 18 artifacts (nine per base) under `output/phase-5b/e2e/`.
+Independent Terra review found no blocker, high, or medium issue. One transient density-harness
+readiness timeout passed both an isolated rerun and the uninterrupted gate; the Pages click-readiness
+harness repair retained all product assertions. Commit, push, hosted CI/Pages, deployment, and live
+verification remain pending.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot
