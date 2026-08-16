@@ -9,8 +9,8 @@ start cue is deployed, live-verified, and accepted; Phase 3F-I Reveal start cue 
 live-verified, and accepted; Phase 3F-J legal destination pulse is deployed, live-verified, and
 accepted; Phase 5A full local match formats is deployed, live-verified, and accepted; Phase 5B local
 persistence is deployed, live-verified, and accepted; Phase 6A fair heuristic AI is deployed,
-live-verified, and accepted; Phase 6B difficulty and explanations is locally complete and accepted;
-next governed phase is Phase 6C
+live-verified, and accepted; Phase 6B difficulty and explanations is deployed, live-verified, and
+accepted; next governed phase is Phase 6C
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -139,8 +139,7 @@ Status: **deployed, live-verified, and accepted**.
 
 ## Phase 6B — difficulty and explanations
 
-Status: **locally complete and accepted; commit, push, hosted CI/Pages, deployment, and live
-verification pending**.
+Status: **deployed, live-verified, and accepted**.
 
 - Easy, Standard (default), and Hard remain deterministic configurations of the existing fair
   heuristic. Difficulty may strengthen only public score-gap, round/final-round, table-multiplier,
@@ -171,8 +170,15 @@ verification pending**.
   generated trials, Phase 6A Root/Pages, 3 Phase 6B focused files / 25 tests, 1,080 generated trials,
   and Phase 6B Root/Pages. All 26 Phase 6B PNGs were visually inspected; independent review was B0/H0.
   The late-suite first-navigation flake was repaired narrowly with navigation `commit` plus the retained
-  application-ready assertion and revalidated. Commit, push, hosted CI/Pages, deployment, and live
-  verification remain pending; Phase 6C is next.
+  application-ready assertion and revalidated. Implementation commit
+  `2a84ce143db29f9172590419f9b9492a22dbe643` passed CI `31958387075` (verify 37m47s; check
+  16:22:38–16:28:14Z; validation 16:28:14–16:59:38Z; artifact upload), with only a Node 20 action
+  deprecation notice. Pages `31958387069` passed build 16:21:54–16:52:24Z, validation
+  16:27:50–16:52:18Z, and deploy 16:52:29–16:52:39Z. Live HTTP/2 was 200 MISS with
+  `Last-Modified: 16:52:34Z`, `index-WMa9jsmo.js`, `index-D3Qe8KIR.css`, and the exact
+  difficulty/reason markers. Live Playwright observed Standard default, selected CPU Hard/Monk,
+  completed real no-match Hand/Draw interaction into CPU settlement, reported zero console errors,
+  and inspected `output/playwright/phase6b-live-monk-hard-390x844.png`. Phase 6C is next.
 
 ## Phase 0 — Rule lock and foundation
 

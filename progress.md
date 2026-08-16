@@ -2,7 +2,7 @@ Original prompt: read the package and understand it, then let me know when we ar
 
 # KoiKoi4x Progress
 
-## 2026-08-16 — Phase 6B locally complete and accepted
+## 2026-08-16 — Phase 6B deployed, live-verified, and accepted
 
 - ADR 0033 and `AI-6B-001`–`AI-6B-007` define the implemented bounded CPU subphase: deterministic Easy,
   Standard (default), and Hard public-match-context weighting; the six canonical public reason
@@ -27,8 +27,19 @@ Original prompt: read the package and understand it, then let me know when we ar
   deterministic-tie coverage. A late-suite navigation flake was repaired narrowly by waiting for
   navigation commit while retaining the application-ready assertion, then revalidated.
 - No engine/protocol/rules/replay changes, rollouts, determinization, seeded noise, online/Firebase,
-  or CPU save work is authorized. Commit, push, hosted CI/Pages, deployment, and live verification
-  remain pending. Phase 6C is next.
+  or CPU save work was added. Implementation commit `2a84ce143db29f9172590419f9b9492a22dbe643` passed
+  CI `31958387075`: verify 16:21:54–16:59:41Z (37m47s), check 16:22:38–16:28:14Z (5m36s),
+  `validate:phase6b` 16:28:14–16:59:38Z (31m24s), and artifact upload 16:59:38–16:59:39Z; Node 20
+  action deprecation was the only notice. Pages `31958387069` passed build 16:21:54–16:52:24Z
+  (30m30s), check 16:22:32–16:27:50Z (5m18s), validation 16:27:50–16:52:18Z (24m28s), deploy job
+  16:52:29–16:52:39Z, and Deploy 16:52:31–16:52:37Z.
+- The cache-busted live HTTP/2 request returned 200 MISS with `Last-Modified: 16:52:34Z`,
+  `index-WMa9jsmo.js`, `index-D3Qe8KIR.css`, and exact difficulty/reason markers. Live Playwright
+  observed Standard default, selected CPU Hard/Monk, started a real 3-round match, played a human
+  no-match Hand and Draw, and saw CPU settlement with
+  `{mode:cpu,cpuDifficulty:hard,cpuPersonality:monk,cpuDecision:{reason:denyVisibleThreat,confidence:measured},cpuTurnState:idle}`
+  and `Claims a visible threat · Measured`; console errors were zero and
+  `output/playwright/phase6b-live-monk-hard-390x844.png` was inspected. Phase 6C is next.
 
 ## 2026-08-16 — Phase 6A locally complete and accepted
 

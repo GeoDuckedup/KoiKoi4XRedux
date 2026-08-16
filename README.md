@@ -392,8 +392,7 @@ browser iterations were `ready:true` with one canvas, 48 unique CardViews, 24/8/
 unlocked input with 16 semantic controls, approved `new-primary-deck`, and available idle persistence
 with a saved round/month 1 checkpoint; the clean `shot-2` was visually inspected. Phase 5B is
 deployed, live-verified, and accepted. Phase 6A is deployed, live-verified, and accepted. Phase 6B
-is locally complete and accepted; commit, hosted CI/Pages, deployment, and live verification remain
-pending. Next governed phase: Phase 6C.
+is deployed, live-verified, and accepted. Next governed phase: Phase 6C.
 
 Phase 6A is locally complete and accepted. It adds a deterministic session-only player-A human versus
 player-B CPU mode for the existing 3/6/12 formats. The CPU receives only a
@@ -422,7 +421,7 @@ utilities, A face-up/B back-only hands, no console diagnostics, and an inspected
 is deployed, live-verified, and accepted. Phase 6B local acceptance is recorded below; rollout work
 remains reserved for Phase 6C.
 
-Phase 6B is locally complete and accepted. It adds deterministic Easy, Standard (default), and Hard
+Phase 6B is deployed, live-verified, and accepted. It adds deterministic Easy, Standard (default), and Hard
 heuristic settings across Timid, Monk, and Gambler, the six canonical public reason tokens, numeric
 `[0,1]` confidence with UI bands, and public score/multiplier/round context. An explanation appears
 only after its CPU action settles, remains private through every CPU-thinking substep, and is derived
@@ -438,8 +437,20 @@ tests, 360 generated trials, Phase 6A Root/Pages, 3 Phase 6B focused files / 25 
 trials, and Phase 6B Root/Pages. All 26 Phase 6B PNGs were visually inspected, including compact
 portrait/landscape explanation banners and privacy artifacts. Independent review was B0/H0. The sole
 late-suite navigation flake was repaired narrowly by waiting for navigation commit while retaining the
-application-ready assertion, then revalidated. Commit, push, hosted CI/Pages, deployment, and live
-verification remain pending; Phase 6C is next.
+application-ready assertion, then revalidated. Implementation commit
+`2a84ce143db29f9172590419f9b9492a22dbe643` passed hosted CI `31958387075`: verify
+16:21:54–16:59:41Z (37m47s), check 16:22:38–16:28:14Z (5m36s), `validate:phase6b`
+16:28:14–16:59:38Z (31m24s), and artifact upload 16:59:38–16:59:39Z; the only notice was Node 20
+action deprecation. Pages `31958387069` passed: build 16:21:54–16:52:24Z (30m30s), check
+16:22:32–16:27:50Z (5m18s), validation 16:27:50–16:52:18Z (24m28s), deploy job
+16:52:29–16:52:39Z, and Deploy 16:52:31–16:52:37Z. A cache-busted live HTTP/2 request returned 200
+MISS with `Last-Modified: 16:52:34Z`, `index-WMa9jsmo.js`, `index-D3Qe8KIR.css`, and the exact
+difficulty/reason markers. Live Playwright observed Standard by default, then selected CPU Hard/Monk,
+started a real 3-round match, played a human no-match Hand and Draw, and observed CPU settlement with
+`{mode:cpu,cpuDifficulty:hard,cpuPersonality:monk,cpuDecision:{reason:denyVisibleThreat,confidence:measured},cpuTurnState:idle}`
+and `Claims a visible threat · Measured`; console errors were zero and
+`output/playwright/phase6b-live-monk-hard-390x844.png` was inspected. Phase 6B is deployed,
+live-verified, and accepted; Phase 6C is next.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

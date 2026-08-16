@@ -1,7 +1,6 @@
 # ADR 0033: Phase 6B deterministic difficulty and public explanations
 
-**Status:** Locally complete and accepted; commit, push, hosted CI/Pages, deployment, and live
-verification pending.
+**Status:** Deployed, live-verified, and accepted.
 
 ## Context
 
@@ -62,4 +61,14 @@ portrait/landscape banner is compact. Independent review was B0/H0. A late-suite
 flake was repaired narrowly with navigation `commit` plus the retained app-ready assertion, then
 revalidated.
 
-Commit, push, hosted CI/Pages, deployment, and live verification are pending. Phase 6C is next.
+Implementation commit `2a84ce143db29f9172590419f9b9492a22dbe643` passed CI `31958387075`: verify
+16:21:54–16:59:41Z (37m47s), check 16:22:38–16:28:14Z (5m36s), validation
+16:28:14–16:59:38Z (31m24s), and artifact upload 16:59:38–16:59:39Z; only a Node 20 action
+deprecation was reported. Pages `31958387069` passed build 16:21:54–16:52:24Z, check
+16:22:32–16:27:50Z, validation 16:27:50–16:52:18Z, deploy job 16:52:29–16:52:39Z, and Deploy
+16:52:31–16:52:37Z. The live HTTP/2 response was 200 MISS with `Last-Modified: 16:52:34Z`,
+`index-WMa9jsmo.js`, `index-D3Qe8KIR.css`, and exact difficulty/reason markers. Live Playwright
+verified Standard default and CPU Hard/Monk through real 3-round no-match Hand/Draw play into CPU
+settlement: `{mode:cpu,cpuDifficulty:hard,cpuPersonality:monk,cpuDecision:{reason:denyVisibleThreat,confidence:measured},cpuTurnState:idle}`
+and `Claims a visible threat · Measured`, with zero console errors; it inspected
+`output/playwright/phase6b-live-monk-hard-390x844.png`. Phase 6C is next.

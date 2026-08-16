@@ -10,15 +10,14 @@ and accepted; Phase 3F-I Reveal start cue is deployed, live-verified, and accept
 destination pulse is deployed, live-verified, and accepted; Phase 5A full local match formats is
 deployed, live-verified, and accepted; Phase 5B local persistence is deployed, live-verified, and
 accepted; Phase 6A fair heuristic AI is deployed, live-verified, and accepted; Phase 6B difficulty
-and explanations is locally complete and accepted, with commit, hosted CI/Pages, deployment, and live
-verification pending
+and explanations is deployed, live-verified, and accepted; next governed phase is Phase 6C
 
 **Runtime state:** Complete deterministic headless match engine plus playable browser-local 3/6/12-round
 formats using real player observations and commands, the owner-approved primary deck, persistent Pixi
 cards, deterministic public-event animation, private pass-the-device handoff, accessible recap/result
 evidence, and the retained local-only deterministic deck Workshop/raster review pipeline
 
-## Phase 6B — locally complete and accepted
+## Phase 6B — deployed, live-verified, and accepted
 
 Phase 6B adds deterministic Easy, Standard (default), and Hard heuristic settings across Timid, Monk,
 and Gambler; canonical public reason tokens; numeric `[0,1]` confidence mapped to UI bands; and public
@@ -43,8 +42,19 @@ and the 783-module production build. The uninterrupted final `npm run validate:p
 generated trials, Phase 6A Root/Pages, 3 Phase 6B focused files / 25 tests, 1,080 generated trials,
 and Phase 6B Root/Pages. All 26 Phase 6B PNGs were visually inspected and independent review was
 B0/H0. A late-suite initial-navigation flake was repaired narrowly with navigation `commit` and the
-retained app-ready assertion, then revalidated. Commit, push, hosted CI/Pages, deployment, and live
-verification remain pending; next is Phase 6C.
+retained app-ready assertion, then revalidated. Implementation commit
+`2a84ce143db29f9172590419f9b9492a22dbe643` passed CI `31958387075`: verify
+16:21:54–16:59:41Z (37m47s), check 16:22:38–16:28:14Z (5m36s), validation 16:28:14–16:59:38Z
+(31m24s), and artifact upload 16:59:38–16:59:39Z; Node 20 action deprecation was the only notice.
+Pages `31958387069` passed build 16:21:54–16:52:24Z (30m30s), check 16:22:32–16:27:50Z (5m18s),
+validation 16:27:50–16:52:18Z (24m28s), deploy job 16:52:29–16:52:39Z, and Deploy
+16:52:31–16:52:37Z. Live HTTP/2 returned 200 MISS with `Last-Modified: 16:52:34Z`,
+`index-WMa9jsmo.js`, `index-D3Qe8KIR.css`, and exact difficulty/reason markers. Live Playwright
+observed Standard default, selected CPU Hard/Monk, started a real 3-round match, completed a human
+no-match Hand and Draw, and observed CPU settlement; reported
+`{mode:cpu,cpuDifficulty:hard,cpuPersonality:monk,cpuDecision:{reason:denyVisibleThreat,confidence:measured},cpuTurnState:idle}`
+and `Claims a visible threat · Measured`; console errors were zero and
+`output/playwright/phase6b-live-monk-hard-390x844.png` was inspected. Next is Phase 6C.
 
 ## Phase 6A — deployed, live-verified, and accepted
 
