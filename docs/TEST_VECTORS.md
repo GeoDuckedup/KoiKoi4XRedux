@@ -788,9 +788,9 @@ passed 59 files / 539 ordinary tests, 10,002 seeded matches, the 48/48 deck, and
 All 26 Phase 6B PNGs were inspected, including CPU-thinking privacy at every substep and compact
 portrait/landscape explanation banners; independent review was B0/H0. The late-suite navigation flake
 was repaired narrowly with navigation `commit` while retaining the app-ready assertion, then
-revalidated. Commit, push, hosted CI/Pages, deployment, and live verification remain pending. Rollouts,
-determinization, seeded variation, simulation tuning, online work, and CPU persistence are expressly
-not Phase 6B work; Phase 6C is next.
+revalidated. Its hosted CI/Pages/deployment/live record is retained in ADR 0033 and STATUS. Rollouts,
+determinization, seeded variation, simulation tuning, online work, and CPU persistence were expressly
+not Phase 6B work; Phase 6C followed.
 
 ## 34. Phase 6C observation-only rollout and tuning vectors
 
@@ -815,8 +815,10 @@ formats × ten seeds). Four sequential shards own complete seed matrices in a 3/
 independently timeout-bounded. Root/Pages artifacts belong under `output/phase-6c/e2e/`; aggregate
 reports belong under `output/phase-6c/reports/`. The final local gate passed all 270 report matches,
 all five zero counters, and Root/Pages worker acceptance with 12 PNGs; representative artifacts were
-inspected and independent review is B0/H0. Hosted CI/Pages, deployment, and live acceptance remain
-pending.
+inspected and independent review is B0/H0. Commit `2206804c25ecd15b38be4ab2c1bdb22fae90cffe`
+passed CI `31969110411` and Pages `31969110390`; cache-busted live HTTP/2 and a real Hard/Monk
+worker turn were verified with zero browser errors. Phase 6C is deployed, live-verified, and
+accepted.
 
 ## 35. Approved-decision coverage matrix
 

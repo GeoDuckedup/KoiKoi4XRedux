@@ -11,14 +11,14 @@ destination pulse is deployed, live-verified, and accepted; Phase 5A full local 
 deployed, live-verified, and accepted; Phase 5B local persistence is deployed, live-verified, and
 accepted; Phase 6A fair heuristic AI is deployed, live-verified, and accepted; Phase 6B difficulty
 and explanations is deployed, live-verified, and accepted; Phase 6C rollout AI and tuning is locally
-complete and accepted; next governed phase is Phase 7A
+deployed, live-verified, and accepted; next governed phase is Phase 7A
 
 **Runtime state:** Complete deterministic headless match engine plus playable browser-local 3/6/12-round
 formats using real player observations and commands, the owner-approved primary deck, persistent Pixi
 cards, deterministic public-event animation, private pass-the-device handoff, accessible recap/result
 evidence, and the retained local-only deterministic deck Workshop/raster review pipeline
 
-## Phase 6C — locally complete and accepted; hosted release pending
+## Phase 6C — deployed, live-verified, and accepted
 
 ADR 0034 defines Phase 6C as observation-only, non-authoritative belief rollout. The selector may
 sample the unseen-card complement consistently with public counts, but may not accept or reconstruct
@@ -44,8 +44,19 @@ Phase 6C focused tests, four shards / 270 complete report matches, and dedicated
 smoke. All report safety counters are zero. Twelve browser PNGs cover resume, thinking, animation,
 settlement, stale-request cancellation, privacy, and portrait/landscape Options; representative
 artifacts were inspected. Independent review is B0/H0 after repairing tie-only seed isolation,
-root-inclusive node accounting, and pending-worker ownership. Commit, push, hosted CI/Pages,
-deployment, and live verification remain pending.
+root-inclusive node accounting, and pending-worker ownership.
+
+Commit `2206804c25ecd15b38be4ab2c1bdb22fae90cffe` passed CI `31969110411`: verify
+19:57:27–20:18:46Z (21m19s), `check` 19:58:22–20:02:07Z (3m45s),
+`validate:phase6c` 20:02:07–20:18:42Z (16m35s), and artifact upload 20:18:42–20:18:44Z. Pages
+`31969110390` passed build 19:57:28–20:23:28Z (26m00s), validation 20:02:17–20:23:21Z
+(21m04s), and deploy 20:23:32–20:23:40Z (8s). The only annotation was the existing Node 20 action
+deprecation. Cache-busted live HTTP/2 returned 200 with `Last-Modified: 20:23:37Z`,
+`index-bNxcwCMr.js`, `index-D3Qe8KIR.css`, and `rollout-worker-DjrC0B6w.js`. A live Hard/Monk
+3-round match completed a real human Hand and Draw into redacted worker thinking, public animation,
+and a settled `{reason:denyVisibleThreat,confidence:measured}` decision; it returned to Player A with
+one canvas/48 CardViews and zero browser errors. The inspected artifact is
+`output/playwright/phase6c-live-monk-hard-390x844.png`.
 
 ## Phase 6B — deployed, live-verified, and accepted
 

@@ -1,6 +1,6 @@
 # ADR 0034: Phase 6C observation-only belief rollouts
 
-**Status:** Accepted locally; hosted release pending.
+**Status:** Deployed, live-verified, and accepted.
 
 ## Context
 
@@ -57,4 +57,9 @@ both complete decks, and the 784-module production build. The final uninterrupte
 four-shard 270-match report matrix, and dedicated Root/Pages worker smoke. All five report safety
 counters are zero; 12 PNGs were generated and representative portrait/landscape, thinking,
 animation, settlement, privacy, and Options artifacts were inspected. Independent review is B0/H0.
-Commit, push, hosted CI/Pages, deployment, and live verification remain pending.
+Commit `2206804c25ecd15b38be4ab2c1bdb22fae90cffe` passed CI `31969110411` (21m19s) and
+Pages `31969110390` (26m00s build; 8s deploy); the only annotation was the existing Node 20 action
+deprecation. Cache-busted live HTTP/2 returned 200 for the main bundle, stylesheet, and dedicated
+rollout worker. A real live Hard/Monk Hand-and-Draw trace proved worker thinking redaction, public
+animation, settled public explanation, one canvas/48 CardViews, and zero browser errors; the
+inspected artifact is `output/playwright/phase6c-live-monk-hard-390x844.png`.

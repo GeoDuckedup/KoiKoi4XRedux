@@ -394,8 +394,8 @@ browser iterations were `ready:true` with one canvas, 48 unique CardViews, 24/8/
 unlocked input with 16 semantic controls, approved `new-primary-deck`, and available idle persistence
 with a saved round/month 1 checkpoint; the clean `shot-2` was visually inspected. Phase 5B is
 deployed, live-verified, and accepted. Phase 6A is deployed, live-verified, and accepted. Phase 6B
-is deployed, live-verified, and accepted. Phase 6C is locally complete and accepted; hosted release
-and live verification are pending. The next governed phase is Phase 7A.
+is deployed, live-verified, and accepted. Phase 6C is deployed, live-verified, and accepted. The next
+governed phase is Phase 7A.
 
 Phase 6A is locally complete and accepted. It adds a deterministic session-only player-A human versus
 player-B CPU mode for the existing 3/6/12 formats. The CPU receives only a
@@ -455,7 +455,8 @@ and `Claims a visible threat · Measured`; console errors were zero and
 `output/playwright/phase6b-live-monk-hard-390x844.png` was inspected. Phase 6B is deployed,
 live-verified, and accepted; Phase 6C followed and is recorded below.
 
-Phase 6C is locally complete and accepted. ADR 0034 locks an observation-only, non-authoritative belief rollout over
+Phase 6C is deployed, live-verified, and accepted. ADR 0034 locks an observation-only,
+non-authoritative belief rollout over
 exact already-issued legal actions: Easy/Standard/Hard use 4/12/24 sampled worlds and 1/2/4 abstract
 capture plies with a 2,048-node cap. A predictable public-derived session seed breaks ties only;
 live authority is never passed/reconstructed, and sampled assignments, seeds, margins, and raw
@@ -463,7 +464,13 @@ scores never enter UI, diagnostics, save/replay data, or public explanations. Th
 passed a benchmark-aware 270-match matrix in four whole-seed shards and wrote only aggregate-safe
 reports under `output/phase-6c/reports/`. Root and Pages worker smoke passed with 12 inspected PNGs;
 independent review was B0/H0. `npm run check` and the complete inherited `validate:phase6c` gate are
-green. Commit, push, hosted CI/Pages, deployment, and live verification remain pending.
+green. Commit `2206804c25ecd15b38be4ab2c1bdb22fae90cffe` passed CI `31969110411` in 21m19s
+and Pages `31969110390` built in 26m00s and deployed in 8s; the only annotation was the existing
+Node 20 action deprecation. Cache-busted live HTTP/2 checks returned 200 for `index-bNxcwCMr.js`,
+`index-D3Qe8KIR.css`, and `rollout-worker-DjrC0B6w.js` with `Last-Modified: 20:23:37Z`. A real live
+Hard/Monk Hand-and-Draw trace observed redacted worker thinking, public animation, settled
+`denyVisibleThreat` / `measured` explanation, one canvas/48 CardViews, and zero browser errors; the
+inspected artifact is `output/playwright/phase6c-live-monk-hard-390x844.png`. Phase 7A is next.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

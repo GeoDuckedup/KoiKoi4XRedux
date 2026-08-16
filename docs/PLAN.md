@@ -10,8 +10,8 @@ live-verified, and accepted; Phase 3F-J legal destination pulse is deployed, liv
 accepted; Phase 5A full local match formats is deployed, live-verified, and accepted; Phase 5B local
 persistence is deployed, live-verified, and accepted; Phase 6A fair heuristic AI is deployed,
 live-verified, and accepted; Phase 6B difficulty and explanations is deployed, live-verified, and
-accepted; Phase 6C rollout AI and tuning is locally complete and accepted; next governed phase is
-Phase 7A project and emulators
+accepted; Phase 6C rollout AI and tuning is deployed, live-verified, and accepted; next governed
+phase is Phase 7A project and emulators
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -183,7 +183,7 @@ Status: **deployed, live-verified, and accepted**.
 
 ## Phase 6C — rollout AI and tuning
 
-Status: **locally complete and accepted; hosted release pending**.
+Status: **deployed, live-verified, and accepted**.
 
 - ADR 0034 locks a non-authoritative observation-only belief rollout. It samples the unseen-card
   complement consistently with public counts but cannot receive/reconstruct live authority or create
@@ -210,8 +210,17 @@ Status: **locally complete and accepted; hosted release pending**.
 - The four release reports have zero illegal/no-action/invalid-state/command-limit/non-finite
   counters. Twelve Root/Pages PNGs cover resume, worker thinking, public animation, settlement,
   stale-request cancellation, privacy, and portrait/landscape Options; representative artifacts were
-  inspected. Independent review is B0/H0. Commit, push, hosted CI/Pages, deployment, and live
-  verification remain pending.
+  inspected. Independent review is B0/H0.
+- Commit `2206804c25ecd15b38be4ab2c1bdb22fae90cffe` passed CI `31969110411` in 21m19s:
+  `check` 3m45s, `validate:phase6c` 16m35s, and artifact upload 2s. Pages `31969110390` passed its
+  26m00s build (`check` 4m10s; validation 21m04s) and 8s deploy job. The only annotation was the
+  existing Node 20 action deprecation.
+- Cache-busted live HTTP/2 returned 200 with `Last-Modified: 20:23:37Z`, `index-bNxcwCMr.js`,
+  `index-D3Qe8KIR.css`, and `rollout-worker-DjrC0B6w.js`. A real Hard/Monk Hand-and-Draw trace
+  returned to Player A after redacted worker thinking and public animation, exposed only the settled
+  `denyVisibleThreat` / `measured` explanation, retained one canvas/48 CardViews, and reported zero
+  browser errors. `output/playwright/phase6c-live-monk-hard-390x844.png` was inspected. Phase 7A is
+  next.
 
 ## Phase 0 — Rule lock and foundation
 

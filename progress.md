@@ -2,7 +2,7 @@ Original prompt: read the package and understand it, then let me know when we ar
 
 # KoiKoi4x Progress
 
-## 2026-08-16 — Phase 6C locally complete and accepted
+## 2026-08-16 — Phase 6C deployed, live-verified, and accepted
 
 - ADR 0034 locks an observation-only, non-authoritative belief evaluator over exact existing legal
   actions. It explicitly forbids live-authority reconstruction and describes its capture lookahead as
@@ -18,8 +18,15 @@ Original prompt: read the package and understand it, then let me know when we ar
   27 Phase 6C focused tests, 270 report matches, and Root/Pages worker smoke. The reports have zero
   safety counters; 12 browser PNGs were produced and representative artifacts inspected.
 - Independent review is B0/H0 after tie-only seed, root-inclusive node-cap, and worker-ownership
-  repairs. Commit, push, hosted CI/Pages, deployment, and live verification remain pending. Phase 7A
-  project/emulator setup is next after release close-out.
+  repairs. Commit `2206804c25ecd15b38be4ab2c1bdb22fae90cffe` passed CI `31969110411` in
+  21m19s and Pages `31969110390` in 26m00s plus an 8s deploy; only the existing Node 20 action
+  annotation appeared.
+- Cache-busted live HTTP/2 returned 200 with the new main bundle, CSS, and
+  `rollout-worker-DjrC0B6w.js`. A real Hard/Monk Hand-and-Draw trace returned to Player A after
+  redacted worker thinking and public animation, exposed the settled `denyVisibleThreat` /
+  `measured` explanation, retained one canvas/48 CardViews, and reported zero browser errors. The
+  inspected screenshot is `output/playwright/phase6c-live-monk-hard-390x844.png`. Phase 7A
+  project/emulator setup is next.
 
 ## 2026-08-16 — Phase 6B deployed, live-verified, and accepted
 
