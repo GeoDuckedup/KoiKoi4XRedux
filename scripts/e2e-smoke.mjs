@@ -10,9 +10,16 @@ const distributionDirectory = process.env.SMOKE_DIST_DIR
   : resolve(repositoryRoot, "apps/web/dist");
 const phase5BOnly = process.env.SMOKE_PHASE5B_ONLY === "1";
 const phase6AOnly = process.env.SMOKE_PHASE6A_ONLY === "1";
+const phase6BOnly = process.env.SMOKE_PHASE6B_ONLY === "1";
 const outputDirectory = resolve(
   repositoryRoot,
-  phase6AOnly ? "output/phase-6a/e2e" : phase5BOnly ? "output/phase-5b/e2e" : "output/phase-5a/e2e",
+  phase6BOnly
+    ? "output/phase-6b/e2e"
+    : phase6AOnly
+      ? "output/phase-6a/e2e"
+      : phase5BOnly
+        ? "output/phase-5b/e2e"
+        : "output/phase-5a/e2e",
 );
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
@@ -1889,7 +1896,7 @@ async function resolvePendingDrawIfNeeded(page) {
               state.input.lockReason !== "awaitingObservation"))
         );
       },
-      { version: beforeVersion, allowCpuHandoff: phase6AOnly },
+      { version: beforeVersion, allowCpuHandoff: phase6AOnly || phase6BOnly },
       { timeout: 30_000 },
     );
     return readState(page);
@@ -1929,7 +1936,7 @@ async function resolvePendingDrawIfNeeded(page) {
             state.input.lockReason !== "awaitingObservation"))
       );
     },
-    { version: beforeVersion, allowCpuHandoff: phase6AOnly },
+    { version: beforeVersion, allowCpuHandoff: phase6AOnly || phase6BOnly },
     { timeout: 30_000 },
   );
   return readState(page);
@@ -2198,6 +2205,29 @@ async function playHandCardById(page, cardId) {
   await acceptHandoffIfPending(page);
   await resolvePendingDrawIfNeeded(page);
   await acceptHandoffIfPending(page);
+  await page.waitForFunction(
+    (expectedCardId) => {
+      const state = JSON.parse(window.render_game_to_text());
+      const control = document.querySelector(
+        `[data-input-role="selectable"][data-card-id="${expectedCardId}"]`,
+      );
+      const saveDialog = document.querySelector("[data-local-save-dialog]");
+      return (
+        state.localRound.phase === "awaitingHandPlay" &&
+        state.input.status === "idle" &&
+        state.input.lockReason === null &&
+        state.input.selectableCardIds.includes(expectedCardId) &&
+        state.animation.status !== "playing" &&
+        control instanceof HTMLButtonElement &&
+        !control.disabled &&
+        control.getAttribute("aria-disabled") !== "true" &&
+        control.getClientRects().length > 0 &&
+        (!(saveDialog instanceof HTMLDialogElement) || !saveDialog.open)
+      );
+    },
+    cardId,
+    { timeout: 30_000 },
+  );
   const before = await readState(page);
   assert(
     before.localRound.phase === "awaitingHandPlay",
@@ -2913,6 +2943,7 @@ async function installPhase6ACpuTrace(page) {
         animationStatus: state.animation.status,
         clipEventType: state.animation.activeClip?.eventType ?? null,
         clipKind: state.animation.activeClip?.kind ?? null,
+        cpuDecision: state.match.cpuDecision,
         cpuTurnState: state.match.cpuTurnState,
         inputLockReason: state.input.lockReason,
         phase: state.localRound.phase,
@@ -3178,6 +3209,12 @@ async function exerciseCpuPersonalityTurn(
     `${label} did not retain observable opponentTurn plus public-event animation evidence.`,
   );
   assert(
+    trace
+      .filter((entry) => entry.activePlayerId === "player-b" || entry.cpuTurnState === "thinking")
+      .every((entry) => entry.cpuDecision === null),
+    `${label} exposed a prior CPU explanation during a later CPU thinking step.`,
+  );
+  assert(
     settled.localRound.handoffPending === false &&
       settled.canvasCount === 1 &&
       settled.cards.cardViewCount === 48 &&
@@ -3208,7 +3245,7 @@ async function runPhase6ACpuSmoke(page, browserErrors, networkErrors) {
   const portrait = { width: 390, height: 844 };
   const landscape = { width: 844, height: 390 };
   await page.setViewportSize(portrait);
-  await page.goto(pageUrl, { waitUntil: "domcontentloaded" });
+  await page.goto(pageUrl, { waitUntil: "commit" });
   await waitForApplicationReady(page, browserErrors, networkErrors);
   const opening = await readState(page);
   const savedLocal = await waitForPersistedCheckpoint(page, opening.localRound.stateVersion);
@@ -3266,6 +3303,381 @@ async function runPhase6ACpuSmoke(page, browserErrors, networkErrors) {
   );
   assert(browserErrors.length === 0, "Phase 6A browser console reported errors.");
   assert(networkErrors.length === 0, "Phase 6A browser network reported errors.");
+}
+
+function cpuDifficultyLabel(difficulty) {
+  return difficulty === "easy" ? "Easy" : difficulty === "hard" ? "Hard" : "Standard";
+}
+
+const PUBLIC_CPU_REASON_COPY = Object.freeze({
+  secureLead: "Secures the match lead",
+  completeYaku: "Completes a yaku",
+  denyVisibleThreat: "Claims a visible threat",
+  strongFuturePotential: "Builds toward a yaku",
+  multiplierPressure: "Presses the table multiplier",
+  comebackRisk: "Pushes for a comeback",
+});
+
+const PUBLIC_CPU_CONFIDENCE_COPY = Object.freeze({
+  clear: "Clear",
+  close: "Close",
+  measured: "Measured",
+});
+
+async function assertPhase6BOptionsBounds(page, viewport, label) {
+  const hard = page.locator('[data-cpu-difficulty][value="hard"]');
+  const freshMatch = page.locator("[data-new-round]");
+  await hard.scrollIntoViewIfNeeded();
+  assert(await hard.isVisible(), `${label} Hard difficulty option is not reachable in Options.`);
+  const hardBounds = await page.evaluate(() => {
+    const dialog = document.querySelector("[data-options-dialog]");
+    const hardOption = document.querySelector('[data-cpu-difficulty][value="hard"]');
+    const toBox = (element) => {
+      const box = element.getBoundingClientRect();
+      return { bottom: box.bottom, left: box.left, right: box.right, top: box.top };
+    };
+    if (!(dialog instanceof HTMLElement) || !(hardOption instanceof HTMLElement)) {
+      throw new Error("PHASE6B_OPTIONS_HARD_SURFACE_MISSING");
+    }
+    return { dialog: toBox(dialog), hardOption: toBox(hardOption) };
+  });
+  assert(
+    hardBounds.hardOption.left >= hardBounds.dialog.left - 2 &&
+      hardBounds.hardOption.right <= hardBounds.dialog.right + 2 &&
+      hardBounds.hardOption.top >= hardBounds.dialog.top - 2 &&
+      hardBounds.hardOption.bottom <= hardBounds.dialog.bottom + 2,
+    `${label} Hard difficulty option is clipped at ${viewport.width}×${viewport.height}: ${JSON.stringify(hardBounds)}.`,
+  );
+  await freshMatch.scrollIntoViewIfNeeded();
+  assert(await freshMatch.isVisible(), `${label} Start fresh match is not reachable in Options.`);
+  const bounds = await page.evaluate(() => {
+    const dialog = document.querySelector("[data-options-dialog]");
+    const start = document.querySelector("[data-new-round]");
+    const toBox = (element) => {
+      const box = element.getBoundingClientRect();
+      return {
+        bottom: box.bottom,
+        left: box.left,
+        right: box.right,
+        top: box.top,
+      };
+    };
+    if (!(dialog instanceof HTMLElement) || !(start instanceof HTMLElement)) {
+      throw new Error("PHASE6B_OPTIONS_START_SURFACE_MISSING");
+    }
+    return {
+      clientHeight: dialog.clientHeight,
+      dialog: toBox(dialog),
+      scrollHeight: dialog.scrollHeight,
+      start: toBox(start),
+      viewport: { height: window.innerHeight, width: window.innerWidth },
+    };
+  });
+  assert(
+    bounds.start.left >= bounds.dialog.left - 2 &&
+      bounds.start.right <= bounds.dialog.right + 2 &&
+      bounds.start.top >= bounds.dialog.top - 2 &&
+      bounds.start.bottom <= bounds.dialog.bottom + 2 &&
+      bounds.dialog.left >= -2 &&
+      bounds.dialog.top >= -2 &&
+      bounds.dialog.right <= bounds.viewport.width + 2 &&
+      bounds.dialog.bottom <= bounds.viewport.height + 2 &&
+      bounds.scrollHeight >= bounds.clientHeight,
+    `${label} Options dialog is clipped or has invalid scroll bounds at ${viewport.width}×${viewport.height}: ${JSON.stringify(bounds)}.`,
+  );
+}
+
+async function selectPhase6BCpuMatchOptions(
+  page,
+  { personality, difficulty, viewport, verifyStandardDefault = false },
+) {
+  const label = `Phase 6B ${cpuPersonalityLabel(personality)}/${cpuDifficultyLabel(difficulty)} Options`;
+  await openOptions(page);
+  await page.locator("[data-match-mode-select]").selectOption("cpu");
+  await page.waitForFunction(
+    () => {
+      const personalityOptions = document.querySelector("[data-cpu-personality-options]");
+      const difficultyOptions = document.querySelector("[data-cpu-difficulty-options]");
+      return (
+        personalityOptions instanceof HTMLElement &&
+        difficultyOptions instanceof HTMLElement &&
+        !personalityOptions.hidden &&
+        !difficultyOptions.hidden
+      );
+    },
+    null,
+    { timeout: 30_000 },
+  );
+  if (verifyStandardDefault) {
+    assert(
+      await page.locator('[data-cpu-difficulty][value="standard"]').isChecked(),
+      `${label} did not expose Standard as the default CPU difficulty.`,
+    );
+  }
+  await page.locator(`[data-cpu-personality][value="${personality}"]`).check();
+  await page.locator(`[data-cpu-difficulty][value="${difficulty}"]`).check();
+  assert(
+    (await page.locator(`[data-cpu-personality][value="${personality}"]`).isChecked()) === true &&
+      (await page.locator(`[data-cpu-difficulty][value="${difficulty}"]`).isChecked()) === true,
+    `${label} did not retain the selected personality and difficulty.`,
+  );
+  if (viewport.width === 844 && viewport.height === 390) {
+    await assertPhase6BOptionsBounds(page, viewport, label);
+  }
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `cpu-options-${personality}-${difficulty}-${viewport.width}x${viewport.height}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await page.locator("[data-new-round]").click();
+  await page.waitForFunction(
+    ({ expectedDifficulty, expectedPersonality }) => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
+        state.match.mode === "cpu" &&
+        state.match.cpuDifficulty === expectedDifficulty &&
+        state.match.cpuPersonality === expectedPersonality &&
+        state.localRound.viewerId === "player-a" &&
+        state.localRound.phase === "awaitingHandPlay" &&
+        state.localRound.activePlayerId === "player-a"
+      );
+    },
+    { expectedDifficulty: difficulty, expectedPersonality: personality },
+    { timeout: 30_000 },
+  );
+}
+
+async function assertPhase6BThinkingRedaction(page, state, label) {
+  const decisionCopy = page.locator("[data-cpu-decision-copy]");
+  assert(
+    state.match.cpuDecision === null &&
+      (await decisionCopy.isHidden()) &&
+      ((await decisionCopy.textContent()) ?? "").trim() === "",
+    `${label} exposed CPU reason or confidence before the public action settled.`,
+  );
+}
+
+async function exercisePhase6BCpuTurn(
+  page,
+  { personality, difficulty, viewport, fromResume = false },
+) {
+  const label = `Phase 6B CPU ${personality}/${difficulty} ${viewport.width}x${viewport.height}`;
+  await installPhase6ACpuTrace(page);
+  await submitHumanCpuHand(page, label);
+  await page.waitForFunction(
+    ({ expectedDifficulty, expectedPersonality }) => {
+      const state = JSON.parse(window.render_game_to_text());
+      const status = document.querySelector("[data-cpu-turn-status]");
+      return (
+        state.match.mode === "cpu" &&
+        state.match.cpuDifficulty === expectedDifficulty &&
+        state.match.cpuPersonality === expectedPersonality &&
+        state.localRound.viewerId === "player-a" &&
+        state.localRound.activePlayerId === "player-b" &&
+        status instanceof HTMLElement &&
+        !status.hidden
+      );
+    },
+    { expectedDifficulty: difficulty, expectedPersonality: personality },
+    { timeout: 30_000 },
+  );
+  const cpuTurn = await readState(page);
+  const cpuCopy = (await page.locator("[data-cpu-turn-status]").textContent()) ?? "";
+  assert(
+    cpuCopy.includes(`The ${cpuPersonalityLabel(personality)}`) &&
+      cpuTurn.match.cpuTurnState === "thinking" &&
+      cpuTurn.input.lockReason === "opponentTurn" &&
+      (await actionableSemanticControlCount(page)) === 0,
+    `${label} did not expose the expected CPU-thinking/input-lock state: ${JSON.stringify({ cpuCopy, input: cpuTurn.input, match: cpuTurn.match })}.`,
+  );
+  await assertPhase6BThinkingRedaction(page, cpuTurn, label);
+  await assertCpuPresentationPrivacy(page, cpuTurn, `${label} during CPU turn`);
+  assert(
+    cpuTurn.canvasCount === 1 && cpuTurn.cards.cardViewCount === 48,
+    `${label} changed the one-canvas/48-CardView runtime.`,
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `cpu-thinking-${personality}-${difficulty}-${viewport.width}x${viewport.height}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).animation.status === "playing",
+    null,
+    { timeout: 30_000 },
+  );
+  const animation = await readState(page);
+  assert(
+    animation.animation.activeClip !== null &&
+      animation.animation.activeClip.eventType !== null &&
+      animation.animation.activeClip.eventType !== undefined,
+    `${label} CPU command did not enter the standard public-event animation path.`,
+  );
+  await page.evaluate(
+    () =>
+      new Promise((resolvePromise) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolvePromise)),
+      ),
+  );
+  await page.waitForTimeout(100);
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `cpu-animation-${personality}-${difficulty}-${viewport.width}x${viewport.height}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  const settled = await finishCpuTurnToHumanOrResult(page, label);
+  const trace = await readAndClearPhase6ACpuTrace(page);
+  assert(
+    trace.some((entry) => entry.inputLockReason === "opponentTurn") &&
+      trace.some((entry) => entry.animationStatus === "playing" && entry.clipEventType !== null),
+    `${label} did not retain observable opponentTurn plus public-event animation evidence.`,
+  );
+  assert(
+    settled.localRound.handoffPending === false &&
+      settled.canvasCount === 1 &&
+      settled.cards.cardViewCount === 48 &&
+      (settled.localRound.activePlayerId === "player-a" || settled.result !== null),
+    `${label} did not settle at the human/result boundary.`,
+  );
+  assert(
+    settled.match.cpuDecision !== null &&
+      [
+        "secureLead",
+        "completeYaku",
+        "denyVisibleThreat",
+        "strongFuturePotential",
+        "multiplierPressure",
+        "comebackRisk",
+      ].includes(settled.match.cpuDecision.reason) &&
+      ["clear", "close", "measured"].includes(settled.match.cpuDecision.confidence),
+    `${label} did not retain a bounded public CPU explanation after settlement: ${JSON.stringify(settled.match)}.`,
+  );
+  const reasonCopy = PUBLIC_CPU_REASON_COPY[settled.match.cpuDecision.reason];
+  const confidenceCopy = PUBLIC_CPU_CONFIDENCE_COPY[settled.match.cpuDecision.confidence];
+  const decisionCopy = page.locator("[data-cpu-decision-copy]");
+  assert(
+    (await decisionCopy.isVisible()) &&
+      ((await decisionCopy.textContent()) ?? "").trim() === `${reasonCopy} · ${confidenceCopy}`,
+    `${label} did not render its public reason and confidence band after settlement.`,
+  );
+  const historyText = (await page.locator("[data-turn-recaps]").textContent()) ?? "";
+  assert(
+    historyText.includes(
+      `The ${cpuPersonalityLabel(personality)}: ${reasonCopy}. ${confidenceCopy}.`,
+    ),
+    `${label} did not retain the public CPU explanation in History.`,
+  );
+  await assertCpuPresentationPrivacy(page, settled, `${label} after CPU turn`);
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `cpu-explanation-${personality}-${difficulty}-${viewport.width}x${viewport.height}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  if (fromResume) {
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `cpu-privacy-${personality}-${difficulty}-${viewport.width}x${viewport.height}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+  }
+}
+
+async function runPhase6BCpuSmoke(page, browserErrors, networkErrors) {
+  const suffix = smokeBasePath === "/" ? "" : "-pages";
+  const portrait = { width: 390, height: 844 };
+  const landscape = { width: 844, height: 390 };
+  await page.setViewportSize(portrait);
+  await page.goto(pageUrl, { waitUntil: "domcontentloaded" });
+  await waitForApplicationReady(page, browserErrors, networkErrors);
+  const opening = await readState(page);
+  const savedLocal = await waitForPersistedCheckpoint(page, opening.localRound.stateVersion);
+  assert(
+    savedLocal.exists && savedLocal.saveId !== null,
+    "Phase 6B CPU smoke could not establish its local-save preservation control.",
+  );
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await waitForApplicationReady(page, browserErrors, networkErrors);
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).persistence.promptKind === "resume",
+    null,
+    { timeout: 30_000 },
+  );
+  assert(
+    await page.locator("[data-local-save-cpu]").isVisible(),
+    "Saved-match resume did not expose the session-only Play vs CPU entry for Phase 6B.",
+  );
+  await page.screenshot({
+    path: resolve(outputDirectory, `cpu-resume-start-390x844${suffix}.png`),
+    fullPage: true,
+  });
+  await page.locator("[data-local-save-cpu]").click();
+  await page.waitForFunction(
+    () => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
+        state.persistence.promptKind === null &&
+        state.match.mode === "cpu" &&
+        state.match.cpuPersonality === "monk" &&
+        state.match.cpuDifficulty === "standard" &&
+        state.localRound.viewerId === "player-a" &&
+        state.localRound.activePlayerId === "player-a"
+      );
+    },
+    null,
+    { timeout: 30_000 },
+  );
+  await exercisePhase6BCpuTurn(page, {
+    personality: "monk",
+    difficulty: "standard",
+    viewport: portrait,
+    fromResume: true,
+  });
+
+  await page.setViewportSize(portrait);
+  await selectPhase6BCpuMatchOptions(page, {
+    personality: "timid",
+    difficulty: "easy",
+    viewport: portrait,
+    verifyStandardDefault: true,
+  });
+  await exercisePhase6BCpuTurn(page, {
+    personality: "timid",
+    difficulty: "easy",
+    viewport: portrait,
+  });
+
+  await page.setViewportSize(landscape);
+  await selectPhase6BCpuMatchOptions(page, {
+    personality: "gambler",
+    difficulty: "hard",
+    viewport: landscape,
+  });
+  await exercisePhase6BCpuTurn(page, {
+    personality: "gambler",
+    difficulty: "hard",
+    viewport: landscape,
+  });
+
+  const savedAfterCpu = await inspectActiveLocalSave(page);
+  assert(
+    savedAfterCpu.exists &&
+      savedAfterCpu.saveId === savedLocal.saveId &&
+      savedAfterCpu.matchId === savedLocal.matchId &&
+      savedAfterCpu.stateVersion === savedLocal.stateVersion,
+    "Phase 6B session-only CPU play mutated or replaced the saved local match.",
+  );
+  assert(browserErrors.length === 0, "Phase 6B browser console reported errors.");
+  assert(networkErrors.length === 0, "Phase 6B browser network reported errors.");
 }
 
 async function playHandCardThroughFeedbackBeat(page, cardId) {
@@ -3377,7 +3789,7 @@ assert(
   "The non-shipping Phase 3D-D density harness entered the production build.",
 );
 process.stdout.write(
-  `${phase6AOnly ? "Phase 6A" : phase5BOnly ? "Phase 5B" : "Phase 5A"} smoke server ready at ${pageUrl}.\n`,
+  `${phase6BOnly ? "Phase 6B" : phase6AOnly ? "Phase 6A" : phase5BOnly ? "Phase 5B" : "Phase 5A"} smoke server ready at ${pageUrl}.\n`,
 );
 
 let browser;
@@ -3403,7 +3815,15 @@ try {
       networkErrors.push(`response: ${response.status()} ${response.url()}`);
   });
 
-  if (phase6AOnly) {
+  if (phase6BOnly) {
+    try {
+      await runPhase6BCpuSmoke(page, browserErrors, networkErrors);
+    } catch (error) {
+      console.error("Phase 6B CPU smoke failed with safe structural diagnostics.", error);
+      throw error;
+    }
+    process.stdout.write("Phase 6B Root/Pages CPU smoke passed.\n");
+  } else if (phase6AOnly) {
     try {
       await runPhase6ACpuSmoke(page, browserErrors, networkErrors);
     } catch (error) {

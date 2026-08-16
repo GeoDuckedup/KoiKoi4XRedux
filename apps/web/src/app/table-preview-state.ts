@@ -14,7 +14,7 @@ import type { InputInteractionInspectionV1 } from "../presentation/input/types";
 import type { YakuPresentationStateV1 } from "../game/yaku-presentation";
 import type { RoundResultPresentationV1 } from "../game/round-result-presentation";
 import type { Phase3DVisualDirectionId } from "../presentation/theme/visual-directions";
-import type { CpuPersonalityV1 } from "../ai/types";
+import type { CpuDecisionReasonV1, CpuDifficultyV1, CpuPersonalityV1 } from "../ai/types";
 
 export const TABLE_SCREEN_ID = "localRound" as const;
 export const TABLE_PRESENTATION_MODE = "authoritativeLocalRound" as const;
@@ -61,6 +61,11 @@ export interface TablePreviewSnapshot {
   };
   readonly layerOrder: BoardLayout["layerOrder"];
   readonly match: {
+    readonly cpuDecision: {
+      readonly confidence: "clear" | "close" | "measured";
+      readonly reason: CpuDecisionReasonV1;
+    } | null;
+    readonly cpuDifficulty: CpuDifficultyV1 | null;
     readonly cpuPersonality: CpuPersonalityV1 | null;
     readonly cpuTurnState: "idle" | "thinking";
     readonly mode: "cpu" | "local";
@@ -187,6 +192,8 @@ export function createTablePreviewSnapshot(input: {
     localRound: Object.freeze({ ...input.localRound }),
     match: Object.freeze({
       mode: input.match?.mode ?? "local",
+      cpuDecision: input.match?.cpuDecision ?? null,
+      cpuDifficulty: input.match?.cpuDifficulty ?? null,
       cpuPersonality: input.match?.cpuPersonality ?? null,
       cpuTurnState: input.match?.cpuTurnState ?? "idle",
     }),

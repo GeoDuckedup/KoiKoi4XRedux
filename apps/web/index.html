@@ -114,6 +114,27 @@
               <span>The Gambler</span>
             </label>
           </fieldset>
+          <fieldset class="cpu-difficulty-options" data-cpu-difficulty-options hidden>
+            <legend>CPU difficulty</legend>
+            <label>
+              <input type="radio" name="cpu-difficulty" value="easy" data-cpu-difficulty />
+              <span>Easy</span>
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="cpu-difficulty"
+                value="standard"
+                data-cpu-difficulty
+                checked
+              />
+              <span>Standard</span>
+            </label>
+            <label>
+              <input type="radio" name="cpu-difficulty" value="hard" data-cpu-difficulty />
+              <span>Hard</span>
+            </label>
+          </fieldset>
           <label>
             <span>Match length</span>
             <select data-match-length-select aria-describedby="match-length-note">
@@ -178,6 +199,7 @@
         >
           <p class="eyebrow">CPU match</p>
           <p data-cpu-turn-copy>The Monk's turn</p>
+          <p class="cpu-turn-status__decision" data-cpu-decision-copy hidden></p>
         </section>
         <div
           class="card-input-overlay"

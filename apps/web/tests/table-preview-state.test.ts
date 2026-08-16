@@ -161,7 +161,13 @@ describe("Phase 2B table diagnostics", () => {
         phase: "awaitingHandPlay",
         handoffPending: false,
       },
-      match: { mode: "local", cpuPersonality: null, cpuTurnState: "idle" },
+      match: {
+        mode: "local",
+        cpuDecision: null,
+        cpuDifficulty: null,
+        cpuPersonality: null,
+        cpuTurnState: "idle",
+      },
       simulationTimeMs: 500,
       theme: { activeId: "ink-parchment", optionsOpen: false },
       animation: {
@@ -226,10 +232,24 @@ describe("Phase 2B table diagnostics", () => {
 
     const cpu = createTablePreviewSnapshot({
       ...input,
-      match: { mode: "cpu", cpuPersonality: "gambler", cpuTurnState: "thinking" },
+      match: {
+        mode: "cpu",
+        cpuDecision: { reason: "multiplierPressure", confidence: "clear" },
+        cpuDifficulty: "hard",
+        cpuPersonality: "gambler",
+        cpuTurnState: "idle",
+      },
     });
-    expect(cpu.match).toEqual({ mode: "cpu", cpuPersonality: "gambler", cpuTurnState: "thinking" });
+    expect(cpu.match).toEqual({
+      mode: "cpu",
+      cpuDecision: { reason: "multiplierPressure", confidence: "clear" },
+      cpuDifficulty: "hard",
+      cpuPersonality: "gambler",
+      cpuTurnState: "idle",
+    });
     expect(serializeTablePreviewSnapshot(cpu)).not.toContain("commandId");
+    expect(serializeTablePreviewSnapshot(cpu)).not.toContain("drawnCardId");
+    expect(serializeTablePreviewSnapshot(cpu)).not.toContain('confidence":0');
   });
 
   it("shrinks legal field overflow into distinct adaptive slots", () => {

@@ -16,8 +16,13 @@ import { describe, expect, it } from "vitest";
 import fairHeuristicSource from "../src/ai/fair-heuristic.ts?raw";
 import typesSource from "../src/ai/types.ts?raw";
 import {
+  CPU_DECISION_REASONS,
+  CPU_DIFFICULTIES,
   CPU_PERSONALITIES,
+  chooseFairCpuDecision,
+  explainPublicCpuAction,
   chooseFairCpuAction,
+  type CpuDifficultyV1,
   type CpuPersonalityV1,
 } from "../src/ai/fair-heuristic";
 
@@ -87,6 +92,35 @@ function firstYakuObservation(): PlayerObservationV1 {
   throw new Error("AI_YAKU_FIXTURE_NOT_REACHED");
 }
 
+function finalScorePressureObservation(score: number, opponentScore: number): PlayerObservationV1 {
+  const observation = firstYakuObservation();
+  return deepFreeze({
+    ...observation,
+    publicState: {
+      ...observation.publicState,
+      matchLength: 3 as const,
+      players: [
+        {
+          ...observation.publicState.players[0],
+          score:
+            observation.publicState.players[0].id === observation.playerId ? score : opponentScore,
+        },
+        {
+          ...observation.publicState.players[1],
+          score:
+            observation.publicState.players[1].id === observation.playerId ? score : opponentScore,
+        },
+      ],
+      round: {
+        ...observation.publicState.round,
+        roundNumber: 3,
+        scheduledMonth: 3,
+        isFinalScheduledRound: true,
+      },
+    },
+  });
+}
+
 function productionCpuHandState(): AuthoritativeGameStateV1 {
   const fixture = PHASE_1B_CAPTURE_FIXTURES.find((candidate) => candidate.id === "CAP-001");
   const openingCommand = fixture?.commands[0];
@@ -106,6 +140,20 @@ describe("Phase 6A fair heuristic CPU", () => {
   it("exports the three fixed, non-random personalities", () => {
     expect(CPU_PERSONALITIES).toEqual(["timid", "monk", "gambler"]);
     expect(Object.isFrozen(CPU_PERSONALITIES)).toBe(true);
+  });
+
+  it("exports the canonical Phase 6B difficulty and explanation vocabulary", () => {
+    expect(CPU_DIFFICULTIES).toEqual(["easy", "standard", "hard"]);
+    expect(CPU_DECISION_REASONS).toEqual([
+      "secureLead",
+      "completeYaku",
+      "denyVisibleThreat",
+      "strongFuturePotential",
+      "multiplierPressure",
+      "comebackRisk",
+    ]);
+    expect(Object.isFrozen(CPU_DIFFICULTIES)).toBe(true);
+    expect(Object.isFrozen(CPU_DECISION_REASONS)).toBe(true);
   });
 
   it("selects and submits an offered Hand action, including an exact-two target", () => {
@@ -159,7 +207,12 @@ describe("Phase 6A fair heuristic CPU", () => {
   it("returns null when an observation offers no action, including terminal/result views", () => {
     const observation = projectPlayerObservation(captureState("CAP-001"), "player-a");
     const terminal = deepFreeze({ ...observation, legalActions: [] });
-    expect(chooseFairCpuAction(terminal, "timid")).toBeNull();
+    for (const personality of CPU_PERSONALITIES satisfies readonly CpuPersonalityV1[]) {
+      expect(chooseFairCpuAction(terminal, personality)).toBeNull();
+      for (const difficulty of CPU_DIFFICULTIES satisfies readonly CpuDifficultyV1[]) {
+        expect(chooseFairCpuDecision(terminal, personality, difficulty)).toBeNull();
+      }
+    }
   });
 
   it("is deterministic across reordered equal-score legal actions and preserves immutable inputs", () => {
@@ -178,9 +231,17 @@ describe("Phase 6A fair heuristic CPU", () => {
     });
     const forward = deepFreeze({ ...observation, legalActions: [first, second] });
     const reverse = deepFreeze({ ...observation, legalActions: [second, first] });
-    for (const personality of CPU_PERSONALITIES) {
+    for (const personality of CPU_PERSONALITIES satisfies readonly CpuPersonalityV1[]) {
       expect(chooseFairCpuAction(forward, personality)).toBe(second);
       expect(chooseFairCpuAction(reverse, personality)).toBe(second);
+      for (const difficulty of CPU_DIFFICULTIES satisfies readonly CpuDifficultyV1[]) {
+        const forwardDecision = chooseFairCpuDecision(forward, personality, difficulty);
+        const reverseDecision = chooseFairCpuDecision(reverse, personality, difficulty);
+        expect(forwardDecision?.action).toBe(second);
+        expect(reverseDecision?.action).toBe(second);
+        expect(reverseDecision).toEqual(forwardDecision);
+        expect(Object.isFrozen(forwardDecision)).toBe(true);
+      }
     }
     expect(Object.isFrozen(forward)).toBe(true);
     expect(Object.isFrozen(forward.legalActions)).toBe(true);
@@ -193,6 +254,40 @@ describe("Phase 6A fair heuristic CPU", () => {
     const gambler = chooseFairCpuAction(observation, "gambler");
     expect(timid).toMatchObject({ type: "chooseYakuDecision", choice: "bank" });
     expect(gambler).toMatchObject({ type: "chooseYakuDecision", choice: "koiKoi" });
+  });
+
+  it("returns an exact action with repeatable public-safe explanation metadata at every difficulty", () => {
+    const observation = firstYakuObservation();
+    for (const personality of CPU_PERSONALITIES satisfies readonly CpuPersonalityV1[]) {
+      for (const difficulty of CPU_DIFFICULTIES satisfies readonly CpuDifficultyV1[]) {
+        const first = chooseFairCpuDecision(observation, personality, difficulty);
+        const second = chooseFairCpuDecision(observation, personality, difficulty);
+        expect(first).not.toBeNull();
+        expect(first).toEqual(second);
+        if (!first) throw new Error("AI_6B_DECISION_MISSING");
+        expect(observation.legalActions).toContain(first.action);
+        expect(CPU_DECISION_REASONS).toContain(first.reason);
+        expect(first.confidence).toBeGreaterThanOrEqual(0);
+        expect(first.confidence).toBeLessThanOrEqual(1);
+        expect(first.confidence * 100).toBe(Math.round(first.confidence * 100));
+        expect(Object.isFrozen(first)).toBe(true);
+      }
+    }
+  });
+
+  it("uses public final-score pressure more strongly at higher difficulties without changing Monk identity", () => {
+    const leading = finalScorePressureObservation(8, 0);
+    const trailing = finalScorePressureObservation(0, 8);
+    expect(chooseFairCpuDecision(trailing, "monk", "easy")?.action).toMatchObject({
+      type: "chooseYakuDecision",
+      choice: "bank",
+    });
+    const protectedLead = chooseFairCpuDecision(leading, "monk", "hard");
+    const comeback = chooseFairCpuDecision(trailing, "monk", "hard");
+    expect(protectedLead?.action).toMatchObject({ type: "chooseYakuDecision", choice: "bank" });
+    expect(protectedLead?.reason).toBe("secureLead");
+    expect(comeback?.action).toMatchObject({ type: "chooseYakuDecision", choice: "koiKoi" });
+    expect(comeback?.reason).toBe("comebackRisk");
   });
 
   it("cannot react to a changed hidden hand/deck when the CPU observation stays identical", () => {
@@ -241,6 +336,37 @@ describe("Phase 6A fair heuristic CPU", () => {
       expect(original.legalActions).toContain(originalAction);
       expect(variant.legalActions).toContain(variantAction);
       expect(canonicalStringifyV1(variantAction)).toBe(canonicalStringifyV1(originalAction));
+      for (const difficulty of CPU_DIFFICULTIES satisfies readonly CpuDifficultyV1[]) {
+        expect(chooseFairCpuDecision(variant, personality, difficulty)).toEqual(
+          chooseFairCpuDecision(original, personality, difficulty),
+        );
+      }
+    }
+  });
+
+  it("derives explanation metadata from public state plus the selected action, not the CPU observation", () => {
+    const observation = firstYakuObservation();
+    const decision = chooseFairCpuDecision(observation, "gambler", "hard");
+    if (!decision) throw new Error("AI_6B_EXPLANATION_DECISION_MISSING");
+    const direct = explainPublicCpuAction(observation.publicState, decision.action);
+    expect(direct).toEqual({ reason: decision.reason, confidence: decision.confidence });
+    const hiddenVariant = deepFreeze({
+      ...observation,
+      ownHand: [...observation.ownHand].reverse(),
+      legalActions: [decision.action],
+    });
+    expect(chooseFairCpuDecision(hiddenVariant, "gambler", "hard")).toEqual(decision);
+    expect(explainPublicCpuAction(hiddenVariant.publicState, decision.action)).toEqual(direct);
+  });
+
+  it("keeps the public explanation helper outside the private-observation scoring path", () => {
+    const start = fairHeuristicSource.indexOf("export function explainPublicCpuAction(");
+    const end = fairHeuristicSource.indexOf("export const chooseFairCpuDecision", start);
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(end).toBeGreaterThan(start);
+    const publicExplanationSource = fairHeuristicSource.slice(start, end);
+    for (const privateToken of ["ownHand", "legalActions", "futurePotential", "scoreAction"]) {
+      expect(publicExplanationSource, privateToken).not.toContain(privateToken);
     }
   });
 

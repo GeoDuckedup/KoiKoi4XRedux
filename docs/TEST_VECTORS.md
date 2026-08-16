@@ -761,7 +761,38 @@ resume preservation, and landscape-selection assertions under `output/phase-6a/e
 accepted flattened gate is `npm run validate:phase6a`; difficulty/reasons/confidence/match-context adaptation and rollout or
 determinization evidence are expressly not Phase 6A work.
 
-## 33. Approved-decision coverage matrix
+## 33. Phase 6B difficulty and public-explanation vectors
+
+| ID | Required expectation |
+|---|---|
+| `AI-6B-001-DECISION-LEGAL-DETERMINISTIC` | For every frozen active CPU observation and Easy, Standard, or Hard configuration, a decision is `null` only when no legal action exists; otherwise it retains one exact existing `LegalActionV1`, one canonical reason token, and finite numeric confidence inclusive `[0,1]`. Repeated calls and reordered equal-score action lists produce the same decision without mutation or command creation. |
+| `AI-6B-002-DIFFICULTY-PERSONALITY-SEPARATION` | Easy, Standard (default), and Hard alter deterministic public-match-context weighting without changing Timid/Monk/Gambler preference identity, offered-action membership, or canonical ties. They use no RNG/noise, clock, search, rollout, hidden-card determinization, or authoritative-state input. |
+| `AI-6B-003-PUBLIC-MATCH-CONTEXT` | Frozen legal observations prove that public score lead/deficit, round/final-round position, table multiplier, scheduled month, and offered action facts may alter the fixed decision/reason deterministically. Context is never reconstructed from hidden hands or draw allocation. |
+| `AI-6B-004-PUBLIC-REASON-CONFIDENCE` | The only emitted reasons are `secureLead`, `completeYaku`, `denyVisibleThreat`, `strongFuturePotential`, `multiplierPressure`, and `comebackRisk`. Confidence is a bounded public decision signal, not a hidden-card probability or score margin, and maps consistently to UI bands. |
+| `AI-6B-005-PRIVATE-MUTATION-INVARIANCE` | Changing only player A's hidden hand and corresponding hidden draw allocation while public state and player-B observation are preserved leaves player B's full action/reason/confidence decision identical for every personality and difficulty. |
+| `AI-6B-006-POST-SETTLEMENT-SESSION-ONLY` | The standard CPU command/public-event/AnimationDirector path remains authoritative. Player A sees no CPU selected action/reason/confidence while thinking; after settlement, the displayed explanation is public-safe and the Phase 5B local save is neither created nor mutated. |
+| `AI-6B-007-ROOT-PAGES-A11Y-PRIVACY` | Root and repository-prefixed Pages production traces cover difficulty selection and Standard default, explicit landscape Options bounds/lower-action reachability, thinking-time redaction, after-settlement explanation, keyboard/accessibility behavior, one canvas/48 CardViews, containment, unchanged local save, and zero browser/network errors. |
+
+Phase 6B binding: focused AI decision/public-explanation tests, retained CPU runtime and
+preview/privacy tests, and `packages/test-fixtures/tests/phase6b-generated-ai.test.ts` execute the
+literal vectors. The generated gate runs 1,080 complete fixed trials (three
+personalities × Easy/Standard/Hard × 3/6/12 formats × 40 seeds) in four bounded sequential 270-trial
+shards. It requires zero illegal actions/commands and no-action returns, invariant-valid normal
+transitions, completion, populated cells, fixed-matrix personality direction, and documented
+difficulty behavior. Root/Pages artifacts belong under `output/phase-6b/e2e/`.
+The uninterrupted final `npm run validate:phase6b` exited 0: 17 inherited focused files / 247 tests,
+Workshop, 14 density viewports, full retained Root/Pages Phase 5A, 3 persistence files / 38 tests plus
+dedicated Root/Pages, 2 Phase 6A focused files / 22 tests, 360 generated trials, Phase 6A Root/Pages,
+3 Phase 6B focused files / 25 tests, 1,080 generated trials, and Phase 6B Root/Pages. `npm run check`
+passed 59 files / 539 ordinary tests, 10,002 seeded matches, the 48/48 deck, and the 783-module build.
+All 26 Phase 6B PNGs were inspected, including CPU-thinking privacy at every substep and compact
+portrait/landscape explanation banners; independent review was B0/H0. The late-suite navigation flake
+was repaired narrowly with navigation `commit` while retaining the app-ready assertion, then
+revalidated. Commit, push, hosted CI/Pages, deployment, and live verification remain pending. Rollouts,
+determinization, seeded variation, simulation tuning, online work, and CPU persistence are expressly
+not Phase 6B work; Phase 6C is next.
+
+## 34. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

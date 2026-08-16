@@ -22,13 +22,13 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run check
-      - run: npm run validate:phase6a
+      - run: npm run validate:phase6b
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-6a-fair-heuristic-ai
+          name: phase-6b-difficulty-explanations
           path: |
             output/phase-5b/e2e
-            output/phase-6a/e2e
+            output/phase-6b/e2e
             decks/new-primary-deck/generated/contact-sheets
           if-no-files-found: error

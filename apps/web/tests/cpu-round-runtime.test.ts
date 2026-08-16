@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import type { LegalActionV1, PlayerObservationV1 } from "@koikoi4x/engine";
 import { describe, expect, it } from "vitest";
 
-import { chooseFairCpuAction } from "../src/ai/fair-heuristic";
+import { chooseFairCpuAction, chooseFairCpuDecision } from "../src/ai/fair-heuristic";
 import { createCpuRoundRuntime } from "../src/game/local-round-runtime";
 import type { InputCommandIntentV1 } from "../src/presentation/input/types";
 
@@ -101,6 +101,36 @@ describe("Phase 6A CPU round runtime", () => {
     const humanText = JSON.stringify(transition.after);
     const hiddenCpuCards = runtime.state.players.find(({ id }) => id === "player-b")?.hand ?? [];
     for (const cardId of hiddenCpuCards) expect(humanText).not.toContain(cardId);
+  });
+
+  it("submits only the 6B decision action while retaining no CPU action metadata for presentation", () => {
+    const runtime = createCpuRoundRuntime({ matchId: "cpu-decision-action" });
+    playHumanUntilCpu(runtime);
+    const decision = chooseFairCpuDecision(runtime.observeFor("player-b"), "monk", "standard");
+    if (!decision) throw new Error("CPU_RUNTIME_DECISION_MISSING");
+
+    expect(runtime.observeFor("player-b").legalActions).toContainEqual(decision.action);
+    expect(() => runtime.submitCpuAction(decision.action)).not.toThrow();
+
+    const main = readFileSync(new URL("../src/main.ts", import.meta.url), "utf8");
+    const start = main.indexOf("async function executeCpuTurn(): Promise<void> {");
+    const end = main.indexOf("\n}\n\nfunction createController", start) + 2;
+    const cpuTurn = main.slice(start, end);
+    expect(cpuTurn).toContain("chooseFairCpuDecision(");
+    expect(cpuTurn).toContain("runtime.submitCpuAction(decision.action)");
+    expect(cpuTurn).not.toContain("chooseFairCpuAction");
+    expect(main).not.toContain("action: decision.action");
+    expect(main).toContain(
+      'cpuDecision: activeMatchMode === "cpu" && !isCpuTurn() ? latestCpuDecision : null',
+    );
+
+    const advanceStart = main.indexOf("async function advanceLocalRound(): Promise<void> {");
+    const advanceEnd = main.indexOf("\n}\n\nfunction redraw", advanceStart) + 2;
+    const advanceRound = main.slice(advanceStart, advanceEnd);
+    expect(advanceRound).toContain("latestCpuDecision = null;");
+    expect(advanceRound.indexOf("latestCpuDecision = null;")).toBeLessThan(
+      advanceRound.indexOf("observation = transition.after;"),
+    );
   });
 
   it("rejects a CPU action whose command fields were not offered by the fresh CPU observation", () => {

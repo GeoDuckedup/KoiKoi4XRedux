@@ -2199,13 +2199,13 @@ Personality controls preferences:
 - **The Monk:** balances immediate value, denial, and yaku development.
 - **The Gambler:** pursues high multipliers and accepts volatility.
 
-Difficulty controls competence:
+Phase 6B difficulty uses the existing deterministic heuristic only. Easy, Standard (default), and
+Hard vary the strength of public match-context weighting; they do not introduce search, rollouts,
+opponent modeling, seeded noise, or hidden-card reconstruction. They may consider only public score
+gap, round/final-round position, table multiplier, scheduled month, and the already-issued actions.
 
-- search/rollout count;
-- rollout depth;
-- quality of opponent modeling;
-- amount of seeded decision noise;
-- awareness of match score and final-round consequences.
+Phase 6C owns search/rollout count, rollout depth, richer opponent modeling, hidden-card
+determinization, and seeded variation.
 
 A difficult Timid remains cautious but makes stronger cautious decisions. A difficult Gambler remains aggressive but is not random.
 
@@ -2237,6 +2237,20 @@ the human observation and never receives the CPU's private hand.
 Difficulty tiers, reason/confidence tokens, and match-context adaptation are Phase 6B. Seeded
 noise, hidden-card determinization, rollout/search, and simulation tuning are Phase 6C.
 
+### Stage 1B — Deterministic difficulty and public explanations
+
+Phase 6B retains the Phase 6A fairness boundary and exact offered-action rule. Easy, Standard
+(default), and Hard are deterministic static heuristic configurations: personality remains the
+primary preference profile while difficulty changes only the strength of public match context. No
+setting is persisted for a CPU match.
+
+After a CPU command has been accepted and its ordinary public-event presentation settles, the UI may
+show one compact explanation. It is a public explanation token, not chain-of-thought: its reason and
+numeric confidence in `[0,1]` must be reproducible from player A's public observation plus the
+now-public action/events. It must not expose private CPU-hand support, score margins based on private
+cards, candidate ranking, hidden-card hypotheses, commands, checkpoint, RNG, or an unbounded
+probability claim. The UI maps confidence to compact bands without changing the stored value.
+
 ### Stage 2 — Determinization rollouts
 
 1. Generate plausible assignments of unseen cards consistent with public information.
@@ -2251,7 +2265,7 @@ Return an explanation token, not hidden chain-of-thought.
 
 ```ts
 interface AIDecision {
-  command: GameCommand;
+  action: LegalActionV1;
   reason:
     | "secureLead"
     | "completeYaku"
@@ -2259,7 +2273,7 @@ interface AIDecision {
     | "strongFuturePotential"
     | "multiplierPressure"
     | "comebackRisk";
-  confidence: number;
+  confidence: number; // inclusive [0,1], public-safe decision confidence
 }
 ```
 
@@ -3842,9 +3856,12 @@ Phase 5 acceptance:
 
 ### Phase 6B — Difficulty and explanations
 
-- difficulty tiers;
-- reason tokens;
-- match-context strategy.
+- deterministic Easy, Standard (default), and Hard public-match-context weighting;
+- canonical public reason tokens and numeric `[0,1]` confidence mapped to UI bands after public
+  animation settlement;
+- public score, multiplier, scheduled-month, and round/final-round strategy;
+- no engine/protocol/rules/replay changes, seeded noise, determinization, rollout, online work, or
+  CPU-save persistence.
 
 ### Phase 6C — Rollout AI and tuning
 

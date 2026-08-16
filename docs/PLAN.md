@@ -9,7 +9,8 @@ start cue is deployed, live-verified, and accepted; Phase 3F-I Reveal start cue 
 live-verified, and accepted; Phase 3F-J legal destination pulse is deployed, live-verified, and
 accepted; Phase 5A full local match formats is deployed, live-verified, and accepted; Phase 5B local
 persistence is deployed, live-verified, and accepted; Phase 6A fair heuristic AI is deployed,
-live-verified, and accepted; next governed phase is Phase 6B difficulty and explanations
+live-verified, and accepted; Phase 6B difficulty and explanations is locally complete and accepted;
+next governed phase is Phase 6C
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -135,6 +136,43 @@ Status: **deployed, live-verified, and accepted**.
   lock, privacy, no diagnostics, and an inspected screenshot.
 - Nonblocking future hardening: add an explicit landscape Options bounds assertion. Existing CSS and
   internal scroll behavior, including successful lower-action access, were reviewed.
+
+## Phase 6B — difficulty and explanations
+
+Status: **locally complete and accepted; commit, push, hosted CI/Pages, deployment, and live
+verification pending**.
+
+- Easy, Standard (default), and Hard remain deterministic configurations of the existing fair
+  heuristic. Difficulty may strengthen only public score-gap, round/final-round, table-multiplier,
+  scheduled-month, and already-issued-action context; it does not alter the Timid/Monk/Gambler
+  identities or add RNG/noise, determinization, search, rollouts, opponent modeling, engine/protocol
+  authority, replay, online work, or CPU persistence.
+- A decision envelope retains an exact offered action and adds exactly one canonical public reason:
+  `secureLead`, `completeYaku`, `denyVisibleThreat`, `strongFuturePotential`,
+  `multiplierPressure`, or `comebackRisk`; numeric confidence is finite and inclusive `[0,1]`, then
+  mapped to a compact UI band. The explanation appears only after its normal public-event animation
+  settles and is derived only from the player-A-safe public observation plus public action/events.
+- CPU match configuration and the latest explanation remain session-only. They neither create nor
+  mutate the Phase 5B local save. During CPU thinking, player A sees no selected CPU card, action,
+  reason, confidence, candidate score, hidden-card inference, or private-hand rationale.
+- `AI-6B-001` through `AI-6B-007`, ADR 0033, and `npm run validate:phase6b` are the accepted local
+  release contract. The gate retains `validate:phase6a`, adds focused decision/runtime/preview tests, and
+  runs 1,080 deterministic complete trials (3 personalities × 3 difficulties × 3/6/12 × 40 seeds)
+  in four 270-trial bounded shards. Root/Pages artifacts belong under `output/phase-6b/e2e/`.
+- Required browser matrix per Root and Pages: session-only resume start; Timid/Easy 390×844 Options;
+  Gambler/Hard 844×390 Options bounds/lower-action access; Monk/Standard resume thinking, animation,
+  explanation, settled, and privacy; Timid/Easy thinking, explanation, and settled; Gambler/Hard
+  thinking, explanation, and settled. Every CPU-thinking substep retains explanation privacy; after
+  settlement the public banner is compact and does not obscure the field.
+- `npm run check` passed 59 files / 539 ordinary tests, 10,002 seeded matches, the 48/48 deck, and the
+  783-module build. The uninterrupted final `npm run validate:phase6b` exited 0 with 17 inherited
+  focused files / 247 tests, Workshop, 14 density viewports, full retained Root/Pages Phase 5A, 3
+  persistence files / 38 tests plus dedicated Root/Pages, 2 Phase 6A focused files / 22 tests, 360
+  generated trials, Phase 6A Root/Pages, 3 Phase 6B focused files / 25 tests, 1,080 generated trials,
+  and Phase 6B Root/Pages. All 26 Phase 6B PNGs were visually inspected; independent review was B0/H0.
+  The late-suite first-navigation flake was repaired narrowly with navigation `commit` plus the retained
+  application-ready assertion and revalidated. Commit, push, hosted CI/Pages, deployment, and live
+  verification remain pending; Phase 6C is next.
 
 ## Phase 0 — Rule lock and foundation
 

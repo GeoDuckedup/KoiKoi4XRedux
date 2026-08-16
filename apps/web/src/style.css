@@ -382,7 +382,11 @@ select:focus-visible {
   font-size: 0.56rem;
 }
 
-.cpu-turn-status p:last-child {
+.cpu-turn-status p {
+  margin: 0;
+}
+
+.cpu-turn-status [data-cpu-turn-copy] {
   margin: 0;
   font-size: 0.78rem;
   font-weight: 800;
@@ -2058,7 +2062,8 @@ summary:focus-visible {
   line-height: 1.35;
 }
 
-.cpu-personality-options {
+.cpu-personality-options,
+.cpu-difficulty-options {
   display: grid;
   gap: 0.45rem;
   margin: 0;
@@ -2066,14 +2071,16 @@ summary:focus-visible {
   border: 0;
 }
 
-.cpu-personality-options legend {
+.cpu-personality-options legend,
+.cpu-difficulty-options legend {
   padding: 0;
   color: var(--theme-text-muted);
   font-size: 0.78rem;
   font-weight: 700;
 }
 
-.cpu-personality-options label {
+.cpu-personality-options label,
+.cpu-difficulty-options label {
   display: flex;
   gap: 0.5rem;
   align-items: center;
@@ -2082,8 +2089,16 @@ summary:focus-visible {
   font-weight: 700;
 }
 
-.cpu-personality-options input {
+.cpu-personality-options input,
+.cpu-difficulty-options input {
   accent-color: var(--theme-accent);
+}
+
+.cpu-turn-status__decision {
+  margin: 0;
+  color: rgb(255 243 207 / 84%);
+  font-size: 0.7rem;
+  font-weight: 700;
 }
 
 .options-dialog__grid,

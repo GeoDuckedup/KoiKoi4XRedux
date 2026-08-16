@@ -10,12 +10,41 @@ and accepted; Phase 3F-I Reveal start cue is deployed, live-verified, and accept
 destination pulse is deployed, live-verified, and accepted; Phase 5A full local match formats is
 deployed, live-verified, and accepted; Phase 5B local persistence is deployed, live-verified, and
 accepted; Phase 6A fair heuristic AI is deployed, live-verified, and accepted; Phase 6B difficulty
-and explanations is next
+and explanations is locally complete and accepted, with commit, hosted CI/Pages, deployment, and live
+verification pending
 
 **Runtime state:** Complete deterministic headless match engine plus playable browser-local 3/6/12-round
 formats using real player observations and commands, the owner-approved primary deck, persistent Pixi
 cards, deterministic public-event animation, private pass-the-device handoff, accessible recap/result
 evidence, and the retained local-only deterministic deck Workshop/raster review pipeline
+
+## Phase 6B — locally complete and accepted
+
+Phase 6B adds deterministic Easy, Standard (default), and Hard heuristic settings across Timid, Monk,
+and Gambler; canonical public reason tokens; numeric `[0,1]` confidence mapped to UI bands; and public
+score/multiplier/month/round context. It preserves the Phase 6A observation-only/exact-legal-action
+boundary, CPU session-only boundary, and player-A-only rendering during CPU work.
+
+The explanation is not chain-of-thought and is never shown during CPU thinking. After the normal
+public-event animation settles, it must be reproducible from player A's public observation plus the
+now-public action/events; private CPU hand support, candidate ranking, hidden-card hypotheses, RNG,
+checkpoint, and command data remain forbidden. No rollout, determinization, RNG/noise, engine,
+protocol, rules, replay, online/Firebase, or CPU-save work is authorized.
+
+`AI-6B-001` through `AI-6B-007`, ADR 0033, 1,080 generated trials in four 270-trial shards, and
+Root/Pages artifacts under `output/phase-6b/e2e/` are accepted local evidence. Explanation privacy
+was checked through every CPU-thinking substep, while the post-settlement banner remains compact and
+keeps the field usable.
+
+`npm run check` passed 59 files / 539 ordinary tests, 10,002 seeded matches, the 48/48 release deck,
+and the 783-module production build. The uninterrupted final `npm run validate:phase6b` exited 0 with
+17 inherited focused files / 247 tests, Workshop, 14 density viewports, full retained Root/Pages Phase
+5A, 3 persistence files / 38 tests plus dedicated Root/Pages, 2 Phase 6A focused files / 22 tests, 360
+generated trials, Phase 6A Root/Pages, 3 Phase 6B focused files / 25 tests, 1,080 generated trials,
+and Phase 6B Root/Pages. All 26 Phase 6B PNGs were visually inspected and independent review was
+B0/H0. A late-suite initial-navigation flake was repaired narrowly with navigation `commit` and the
+retained app-ready assertion, then revalidated. Commit, push, hosted CI/Pages, deployment, and live
+verification remain pending; next is Phase 6C.
 
 ## Phase 6A — deployed, live-verified, and accepted
 
@@ -766,5 +795,5 @@ The deployed baseline is
 
 ## Next governed phase
 
-**Phase 6B — Difficulty and explanations:** the approved next subphase adds reasons, confidence, and
-match-context strategy. Rollout, determinization, and tuning remain Phase 6C.
+**Phase 6C:** the next governed subphase may consider rollout, determinization, and tuning; those
+remain outside the locally accepted Phase 6B scope.

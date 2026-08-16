@@ -31,7 +31,12 @@ import {
   type LocalRoundRuntimeV1,
   type LocalRoundTransitionV1,
 } from "./game/local-round-runtime";
-import { chooseFairCpuAction, type CpuPersonalityV1 } from "./ai/fair-heuristic";
+import {
+  chooseFairCpuDecision,
+  type CpuDecisionReasonV1,
+  type CpuDifficultyV1,
+  type CpuPersonalityV1,
+} from "./ai/fair-heuristic";
 import {
   createIndexedDbLocalSaveRepository,
   createLocalSaveStore,
@@ -167,6 +172,10 @@ const cpuPersonalityOptions = queryRequired<HTMLElement>("[data-cpu-personality-
 const cpuPersonalityInputs = Object.freeze([
   ...document.querySelectorAll<HTMLInputElement>("[data-cpu-personality]"),
 ]);
+const cpuDifficultyOptions = queryRequired<HTMLElement>("[data-cpu-difficulty-options]");
+const cpuDifficultyInputs = Object.freeze([
+  ...document.querySelectorAll<HTMLInputElement>("[data-cpu-difficulty]"),
+]);
 const deckSelect = queryRequired<HTMLSelectElement>("[data-deck-select]");
 const cardInputOverlay = queryRequired<HTMLElement>("[data-card-input-overlay]");
 const handPlayAttention = queryRequired<HTMLElement>("[data-hand-play-attention]");
@@ -196,6 +205,7 @@ const handoffDescription = queryRequired<HTMLElement>("[data-handoff-description
 const handoffReady = queryRequired<HTMLButtonElement>("[data-handoff-ready]");
 const cpuTurnStatus = queryRequired<HTMLElement>("[data-cpu-turn-status]");
 const cpuTurnCopy = queryRequired<HTMLElement>("[data-cpu-turn-copy]");
+const cpuDecisionCopy = queryRequired<HTMLElement>("[data-cpu-decision-copy]");
 const recapList = queryRequired<HTMLOListElement>("[data-turn-recaps]");
 const latestRecap = queryRequired<HTMLElement>("[data-latest-recap]");
 const yakuFeedback = queryRequired<HTMLElement>("[data-yaku-feedback]");
@@ -256,8 +266,14 @@ let selectedMatchMode: "cpu" | "local" = "local";
 let activeMatchMode: "cpu" | "local" = "local";
 let selectedCpuPersonality: CpuPersonalityV1 = "monk";
 let activeCpuPersonality: CpuPersonalityV1 = "monk";
+let selectedCpuDifficulty: CpuDifficultyV1 = "standard";
+let activeCpuDifficulty: CpuDifficultyV1 = "standard";
 let cpuTurnState: "idle" | "thinking" = "idle";
 let cpuTurnQueued = false;
+let latestCpuDecision: {
+  readonly confidence: "clear" | "close" | "measured";
+  readonly reason: CpuDecisionReasonV1;
+} | null = null;
 let runtime: LocalRoundRuntimeV1 = createLocalRoundRuntime({ matchLength: selectedMatchLength });
 let observation: PlayerObservationV1 = runtime.observe();
 let projection: PresentationBoardProjection = projectObservationToBoard(observation);
@@ -387,18 +403,60 @@ function cpuTurnMessage(): string {
   return cpuTurnState === "thinking" ? `${name} is choosing a card.` : `${name}'s turn.`;
 }
 
+function cpuConfidenceLabel(confidence: number): "clear" | "close" | "measured" {
+  if (confidence >= 0.8) return "clear";
+  if (confidence >= 0.62) return "measured";
+  return "close";
+}
+
+function cpuReasonCopy(reason: CpuDecisionReasonV1): string {
+  switch (reason) {
+    case "secureLead":
+      return "Secures the match lead";
+    case "completeYaku":
+      return "Completes a yaku";
+    case "denyVisibleThreat":
+      return "Claims a visible threat";
+    case "strongFuturePotential":
+      return "Builds toward a yaku";
+    case "multiplierPressure":
+      return "Presses the table multiplier";
+    case "comebackRisk":
+      return "Pushes for a comeback";
+  }
+}
+
+function cpuConfidenceCopy(confidence: "clear" | "close" | "measured"): string {
+  return confidence === "clear" ? "Clear" : confidence === "measured" ? "Measured" : "Close";
+}
+
 function syncMatchControls(): void {
   matchModeSelect.value = selectedMatchMode;
   cpuPersonalityOptions.hidden = selectedMatchMode !== "cpu";
+  cpuDifficultyOptions.hidden = selectedMatchMode !== "cpu";
   for (const input of cpuPersonalityInputs) {
     input.checked = input.value === selectedCpuPersonality;
+  }
+  for (const input of cpuDifficultyInputs) {
+    input.checked = input.value === selectedCpuDifficulty;
   }
 }
 
 function renderCpuTurnStatus(): void {
-  const visible = isCpuTurn();
+  const showingDecision =
+    activeMatchMode === "cpu" && latestCpuDecision !== null && resultPresentation === null;
+  const visible = isCpuTurn() || showingDecision;
   cpuTurnStatus.hidden = !visible;
-  cpuTurnCopy.textContent = visible ? cpuTurnMessage() : "";
+  cpuTurnCopy.textContent = isCpuTurn()
+    ? cpuTurnMessage()
+    : showingDecision
+      ? `${playerName("player-b")}'s last move.`
+      : "";
+  cpuDecisionCopy.hidden = !showingDecision || isCpuTurn();
+  cpuDecisionCopy.textContent =
+    showingDecision && !isCpuTurn() && latestCpuDecision
+      ? `${cpuReasonCopy(latestCpuDecision.reason)} · ${cpuConfidenceCopy(latestCpuDecision.confidence)}`
+      : "";
 }
 
 function tableStatusModel(): TableSceneStatusV1 {
@@ -467,6 +525,8 @@ function snapshot() {
     },
     match: {
       mode: activeMatchMode,
+      cpuDecision: activeMatchMode === "cpu" && !isCpuTurn() ? latestCpuDecision : null,
+      cpuDifficulty: activeMatchMode === "cpu" ? activeCpuDifficulty : null,
       cpuPersonality: activeMatchMode === "cpu" ? activeCpuPersonality : null,
       cpuTurnState,
     },
@@ -1023,6 +1083,7 @@ async function continueSavedMatch(): Promise<void> {
     activeMatchMode = "local";
     selectedMatchMode = "local";
     cpuTurnState = "idle";
+    latestCpuDecision = null;
     syncMatchControls();
     runtime = restoreLocalRoundRuntime(localSaveSnapshot(pendingResumeSave));
     observation = runtime.observe();
@@ -1664,13 +1725,26 @@ function ensureAnimationLoop(): void {
   animationFrameId = requestAnimationFrame(frame);
 }
 
-function recordCompletedTurn(transition: LocalRoundTransitionV1): void {
+function recordCompletedTurn(
+  transition: LocalRoundTransitionV1,
+  cpuDecision: {
+    readonly confidence: "clear" | "close" | "measured";
+    readonly reason: CpuDecisionReasonV1;
+  } | null = null,
+): void {
   pendingTurnEvents.push(...transition.events);
   const boundary = transition.events.some(
     ({ type }) => type === "turnCompleted" || type === "roundResultCommitted",
   );
   if (!boundary) return;
-  const recap = formatTurnRecap(pendingTurnEvents);
+  const recap = [
+    formatTurnRecap(pendingTurnEvents),
+    cpuDecision === null
+      ? ""
+      : `${playerName("player-b")}: ${cpuReasonCopy(cpuDecision.reason)}. ${cpuConfidenceCopy(cpuDecision.confidence)}.`,
+  ]
+    .filter((part) => part.length > 0)
+    .join(" ");
   if (recap.length > 0) recaps.push(recap);
   pendingTurnEvents = [];
   renderRecaps();
@@ -1679,6 +1753,7 @@ function recordCompletedTurn(transition: LocalRoundTransitionV1): void {
 async function executeCommittedTransition(
   transition: LocalRoundTransitionV1,
   actor: "cpu" | "human",
+  cpuDecision: { readonly confidence: number; readonly reason: CpuDecisionReasonV1 } | null = null,
 ): Promise<void> {
   if (!animationDirector) return;
   commandCount += 1;
@@ -1707,7 +1782,13 @@ async function executeCommittedTransition(
 
   try {
     observation = transition.after;
-    recordCompletedTurn(transition);
+    if (actor === "cpu" && cpuDecision !== null) {
+      latestCpuDecision = Object.freeze({
+        reason: cpuDecision.reason,
+        confidence: cpuConfidenceLabel(cpuDecision.confidence),
+      });
+    }
+    recordCompletedTurn(transition, actor === "cpu" ? latestCpuDecision : null);
     interactionController?.replaceSource(createInteractionSourceFromObservation(observation));
     handoffPlayerId = activeMatchMode === "local" ? transition.handoffPlayerId : null;
     refreshYakuPresentation(transition.events, transition.before);
@@ -1782,10 +1863,17 @@ async function executeCpuTurn(): Promise<void> {
   await Promise.resolve();
   try {
     const cpuObservation = runtime.observeFor("player-b");
-    const action = chooseFairCpuAction(cpuObservation, activeCpuPersonality);
-    if (action === null) throw new Error("CPU_ACTION_MISSING: CPU turn has no legal action.");
-    const transition = runtime.submitCpuAction(action);
-    await executeCommittedTransition(transition, "cpu");
+    const decision = chooseFairCpuDecision(
+      cpuObservation,
+      activeCpuPersonality,
+      activeCpuDifficulty,
+    );
+    if (decision === null) throw new Error("CPU_ACTION_MISSING: CPU turn has no legal action.");
+    const transition = runtime.submitCpuAction(decision.action);
+    await executeCommittedTransition(transition, "cpu", {
+      reason: decision.reason,
+      confidence: decision.confidence,
+    });
   } catch (error: unknown) {
     processingIntent = false;
     cpuTurnState = "idle";
@@ -1844,6 +1932,7 @@ async function startFreshLocalMatch(
   activeMatchMode = "local";
   selectedMatchMode = "local";
   cpuTurnState = "idle";
+  latestCpuDecision = null;
   syncMatchControls();
   restartCount += 1;
   const matchLength = resolveFreshLocalMatchLength(selectedMatchLength, completedMatchLength);
@@ -1897,7 +1986,9 @@ async function startFreshCpuMatch(
   activeMatchMode = "cpu";
   selectedMatchMode = "cpu";
   activeCpuPersonality = selectedCpuPersonality;
+  activeCpuDifficulty = selectedCpuDifficulty;
   cpuTurnState = "idle";
+  latestCpuDecision = null;
   syncMatchControls();
   restartCount += 1;
   const matchLength = resolveFreshLocalMatchLength(selectedMatchLength, completedMatchLength);
@@ -1947,6 +2038,9 @@ async function advanceLocalRound(): Promise<void> {
   refreshInteractionSurface();
   try {
     const transition = runtime.advanceRound();
+    // CPU explanations describe a completed public turn in the prior round.
+    // Never carry one into a fresh month, including an automatic opening result.
+    latestCpuDecision = null;
     observation = transition.after;
     projection = projectObservationToBoard(observation);
     pendingTurnEvents = [];
@@ -2138,6 +2232,14 @@ for (const input of cpuPersonalityInputs) {
     if (!input.checked) return;
     if (input.value !== "timid" && input.value !== "monk" && input.value !== "gambler") return;
     selectedCpuPersonality = input.value;
+    syncMatchControls();
+  });
+}
+for (const input of cpuDifficultyInputs) {
+  input.addEventListener("change", () => {
+    if (!input.checked) return;
+    if (input.value !== "easy" && input.value !== "standard" && input.value !== "hard") return;
+    selectedCpuDifficulty = input.value;
     syncMatchControls();
   });
 }

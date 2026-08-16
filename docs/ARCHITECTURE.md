@@ -160,6 +160,13 @@ resulting public hash. Future Firebase transaction storage/publication remains P
   renderer remains on player A's observation throughout a CPU turn, and public events alone cross
   into the existing AnimationDirector. Phase 6A CPU matches are session-only, player A versus player
   B, and retain the existing 3/6/12 formats.
+- Phase 6B keeps that selector boundary intact and adds deterministic Easy, Standard (default), and
+  Hard public-match-context weighting plus a decision envelope containing an exact offered action,
+  one canonical reason token, and numeric `[0,1]` confidence. The runtime may retain a public
+  explanation only after the corresponding command's public-event animation settles. That envelope
+  is derived from the player-A-safe public observation and public action/events; it contains no
+  private CPU-hand rationale, candidate scores, hidden allocation, command ID, checkpoint, or RNG.
+  CPU settings and explanation state remain session-only and do not enter the Phase 5B local save.
 - The compact Options shell owns secondary browser controls. Critical turn instruction/actions,
   public Yaku names/totals, and latest history remain visible, while Yaku/result/handoff modals keep
   focus priority and prevent unrelated option changes.
@@ -247,6 +254,15 @@ less than four percent of Phase 1E's 10,002-match compute budget. Root and Pages
 CPU lock, public animation, settled-human-turn, and private-redaction artifacts under
 `output/phase-6a/e2e/`. Difficulty, explanations, match-context adaptation, and rollout metrics do
 not enter this gate before Phase 6B/6C.
+
+Phase 6B retains the Phase 6A gate and adds focused decision/public-explanation coverage plus a
+separate 1,080-trial deterministic generated gate (three personalities × Easy/Standard/Hard × 3/6/12
+formats × 40 seeds) in four 270-trial bounded shards. It records zero illegal/no-action outcomes,
+completion/invariants, personality identity, documented fixed-matrix difficulty behavior, and
+public-safe explanation coverage. Root and Pages smoke adds difficulty selection, thinking-time
+redaction, after-settlement explanation, explicit landscape Options bounds, and session-only
+persistence evidence under `output/phase-6b/e2e/`. Implementation and runtime evidence remain
+pending until this gate exists and passes.
 
 Phase 2E keeps deck authoring outside the production client. Portable package, transform,
 contact-sheet, and approval contracts live in `packages/deck-format/src`; Sharp, filesystem access,

@@ -2,6 +2,34 @@ Original prompt: read the package and understand it, then let me know when we ar
 
 # KoiKoi4x Progress
 
+## 2026-08-16 — Phase 6B locally complete and accepted
+
+- ADR 0033 and `AI-6B-001`–`AI-6B-007` define the implemented bounded CPU subphase: deterministic Easy,
+  Standard (default), and Hard public-match-context weighting; the six canonical public reason
+  tokens; and finite numeric `[0,1]` confidence mapped to UI bands.
+- The Phase 6A observation-only/exact-existing-legal-action and CPU session-only boundaries remain
+  intact. A public explanation may appear only after its ordinary public-event animation settles and
+  must be reproducible from player-A-safe public observation plus public action/events. It cannot
+  disclose CPU-hand support, candidate scoring, hidden-card hypotheses, command/checkpoint/RNG, or
+  chain-of-thought.
+- The generated gate passed 1,080 complete fixed trials (3 personalities × 3 difficulties ×
+  3/6/12 formats × 40 seeds) in four 270-trial bounded shards, retaining Phase 6A's gate. The 26
+  inspected Root/Pages artifacts under `output/phase-6b/e2e/` cover difficulty/options, thinking
+  redaction, post-settlement explanations, privacy, session-only save preservation, and landscape
+  bounds/lower-action access.
+- `npm run check` passed 59 files / 539 ordinary tests, 10,002 seeded matches, the 48/48 release
+  deck, and the 783-module build. The uninterrupted final `npm run validate:phase6b` exited 0 with
+  17 inherited focused files / 247 tests, Workshop, 14 density viewports, full retained Root/Pages
+  Phase 5A, 3 persistence files / 38 tests plus dedicated Root/Pages, 2 Phase 6A focused files / 22
+  tests, 360 generated trials, Phase 6A Root/Pages, 3 Phase 6B focused files / 25 tests, 1,080
+  generated trials, and Phase 6B Root/Pages.
+- Independent review was B0/H0 after closing thinking-time diagnostic privacy and all-difficulty
+  deterministic-tie coverage. A late-suite navigation flake was repaired narrowly by waiting for
+  navigation commit while retaining the application-ready assertion, then revalidated.
+- No engine/protocol/rules/replay changes, rollouts, determinization, seeded noise, online/Firebase,
+  or CPU save work is authorized. Commit, push, hosted CI/Pages, deployment, and live verification
+  remain pending. Phase 6C is next.
+
 ## 2026-08-16 — Phase 6A locally complete and accepted
 
 - ADR 0032 and `AI-6A-001`–`AI-6A-005` lock the implemented local observation-only deterministic

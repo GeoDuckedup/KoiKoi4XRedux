@@ -5,11 +5,31 @@ import {
   type CardId,
   type LegalActionV1,
   type PlayerObservationV1,
+  type PublicGameStateV1,
 } from "@koikoi4x/engine";
 
-import { CPU_PERSONALITIES, type CpuPersonalityV1, type FairCpuActionSelectorV1 } from "./types";
+import {
+  CPU_DIFFICULTIES,
+  CPU_PERSONALITIES,
+  type CpuDecisionReasonV1,
+  type CpuDecisionV1,
+  type CpuDifficultyV1,
+  type CpuPersonalityV1,
+  type FairCpuActionSelectorV1,
+  type FairCpuDecisionSelectorV1,
+} from "./types";
 
-export { CPU_PERSONALITIES, type CpuPersonalityV1, type FairCpuActionSelectorV1 } from "./types";
+export {
+  CPU_DECISION_REASONS,
+  CPU_DIFFICULTIES,
+  CPU_PERSONALITIES,
+  type CpuDecisionReasonV1,
+  type CpuDecisionV1,
+  type CpuDifficultyV1,
+  type CpuPersonalityV1,
+  type FairCpuActionSelectorV1,
+  type FairCpuDecisionSelectorV1,
+} from "./types";
 
 interface ActionFeaturesV1 {
   readonly currentMonthCapture: number;
@@ -31,6 +51,19 @@ interface PersonalityWeightsV1 {
   readonly yakuTotalDelta: number;
   readonly bankAward: number;
   readonly koiPressure: number;
+}
+
+interface DifficultyContextWeightsV1 {
+  readonly finalDeficitKoiPressure: number;
+  readonly finalLeadBankSecurity: number;
+  readonly lateDeficitProgress: number;
+  readonly lateLeadExposure: number;
+}
+
+interface MatchContextV1 {
+  readonly isLateMatch: boolean;
+  readonly isTrailing: boolean;
+  readonly isLeading: boolean;
 }
 
 const PERSONALITY_WEIGHTS: Readonly<Record<CpuPersonalityV1, PersonalityWeightsV1>> = Object.freeze(
@@ -70,6 +103,34 @@ const PERSONALITY_WEIGHTS: Readonly<Record<CpuPersonalityV1, PersonalityWeightsV
     }),
   },
 );
+
+/**
+ * These factors deliberately use only the public score/round context. Easy
+ * preserves the Phase 6A scoring profile; stronger tiers increase the value
+ * of protecting a late lead or pursuing a late deficit without simulating an
+ * unseen deck.
+ */
+const DIFFICULTY_CONTEXT_WEIGHTS: Readonly<Record<CpuDifficultyV1, DifficultyContextWeightsV1>> =
+  Object.freeze({
+    easy: Object.freeze({
+      finalDeficitKoiPressure: 0,
+      finalLeadBankSecurity: 0,
+      lateDeficitProgress: 0,
+      lateLeadExposure: 0,
+    }),
+    standard: Object.freeze({
+      finalDeficitKoiPressure: 9,
+      finalLeadBankSecurity: 12,
+      lateDeficitProgress: 3,
+      lateLeadExposure: 2,
+    }),
+    hard: Object.freeze({
+      finalDeficitKoiPressure: 18,
+      finalLeadBankSecurity: 24,
+      lateDeficitProgress: 6,
+      lateLeadExposure: 5,
+    }),
+  });
 
 const CARD_INDEX = new Map(CARD_IDS.map((cardId, index) => [cardId, index]));
 
@@ -126,6 +187,25 @@ function unknownCardCount(observation: PlayerObservationV1): number {
   return CARD_IDS.filter(
     (cardId) => !publicCardIds.has(cardId) && !observation.ownHand.includes(cardId),
   ).length;
+}
+
+function matchContext(
+  publicState: PublicGameStateV1,
+  playerId: PlayerObservationV1["playerId"],
+): MatchContextV1 {
+  const players = publicState.players;
+  const player = players.find(({ id }) => id === playerId);
+  const opponent = players.find(({ id }) => id !== playerId);
+  if (player === undefined || opponent === undefined)
+    throw new Error("CPU_OBSERVATION_PLAYERS_MISSING");
+  const round = publicState.round;
+  const isLateMatch =
+    round.isFinalScheduledRound || round.roundNumber * 2 >= publicState.matchLength;
+  return Object.freeze({
+    isLateMatch,
+    isTrailing: player.score < opponent.score,
+    isLeading: player.score > opponent.score,
+  });
 }
 
 function futurePotential(observation: PlayerObservationV1, captured: readonly CardId[]): number {
@@ -193,15 +273,28 @@ function scoreYakuChoice(
   observation: PlayerObservationV1,
   action: Extract<LegalActionV1, { readonly type: "chooseYakuDecision" }>,
   weights: PersonalityWeightsV1,
+  contextWeights: DifficultyContextWeightsV1,
+  context: MatchContextV1,
 ): number {
   const currentYakuTotal =
     observation.publicState.phase.kind === "awaitingYakuDecision"
       ? observation.publicState.phase.context.currentYakuTotal
       : 0;
-  if (action.choice === "bank") return action.awardedPoints * weights.bankAward;
+  if (action.choice === "bank") {
+    const leadSecurity =
+      context.isLateMatch && context.isLeading
+        ? action.awardedPoints * contextWeights.finalLeadBankSecurity
+        : 0;
+    return action.awardedPoints * weights.bankAward + leadSecurity;
+  }
+  const deficitPressure =
+    context.isLateMatch && context.isTrailing
+      ? currentYakuTotal * action.resultingTableMultiplier * contextWeights.finalDeficitKoiPressure
+      : 0;
   return (
     currentYakuTotal * action.resultingTableMultiplier * weights.koiPressure +
-    action.resultingTableMultiplier * weights.futurePotential
+    action.resultingTableMultiplier * weights.futurePotential +
+    deficitPressure
   );
 }
 
@@ -209,9 +302,21 @@ function scoreAction(
   observation: PlayerObservationV1,
   action: LegalActionV1,
   weights: PersonalityWeightsV1,
+  contextWeights: DifficultyContextWeightsV1,
+  context: MatchContextV1,
 ): number {
-  if (action.type === "chooseYakuDecision") return scoreYakuChoice(observation, action, weights);
+  if (action.type === "chooseYakuDecision") {
+    return scoreYakuChoice(observation, action, weights, contextWeights, context);
+  }
   const features = featuresForAction(observation, action);
+  const lateDeficitProgress =
+    context.isLateMatch && context.isTrailing
+      ? (features.yakuTotalDelta + features.newYakuPoints) * contextWeights.lateDeficitProgress
+      : 0;
+  const lateLeadExposure =
+    context.isLateMatch && context.isLeading
+      ? features.placedExposure * contextWeights.lateLeadExposure
+      : 0;
   return (
     features.immediateValue * weights.immediateValue +
     features.yakuTotalDelta * weights.yakuTotalDelta +
@@ -219,7 +324,9 @@ function scoreAction(
     features.futurePotential * weights.futurePotential +
     features.denialValue * weights.denialValue +
     features.currentMonthCapture * weights.currentMonthCapture -
-    features.placedExposure * weights.placedExposure
+    features.placedExposure * weights.placedExposure +
+    lateDeficitProgress -
+    lateLeadExposure
   );
 }
 
@@ -244,18 +351,106 @@ function compareCanonicalAction(left: LegalActionV1, right: LegalActionV1): numb
   return 0;
 }
 
-export const chooseFairCpuAction: FairCpuActionSelectorV1 = (observation, personality) => {
+function isKnownPersonality(personality: CpuPersonalityV1): boolean {
+  return (CPU_PERSONALITIES as readonly string[]).includes(personality);
+}
+
+function isKnownDifficulty(difficulty: CpuDifficultyV1): boolean {
+  return (CPU_DIFFICULTIES as readonly string[]).includes(difficulty);
+}
+
+function publicActionYakuDelta(publicState: PublicGameStateV1, action: LegalActionV1): number {
+  if (action.type === "chooseYakuDecision") return 0;
+  const player = publicState.players.find(({ id }) => id === action.actorId);
+  if (player === undefined) throw new Error("CPU_PUBLIC_ACTION_PLAYER_MISSING");
+  const before = evaluateYaku(player.captured, publicState.round.scheduledMonth);
+  const after = evaluateYaku(
+    [...player.captured, ...capturedCardIds(action)],
+    publicState.round.scheduledMonth,
+  );
+  return after.currentYakuTotal - before.currentYakuTotal;
+}
+
+function actionDeniesVisibleThreat(action: LegalActionV1): boolean {
+  if (action.type === "chooseYakuDecision" || action.resolution.kind === "placeOnField")
+    return false;
+  return action.resolution.matchingFieldCardIds.some((cardId) => {
+    const definition = getCardDefinition(cardId);
+    return definition.category === "bright" || definition.fixedYakuMemberships.length > 0;
+  });
+}
+
+function publicReasonForAction(
+  publicState: PublicGameStateV1,
+  action: LegalActionV1,
+  context: MatchContextV1,
+): CpuDecisionReasonV1 {
+  if (action.type === "chooseYakuDecision") {
+    if (action.choice === "bank") return context.isLeading ? "secureLead" : "completeYaku";
+    return context.isLateMatch && context.isTrailing ? "comebackRisk" : "multiplierPressure";
+  }
+  if (publicActionYakuDelta(publicState, action) > 0) return "completeYaku";
+  if (context.isLateMatch && context.isTrailing) return "comebackRisk";
+  if (actionDeniesVisibleThreat(action)) return "denyVisibleThreat";
+  return "strongFuturePotential";
+}
+
+function clampAndRoundConfidence(value: number): number {
+  return Math.round(Math.min(1, Math.max(0, value)) * 100) / 100;
+}
+
+/**
+ * This deliberately derives explanation metadata from the public pre-state
+ * and the one action that has become public. It must not inspect the CPU hand,
+ * its alternative legal actions, or heuristic score margins, because those
+ * would leak private decision information to player A.
+ */
+export function explainPublicCpuAction(
+  publicState: PublicGameStateV1,
+  action: LegalActionV1,
+): Readonly<Pick<CpuDecisionV1, "reason" | "confidence">> {
+  const context = matchContext(publicState, action.actorId);
+  const reason = publicReasonForAction(publicState, action, context);
+  let confidence = 0.5;
+  if (action.type === "chooseYakuDecision") {
+    if (action.choice === "bank") {
+      confidence = 0.58 + Math.min(0.27, action.awardedPoints * 0.04);
+      if (context.isLeading) confidence += 0.1;
+    } else {
+      confidence = 0.5 + Math.min(0.2, action.resultingTableMultiplier * 0.05);
+      if (context.isLateMatch && context.isTrailing) confidence += 0.1;
+    }
+  } else if (action.resolution.kind === "fourCardSweep") {
+    confidence = 0.92;
+  } else if (publicActionYakuDelta(publicState, action) > 0) {
+    confidence = 0.86;
+  } else if (actionDeniesVisibleThreat(action)) {
+    confidence = 0.76;
+  } else if (action.resolution.kind === "captureChoice") {
+    confidence = 0.66;
+  }
+  return Object.freeze({ reason, confidence: clampAndRoundConfidence(confidence) });
+}
+
+export const chooseFairCpuDecision: FairCpuDecisionSelectorV1 = (
+  observation,
+  personality,
+  difficulty,
+) => {
   if (!(CPU_PERSONALITIES as readonly string[]).includes(personality)) {
     throw new Error("CPU_PERSONALITY_INVALID");
   }
+  if (!isKnownDifficulty(difficulty)) throw new Error("CPU_DIFFICULTY_INVALID");
   const actions = observation.legalActions;
   if (actions.length === 0) return null;
   const weights = PERSONALITY_WEIGHTS[personality];
+  const contextWeights = DIFFICULTY_CONTEXT_WEIGHTS[difficulty];
+  const context = matchContext(observation.publicState, observation.playerId);
   let chosen = actions[0];
   if (chosen === undefined) return null;
-  let chosenScore = scoreAction(observation, chosen, weights);
+  let chosenScore = scoreAction(observation, chosen, weights, contextWeights, context);
   for (const action of actions.slice(1)) {
-    const score = scoreAction(observation, action, weights);
+    const score = scoreAction(observation, action, weights, contextWeights, context);
     if (
       score > chosenScore ||
       (score === chosenScore && compareCanonicalAction(action, chosen) < 0)
@@ -264,5 +459,19 @@ export const chooseFairCpuAction: FairCpuActionSelectorV1 = (observation, person
       chosenScore = score;
     }
   }
-  return chosen;
+  const explanation = explainPublicCpuAction(observation.publicState, chosen);
+  return Object.freeze({
+    action: chosen,
+    ...explanation,
+  });
+};
+
+/**
+ * Phase 6A callers retain their stable action-only API. The easy tier is the
+ * original heuristic profile, so this compatibility wrapper intentionally
+ * adds no match-context adaptation.
+ */
+export const chooseFairCpuAction: FairCpuActionSelectorV1 = (observation, personality) => {
+  if (!isKnownPersonality(personality)) throw new Error("CPU_PERSONALITY_INVALID");
+  return chooseFairCpuDecision(observation, personality, "easy")?.action ?? null;
 };

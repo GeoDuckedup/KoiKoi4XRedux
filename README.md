@@ -70,6 +70,7 @@ npm run validate:phase3fj
 npm run validate:phase5a
 npm run validate:phase5b
 npm run validate:phase6a
+npm run validate:phase6b
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -390,8 +391,9 @@ HTTP/2 request returned 200 MISS, `Last-Modified: Sun, 16 Aug 2026 01:52:53 GMT`
 browser iterations were `ready:true` with one canvas, 48 unique CardViews, 24/8/8/8 zones, idle
 unlocked input with 16 semantic controls, approved `new-primary-deck`, and available idle persistence
 with a saved round/month 1 checkpoint; the clean `shot-2` was visually inspected. Phase 5B is
-deployed, live-verified, and accepted. Phase 6A is deployed, live-verified, and accepted. Next
-governed phase: Phase 6B difficulty and explanations.
+deployed, live-verified, and accepted. Phase 6A is deployed, live-verified, and accepted. Phase 6B
+is locally complete and accepted; commit, hosted CI/Pages, deployment, and live verification remain
+pending. Next governed phase: Phase 6C.
 
 Phase 6A is locally complete and accepted. It adds a deterministic session-only player-A human versus
 player-B CPU mode for the existing 3/6/12 formats. The CPU receives only a
@@ -417,8 +419,27 @@ build 03:13:04–03:36:26 (23m22s), check 4m03s, validation 18m32s, and deploy 0
 session-only/resume markers. Live browser verification selected Gambler, started a real CPU match,
 played A's no-match Hand then Draw capture, observed `The Gambler is choosing a card`, locked
 utilities, A face-up/B back-only hands, no console diagnostics, and an inspected screenshot. Phase 6A
-is deployed, live-verified, and accepted. Next: Phase 6B difficulty and explanations—reasons,
-confidence, and match-context strategy; no rollout work until 6C.
+is deployed, live-verified, and accepted. Phase 6B local acceptance is recorded below; rollout work
+remains reserved for Phase 6C.
+
+Phase 6B is locally complete and accepted. It adds deterministic Easy, Standard (default), and Hard
+heuristic settings across Timid, Monk, and Gambler, the six canonical public reason tokens, numeric
+`[0,1]` confidence with UI bands, and public score/multiplier/round context. An explanation appears
+only after its CPU action settles, remains private through every CPU-thinking substep, and is derived
+from player-A-safe public information plus the now-public action/events; it is not hidden reasoning.
+CPU matches remain session-only and Phase 6B adds no RNG, determinization, rollouts, online play, or
+CPU saves.
+
+`npm run check` passed 59 files / 539 ordinary tests, 10,002 seeded matches, the 48/48 release deck,
+and the 783-module production build. The uninterrupted final `npm run validate:phase6b` exited 0:
+17 inherited focused files / 247 tests, Workshop, 14 density viewports, full retained Root/Pages
+Phase 5A, 3 persistence files / 38 tests plus dedicated Root/Pages, 2 Phase 6A focused files / 22
+tests, 360 generated trials, Phase 6A Root/Pages, 3 Phase 6B focused files / 25 tests, 1,080 generated
+trials, and Phase 6B Root/Pages. All 26 Phase 6B PNGs were visually inspected, including compact
+portrait/landscape explanation banners and privacy artifacts. Independent review was B0/H0. The sole
+late-suite navigation flake was repaired narrowly by waiting for navigation commit while retaining the
+application-ready assertion, then revalidated. Commit, push, hosted CI/Pages, deployment, and live
+verification remain pending; Phase 6C is next.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot
