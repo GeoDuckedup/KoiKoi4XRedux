@@ -1,15 +1,15 @@
 # KoiKoi4x Implementation Plan
 
 **Plan version:** 1.1
-**Updated:** August 15, 2026
+**Updated:** August 16, 2026
 **Current gate:** Phase 3F-E utility dock/capture cleanup is deployed and accepted; Phase 3F-F
 interaction clarity/card inspection is deployed and accepted; Phase 3F-G card inspector yaku
 reference/native gesture polish is deployed, live-verified, and accepted; Phase 3F-H active-hand
 start cue is deployed, live-verified, and accepted; Phase 3F-I Reveal start cue is deployed,
 live-verified, and accepted; Phase 3F-J legal destination pulse is deployed, live-verified, and
 accepted; Phase 5A full local match formats is deployed, live-verified, and accepted; Phase 5B local
-persistence is locally complete and accepted, with commit/push/hosted CI/Pages/deployment/live
-verification pending
+persistence is deployed, live-verified, and accepted; next governed phase is Phase 6A fair heuristic
+AI
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -56,8 +56,7 @@ Status: **deployed, live-verified, and accepted**.
 
 ## Phase 5B contract — local persistence
 
-Status: **locally complete and accepted; commit/push/hosted CI/Pages/deployment/live verification
-pending**.
+Status: **deployed, live-verified, and accepted**.
 
 - One active `mode: "local"` IndexedDB save stores private authoritative state plus checkpoint/RNG,
   required version/identity/timestamp metadata, and no command log or presentation state.
@@ -83,6 +82,17 @@ pending**.
   open denial and write conflict. Independent Terra review found no blocker, high, or medium issue.
   A transient density `appReady` timeout passed isolated and uninterrupted reruns; the Pages
   click-readiness harness repair did not weaken product assertions.
+- Implementation commit `e10edba` and workflow-budget commit `b8ac977` are deployed. Initial CI
+  `31917983898` was canceled solely by the inherited 30-minute hard cap after `check` passed; the
+  exact `verify` and Pages `build` budgets were raised to 60 minutes without test changes. Replacement
+  CI `31919222493` passed verify 01:17:17–01:51:51 UTC (34m34s), check 01:17:52–01:23:20,
+  validation 01:23:20–01:51:48, and artifact upload. Pages `31919222489` passed build
+  01:17:37–01:52:44 UTC (35m07s), validation 01:23:58–01:52:36, and deploy 01:52:48–01:52:56 (8s).
+- Cache-busted live HTTP/2 was 200 MISS with `Last-Modified: Sun, 16 Aug 2026 01:52:53 GMT`,
+  `index-CSmLy86o.js`, `index-DRn1Xu7z.css`, and the expected Continue/Review/storage/corrupt-save
+  markers. Three fresh live-browser iterations were ready with one canvas, 48 unique CardViews,
+  24/8/8/8 zones, idle unlocked 16 semantic controls, approved `new-primary-deck`, and available idle
+  persistence with `lastSavedAt` and round/month 1; clean `shot-2` was inspected.
 
 ## Phase 0 — Rule lock and foundation
 
@@ -1178,23 +1188,20 @@ response was HTTP/2 200 MISS, `Last-Modified: Sat, 15 Aug 2026 17:58:05 GMT`, wi
 visible and accessible strings. A three-iteration live client trace recorded loading `state-0`, then
 ready `state-1`/`state-2`, one canvas, 48 unique CardViews, no clipped/invalid/overlap diagnostics,
 and an inspected live screenshot. The hosted workflow's Node 20 deprecation notice is nonblocking.
-Phase 3F-J and Phase 5A are deployed, live-verified, and accepted; Phase 5B local persistence is
-locally accepted and awaiting release close-out.
+Phase 3F-J, Phase 5A, and Phase 5B are deployed, live-verified, and accepted.
 
 ## Later phases
 
-1. **Phase 5B — Local persistence (locally accepted; release pending):** one active local IndexedDB
-   save with strict version/schema/invariant validation and no migration; post-settlement
-   serialized/coalesced autosave; Continue/Delete; corrupt-save Delete/Start New/sanitized diagnostic
-   export; derived privacy/Ready resume; session-only storage-failure warning; Root/Pages
-   accessibility evidence.
-2. **Phase 6 — CPU opponents:** observation-only heuristic/difficulty/personality and deterministic rollout tuning.
-3. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
-4. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
-5. **Phase 9A — Product polish:** final interface, accessibility, performance, and reliability pass.
-6. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook,
+1. **Phase 6A — Fair heuristic AI:** observation-only API, three personalities, and legal decisions.
+2. **Phase 6B — Difficulty and explanations:** difficulty tiers, reason tokens, and match-context
+   strategy.
+3. **Phase 6C — Rollout AI and tuning:** determinization, seeded rollouts, and simulation reports.
+4. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
+5. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
+6. **Phase 9A — Product polish:** final interface, accessibility, performance, and reliability pass.
+7. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook,
    deliberately executed after the final interaction and progression model stabilizes.
-7. **Phase 9B — Release acceptance:** final content, telemetry, cross-platform, and release checks.
+8. **Phase 9B — Release acceptance:** final content, telemetry, cross-platform, and release checks.
 
 No later phase may bypass the acceptance gate of the preceding phase.
 

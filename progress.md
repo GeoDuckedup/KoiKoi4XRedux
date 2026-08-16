@@ -2,7 +2,7 @@ Original prompt: read the package and understand it, then let me know when we ar
 
 # KoiKoi4x Progress
 
-## 2026-08-15 — Phase 5B locally complete and accepted
+## 2026-08-16 — Phase 5B deployed, live-verified, and accepted
 
 - Phase 5B now has local acceptance for one strict private `mode: "local"` IndexedDB checkpoint:
   post-settlement autosave, strict decode/RNG provenance without migration, Continue plus
@@ -17,8 +17,19 @@ Original prompt: read the package and understand it, then let me know when we ar
 - Independent Terra review found no blocker, high, or medium issue. A transient density `appReady`
   timeout passed isolated and uninterrupted reruns. The Pages click-readiness harness was repaired
   with strict authoritative/control checks and without weakening product assertions.
-- Commit, push, hosted CI/Pages, deployment, and live verification remain pending. Next: complete
-  those release steps before declaring Phase 5B deployed or selecting another product subphase.
+- Implementation commit `e10edba` and workflow-budget commit `b8ac977` are deployed. Initial CI
+  `31917983898` was canceled solely by the inherited 30-minute hard cap after `check` passed; the
+  exact verify/build timeout budgets increased to 60 minutes without test changes. Replacement CI
+  `31919222493` passed verify 01:17:17–01:51:51 UTC (34m34s), check 01:17:52–01:23:20, validation
+  01:23:20–01:51:48, and artifact upload. Pages `31919222489` passed build 01:17:37–01:52:44 UTC
+  (35m07s), validation 01:23:58–01:52:36, and deploy 01:52:48–01:52:56 (8s).
+- Live cache-busted HTTP/2 was 200 MISS, `Last-Modified: Sun, 16 Aug 2026 01:52:53 GMT`, with
+  `index-CSmLy86o.js` / `index-DRn1Xu7z.css` and the expected saved-match/storage/corrupt-save
+  markers. Three fresh browser iterations were ready with one canvas, 48 unique CardViews, 24/8/8/8
+  zones, idle unlocked 16 semantic controls, approved `new-primary-deck`, and available idle
+  persistence with `lastSavedAt` and round/month 1; clean `shot-2` was visually inspected.
+- Next governed phase: **Phase 6A — Fair heuristic AI**, beginning with an observation-only API,
+  three personalities, and legal decisions. Phase 6B/6C remain later governed work.
 
 ## 2026-08-15 — Phase 5A deployed, live-verified, and accepted
 

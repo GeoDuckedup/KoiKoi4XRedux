@@ -1,6 +1,6 @@
 # KoiKoi4x Project Status
 
-**Updated:** August 15, 2026
+**Updated:** August 16, 2026
 
 **Overall state:** Greenfield rewrite through Phase 3F-E utility dock/capture cleanup is deployed,
 live-verified, and accepted; Phase 3F-F interaction clarity/card inspection is deployed,
@@ -8,8 +8,8 @@ live-verified, and accepted; Phase 3F-G card inspector yaku reference/native ges
 deployed, live-verified, and accepted; Phase 3F-H active-hand start cue is deployed, live-verified,
 and accepted; Phase 3F-I Reveal start cue is deployed, live-verified, and accepted; Phase 3F-J legal
 destination pulse is deployed, live-verified, and accepted; Phase 5A full local match formats is
-deployed, live-verified, and accepted; Phase 5B local persistence is locally complete and accepted,
-with commit/push/hosted CI/Pages/deployment/live verification pending
+deployed, live-verified, and accepted; Phase 5B local persistence is deployed, live-verified, and
+accepted; Phase 6A fair heuristic AI is next
 
 **Runtime state:** Complete deterministic headless match engine plus playable browser-local 3/6/12-round
 formats using real player observations and commands, the owner-approved primary deck, persistent Pixi
@@ -39,7 +39,7 @@ opponent-Hand/field counts, match length 3, idle `awaitingHandPlay`, no locks, a
 clipped/invalid/overlap diagnostics. `output/phase-5a/live-ready/shot-2.png` was visually inspected;
 no error artifact was produced. Phase 5A is deployed, live-verified, and accepted.
 
-## Phase 5B — locally complete and accepted
+## Phase 5B — deployed, live-verified, and accepted
 
 Phase 5B implements the local authoritative-save contract. ADR 0031 and `SAVE-5B-001` through
 `SAVE-5B-009` lock one active local IndexedDB checkpoint, strict no-migration decode,
@@ -57,8 +57,21 @@ smoke through 3F/3B/End-of-Play/Bank/real three-round rematch, 3 persistence foc
 tests, and dedicated Root/Pages persistence smoke. The persistence smoke produced 18 artifacts
 (nine per base) under `output/phase-5b/e2e/`. Independent Terra review found no blocker, high, or
 medium issue. One transient density-review `appReady` timeout passed isolated and then uninterrupted
-reruns; the Pages click-readiness harness repair retained every product assertion. Commit, push,
-hosted CI/Pages, deployment, and live verification remain pending.
+reruns; the Pages click-readiness harness repair retained every product assertion.
+
+Implementation commit `e10edba` and workflow-budget commit `b8ac977` are deployed. Initial CI
+`31917983898` was canceled solely by the inherited 30-minute hard cap after `check` passed; the
+two exact job budgets increased to 60 minutes without test changes. Replacement CI `31919222493`
+passed verify 01:17:17–01:51:51 UTC (34m34s), check 01:17:52–01:23:20, validation
+01:23:20–01:51:48, and artifact upload. Pages `31919222489` passed build 01:17:37–01:52:44 UTC
+(35m07s), validation 01:23:58–01:52:36, and deploy 01:52:48–01:52:56 (8s). A cache-busted live
+HTTP/2 request returned 200 MISS with `Last-Modified: Sun, 16 Aug 2026 01:52:53 GMT`,
+`index-CSmLy86o.js`, `index-DRn1Xu7z.css`, and the expected `Continue saved match?`,
+`Review completed match?`, `Saving is unavailable`, and `This saved game cannot be opened` markers.
+Three fresh live-browser iterations were `ready:true` with one canvas, 48 unique CardViews, 24/8/8/8
+zones, idle unlocked 16 semantic controls, approved `new-primary-deck`, and available idle persistence
+with `lastSavedAt` plus round/month 1. The clean live `shot-2` was visually inspected. Phase 5B is
+deployed, live-verified, and accepted.
 
 ## Current result
 
@@ -716,8 +729,7 @@ projection, recap, and handoff are recorded in
 The deployed baseline is
 [`https://geoduckedup.github.io/KoiKoi4XRedux/`](https://geoduckedup.github.io/KoiKoi4XRedux/).
 
-## Next release step
+## Next governed phase
 
-**Phase 5B release close-out:** commit and push the locally accepted work, confirm hosted CI and
-GitHub Pages, then perform deployment and live verification before marking Phase 5B deployed. Do not
-select another product subphase until those steps are complete.
+**Phase 6A — Fair heuristic AI:** the approved next subphase is an observation-only API with three
+personalities and legal decisions. Difficulty/explanations and rollout tuning remain Phase 6B/6C.

@@ -376,8 +376,20 @@ three-round rematch, 3 persistence files / 38 focused tests, and dedicated Root 
 persistence smoke. The latter wrote 18 artifacts (nine per base) under `output/phase-5b/e2e/`.
 Independent Terra review found no blocker, high, or medium issue. One transient density-harness
 readiness timeout passed both an isolated rerun and the uninterrupted gate; the Pages click-readiness
-harness repair retained all product assertions. Commit, push, hosted CI/Pages, deployment, and live
-verification remain pending.
+harness repair retained all product assertions.
+
+Phase 5B deployed in implementation commit `e10edba` and workflow-budget commit `b8ac977`. CI
+`31917983898` was canceled solely by the inherited 30-minute job cap after `check` passed; the two
+workflow timeout budgets were raised to 60 minutes without changing tests. Replacement CI
+`31919222493` passed: verify 01:17:17–01:51:51 UTC (34m34s), check 01:17:52–01:23:20, validation
+01:23:20–01:51:48, and artifact upload. Pages `31919222489` passed: build 01:17:37–01:52:44 UTC
+(35m07s), validation 01:23:58–01:52:36, and deploy 01:52:48–01:52:56 (8s). A cache-busted live
+HTTP/2 request returned 200 MISS, `Last-Modified: Sun, 16 Aug 2026 01:52:53 GMT`, with
+`index-CSmLy86o.js` / `index-DRn1Xu7z.css` and the expected persistence markers. Three fresh live
+browser iterations were `ready:true` with one canvas, 48 unique CardViews, 24/8/8/8 zones, idle
+unlocked input with 16 semantic controls, approved `new-primary-deck`, and available idle persistence
+with a saved round/month 1 checkpoint; the clean `shot-2` was visually inspected. Phase 5B is
+deployed, live-verified, and accepted. Next governed phase: Phase 6A fair heuristic AI.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

@@ -1,7 +1,6 @@
 # ADR 0031: Phase 5B local persistence boundary
 
-**Status:** Locally complete and accepted; commit/push/hosted CI/Pages/deployment/live evidence
-pending.
+**Status:** Deployed, live-verified, and accepted.
 
 ## Context
 
@@ -55,5 +54,14 @@ browser, leaking private state, or treating a visual/tween state as durable game
   IndexedDB open denial and write conflict. The Pages click-readiness harness repair did not weaken
   product assertions. A transient density-harness readiness timeout passed an isolated rerun and the
   final uninterrupted gate. Independent Terra review found no blocker, high, or medium issue.
-- Local acceptance does not claim a commit, push, hosted CI/Pages result, deployment, or live
-  verification; those remain release steps.
+- Implementation commit `e10edba` and workflow-budget commit `b8ac977` deployed this boundary.
+  Initial CI `31917983898` was canceled solely by the inherited 30-minute cap after `check` passed.
+  The two job budgets increased to 60 minutes without changing tests. Replacement CI `31919222493`
+  passed verify 01:17:17–01:51:51 UTC (34m34s), check 01:17:52–01:23:20, validation
+  01:23:20–01:51:48, and artifact upload; Pages `31919222489` passed build 01:17:37–01:52:44 UTC,
+  validation 01:23:58–01:52:36, and deploy 01:52:48–01:52:56.
+- Live cache-busted HTTP/2 was 200 MISS, `Last-Modified: Sun, 16 Aug 2026 01:52:53 GMT`, with
+  `index-CSmLy86o.js` / `index-DRn1Xu7z.css` and expected persistence markers. Three fresh live
+  iterations were ready with one canvas, 48 unique CardViews, 24/8/8/8 zones, idle unlocked 16
+  semantic controls, approved deck, and available idle persistence with `lastSavedAt` and round/month
+  1. The clean live `shot-2` was inspected.
