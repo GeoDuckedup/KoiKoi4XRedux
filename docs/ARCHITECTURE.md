@@ -150,6 +150,16 @@ resulting public hash. Future Firebase transaction storage/publication remains P
   from restored authority before private observation is rendered. Corrupt recovery is an explicit
   Delete/Start New/sanitized-export surface, not a browser-side reconstruction. Firebase, online
   authority, CPU/practice saves, and legacy-save migration remain out of Phase 5B.
+- Phase 6A places the deterministic fair heuristic and its `PlayerObservationV1 -> LegalActionV1 |
+  null` API in `apps/web/src/ai`. It may inspect only its one immutable observation and select only
+  an element already present in `observation.legalActions`; it may not accept/import authoritative
+  state, create legal actions, call legal-action construction/execution helpers, reconstruct hidden
+  allocation, use RNG or clocks, generate command IDs, write persistence, or perform DOM/Pixi work.
+  Pure card/yaku evaluation of information already in the observation remains permitted. The CPU adapter owns
+  command creation and uses an internal player-B observation only for that call. The board/text
+  renderer remains on player A's observation throughout a CPU turn, and public events alone cross
+  into the existing AnimationDirector. Phase 6A CPU matches are session-only, player A versus player
+  B, and retain the existing 3/6/12 formats.
 - The compact Options shell owns secondary browser controls. Critical turn instruction/actions,
   public Yaku names/totals, and latest history remain visible, while Yaku/result/handoff modals keep
   focus priority and prevent unrelated option changes.
@@ -226,6 +236,17 @@ may drive `aria-hidden`, pointer-inert gold destination perimeters and compact n
 decorations neither infer matches nor create controls, intents, legal actions, CardViews, or state
 transitions. The semantic overlay remains the sole activation surface. See
 [`ADR 0029`](./adr/0029-phase-3f-j-legal-destination-pulse.md).
+
+Phase 6A adds focused `fair-heuristic-ai.test.ts` and `cpu-round-runtime.test.ts` coverage plus a
+bounded deterministic generated gate. The AI test owns literal legal-action, repeatability, and
+hidden-hand mutation checks; the runtime test owns human-only rendering, session-only persistence,
+CPU input locking, and public-event animation handoff. The generated gate runs 360 complete CPU
+trials (three personalities × 3/6/12 formats × 40 fixed seeds), in four sequential timeout-bounded
+shards: enough to cover every personality/format cell and directional aggregate metrics while adding
+less than four percent of Phase 1E's 10,002-match compute budget. Root and Pages browser smoke adds
+CPU lock, public animation, settled-human-turn, and private-redaction artifacts under
+`output/phase-6a/e2e/`. Difficulty, explanations, match-context adaptation, and rollout metrics do
+not enter this gate before Phase 6B/6C.
 
 Phase 2E keeps deck authoring outside the production client. Portable package, transform,
 contact-sheet, and approval contracts live in `packages/deck-format/src`; Sharp, filesystem access,

@@ -2196,7 +2196,7 @@ No CPU function may accept `AuthoritativeGameState`.
 Personality controls preferences:
 
 - **The Timid:** secures points, avoids exposing high-value cards, Banks earlier.
-- **The Monk:** balanced immediate value, denial, yaku development, and match context.
+- **The Monk:** balances immediate value, denial, and yaku development.
 - **The Gambler:** pursues high multipliers and accepts volatility.
 
 Difficulty controls competence:
@@ -2213,17 +2213,29 @@ A difficult Timid remains cautious but makes stronger cautious decisions. A diff
 
 ### Stage 1 — Fair heuristic AI
 
-Score legal actions using:
+Phase 6A receives one `PlayerObservationV1` and returns exactly one existing `LegalActionV1` or
+`null` when the observation has no legal action. It is deterministic and has no random source,
+authoritative-state parameter, private-state reconstruction, command-ID generation, or browser side
+effect. The caller alone turns the returned existing legal action into a command.
+
+Score only the observation's legal actions using:
 
 - immediate captured value;
 - yaku completion;
 - yaku progress;
 - denial from public information;
 - current round month;
-- match score;
 - table multiplier;
 - remaining card counts;
 - personality weights.
+
+Phase 6A is player A (human) versus player B (CPU) for every existing 3/6/12-round match format.
+It is session-only: it does not create or mutate a Phase 5B local save. CPU actions use the same
+accepted command, public-event, and animation path as a human action, while the renderer remains on
+the human observation and never receives the CPU's private hand.
+
+Difficulty tiers, reason/confidence tokens, and match-context adaptation are Phase 6B. Seeded
+noise, hidden-card determinization, rollout/search, and simulation tuning are Phase 6C.
 
 ### Stage 2 — Determinization rollouts
 
@@ -3148,10 +3160,10 @@ Use human-readable fixture files:
 ## 29.4 AI tests
 
 - CPU accepts only `PlayerObservation`.
-- Fixed observation and seed produce fixed command.
+- Fixed observation produces a fixed existing legal action without RNG.
 - No illegal moves over large simulation batches.
 - Personality metrics differ in expected directions.
-- Difficulty improves outcome without changing personality identity.
+- Difficulty improves outcome without changing personality identity only after Phase 6B.
 
 ## 29.5 Presentation tests
 
@@ -3820,9 +3832,13 @@ Phase 5 acceptance:
 
 ### Phase 6A — Fair heuristic AI
 
-- observation-only API;
-- three personalities;
-- legal decisions.
+- `PlayerObservationV1 -> LegalActionV1 | null` only; never `AuthoritativeGameStateV1`;
+- deterministic Timid, Monk, and Gambler preferences over already-issued legal actions;
+- CPU is player B against local human player A for the existing 3/6/12-round formats;
+- CPU commands use the existing public-event animation path while the human projection remains the
+  sole presentation source;
+- session-only CPU play with no local-save mutation, difficulty, reasons, confidence, match-context
+  adaptation, seeded noise, determinization, rollout, online, or Firebase work.
 
 ### Phase 6B — Difficulty and explanations
 

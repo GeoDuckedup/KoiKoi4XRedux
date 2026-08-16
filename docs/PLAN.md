@@ -94,6 +94,43 @@ Status: **deployed, live-verified, and accepted**.
   24/8/8/8 zones, idle unlocked 16 semantic controls, approved `new-primary-deck`, and available idle
   persistence with `lastSavedAt` and round/month 1; clean `shot-2` was inspected.
 
+## Phase 6A contract — fair heuristic AI
+
+Status: **locally complete and accepted; hosted release evidence pending**.
+
+- `apps/web/src/ai` owns a pure deterministic `PlayerObservationV1 -> LegalActionV1 | null` selector.
+  It receives neither authoritative state nor a random source, and it can return only an exact
+  member of the observation's existing legal-action list. The runtime—not the heuristic—creates a
+  command ID and submits it through the existing accepted-command path.
+- Timid, Monk, and Gambler are preference profiles, not difficulty tiers. Phase 6A excludes
+  explanations/reason tokens/confidence, difficulty, match-context adaptation, seeded noise,
+  determinization, rollouts, online/Firebase work, and CPU/practice persistence.
+- CPU matches are session-only player A (human) versus player B (CPU) in every existing 3/6/12
+  format. During a CPU turn, the player-A observation remains the only renderer/text source; the
+  adapter may obtain a transient player-B observation for the heuristic but must never expose that
+  hand. It locks human input and sends the resulting normal legal command through the standard
+  public-event AnimationDirector path.
+- `AI-6A-001` through `AI-6A-005`, ADR 0032, and `npm run validate:phase6a` are locally accepted.
+  Focused paths are `apps/web/tests/fair-heuristic-ai.test.ts` and
+  `apps/web/tests/cpu-round-runtime.test.ts`; generated coverage is 360 deterministic complete
+  trials (3 personalities × 3/6/12 formats × 40 seeds) in four bounded sequential shards. This is
+  intentionally smaller than Phase 1E's 10,002-match rules gate to preserve the hosted 60-minute
+  budget while still covering every personality/format cell and aggregate direction.
+- Focused Root/Pages CPU artifacts pass under `output/phase-6a/e2e/`: CPU input lock, a standard
+  public-event animation frame, settled return to the human, CPU-hand redaction, resume preservation,
+  and landscape option/personality selection. Full seven-viewport baseline remains inherited from
+  Phase 5B.
+- Local closure: `npm run check` passed format/lint/all workspace typechecks/decks, 58 files / 532
+  ordinary tests, 10,002 deterministic seeds (3/6/12 = 3,334 each), and the 783-module production
+  build. `npm run validate:phase6a` passed its retained release deck, technical artifacts, inherited
+  focused/runtime/Workshop/density/Root/Pages/persistence suites, 2 Phase 6A files / 16 tests, four
+  90-trial generated shards with zero illegal/no-action outcomes and directional Bank/Koi metrics, and
+  dedicated Root/Pages CPU smoke. All 26 artifacts plus bundled-client one-canvas/48-CardView/no-
+  diagnostics evidence were inspected; independent Terra final review was B0/H0. Commit/push, hosted
+  CI/Pages, deployment, and live verification remain pending.
+- Nonblocking future hardening: add an explicit landscape Options bounds assertion. Existing CSS and
+  internal scroll behavior, including successful lower-action access, were reviewed.
+
 ## Phase 0 — Rule lock and foundation
 
 ### Phase 0A — Canonical rules decision log

@@ -69,6 +69,7 @@ npm run validate:phase3fi
 npm run validate:phase3fj
 npm run validate:phase5a
 npm run validate:phase5b
+npm run validate:phase6a
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -390,6 +391,23 @@ browser iterations were `ready:true` with one canvas, 48 unique CardViews, 24/8/
 unlocked input with 16 semantic controls, approved `new-primary-deck`, and available idle persistence
 with a saved round/month 1 checkpoint; the clean `shot-2` was visually inspected. Phase 5B is
 deployed, live-verified, and accepted. Next governed phase: Phase 6A fair heuristic AI.
+
+Phase 6A is locally complete and accepted. It adds a deterministic session-only player-A human versus
+player-B CPU mode for the existing 3/6/12 formats. The CPU receives only a
+`PlayerObservationV1` and selects an already-issued legal action through one of three personalities;
+the game continues to animate ordinary public events and never renders the CPU hand. Difficulty,
+explanations, match-context adaptation, deterministic rollouts, online play, and CPU persistence are
+not part of this subphase. Focused production Root and Pages CPU smoke both pass: every personality
+uses a real human action followed by a normal public CPU event/animation sequence, with CPU privacy,
+the `opponentTurn` lock, 1 canvas/48 CardViews, session-only persistence, and portrait/landscape
+artifacts. `npm run check` passed format/lint/all workspace typechecks/decks, 58 files / 532 ordinary
+tests, 10,002 deterministic seeds (3/6/12 = 3,334 each), and the 783-module production build.
+`npm run validate:phase6a` passed unchanged: release deck 48/48, 100 technical artifacts, inherited
+focused/runtime/Workshop/density/Root/Pages/persistence coverage, the two Phase 6A files / 16 tests,
+360 complete AI trials in four 90-trial shards with zero illegal/no-action outcomes and directional
+Bank/Koi metrics, and the dedicated Root/Pages CPU suites. All 26 Phase 6A PNGs and the bundled
+client's one-canvas/48-CardView/no-diagnostics evidence were inspected; independent Terra final review
+reported B0/H0. Commit/push, hosted CI/Pages, deployment, and live verification remain pending.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

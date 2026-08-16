@@ -161,6 +161,7 @@ describe("Phase 2B table diagnostics", () => {
         phase: "awaitingHandPlay",
         handoffPending: false,
       },
+      match: { mode: "local", cpuPersonality: null, cpuTurnState: "idle" },
       simulationTimeMs: 500,
       theme: { activeId: "ink-parchment", optionsOpen: false },
       animation: {
@@ -222,6 +223,13 @@ describe("Phase 2B table diagnostics", () => {
     expect(redacted.input.selectedCardId).toBeNull();
     expect(redacted.input.focusedCardId).toBeNull();
     expect(redactedText).not.toContain("march-curtain");
+
+    const cpu = createTablePreviewSnapshot({
+      ...input,
+      match: { mode: "cpu", cpuPersonality: "gambler", cpuTurnState: "thinking" },
+    });
+    expect(cpu.match).toEqual({ mode: "cpu", cpuPersonality: "gambler", cpuTurnState: "thinking" });
+    expect(serializeTablePreviewSnapshot(cpu)).not.toContain("commandId");
   });
 
   it("shrinks legal field overflow into distinct adaptive slots", () => {

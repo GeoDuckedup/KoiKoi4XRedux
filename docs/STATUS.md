@@ -9,12 +9,39 @@ deployed, live-verified, and accepted; Phase 3F-H active-hand start cue is deplo
 and accepted; Phase 3F-I Reveal start cue is deployed, live-verified, and accepted; Phase 3F-J legal
 destination pulse is deployed, live-verified, and accepted; Phase 5A full local match formats is
 deployed, live-verified, and accepted; Phase 5B local persistence is deployed, live-verified, and
-accepted; Phase 6A fair heuristic AI is next
+accepted; Phase 6A fair heuristic AI is locally complete and accepted; hosted release evidence is pending
 
 **Runtime state:** Complete deterministic headless match engine plus playable browser-local 3/6/12-round
 formats using real player observations and commands, the owner-approved primary deck, persistent Pixi
 cards, deterministic public-event animation, private pass-the-device handoff, accessible recap/result
 evidence, and the retained local-only deterministic deck Workshop/raster review pipeline
+
+## Phase 6A — locally complete and accepted
+
+Phase 6A is scoped to a deterministic, observation-only fair heuristic in `apps/web/src/ai`: one
+`PlayerObservationV1` becomes one exact existing `LegalActionV1` or `null`. It has no authoritative
+state input, RNG, hidden-card reconstruction, command construction, persistence, DOM/Pixi work, or
+online/Firebase dependency. Timid, Monk, and Gambler are the three preference profiles.
+
+The CPU is player B; the local human is player A, and all existing 3/6/12 formats remain available.
+The renderer remains on player A's observation during CPU work, human controls lock, and only the
+ordinary public events enter the existing animation path. CPU matches are session-only and do not
+mutate the one active Phase 5B local save. Difficulty/reasons/confidence/match-context adaptation
+remain 6B; determinization/seeded rollouts/tuning remain 6C.
+
+Focused production Root and Pages CPU smoke both pass. They exercise each personality through a real
+human action, visible `opponentTurn` input lock, standard public event/animation, settled human/result
+boundary, renderer/text privacy, unchanged local save, and the 1-canvas/48-CardView invariant at
+390x844 and 844x390. `npm run check` passed format/lint/all workspace typechecks/decks, 58 files / 532
+ordinary tests, 10,002 deterministic seeds (3/6/12 = 3,334 each), and the 783-module build.
+`npm run validate:phase6a` passed the release deck (48/48), 100 technical artifacts, retained
+focused/runtime/Workshop/density/Root/Pages/persistence coverage, 2 Phase 6A files / 16 tests, 360
+complete AI trials in four 90-trial shards with zero illegal/no-action results and directional Bank/Koi
+metrics, and dedicated Root/Pages CPU smoke. All 26 Phase 6A PNGs and bundled-client one-canvas/48-
+CardView/no-diagnostics evidence were inspected. Independent Terra final review is B0/H0; earlier
+H/M findings were repaired. Commit/push, hosted CI/Pages, deployment, and live verification remain
+pending. A nonblocking future hardening item is an explicit landscape Options bounds assertion;
+CSS/internal scrolling and successful lower-action access were reviewed.
 
 ## Phase 5A — deployed, live-verified, and accepted
 

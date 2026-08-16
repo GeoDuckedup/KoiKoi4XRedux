@@ -86,6 +86,35 @@
         <section class="options-dialog__group" aria-labelledby="options-table-title">
           <h3 id="options-table-title">Table</h3>
           <label>
+            <span>Match type</span>
+            <select data-match-mode-select aria-describedby="match-mode-note">
+              <option value="local" selected>Local pass-and-play</option>
+              <option value="cpu">Play vs CPU</option>
+            </select>
+            <small id="match-mode-note">CPU matches are session-only in this phase.</small>
+          </label>
+          <fieldset class="cpu-personality-options" data-cpu-personality-options hidden>
+            <legend>CPU personality</legend>
+            <label>
+              <input type="radio" name="cpu-personality" value="timid" data-cpu-personality />
+              <span>The Timid</span>
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="cpu-personality"
+                value="monk"
+                data-cpu-personality
+                checked
+              />
+              <span>The Monk</span>
+            </label>
+            <label>
+              <input type="radio" name="cpu-personality" value="gambler" data-cpu-personality />
+              <span>The Gambler</span>
+            </label>
+          </fieldset>
+          <label>
             <span>Match length</span>
             <select data-match-length-select aria-describedby="match-length-note">
               <option value="3" selected>3 rounds</option>
@@ -129,16 +158,27 @@
             <button type="button" data-local-save-primary>Continue</button>
             <button type="button" data-local-save-delete>Delete saved game</button>
             <button type="button" data-local-save-secondary hidden>Back</button>
+            <button type="button" data-local-save-cpu hidden>Play vs CPU (not saved)</button>
           </div>
         </div>
       </dialog>
 
       <section
         class="game-frame"
-        aria-label="Playable local KoiKoi4x Hanafuda round"
+        aria-label="Playable KoiKoi4x Hanafuda round"
         aria-describedby="input-instruction"
       >
         <div class="game-host" data-game-host></div>
+        <section
+          class="cpu-turn-status"
+          data-cpu-turn-status
+          hidden
+          role="status"
+          aria-live="polite"
+        >
+          <p class="eyebrow">CPU match</p>
+          <p data-cpu-turn-copy>The Monk's turn</p>
+        </section>
         <div
           class="card-input-overlay"
           data-card-input-overlay

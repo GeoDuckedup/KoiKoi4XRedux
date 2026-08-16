@@ -9,9 +9,10 @@ const distributionDirectory = process.env.SMOKE_DIST_DIR
   ? resolve(process.env.SMOKE_DIST_DIR)
   : resolve(repositoryRoot, "apps/web/dist");
 const phase5BOnly = process.env.SMOKE_PHASE5B_ONLY === "1";
+const phase6AOnly = process.env.SMOKE_PHASE6A_ONLY === "1";
 const outputDirectory = resolve(
   repositoryRoot,
-  phase5BOnly ? "output/phase-5b/e2e" : "output/phase-5a/e2e",
+  phase6AOnly ? "output/phase-6a/e2e" : phase5BOnly ? "output/phase-5b/e2e" : "output/phase-5a/e2e",
 );
 const requestedBasePath = process.env.SMOKE_BASE_PATH ?? "/";
 const smokeBasePath = `/${requestedBasePath.replace(/^\/+|\/+$/gu, "")}`.replace(/^\/$/u, "/");
@@ -1876,16 +1877,19 @@ async function resolvePendingDrawIfNeeded(page) {
   ) {
     await finishNonVisualGameplayPlan(page);
     await page.waitForFunction(
-      (version) => {
+      ({ version, allowCpuHandoff }) => {
         const state = JSON.parse(window.render_game_to_text());
         return (
           state.localRound.stateVersion > version &&
-          state.animation.status !== "playing" &&
-          state.input.status !== "intentPending" &&
-          state.input.lockReason !== "awaitingObservation"
+          ((allowCpuHandoff &&
+            state.match.mode === "cpu" &&
+            state.localRound.activePlayerId === "player-b") ||
+            (state.animation.status !== "playing" &&
+              state.input.status !== "intentPending" &&
+              state.input.lockReason !== "awaitingObservation"))
         );
       },
-      beforeVersion,
+      { version: beforeVersion, allowCpuHandoff: phase6AOnly },
       { timeout: 30_000 },
     );
     return readState(page);
@@ -1913,16 +1917,19 @@ async function resolvePendingDrawIfNeeded(page) {
   }
   await finishNonVisualGameplayPlan(page);
   await page.waitForFunction(
-    (version) => {
+    ({ version, allowCpuHandoff }) => {
       const state = JSON.parse(window.render_game_to_text());
       return (
         state.localRound.stateVersion > version &&
-        state.animation.status !== "playing" &&
-        state.input.status !== "intentPending" &&
-        state.input.lockReason !== "awaitingObservation"
+        ((allowCpuHandoff &&
+          state.match.mode === "cpu" &&
+          state.localRound.activePlayerId === "player-b") ||
+          (state.animation.status !== "playing" &&
+            state.input.status !== "intentPending" &&
+            state.input.lockReason !== "awaitingObservation"))
       );
     },
-    beforeVersion,
+    { version: beforeVersion, allowCpuHandoff: phase6AOnly },
     { timeout: 30_000 },
   );
   return readState(page);
@@ -2889,6 +2896,378 @@ async function runPhase5BStorageOpenFailureSmoke(browser) {
   }
 }
 
+function cpuPersonalityLabel(personality) {
+  return personality === "timid" ? "Timid" : personality === "gambler" ? "Gambler" : "Monk";
+}
+
+async function installPhase6ACpuTrace(page) {
+  await page.evaluate(() => {
+    globalThis.__phase6aCpuTraceCancel?.();
+    const entries = [];
+    let active = true;
+    const sample = () => {
+      if (!active) return;
+      const state = JSON.parse(globalThis.render_game_to_text());
+      entries.push({
+        activePlayerId: state.localRound.activePlayerId,
+        animationStatus: state.animation.status,
+        clipEventType: state.animation.activeClip?.eventType ?? null,
+        clipKind: state.animation.activeClip?.kind ?? null,
+        cpuTurnState: state.match.cpuTurnState,
+        inputLockReason: state.input.lockReason,
+        phase: state.localRound.phase,
+      });
+      if (entries.length > 1_200) entries.shift();
+      requestAnimationFrame(sample);
+    };
+    globalThis.__phase6aCpuTrace = entries;
+    globalThis.__phase6aCpuTraceCancel = () => {
+      active = false;
+    };
+    sample();
+  });
+}
+
+async function readAndClearPhase6ACpuTrace(page) {
+  return page.evaluate(() => {
+    globalThis.__phase6aCpuTraceCancel?.();
+    const entries = globalThis.__phase6aCpuTrace ?? [];
+    delete globalThis.__phase6aCpuTrace;
+    delete globalThis.__phase6aCpuTraceCancel;
+    return entries;
+  });
+}
+
+async function selectCpuMatchOptions(page, personality, viewport) {
+  await openOptions(page);
+  await page.locator("[data-match-mode-select]").selectOption("cpu");
+  await page.waitForFunction(
+    () => {
+      const options = document.querySelector("[data-cpu-personality-options]");
+      return options instanceof HTMLElement && !options.hidden;
+    },
+    null,
+    { timeout: 30_000 },
+  );
+  await page.locator(`[data-cpu-personality][value="${personality}"]`).check();
+  assert(
+    (await page.locator(`[data-cpu-personality][value="${personality}"]`).isChecked()) === true,
+    `CPU Options did not retain The ${cpuPersonalityLabel(personality)} selection.`,
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `cpu-options-${personality}-${viewport.width}x${viewport.height}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await page.locator("[data-new-round]").click();
+  await page.waitForFunction(
+    (expectedPersonality) => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
+        state.match.mode === "cpu" &&
+        state.match.cpuPersonality === expectedPersonality &&
+        state.localRound.viewerId === "player-a" &&
+        state.localRound.phase === "awaitingHandPlay" &&
+        state.localRound.activePlayerId === "player-a"
+      );
+    },
+    personality,
+    { timeout: 30_000 },
+  );
+}
+
+async function submitHumanCpuHand(page, label) {
+  const before = await readState(page);
+  assert(
+    before.match.mode === "cpu" &&
+      before.localRound.viewerId === "player-a" &&
+      before.localRound.activePlayerId === "player-a" &&
+      before.localRound.phase === "awaitingHandPlay",
+    `${label} did not begin at a human Hand decision: ${JSON.stringify({ match: before.match, localRound: before.localRound })}.`,
+  );
+  const source = page.locator('[data-input-role="selectable"]').first();
+  assert(await source.isVisible(), `${label} has no production human Hand control.`);
+  await source.click({ noWaitAfter: true });
+  await page.waitForFunction(
+    (version) => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
+        state.localRound.stateVersion > version ||
+        state.input.status === "confirming" ||
+        state.input.status === "targeting"
+      );
+    },
+    before.localRound.stateVersion,
+    { timeout: 30_000 },
+  );
+  const selected = await readState(page);
+  if (selected.localRound.stateVersion === before.localRound.stateVersion) {
+    const target = page.locator('[data-input-role="target"]').first();
+    if ((await target.count()) > 0) await target.click({ noWaitAfter: true });
+    else await activateSettledFieldPlacement(page, `${label} selected Hand card`);
+  }
+  await finishNonVisualGameplayPlan(page);
+  await page.waitForFunction(
+    (version) => {
+      const state = JSON.parse(window.render_game_to_text());
+      return state.localRound.stateVersion > version;
+    },
+    before.localRound.stateVersion,
+    { timeout: 30_000 },
+  );
+  for (let step = 0; step < 4; step += 1) {
+    const state = await readState(page);
+    if (state.localRound.activePlayerId === "player-b") return;
+    if (
+      state.localRound.activePlayerId === "player-a" &&
+      state.localRound.phase === "awaitingYakuDecision"
+    ) {
+      const koiKoi = page.locator("[data-yaku-koi-koi]");
+      assert(
+        (await koiKoi.isVisible()) && (await koiKoi.isEnabled()),
+        `${label} human Yaku continuation did not offer Koi-Koi.`,
+      );
+      await koiKoi.click({ noWaitAfter: true });
+      await page.waitForFunction(
+        (version) => JSON.parse(window.render_game_to_text()).localRound.stateVersion > version,
+        state.localRound.stateVersion,
+        { timeout: 30_000 },
+      );
+      continue;
+    }
+    if (
+      state.localRound.activePlayerId === "player-a" &&
+      state.localRound.phase === "awaitingDrawResolution"
+    ) {
+      await resolvePendingDrawIfNeeded(page);
+      continue;
+    }
+    throw new Error(
+      `${label} did not reach a CPU handoff after a normal human continuation: ${JSON.stringify({ localRound: state.localRound, input: state.input })}.`,
+    );
+  }
+  throw new Error(`${label} did not hand off to the CPU within the bounded human continuation.`);
+}
+
+async function finishCpuTurnToHumanOrResult(page, label) {
+  for (let step = 0; step < 8; step += 1) {
+    const state = await readState(page);
+    if (
+      state.localRound.activePlayerId === "player-a" ||
+      state.localRound.phase === "roundComplete" ||
+      state.localRound.phase === "matchComplete"
+    ) {
+      return state;
+    }
+    await page.evaluate(() => window.advanceTime(5_000));
+    await page.waitForTimeout(25);
+  }
+  throw new Error(`${label} did not return CPU play to the human or a committed result.`);
+}
+
+async function assertCpuPresentationPrivacy(page, state, label) {
+  const recipientText = await page.locator("body").innerText();
+  const serialized = JSON.stringify(state);
+  const forbiddenText = [
+    "cpuObservation",
+    "cpuLegalActions",
+    "cpuOwnHand",
+    "cpuSelectedCard",
+    "cpuReason",
+    "cpuCommand",
+    "cpuSeed",
+    "AuthoritativeGameState",
+  ];
+  for (const token of forbiddenText) {
+    assert(
+      !serialized.includes(token) && !recipientText.includes(token),
+      `${label} leaked forbidden CPU diagnostic data: ${token}.`,
+    );
+  }
+  assert(
+    !state.cards.visibleViews.some(({ zone }) => zone === "opponentHand"),
+    `${label} exposed an opponent-hand CardId through recipient-visible card views.`,
+  );
+  assert(
+    state.localRound.viewerId === "player-a" &&
+      state.localRound.handoffPending === false &&
+      state.input.selectedCardId === null,
+    `${label} did not retain the human-only observer/no-handoff/no-selected-card boundary.`,
+  );
+}
+
+async function exerciseCpuPersonalityTurn(
+  page,
+  personality,
+  viewport,
+  { fromResume = false } = {},
+) {
+  const label = `CPU ${personality} ${viewport.width}x${viewport.height}`;
+  await installPhase6ACpuTrace(page);
+  await submitHumanCpuHand(page, label);
+  await page.waitForFunction(
+    (expectedPersonality) => {
+      const state = JSON.parse(window.render_game_to_text());
+      const status = document.querySelector("[data-cpu-turn-status]");
+      return (
+        state.match.mode === "cpu" &&
+        state.match.cpuPersonality === expectedPersonality &&
+        state.localRound.viewerId === "player-a" &&
+        state.localRound.activePlayerId === "player-b" &&
+        status instanceof HTMLElement &&
+        !status.hidden
+      );
+    },
+    personality,
+    { timeout: 30_000 },
+  );
+  const cpuTurn = await readState(page);
+  const cpuCopy = (await page.locator("[data-cpu-turn-status]").textContent()) ?? "";
+  assert(
+    cpuCopy.includes(`The ${cpuPersonalityLabel(personality)}`) &&
+      cpuTurn.match.cpuTurnState === "thinking" &&
+      cpuTurn.input.lockReason === "opponentTurn" &&
+      (await actionableSemanticControlCount(page)) === 0,
+    `${label} did not expose the correct visible opponentTurn lock: ${JSON.stringify({ cpuCopy, input: cpuTurn.input, match: cpuTurn.match })}.`,
+  );
+  await assertCpuPresentationPrivacy(page, cpuTurn, `${label} during CPU turn`);
+  assert(
+    cpuTurn.canvasCount === 1 && cpuTurn.cards.cardViewCount === 48,
+    `${label} changed the one-canvas/48-CardView runtime.`,
+  );
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `cpu-turn-${personality}-${viewport.width}x${viewport.height}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).animation.status === "playing",
+    null,
+    { timeout: 30_000 },
+  );
+  const animation = await readState(page);
+  assert(
+    animation.animation.activeClip !== null &&
+      animation.animation.activeClip.eventType !== null &&
+      animation.animation.activeClip.eventType !== undefined,
+    `${label} CPU command did not enter the standard public-event animation path.`,
+  );
+  await page.evaluate(
+    () =>
+      new Promise((resolvePromise) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolvePromise)),
+      ),
+  );
+  await page.waitForTimeout(100);
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `cpu-animation-${personality}-${viewport.width}x${viewport.height}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  const settled = await finishCpuTurnToHumanOrResult(page, label);
+  const trace = await readAndClearPhase6ACpuTrace(page);
+  assert(
+    trace.some((entry) => entry.inputLockReason === "opponentTurn") &&
+      trace.some((entry) => entry.animationStatus === "playing" && entry.clipEventType !== null),
+    `${label} did not retain observable opponentTurn plus public-event animation evidence.`,
+  );
+  assert(
+    settled.localRound.handoffPending === false &&
+      settled.canvasCount === 1 &&
+      settled.cards.cardViewCount === 48 &&
+      (settled.localRound.activePlayerId === "player-a" || settled.result !== null),
+    `${label} did not settle at the human/result boundary.`,
+  );
+  await assertCpuPresentationPrivacy(page, settled, `${label} after CPU turn`);
+  await page.screenshot({
+    path: resolve(
+      outputDirectory,
+      `cpu-settled-${personality}-${viewport.width}x${viewport.height}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+    ),
+    fullPage: true,
+  });
+  if (fromResume) {
+    await page.screenshot({
+      path: resolve(
+        outputDirectory,
+        `cpu-privacy-${personality}-${viewport.width}x${viewport.height}${smokeBasePath === "/" ? "" : "-pages"}.png`,
+      ),
+      fullPage: true,
+    });
+  }
+}
+
+async function runPhase6ACpuSmoke(page, browserErrors, networkErrors) {
+  const suffix = smokeBasePath === "/" ? "" : "-pages";
+  const portrait = { width: 390, height: 844 };
+  const landscape = { width: 844, height: 390 };
+  await page.setViewportSize(portrait);
+  await page.goto(pageUrl, { waitUntil: "domcontentloaded" });
+  await waitForApplicationReady(page, browserErrors, networkErrors);
+  const opening = await readState(page);
+  const savedLocal = await waitForPersistedCheckpoint(page, opening.localRound.stateVersion);
+  assert(
+    savedLocal.exists && savedLocal.saveId !== null,
+    "CPU smoke could not establish its local-save preservation control.",
+  );
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await waitForApplicationReady(page, browserErrors, networkErrors);
+  await page.waitForFunction(
+    () => JSON.parse(window.render_game_to_text()).persistence.promptKind === "resume",
+    null,
+    { timeout: 30_000 },
+  );
+  assert(
+    await page.locator("[data-local-save-cpu]").isVisible(),
+    "Saved-match resume did not expose the session-only Play vs CPU entry.",
+  );
+  await page.screenshot({
+    path: resolve(outputDirectory, `cpu-resume-start-390x844${suffix}.png`),
+    fullPage: true,
+  });
+  await page.locator("[data-local-save-cpu]").click();
+  await page.waitForFunction(
+    () => {
+      const state = JSON.parse(window.render_game_to_text());
+      return (
+        state.persistence.promptKind === null &&
+        state.match.mode === "cpu" &&
+        state.match.cpuPersonality === "monk" &&
+        state.localRound.viewerId === "player-a" &&
+        state.localRound.activePlayerId === "player-a"
+      );
+    },
+    null,
+    { timeout: 30_000 },
+  );
+  await exerciseCpuPersonalityTurn(page, "monk", portrait, { fromResume: true });
+
+  await page.setViewportSize(portrait);
+  await selectCpuMatchOptions(page, "timid", portrait);
+  await exerciseCpuPersonalityTurn(page, "timid", portrait);
+
+  await page.setViewportSize(landscape);
+  await selectCpuMatchOptions(page, "gambler", landscape);
+  await exerciseCpuPersonalityTurn(page, "gambler", landscape);
+
+  const savedAfterCpu = await inspectActiveLocalSave(page);
+  assert(
+    savedAfterCpu.exists &&
+      savedAfterCpu.saveId === savedLocal.saveId &&
+      savedAfterCpu.matchId === savedLocal.matchId &&
+      savedAfterCpu.stateVersion === savedLocal.stateVersion,
+    "Session-only CPU play mutated or replaced the saved local match.",
+  );
+  assert(browserErrors.length === 0, "Phase 6A browser console reported errors.");
+  assert(networkErrors.length === 0, "Phase 6A browser network reported errors.");
+}
+
 async function playHandCardThroughFeedbackBeat(page, cardId) {
   await acceptHandoffIfPending(page);
   await resolvePendingDrawIfNeeded(page);
@@ -2998,7 +3377,7 @@ assert(
   "The non-shipping Phase 3D-D density harness entered the production build.",
 );
 process.stdout.write(
-  `${phase5BOnly ? "Phase 5B" : "Phase 5A"} smoke server ready at ${pageUrl}.\n`,
+  `${phase6AOnly ? "Phase 6A" : phase5BOnly ? "Phase 5B" : "Phase 5A"} smoke server ready at ${pageUrl}.\n`,
 );
 
 let browser;
@@ -3024,7 +3403,15 @@ try {
       networkErrors.push(`response: ${response.status()} ${response.url()}`);
   });
 
-  if (phase5BOnly) {
+  if (phase6AOnly) {
+    try {
+      await runPhase6ACpuSmoke(page, browserErrors, networkErrors);
+    } catch (error) {
+      console.error("Phase 6A CPU smoke failed with safe structural diagnostics.", error);
+      throw error;
+    }
+    process.stdout.write("Phase 6A Root/Pages CPU smoke passed.\n");
+  } else if (phase5BOnly) {
     await runPhase5BPersistenceSmoke(page, browserErrors, networkErrors);
     await runPhase5BDecisionResumeSmoke(browser);
     await runPhase5BMatchCompleteResumeSmoke(browser);

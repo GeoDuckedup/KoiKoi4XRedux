@@ -2,6 +2,31 @@ Original prompt: read the package and understand it, then let me know when we ar
 
 # KoiKoi4x Progress
 
+## 2026-08-16 — Phase 6A locally complete and accepted
+
+- ADR 0032 and `AI-6A-001`–`AI-6A-005` lock the implemented local observation-only deterministic
+  `PlayerObservationV1 -> LegalActionV1 | null` heuristic in `apps/web/src/ai`, with Timid, Monk,
+  and Gambler preferences over existing legal actions. The local CPU runtime, Options selection, and
+  focused test paths are complete and locally accepted.
+- Player A remains the human renderer and player B is the session-only CPU in all existing 3/6/12
+  formats. CPU actions must use the normal public-event animation path while human input is locked;
+  the CPU hand must never enter renderer/text/DOM state. No local-save mutation, difficulty,
+  reasons/confidence, match-context adaptation, seeded noise, determinization, rollout, Firebase,
+  or online work is authorized in 6A.
+- `npm run check` passed format/lint/all workspace typechecks/decks, 58 files / 532 ordinary tests,
+  10,002 deterministic seeds (3/6/12 = 3,334 each), and the 783-module production build.
+  `npm run validate:phase6a` passed release deck 48/48, 100 technical artifacts, inherited 17
+  focused files / 247 tests, Workshop, 14 Root/Pages density, retained full Root+Pages through real
+  3-round/rematch, persistence 3 files / 38 plus dedicated Root/Pages, Phase 6A focused 2 files / 16,
+  360 complete AI trials in four 90-trial shards with zero illegal/no-action and directional Bank/Koi,
+  and dedicated Phase 6A Root+Pages.
+- All 26 Phase 6A PNGs and bundled client one-canvas/48-CardView/no-diagnostics evidence were
+  inspected. Independent Terra final review was B0/H0 after repairs to legal-action preview,
+  production-B hidden mutation, metrics, `opponentTurn` precedence, Pages keyboard placement,
+  screenshot settlement, and documentation. Commit/push, hosted CI/Pages, deployment, and live
+  verification remain pending. Nonblocking future hardening: explicit landscape Options bounds
+  assertion; CSS/internal scroll and successful lower action were reviewed.
+
 ## 2026-08-16 — Phase 5B deployed, live-verified, and accepted
 
 - Phase 5B now has local acceptance for one strict private `mode: "local"` IndexedDB checkpoint:

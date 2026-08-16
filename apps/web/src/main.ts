@@ -21,6 +21,7 @@ import {
 import { createCardInspectionPresentation } from "./game/card-inspection";
 import { createContextualHelpPresentation } from "./game/contextual-help";
 import {
+  createCpuRoundRuntime,
   createLocalRoundRuntime,
   createFreshLocalMatchSeed,
   PHASE_3A_MATCH_ID,
@@ -30,6 +31,7 @@ import {
   type LocalRoundRuntimeV1,
   type LocalRoundTransitionV1,
 } from "./game/local-round-runtime";
+import { chooseFairCpuAction, type CpuPersonalityV1 } from "./ai/fair-heuristic";
 import {
   createIndexedDbLocalSaveRepository,
   createLocalSaveStore,
@@ -154,11 +156,17 @@ const localSaveDialogWarning = queryRequired<HTMLElement>("[data-local-save-dial
 const localSavePrimary = queryRequired<HTMLButtonElement>("[data-local-save-primary]");
 const localSaveDelete = queryRequired<HTMLButtonElement>("[data-local-save-delete]");
 const localSaveSecondary = queryRequired<HTMLButtonElement>("[data-local-save-secondary]");
+const localSaveCpu = queryRequired<HTMLButtonElement>("[data-local-save-cpu]");
 const themeOptions = Object.freeze([
   ...document.querySelectorAll<HTMLInputElement>("[data-theme-option]"),
 ]);
 const fullscreenButton = queryRequired<HTMLButtonElement>("[data-fullscreen-button]");
 const matchLengthSelect = queryRequired<HTMLSelectElement>("[data-match-length-select]");
+const matchModeSelect = queryRequired<HTMLSelectElement>("[data-match-mode-select]");
+const cpuPersonalityOptions = queryRequired<HTMLElement>("[data-cpu-personality-options]");
+const cpuPersonalityInputs = Object.freeze([
+  ...document.querySelectorAll<HTMLInputElement>("[data-cpu-personality]"),
+]);
 const deckSelect = queryRequired<HTMLSelectElement>("[data-deck-select]");
 const cardInputOverlay = queryRequired<HTMLElement>("[data-card-input-overlay]");
 const handPlayAttention = queryRequired<HTMLElement>("[data-hand-play-attention]");
@@ -186,6 +194,8 @@ const handoff = queryRequired<HTMLElement>("[data-handoff]");
 const handoffTitle = queryRequired<HTMLElement>("[data-handoff-title]");
 const handoffDescription = queryRequired<HTMLElement>("[data-handoff-description]");
 const handoffReady = queryRequired<HTMLButtonElement>("[data-handoff-ready]");
+const cpuTurnStatus = queryRequired<HTMLElement>("[data-cpu-turn-status]");
+const cpuTurnCopy = queryRequired<HTMLElement>("[data-cpu-turn-copy]");
 const recapList = queryRequired<HTMLOListElement>("[data-turn-recaps]");
 const latestRecap = queryRequired<HTMLElement>("[data-latest-recap]");
 const yakuFeedback = queryRequired<HTMLElement>("[data-yaku-feedback]");
@@ -242,6 +252,12 @@ let animationDirector: AnimationDirectorV1 | undefined;
 let interactionController: InteractionControllerV1 | undefined;
 let domCardBridge: DomCardBridgeV1 | undefined;
 let selectedMatchLength: MatchLength = 3;
+let selectedMatchMode: "cpu" | "local" = "local";
+let activeMatchMode: "cpu" | "local" = "local";
+let selectedCpuPersonality: CpuPersonalityV1 = "monk";
+let activeCpuPersonality: CpuPersonalityV1 = "monk";
+let cpuTurnState: "idle" | "thinking" = "idle";
+let cpuTurnQueued = false;
 let runtime: LocalRoundRuntimeV1 = createLocalRoundRuntime({ matchLength: selectedMatchLength });
 let observation: PlayerObservationV1 = runtime.observe();
 let projection: PresentationBoardProjection = projectObservationToBoard(observation);
@@ -343,11 +359,46 @@ function activePlayerId(phase: PublicPhaseV1): PlayerId | null {
 }
 
 function playerName(playerId: PlayerId): string {
+  if (activeMatchMode === "cpu" && playerId === "player-b") {
+    return `The ${activeCpuPersonality === "timid" ? "Timid" : activeCpuPersonality === "gambler" ? "Gambler" : "Monk"}`;
+  }
   return playerId === "player-a" ? "Player A" : "Player B";
 }
 
 function otherPlayer(playerId: PlayerId): PlayerId {
   return playerId === "player-a" ? "player-b" : "player-a";
+}
+
+function isCpuTurn(): boolean {
+  const phase = observation.publicState.phase;
+  return (
+    activeMatchMode === "cpu" &&
+    phase.kind !== "roundComplete" &&
+    phase.kind !== "matchComplete" &&
+    phase.playerId === "player-b"
+  );
+}
+
+function cpuTurnMessage(): string {
+  const name = playerName("player-b");
+  const phase = observation.publicState.phase;
+  if (phase.kind === "awaitingDrawResolution") return `${name} is resolving the Draw.`;
+  if (phase.kind === "awaitingYakuDecision") return `${name} is choosing Bank or Koi-Koi.`;
+  return cpuTurnState === "thinking" ? `${name} is choosing a card.` : `${name}'s turn.`;
+}
+
+function syncMatchControls(): void {
+  matchModeSelect.value = selectedMatchMode;
+  cpuPersonalityOptions.hidden = selectedMatchMode !== "cpu";
+  for (const input of cpuPersonalityInputs) {
+    input.checked = input.value === selectedCpuPersonality;
+  }
+}
+
+function renderCpuTurnStatus(): void {
+  const visible = isCpuTurn();
+  cpuTurnStatus.hidden = !visible;
+  cpuTurnCopy.textContent = visible ? cpuTurnMessage() : "";
 }
 
 function tableStatusModel(): TableSceneStatusV1 {
@@ -414,6 +465,11 @@ function snapshot() {
       commandCount,
       matchLength: observation.publicState.matchLength,
     },
+    match: {
+      mode: activeMatchMode,
+      cpuPersonality: activeMatchMode === "cpu" ? activeCpuPersonality : null,
+      cpuTurnState,
+    },
     persistence: {
       status: persistenceStatusKind,
       promptKind: persistencePromptKind,
@@ -452,6 +508,7 @@ function snapshot() {
 
 function currentInputLock(): InputLockReason | null {
   if (deckStatus === "loading") return "deckLoading";
+  if (isCpuTurn()) return "opponentTurn";
   if (animationDirector?.isBusy()) return "animation";
   if (processingIntent) return "awaitingObservation";
   if (captureInspector.open) return "remoteReplay";
@@ -820,6 +877,7 @@ function renderLocalSavePrompt(kind: "corrupt" | "delete" | "fresh" | "resume"):
   localSaveDialogWarning.hidden = true;
   localSaveDialogWarning.textContent = "";
   localSaveSecondary.hidden = true;
+  localSaveCpu.hidden = kind !== "resume";
   localSaveDelete.hidden = false;
   if (kind === "resume" && save) {
     const complete = save.authoritativeState.phase.kind === "matchComplete";
@@ -885,7 +943,14 @@ function closeLocalSavePrompt(): void {
 }
 
 async function persistStableRuntime(): Promise<void> {
-  if (!ready || !persistenceAvailable || processingIntent || animationDirector?.isBusy()) return;
+  if (
+    activeMatchMode !== "local" ||
+    !ready ||
+    !persistenceAvailable ||
+    processingIntent ||
+    animationDirector?.isBusy()
+  )
+    return;
   persistenceStatusKind = "saving";
   try {
     await localSaveStore.queueSnapshot(runtime.snapshot());
@@ -955,6 +1020,10 @@ function showPrivateResumeHandoff(): void {
 async function continueSavedMatch(): Promise<void> {
   if (pendingResumeSave === null || !animationDirector) return;
   try {
+    activeMatchMode = "local";
+    selectedMatchMode = "local";
+    cpuTurnState = "idle";
+    syncMatchControls();
     runtime = restoreLocalRoundRuntime(localSaveSnapshot(pendingResumeSave));
     observation = runtime.observe();
     projection = projectObservationToBoard(observation);
@@ -1017,6 +1086,7 @@ function requestFreshLocalMatch(
 
 function inputMessage(inspection: InputInteractionInspectionV1): string {
   if (handoffPlayerId) return `Pass the device to ${playerName(handoffPlayerId)}.`;
+  if (isCpuTurn()) return cpuTurnMessage();
   if (inspection.status === "intentPending") return "Move accepted. Updating the local round.";
   if (inspection.status === "locked") {
     if (inspection.lockReason === "roundTransition") return "The round is complete.";
@@ -1527,6 +1597,7 @@ function refreshInteractionSurface(): void {
   renderSemanticCardBridge();
   renderYakuPresentation(inspection);
   renderRoundResult();
+  renderCpuTurnStatus();
   inputInstruction.textContent = inputMessage(inspection);
   updateControls();
   application?.render();
@@ -1605,22 +1676,11 @@ function recordCompletedTurn(transition: LocalRoundTransitionV1): void {
   renderRecaps();
 }
 
-async function executeIntent(intent: InputCommandIntentV1): Promise<void> {
-  if (!animationDirector || processingIntent) return;
-  processingIntent = true;
-  refreshYakuPresentation();
-  status.textContent = "Move accepted by the local engine. Replaying the public result…";
-  refreshInteractionSurface();
-  let transition: LocalRoundTransitionV1;
-  try {
-    transition = runtime.submit(intent);
-  } catch (error: unknown) {
-    status.textContent = `The move was rejected without changing the table: ${error instanceof Error ? error.message : "unknown error"}`;
-    processingIntent = false;
-    refreshInteractionSurface();
-    return;
-  }
-
+async function executeCommittedTransition(
+  transition: LocalRoundTransitionV1,
+  actor: "cpu" | "human",
+): Promise<void> {
+  if (!animationDirector) return;
   commandCount += 1;
   let animationSettledNormally = true;
   try {
@@ -1649,10 +1709,10 @@ async function executeIntent(intent: InputCommandIntentV1): Promise<void> {
     observation = transition.after;
     recordCompletedTurn(transition);
     interactionController?.replaceSource(createInteractionSourceFromObservation(observation));
-    handoffPlayerId = transition.handoffPlayerId;
+    handoffPlayerId = activeMatchMode === "local" ? transition.handoffPlayerId : null;
     refreshYakuPresentation(transition.events, transition.before);
     refreshRoundResultPresentation(transition.events);
-    if (yakuPresentation.feedback) {
+    if (yakuPresentation.feedback && actor === "human") {
       refreshInteractionSurface();
       await waitForYakuFeedbackBeat();
     }
@@ -1663,7 +1723,7 @@ async function executeIntent(intent: InputCommandIntentV1): Promise<void> {
       handoffReady.textContent = `${playerName(handoffPlayerId)} ready`;
       status.textContent = `Turn complete. Pass the device to ${playerName(handoffPlayerId)}.`;
     } else if (transition.roundComplete) {
-      status.textContent = "The local round is complete. Review the recap or start a new round.";
+      status.textContent = "The round is complete. Review the recap or start a new round.";
     } else if (!animationSettledNormally) {
       status.textContent = "Move applied. Presentation settled directly to the confirmed state.";
     } else {
@@ -1674,8 +1734,63 @@ async function executeIntent(intent: InputCommandIntentV1): Promise<void> {
     console.error(error);
   } finally {
     processingIntent = false;
+    cpuTurnState = isCpuTurn() ? "thinking" : "idle";
     refreshInteractionSurface();
     await persistStableRuntime();
+    queueCpuTurn();
+  }
+}
+
+async function executeIntent(intent: InputCommandIntentV1): Promise<void> {
+  if (
+    !animationDirector ||
+    processingIntent ||
+    (activeMatchMode !== "local" && intent.actorId !== "player-a")
+  )
+    return;
+  processingIntent = true;
+  refreshYakuPresentation();
+  status.textContent = "Move accepted by the local engine. Replaying the public result…";
+  refreshInteractionSurface();
+  let transition: LocalRoundTransitionV1;
+  try {
+    transition = runtime.submit(intent);
+  } catch (error: unknown) {
+    status.textContent = `The move was rejected without changing the table: ${error instanceof Error ? error.message : "unknown error"}`;
+    processingIntent = false;
+    refreshInteractionSurface();
+    return;
+  }
+  await executeCommittedTransition(transition, "human");
+}
+
+function queueCpuTurn(): void {
+  if (activeMatchMode !== "cpu" || !isCpuTurn() || processingIntent || cpuTurnQueued) return;
+  cpuTurnQueued = true;
+  queueMicrotask(() => {
+    cpuTurnQueued = false;
+    void executeCpuTurn();
+  });
+}
+
+async function executeCpuTurn(): Promise<void> {
+  if (!animationDirector || activeMatchMode !== "cpu" || !isCpuTurn() || processingIntent) return;
+  processingIntent = true;
+  cpuTurnState = "thinking";
+  status.textContent = cpuTurnMessage();
+  refreshInteractionSurface();
+  await Promise.resolve();
+  try {
+    const cpuObservation = runtime.observeFor("player-b");
+    const action = chooseFairCpuAction(cpuObservation, activeCpuPersonality);
+    if (action === null) throw new Error("CPU_ACTION_MISSING: CPU turn has no legal action.");
+    const transition = runtime.submitCpuAction(action);
+    await executeCommittedTransition(transition, "cpu");
+  } catch (error: unknown) {
+    processingIntent = false;
+    cpuTurnState = "idle";
+    status.textContent = `CPU turn could not continue: ${error instanceof Error ? error.message : "unknown error"}`;
+    refreshInteractionSurface();
   }
 }
 
@@ -1718,14 +1833,18 @@ async function startFreshLocalMatch(
   completedMatchLength: MatchLength | null = null,
 ): Promise<void> {
   if (!animationDirector) return;
-  if (isYakuDecisionOpen()) {
+  if (isYakuDecisionOpen() && !localSaveDialog.open) {
     status.textContent = "Resolve the Bank or Koi-Koi decision before starting a fresh match.";
     return;
   }
-  if (isRoundResultOpen() && !fromResultAction) {
+  if (isRoundResultOpen() && !fromResultAction && !localSaveDialog.open) {
     status.textContent = "Use the round-result action before starting a fresh match.";
     return;
   }
+  activeMatchMode = "local";
+  selectedMatchMode = "local";
+  cpuTurnState = "idle";
+  syncMatchControls();
   restartCount += 1;
   const matchLength = resolveFreshLocalMatchLength(selectedMatchLength, completedMatchLength);
   runtime = createLocalRoundRuntime({
@@ -1745,6 +1864,7 @@ async function startFreshLocalMatch(
   await animationDirector.cancelAndSnapTo(projection);
   interactionController = createController();
   renderRecaps();
+  if (localSaveDialog.open) closeLocalSavePrompt();
   redraw();
   status.textContent =
     observation.publicState.phase.kind === "roundComplete" ||
@@ -1753,6 +1873,71 @@ async function startFreshLocalMatch(
       : `New ${matchLength}-round match. Player A may select a hand card.`;
   refreshInteractionSurface();
   await persistStableRuntime();
+}
+
+async function startFreshCpuMatch(
+  fromResultAction = false,
+  completedMatchLength: MatchLength | null = null,
+  allowAbandonSavedLocalView = false,
+): Promise<void> {
+  if (!animationDirector) return;
+  if (isYakuDecisionOpen() && !localSaveDialog.open && !allowAbandonSavedLocalView) {
+    status.textContent = "Resolve the Bank or Koi-Koi decision before starting a fresh match.";
+    return;
+  }
+  if (
+    isRoundResultOpen() &&
+    !fromResultAction &&
+    !localSaveDialog.open &&
+    !allowAbandonSavedLocalView
+  ) {
+    status.textContent = "Use the round-result action before starting a fresh match.";
+    return;
+  }
+  activeMatchMode = "cpu";
+  selectedMatchMode = "cpu";
+  activeCpuPersonality = selectedCpuPersonality;
+  cpuTurnState = "idle";
+  syncMatchControls();
+  restartCount += 1;
+  const matchLength = resolveFreshLocalMatchLength(selectedMatchLength, completedMatchLength);
+  runtime = createCpuRoundRuntime({
+    matchId: `${PHASE_3A_MATCH_ID}-cpu-${restartCount}`,
+    matchLength,
+    seed: createFreshLocalMatchSeed(restartCount),
+  });
+  observation = runtime.observe();
+  projection = projectObservationToBoard(observation);
+  refreshYakuPresentation();
+  refreshRoundResultPresentation();
+  pendingTurnEvents = [];
+  recaps.splice(0, recaps.length);
+  commandCount = 0;
+  handoffPlayerId = null;
+  handoff.hidden = true;
+  await animationDirector.cancelAndSnapTo(projection);
+  interactionController = createController();
+  renderRecaps();
+  if (localSaveDialog.open) closeLocalSavePrompt();
+  redraw();
+  status.textContent = `New ${matchLength}-round CPU match against ${playerName("player-b")}. Player A may select a hand card.`;
+  refreshInteractionSurface();
+  queueCpuTurn();
+}
+
+function requestFreshCpuMatch(
+  fromResult = false,
+  completedMatchLength: MatchLength | null = null,
+): void {
+  void startFreshCpuMatch(fromResult, completedMatchLength);
+}
+
+function requestFreshSelectedMatch(
+  fromResult = false,
+  completedMatchLength: MatchLength | null = null,
+): void {
+  if (selectedMatchMode === "cpu") requestFreshCpuMatch(fromResult, completedMatchLength);
+  else requestFreshLocalMatch(fromResult, completedMatchLength);
 }
 
 async function advanceLocalRound(): Promise<void> {
@@ -1768,7 +1953,7 @@ async function advanceLocalRound(): Promise<void> {
     interactionController?.replaceSource(createInteractionSourceFromObservation(observation));
     refreshYakuPresentation(transition.events, transition.before);
     refreshRoundResultPresentation(transition.events);
-    handoffPlayerId = transition.handoffPlayerId;
+    handoffPlayerId = activeMatchMode === "local" ? transition.handoffPlayerId : null;
     await animationDirector.cancelAndSnapTo(projection);
     if (handoffPlayerId) {
       handoffTitle.textContent = `Pass to ${playerName(handoffPlayerId)}`;
@@ -1779,7 +1964,7 @@ async function advanceLocalRound(): Promise<void> {
     } else if (transition.roundComplete) {
       status.textContent = "The automatic result is ready to review.";
     } else {
-      status.textContent = `${playerName(observation.playerId)} is ready. Select a hand card.`;
+      status.textContent = inputMessage(interactionController?.inspect() ?? unavailableInput);
     }
   } catch (error: unknown) {
     status.textContent = `Could not advance the local round: ${error instanceof Error ? error.message : "unknown error"}`;
@@ -1788,6 +1973,7 @@ async function advanceLocalRound(): Promise<void> {
     processingIntent = false;
     refreshInteractionSurface();
     await persistStableRuntime();
+    queueCpuTurn();
   }
 }
 
@@ -1938,6 +2124,23 @@ matchLengthSelect.addEventListener("change", () => {
   selectedMatchLength = value;
   optionsAnnouncement.textContent = `${selectedMatchLength}-round format selected. It will apply when a fresh match starts.`;
 });
+matchModeSelect.addEventListener("change", () => {
+  const mode = matchModeSelect.value;
+  if (mode !== "cpu" && mode !== "local") {
+    matchModeSelect.value = selectedMatchMode;
+    return;
+  }
+  selectedMatchMode = mode;
+  syncMatchControls();
+});
+for (const input of cpuPersonalityInputs) {
+  input.addEventListener("change", () => {
+    if (!input.checked) return;
+    if (input.value !== "timid" && input.value !== "monk" && input.value !== "gambler") return;
+    selectedCpuPersonality = input.value;
+    syncMatchControls();
+  });
+}
 fieldPlacementControl.addEventListener("click", () => {
   interactionController?.confirm();
   refreshInteractionSurface();
@@ -1958,13 +2161,17 @@ yakuKoiKoiButton.addEventListener("click", () => {
 });
 newRoundButton.addEventListener("click", () => {
   closeOptions(false);
-  requestFreshLocalMatch();
+  requestFreshSelectedMatch();
 });
 roundResultAction.addEventListener("click", () => {
   if (resultPresentation && "plan" in resultPresentation.action) {
     void advanceLocalRound();
   } else if (resultPresentation && "result" in resultPresentation.action) {
-    requestFreshLocalMatch(true, resultPresentation.action.result.matchLength);
+    if (activeMatchMode === "cpu") {
+      requestFreshCpuMatch(true, resultPresentation.action.result.matchLength);
+    } else {
+      requestFreshLocalMatch(true, resultPresentation.action.result.matchLength);
+    }
   }
 });
 localSavePrimary.addEventListener("click", () => {
@@ -1986,6 +2193,12 @@ localSaveSecondary.addEventListener("click", () => {
   else if (localSavePromptOrigin === "corrupt") renderLocalSavePrompt("corrupt");
   else if (pendingResumeSave !== null) renderLocalSavePrompt("resume");
   else closeLocalSavePrompt();
+});
+localSaveCpu.addEventListener("click", () => {
+  if (persistencePromptKind !== "resume") return;
+  selectedMatchMode = "cpu";
+  syncMatchControls();
+  void startFreshCpuMatch(false, null, true);
 });
 localSaveDialog.addEventListener("cancel", (event) => {
   event.preventDefault();
@@ -2057,6 +2270,7 @@ window.addEventListener("keydown", (event) => {
 
 async function start(): Promise<void> {
   applyActiveTheme(await themeStore.hydrate());
+  syncMatchControls();
   await prepareLocalSave();
   if (pendingResumeSave !== null) {
     runtime = restoreLocalRoundRuntime(localSaveSnapshot(pendingResumeSave));

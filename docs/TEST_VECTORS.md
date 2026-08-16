@@ -737,7 +737,31 @@ The flattened release gate is `npm run validate:phase5b`; artifacts belong under
 `output/phase-5b/e2e/`. ADR 0031 locks the private authoritative-save boundary. This phase does not
 add Firebase, online authority, CPU/practice saves, or legacy-save migration.
 
-## 32. Approved-decision coverage matrix
+## 32. Phase 6A fair heuristic AI vectors
+
+| ID | Required expectation |
+|---|---|
+| `AI-6A-001-HAND-LEGAL-DETERMINISTIC` | For one frozen active player-B Hand observation with legal Hand actions, each Timid, Monk, and Gambler selector returns an exact existing `LegalActionV1`; repeated calls return the same immutable action and do not create a command. |
+| `AI-6A-002-EXACT-TWO-TARGET` | For a frozen player-B Hand observation whose source has exactly two existing target actions, each selector chooses one exact existing target action deterministically. No selector creates, reorders, or substitutes a Field target. |
+| `AI-6A-003-DRAW-LEGAL-DETERMINISTIC` | For a frozen active player-B Draw-resolution observation, each selector returns the only or one of the already-issued Draw legal actions deterministically; it never derives capture legality from cards or coordinates. |
+| `AI-6A-004-YAKU-PERSONALITY` | One frozen player-B Yaku-decision observation has both existing Bank and Koi-Koi actions. Tuned fixed expectations prove Timid Banks, Gambler calls Koi-Koi, and Monk chooses its explicitly locked balanced action; every result is an existing legal action. |
+| `AI-6A-005-FORCED-KOI` | A frozen final-rule player-B decision observation exposes only Koi-Koi. Every personality returns that existing action, proving the heuristic cannot manufacture an unavailable Bank. |
+
+Phase 6A binding: `apps/web/tests/fair-heuristic-ai.test.ts` owns these literal vectors,
+selector immutability/repeatability, API/source boundary, and hidden-hand mutation proof. The mutation
+changes player A's private hand and corresponding hidden draw allocation while preserving public
+state, player-B hand, phase, and player-B observation; all three player-B decisions must remain
+identical. `apps/web/tests/cpu-round-runtime.test.ts` owns session-only player-A-human/player-B-CPU
+runtime behavior, renderer/text privacy, input lock, and ordinary public-event animation handoff.
+`packages/test-fixtures/tests/phase6a-generated-ai.test.ts` runs 360 complete fixed trials (three
+personalities × 3/6/12 formats × 40 seeds) in four bounded sequential shards. It requires zero illegal
+actions/commands, invariant-valid normal transitions, completion, nonempty cells, and tuned aggregate
+personality direction. Root/Pages smoke passes CPU lock, public-animation, settled-human, redaction,
+resume preservation, and landscape-selection assertions under `output/phase-6a/e2e/`. The locally
+accepted flattened gate is `npm run validate:phase6a`; difficulty/reasons/confidence/match-context adaptation and rollout or
+determinization evidence are expressly not Phase 6A work.
+
+## 33. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

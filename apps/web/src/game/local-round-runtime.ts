@@ -11,6 +11,7 @@ import {
   type AuthoritativeGameStateV1,
   type EngineCheckpointV1,
   type GameplayCommandV1,
+  type LegalActionV1,
   type MatchLength,
   type PlayerId,
   type PlayerObservationV1,
@@ -63,7 +64,17 @@ export interface LocalRoundRuntimeV1 {
   createSource: () => InteractionSourceV1;
   advanceRound: () => LocalRoundTransitionV1;
   observe: () => PlayerObservationV1;
+  /**
+   * Produces a recipient-safe observation without changing the presentation
+   * viewer. CPU callers use this to inspect only their own hand.
+   */
+  observeFor: (playerId: PlayerId) => PlayerObservationV1;
   submit: (intent: InputCommandIntentV1) => LocalRoundTransitionV1;
+  /**
+   * Accepts an exact action offered to CPU player B, but always returns the
+   * transition from the permanent human Player A presentation view.
+   */
+  submitCpuAction: (action: LegalActionV1) => LocalRoundTransitionV1;
   switchViewer: (playerId: PlayerId) => PlayerObservationV1;
   snapshot: () => LocalRoundSnapshotV1;
 }
@@ -120,6 +131,99 @@ function commandFromIntent(intent: InputCommandIntentV1, commandId: string): Gam
   });
 }
 
+function intentFromLegalAction(
+  observation: PlayerObservationV1,
+  action: LegalActionV1,
+): InputCommandIntentV1 {
+  const base = {
+    formatVersion: 1 as const,
+    matchId: observation.publicState.matchId,
+    expectedStateVersion: observation.publicState.stateVersion,
+    actorId: observation.playerId,
+  };
+  if (action.type === "playHandCard") {
+    return deepFreeze({
+      ...base,
+      action: {
+        type: "playHandCard" as const,
+        cardId: action.cardId,
+        ...(action.targetFieldCardId === undefined
+          ? {}
+          : { targetFieldCardId: action.targetFieldCardId }),
+      },
+    });
+  }
+  if (action.type === "resolveDrawCard") {
+    return deepFreeze({
+      ...base,
+      action: {
+        type: "resolveDrawCard" as const,
+        ...(action.targetFieldCardId === undefined
+          ? {}
+          : { targetFieldCardId: action.targetFieldCardId }),
+      },
+    });
+  }
+  return deepFreeze({
+    ...base,
+    action: { type: "chooseYakuDecision" as const, choice: action.choice },
+  });
+}
+
+function sameCardIds(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((cardId, index) => cardId === right[index]);
+}
+
+function sameResolution(
+  left: Extract<LegalActionV1, { readonly type: "playHandCard" }>["resolution"],
+  right: Extract<LegalActionV1, { readonly type: "playHandCard" }>["resolution"],
+): boolean {
+  return (
+    left.kind === right.kind && sameCardIds(left.matchingFieldCardIds, right.matchingFieldCardIds)
+  );
+}
+
+/** Compares the whole offered action, including engine-provided preview metadata. */
+function sameLegalAction(left: LegalActionV1, right: LegalActionV1): boolean {
+  if (left.type !== right.type || left.actorId !== right.actorId) return false;
+  if (left.type === "playHandCard" && right.type === "playHandCard") {
+    return (
+      left.cardId === right.cardId &&
+      left.targetFieldCardId === right.targetFieldCardId &&
+      sameResolution(left.resolution, right.resolution)
+    );
+  }
+  if (left.type === "resolveDrawCard" && right.type === "resolveDrawCard") {
+    return (
+      left.drawnCardId === right.drawnCardId &&
+      left.targetFieldCardId === right.targetFieldCardId &&
+      sameResolution(left.resolution, right.resolution)
+    );
+  }
+  if (left.type !== "chooseYakuDecision" || right.type !== "chooseYakuDecision") {
+    return false;
+  }
+  if (left.choice !== right.choice) return false;
+  if (left.choice === "bank" && right.choice === "bank") {
+    return (
+      left.tableMultiplierAtDecision === right.tableMultiplierAtDecision &&
+      left.scoringMultiplier === right.scoringMultiplier &&
+      left.awardedPoints === right.awardedPoints
+    );
+  }
+  if (left.choice === "koiKoi" && right.choice === "koiKoi") {
+    return (
+      left.currentTableMultiplier === right.currentTableMultiplier &&
+      left.resultingTableMultiplier === right.resultingTableMultiplier
+    );
+  }
+  return false;
+}
+
+function isOfferedCpuAction(offered: readonly LegalActionV1[], candidate: LegalActionV1): boolean {
+  return offered.some((action) => sameLegalAction(action, candidate));
+}
+
 function activeViewerForState(state: AuthoritativeGameStateV1): PlayerId {
   return state.phase.kind === "roundComplete" || state.phase.kind === "matchComplete"
     ? "player-a"
@@ -154,6 +258,8 @@ function createLocalRoundRuntimeInternal(input: {
   let viewerId = input.viewerId;
   let commandSequence = input.commandSequence;
   const observe = (): PlayerObservationV1 => projectPlayerObservation(state, viewerId);
+  const observeFor = (playerId: PlayerId): PlayerObservationV1 =>
+    projectPlayerObservation(state, playerId);
   return {
     get checkpoint() {
       return checkpoint;
@@ -165,6 +271,7 @@ function createLocalRoundRuntimeInternal(input: {
       return viewerId;
     },
     observe,
+    observeFor,
     snapshot: () => deepFreeze({ state, checkpoint }),
     createSource: () => createInteractionSourceFromObservation(observe()),
     advanceRound: () => {
@@ -230,6 +337,37 @@ function createLocalRoundRuntimeInternal(input: {
         roundComplete: state.phase.kind === "roundComplete" || state.phase.kind === "matchComplete",
       });
     },
+    submitCpuAction: (action) => {
+      const cpuObservation = observeFor("player-b");
+      if (
+        state.phase.kind === "roundComplete" ||
+        state.phase.kind === "matchComplete" ||
+        state.phase.playerId !== "player-b" ||
+        !isOfferedCpuAction(cpuObservation.legalActions, action)
+      ) {
+        throw new Error(
+          "CPU_ACTION_INVALID: action was not offered by the current CPU observation.",
+        );
+      }
+      const before = observeFor("player-a");
+      commandSequence += 1;
+      const transition = applyGameplayCommand(
+        state,
+        commandFromIntent(
+          intentFromLegalAction(cpuObservation, action),
+          `${matchId}:command:${commandSequence}`,
+        ),
+      );
+      state = transition.state;
+      const after = observeFor("player-a");
+      return deepFreeze({
+        before,
+        after,
+        events: projectPublicEvents(transition.events),
+        handoffPlayerId: null,
+        roundComplete: state.phase.kind === "roundComplete" || state.phase.kind === "matchComplete",
+      });
+    },
     switchViewer: (playerId) => {
       if (state.phase.kind === "awaitingHandPlay" && state.phase.playerId !== playerId) {
         throw new Error("LOCAL_HANDOFF_INVALID: viewer must be the active player.");
@@ -266,5 +404,36 @@ export function createLocalRoundRuntime(input?: {
     commandSequence: 0,
     state: started.state,
     viewerId: activeViewerForState(started.state),
+  });
+}
+
+/**
+ * A browser-local CPU match keeps Player A as the sole presentation observer.
+ * It deliberately has no persistence API: Phase 5B saves only pass-and-play
+ * local matches.
+ */
+export function createCpuRoundRuntime(input?: {
+  readonly matchId?: string;
+  readonly matchLength?: MatchLength;
+  readonly seed?: string;
+  readonly starterId?: PlayerId;
+}): LocalRoundRuntimeV1 {
+  const matchId = input?.matchId ?? `${PHASE_3B_MATCH_ID}-cpu`;
+  const started = startMatch(
+    {
+      type: "startMatch",
+      commandId: `${matchId}:start`,
+      matchId,
+      expectedStateVersion: 0,
+      matchLength: input?.matchLength ?? 3,
+      starterPolicy: { kind: "provided", playerId: input?.starterId ?? "player-a" },
+    },
+    createSeededRandomSource(input?.seed ?? PHASE_3B_LOCAL_SEED),
+  );
+  return createLocalRoundRuntimeInternal({
+    checkpoint: started.checkpoint,
+    commandSequence: 0,
+    state: started.state,
+    viewerId: "player-a",
   });
 }
