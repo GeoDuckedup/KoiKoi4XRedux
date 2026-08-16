@@ -31,12 +31,12 @@ import {
   type LocalRoundRuntimeV1,
   type LocalRoundTransitionV1,
 } from "./game/local-round-runtime";
+import type { CpuDecisionReasonV1, CpuDifficultyV1, CpuPersonalityV1 } from "./ai/fair-heuristic";
 import {
-  chooseFairCpuDecision,
-  type CpuDecisionReasonV1,
-  type CpuDifficultyV1,
-  type CpuPersonalityV1,
-} from "./ai/fair-heuristic";
+  createCpuSessionRootSeed,
+  createCpuWorkerRequestOwnership,
+  createRolloutCpuClient,
+} from "./ai/rollout-client";
 import {
   createIndexedDbLocalSaveRepository,
   createLocalSaveStore,
@@ -270,6 +270,10 @@ let selectedCpuDifficulty: CpuDifficultyV1 = "standard";
 let activeCpuDifficulty: CpuDifficultyV1 = "standard";
 let cpuTurnState: "idle" | "thinking" = "idle";
 let cpuTurnQueued = false;
+const rolloutCpuClient = createRolloutCpuClient();
+const cpuWorkerOwnership = createCpuWorkerRequestOwnership();
+let cpuRuntimeGeneration = 0;
+let activeCpuRootSeed: string | null = null;
 let latestCpuDecision: {
   readonly confidence: "clear" | "close" | "measured";
   readonly reason: CpuDecisionReasonV1;
@@ -392,6 +396,37 @@ function isCpuTurn(): boolean {
     phase.kind !== "roundComplete" &&
     phase.kind !== "matchComplete" &&
     phase.playerId === "player-b"
+  );
+}
+
+interface CpuRequestContextV1 {
+  readonly generation: number;
+  readonly matchId: string;
+  readonly stateVersion: number;
+  readonly roundNumber: number;
+  readonly restartIdentity: number;
+  readonly personality: CpuPersonalityV1;
+  readonly difficulty: CpuDifficultyV1;
+}
+
+function invalidateCpuRollout(): void {
+  cpuRuntimeGeneration += 1;
+  cpuTurnQueued = false;
+  rolloutCpuClient.invalidate();
+}
+
+function cpuRequestIsCurrent(context: CpuRequestContextV1): boolean {
+  return (
+    context.generation === cpuRuntimeGeneration &&
+    activeMatchMode === "cpu" &&
+    activeCpuRootSeed !== null &&
+    context.matchId === observation.publicState.matchId &&
+    context.stateVersion === observation.publicState.stateVersion &&
+    context.roundNumber === observation.publicState.round.roundNumber &&
+    context.restartIdentity === restartCount &&
+    context.personality === activeCpuPersonality &&
+    context.difficulty === activeCpuDifficulty &&
+    isCpuTurn()
   );
 }
 
@@ -1079,9 +1114,12 @@ function showPrivateResumeHandoff(): void {
 
 async function continueSavedMatch(): Promise<void> {
   if (pendingResumeSave === null || !animationDirector) return;
+  if (processingIntent && !cpuWorkerOwnership.hasPending()) return;
   try {
+    invalidateCpuRollout();
     activeMatchMode = "local";
     selectedMatchMode = "local";
+    activeCpuRootSeed = null;
     cpuTurnState = "idle";
     latestCpuDecision = null;
     syncMatchControls();
@@ -1856,29 +1894,56 @@ function queueCpuTurn(): void {
 
 async function executeCpuTurn(): Promise<void> {
   if (!animationDirector || activeMatchMode !== "cpu" || !isCpuTurn() || processingIntent) return;
+  const cpuObservation = runtime.observeFor("player-b");
+  const rootSeed = activeCpuRootSeed;
+  if (rootSeed === null) return;
+  const requestContext: CpuRequestContextV1 = Object.freeze({
+    generation: cpuRuntimeGeneration,
+    matchId: cpuObservation.publicState.matchId,
+    stateVersion: cpuObservation.publicState.stateVersion,
+    roundNumber: cpuObservation.publicState.round.roundNumber,
+    restartIdentity: restartCount,
+    personality: activeCpuPersonality,
+    difficulty: activeCpuDifficulty,
+  });
+  const workerOwnerId = cpuWorkerOwnership.claim();
+  let currentWorkerFailure = false;
   processingIntent = true;
   cpuTurnState = "thinking";
   status.textContent = cpuTurnMessage();
   refreshInteractionSurface();
-  await Promise.resolve();
   try {
-    const cpuObservation = runtime.observeFor("player-b");
-    const decision = chooseFairCpuDecision(
-      cpuObservation,
-      activeCpuPersonality,
-      activeCpuDifficulty,
-    );
+    const decision = await rolloutCpuClient.choose({
+      observation: cpuObservation,
+      personality: requestContext.personality,
+      difficulty: requestContext.difficulty,
+      rootSeed,
+      restartIdentity: requestContext.restartIdentity,
+    });
+    if (!cpuRequestIsCurrent(requestContext)) return;
     if (decision === null) throw new Error("CPU_ACTION_MISSING: CPU turn has no legal action.");
+    if (!cpuWorkerOwnership.release(workerOwnerId)) return;
     const transition = runtime.submitCpuAction(decision.action);
     await executeCommittedTransition(transition, "cpu", {
       reason: decision.reason,
       confidence: decision.confidence,
     });
-  } catch (error: unknown) {
+  } catch {
+    if (!cpuRequestIsCurrent(requestContext)) return;
+    currentWorkerFailure = true;
     processingIntent = false;
     cpuTurnState = "idle";
-    status.textContent = `CPU turn could not continue: ${error instanceof Error ? error.message : "unknown error"}`;
+    status.textContent = "CPU turn could not continue. Start a fresh match to try again.";
     refreshInteractionSurface();
+  } finally {
+    if (cpuWorkerOwnership.release(workerOwnerId)) {
+      processingIntent = false;
+      cpuTurnState = currentWorkerFailure ? "idle" : isCpuTurn() ? "thinking" : "idle";
+      refreshInteractionSurface();
+      if (!currentWorkerFailure && requestContext.generation === cpuRuntimeGeneration) {
+        queueCpuTurn();
+      }
+    }
   }
 }
 
@@ -1921,6 +1986,7 @@ async function startFreshLocalMatch(
   completedMatchLength: MatchLength | null = null,
 ): Promise<void> {
   if (!animationDirector) return;
+  if (processingIntent && !cpuWorkerOwnership.hasPending()) return;
   if (isYakuDecisionOpen() && !localSaveDialog.open) {
     status.textContent = "Resolve the Bank or Koi-Koi decision before starting a fresh match.";
     return;
@@ -1929,8 +1995,10 @@ async function startFreshLocalMatch(
     status.textContent = "Use the round-result action before starting a fresh match.";
     return;
   }
+  invalidateCpuRollout();
   activeMatchMode = "local";
   selectedMatchMode = "local";
+  activeCpuRootSeed = null;
   cpuTurnState = "idle";
   latestCpuDecision = null;
   syncMatchControls();
@@ -1970,6 +2038,7 @@ async function startFreshCpuMatch(
   allowAbandonSavedLocalView = false,
 ): Promise<void> {
   if (!animationDirector) return;
+  if (processingIntent && !cpuWorkerOwnership.hasPending()) return;
   if (isYakuDecisionOpen() && !localSaveDialog.open && !allowAbandonSavedLocalView) {
     status.textContent = "Resolve the Bank or Koi-Koi decision before starting a fresh match.";
     return;
@@ -1983,10 +2052,12 @@ async function startFreshCpuMatch(
     status.textContent = "Use the round-result action before starting a fresh match.";
     return;
   }
+  invalidateCpuRollout();
   activeMatchMode = "cpu";
   selectedMatchMode = "cpu";
   activeCpuPersonality = selectedCpuPersonality;
   activeCpuDifficulty = selectedCpuDifficulty;
+  activeCpuRootSeed = null;
   cpuTurnState = "idle";
   latestCpuDecision = null;
   syncMatchControls();
@@ -1998,6 +2069,7 @@ async function startFreshCpuMatch(
     seed: createFreshLocalMatchSeed(restartCount),
   });
   observation = runtime.observe();
+  activeCpuRootSeed = createCpuSessionRootSeed(observation.publicState.matchId, restartCount);
   projection = projectObservationToBoard(observation);
   refreshYakuPresentation();
   refreshRoundResultPresentation();
@@ -2034,6 +2106,7 @@ function requestFreshSelectedMatch(
 async function advanceLocalRound(): Promise<void> {
   if (!animationDirector || !resultPresentation || !("plan" in resultPresentation.action)) return;
   if (processingIntent || handoffPlayerId !== null) return;
+  invalidateCpuRollout();
   processingIntent = true;
   refreshInteractionSurface();
   try {
@@ -2311,6 +2384,9 @@ localSaveDialog.addEventListener("cancel", (event) => {
 });
 handoffReady.addEventListener("click", () => void acceptHandoff());
 document.addEventListener("fullscreenchange", updateFullscreenLabel);
+window.addEventListener("pagehide", invalidateCpuRollout);
+window.addEventListener("beforeunload", invalidateCpuRollout);
+window.addEventListener("pageshow", queueCpuTurn);
 window.addEventListener("keydown", (event) => {
   if (captureInspector.open) return;
   if (

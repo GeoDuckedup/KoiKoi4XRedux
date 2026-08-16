@@ -7,8 +7,8 @@ export type CpuPersonalityV1 = (typeof CPU_PERSONALITIES)[number];
 /**
  * Difficulty changes how strongly the selector applies public match pressure.
  * It never changes the personality preference profile or permits hidden-card
- * reconstruction.  Rollouts and seeded variation remain deliberately out of
- * scope until Phase 6C.
+ * reconstruction. Phase 6C adds bounded observation-only belief rollouts;
+ * difficulty controls their fixed budget without widening the input boundary.
  */
 export const CPU_DIFFICULTIES = Object.freeze(["easy", "standard", "hard"] as const);
 
@@ -51,4 +51,17 @@ export type FairCpuDecisionSelectorV1 = (
   observation: PlayerObservationV1,
   personality: CpuPersonalityV1,
   difficulty: CpuDifficultyV1,
+) => CpuDecisionV1 | null;
+
+export interface CpuRolloutBudgetV1 {
+  readonly determinizations: number;
+  readonly depth: number;
+  readonly captureNodeCeiling: number;
+}
+
+export type RolloutCpuDecisionSelectorV1 = (
+  observation: PlayerObservationV1,
+  personality: CpuPersonalityV1,
+  difficulty: CpuDifficultyV1,
+  rootSeed: string,
 ) => CpuDecisionV1 | null;

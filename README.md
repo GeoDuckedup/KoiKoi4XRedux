@@ -71,6 +71,8 @@ npm run validate:phase5a
 npm run validate:phase5b
 npm run validate:phase6a
 npm run validate:phase6b
+npm run test:phase6c:generated:benchmark
+npm run validate:phase6c
 npm run validate:cards
 npm run validate:decks
 npx playwright install chromium
@@ -392,7 +394,8 @@ browser iterations were `ready:true` with one canvas, 48 unique CardViews, 24/8/
 unlocked input with 16 semantic controls, approved `new-primary-deck`, and available idle persistence
 with a saved round/month 1 checkpoint; the clean `shot-2` was visually inspected. Phase 5B is
 deployed, live-verified, and accepted. Phase 6A is deployed, live-verified, and accepted. Phase 6B
-is deployed, live-verified, and accepted. Next governed phase: Phase 6C.
+is deployed, live-verified, and accepted. Phase 6C is locally complete and accepted; hosted release
+and live verification are pending. The next governed phase is Phase 7A.
 
 Phase 6A is locally complete and accepted. It adds a deterministic session-only player-A human versus
 player-B CPU mode for the existing 3/6/12 formats. The CPU receives only a
@@ -450,7 +453,17 @@ started a real 3-round match, played a human no-match Hand and Draw, and observe
 `{mode:cpu,cpuDifficulty:hard,cpuPersonality:monk,cpuDecision:{reason:denyVisibleThreat,confidence:measured},cpuTurnState:idle}`
 and `Claims a visible threat · Measured`; console errors were zero and
 `output/playwright/phase6b-live-monk-hard-390x844.png` was inspected. Phase 6B is deployed,
-live-verified, and accepted; Phase 6C is next.
+live-verified, and accepted; Phase 6C followed and is recorded below.
+
+Phase 6C is locally complete and accepted. ADR 0034 locks an observation-only, non-authoritative belief rollout over
+exact already-issued legal actions: Easy/Standard/Hard use 4/12/24 sampled worlds and 1/2/4 abstract
+capture plies with a 2,048-node cap. A predictable public-derived session seed breaks ties only;
+live authority is never passed/reconstructed, and sampled assignments, seeds, margins, and raw
+scores never enter UI, diagnostics, save/replay data, or public explanations. The generated gate
+passed a benchmark-aware 270-match matrix in four whole-seed shards and wrote only aggregate-safe
+reports under `output/phase-6c/reports/`. Root and Pages worker smoke passed with 12 inspected PNGs;
+independent review was B0/H0. `npm run check` and the complete inherited `validate:phase6c` gate are
+green. Commit, push, hosted CI/Pages, deployment, and live verification remain pending.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

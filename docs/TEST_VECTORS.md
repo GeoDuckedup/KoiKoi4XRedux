@@ -792,7 +792,33 @@ revalidated. Commit, push, hosted CI/Pages, deployment, and live verification re
 determinization, seeded variation, simulation tuning, online work, and CPU persistence are expressly
 not Phase 6B work; Phase 6C is next.
 
-## 34. Approved-decision coverage matrix
+## 34. Phase 6C observation-only rollout and tuning vectors
+
+| ID | Required expectation |
+|---|---|
+| `AI-6C-001-UNSEEN-COMPLEMENT` | From a frozen `PlayerObservationV1`, every belief world contains exactly the canonical unseen-card complement: no public/captured/own-hand card is sampled, no unseen card is duplicated or omitted, and opponent-hand/draw hypothesis counts equal the observation's public counts. No authoritative-state parameter or reconstruction exists. |
+| `AI-6C-002-FIXED-BUDGETS-NODE-CAP` | Easy, Standard, and Hard execute at most 4/12/24 sampled worlds and 1/2/4 abstract capture plies respectively. Every decision stops at or below 2,048 evaluated nodes, including wide legal-action lists and exhausted/unproductive worlds. |
+| `AI-6C-003-SEEDED-REPEATABILITY` | Identical observation, personality, difficulty, and public-derived seed produce byte-equivalent belief summaries and the same action without mutating the observation. Reordering canonical-equal inputs does not change the outcome. |
+| `AI-6C-004-TIE-ONLY-VARIATION` | Different permitted seeds may select different canonically ordered candidates only when their aggregate utilities are equal. A seed cannot add score noise, change personality weights, or overturn any non-tied utility result. |
+| `AI-6C-005-EXACT-OFFERED-ACTION` | A rollout decision is `null` only when no legal action exists; otherwise its action is an exact member of `observation.legalActions`. Abstract rollouts never invent an action, command, event, or legality, and execution remains the normal engine command/public-event/animation path. |
+| `AI-6C-006-HIDDEN-PRIVACY` | CPU code accepts only recipient-safe observation/configuration/seed input. Player A rendering, accessible text, `render_game_to_text`, logs, explanations, and errors expose no CPU card identity, sampled assignment, draw hypothesis, seed, candidate margin, raw score, command/checkpoint, or chain-of-thought. |
+| `AI-6C-007-STALE-RESULT-REJECTION` | A delayed rollout result is ignored after match replacement, mode/configuration change, round advance, or observation/state-version change. Only a result for the current CPU request may be revalidated and submitted, and human input remains correctly locked/unlocked. |
+| `AI-6C-008-SESSION-SAVE-EXPLANATION` | CPU configuration and derived seed remain session-only and neither create nor mutate the Phase 5B local save. The public explanation remains absent during thinking and is computed only after settlement from player-A-safe public action/event facts, not belief internals. |
+| `AI-6C-009-AGGREGATE-REPORT-METRICS` | The Node-only report is canonical and aggregate-only. It covers every personality/difficulty/format cell, labels its bounded opponent policy, and records counts, budget/elapsed data, win rate, average score, average Bank multiplier, Koi-Koi/forced-Koi, lucky/automatic result, no-score rounds, average turns, first-player advantage, zero illegal/no-action outcomes, and a canonical SHA-256. Schema/content scans reject card IDs, assignments, seeds, commands/checkpoints, per-match traces, and raw candidate scores. |
+| `AI-6C-010-ROOT-PAGES-RUNTIME` | Root and repository-prefixed Pages production traces exercise representative rollout CPU turns, standard public-event animation, post-settlement explanation, stale/lifecycle safety, unchanged local save, one canvas/48 CardViews, keyboard/accessibility and portrait/landscape containment, with no rollout internals or browser/network errors. |
+
+Phase 6C binding is accepted locally: focused `apps/web/tests/fair-rollout-ai.test.ts`, retained CPU
+runtime/preview privacy tests, and `packages/test-fixtures/tests/phase6c-generated-ai.test.ts`
+execute the literal vectors. `npm run test:phase6c:generated:benchmark` runs one full 27-match matrix
+before the initial 270-match release report (three personalities × three difficulties × 3/6/12
+formats × ten seeds). Four sequential shards own complete seed matrices in a 3/3/2/2 split and are
+independently timeout-bounded. Root/Pages artifacts belong under `output/phase-6c/e2e/`; aggregate
+reports belong under `output/phase-6c/reports/`. The final local gate passed all 270 report matches,
+all five zero counters, and Root/Pages worker acceptance with 12 PNGs; representative artifacts were
+inspected and independent review is B0/H0. Hosted CI/Pages, deployment, and live acceptance remain
+pending.
+
+## 35. Approved-decision coverage matrix
 
 | Decision | Required fixture coverage |
 |---|---|

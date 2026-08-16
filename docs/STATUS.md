@@ -10,12 +10,42 @@ and accepted; Phase 3F-I Reveal start cue is deployed, live-verified, and accept
 destination pulse is deployed, live-verified, and accepted; Phase 5A full local match formats is
 deployed, live-verified, and accepted; Phase 5B local persistence is deployed, live-verified, and
 accepted; Phase 6A fair heuristic AI is deployed, live-verified, and accepted; Phase 6B difficulty
-and explanations is deployed, live-verified, and accepted; next governed phase is Phase 6C
+and explanations is deployed, live-verified, and accepted; Phase 6C rollout AI and tuning is locally
+complete and accepted; next governed phase is Phase 7A
 
 **Runtime state:** Complete deterministic headless match engine plus playable browser-local 3/6/12-round
 formats using real player observations and commands, the owner-approved primary deck, persistent Pixi
 cards, deterministic public-event animation, private pass-the-device handoff, accessible recap/result
 evidence, and the retained local-only deterministic deck Workshop/raster review pipeline
+
+## Phase 6C — locally complete and accepted; hosted release pending
+
+ADR 0034 defines Phase 6C as observation-only, non-authoritative belief rollout. The selector may
+sample the unseen-card complement consistently with public counts, but may not accept or reconstruct
+`AuthoritativeGameStateV1`, invent legality, or expose hidden hypotheses. Root candidates remain exact
+members of the already-issued legal-action list and execute only through the normal engine command,
+public-event, and animation path.
+
+The locked budgets are 4/12/24 sampled worlds and 1/2/4 abstract capture plies for
+Easy/Standard/Hard, capped at 2,048 nodes per decision. A predictable public-derived seed remains
+session-only and breaks ties only. Phase 5B saves and Phase 6B public explanations remain unchanged;
+seeds, belief assignments, score margins, and raw candidate scores never enter player-facing or
+diagnostic state.
+
+The accepted local release gate inherits `validate:phase6b`, adds focused rollout/runtime/privacy tests, a
+benchmark-aware initial 270-match matrix in four bounded whole-seed shards, and dedicated Root/Pages
+smoke. Aggregate reports belong under `output/phase-6c/reports/`; browser evidence belongs under
+`output/phase-6c/e2e/`.
+
+`npm run check` passed 61 files / 557 ordinary tests, all 10,002 deterministic engine seeds, the two
+complete 48-card decks, and the 784-module production build with its rollout worker. The final
+uninterrupted `npm run validate:phase6c` exited 0 through every inherited release layer plus 27
+Phase 6C focused tests, four shards / 270 complete report matches, and dedicated Root/Pages worker
+smoke. All report safety counters are zero. Twelve browser PNGs cover resume, thinking, animation,
+settlement, stale-request cancellation, privacy, and portrait/landscape Options; representative
+artifacts were inspected. Independent review is B0/H0 after repairing tie-only seed isolation,
+root-inclusive node accounting, and pending-worker ownership. Commit, push, hosted CI/Pages,
+deployment, and live verification remain pending.
 
 ## Phase 6B — deployed, live-verified, and accepted
 

@@ -10,7 +10,8 @@ live-verified, and accepted; Phase 3F-J legal destination pulse is deployed, liv
 accepted; Phase 5A full local match formats is deployed, live-verified, and accepted; Phase 5B local
 persistence is deployed, live-verified, and accepted; Phase 6A fair heuristic AI is deployed,
 live-verified, and accepted; Phase 6B difficulty and explanations is deployed, live-verified, and
-accepted; next governed phase is Phase 6C
+accepted; Phase 6C rollout AI and tuning is locally complete and accepted; next governed phase is
+Phase 7A project and emulators
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -179,6 +180,38 @@ Status: **deployed, live-verified, and accepted**.
   difficulty/reason markers. Live Playwright observed Standard default, selected CPU Hard/Monk,
   completed real no-match Hand/Draw interaction into CPU settlement, reported zero console errors,
   and inspected `output/playwright/phase6b-live-monk-hard-390x844.png`. Phase 6C is next.
+
+## Phase 6C — rollout AI and tuning
+
+Status: **locally complete and accepted; hosted release pending**.
+
+- ADR 0034 locks a non-authoritative observation-only belief rollout. It samples the unseen-card
+  complement consistently with public counts but cannot receive/reconstruct live authority or create
+  legality; each result must remain one exact action already offered by the CPU observation.
+- Fixed budgets are Easy 4 sampled worlds/1 abstract capture ply, Standard 12/2, and Hard 24/4,
+  with a 2,048-node hard cap. A predictable public-derived seed is session-only and breaks utility
+  ties only; it may not add score noise or overturn a non-tied decision.
+- Belief worlds, seeds, margins, and raw candidate scores are private implementation data and are
+  forbidden from UI, accessible text, diagnostic state, save/replay data, and public explanations.
+  The Phase 6B after-settlement public explanation and Phase 5B save boundary remain unchanged.
+- `AI-6C-001` through `AI-6C-010` and `npm run validate:phase6c` are the accepted local contract.
+  The gate inherits Phase 6B, adds `fair-rollout-ai` plus CPU runtime/preview coverage, an
+  initial 270-complete-match matrix (3 personalities × 3 difficulties × 3/6/12 × 10 seeds), and
+  dedicated Root/Pages smoke. Generated work is split into four whole-seed shards after a one-matrix
+  benchmark; artifacts belong under `output/phase-6c/reports/` and `output/phase-6c/e2e/`.
+- Reports are aggregate-only: matrix labels/counts, budget/time and balance metrics, illegal/no-action
+  counts, and a canonical digest are allowed. Card IDs, hidden assignments, seeds, command/checkpoint
+  material, per-match traces, and raw candidate scores are forbidden.
+- `npm run check` passed 61 files / 557 ordinary tests, all 10,002 engine seeds, both complete decks,
+  and the 784-module production build with a dedicated worker chunk. The uninterrupted
+  `npm run validate:phase6c` exited 0 through 247 inherited focused tests, Workshop, 14 density
+  viewports, all retained Root/Pages suites, 360 Phase 6A trials, 1,080 Phase 6B trials, 27 Phase 6C
+  focused tests, 270 rollout-report matches, and final Root/Pages worker smoke.
+- The four release reports have zero illegal/no-action/invalid-state/command-limit/non-finite
+  counters. Twelve Root/Pages PNGs cover resume, worker thinking, public animation, settlement,
+  stale-request cancellation, privacy, and portrait/landscape Options; representative artifacts were
+  inspected. Independent review is B0/H0. Commit, push, hosted CI/Pages, deployment, and live
+  verification remain pending.
 
 ## Phase 0 — Rule lock and foundation
 
@@ -1278,15 +1311,15 @@ Phase 3F-J, Phase 5A, and Phase 5B are deployed, live-verified, and accepted.
 
 ## Later phases
 
-1. **Phase 6B — Difficulty and explanations:** difficulty tiers, reason tokens, confidence, and match-context
-   strategy.
-2. **Phase 6C — Rollout AI and tuning:** determinization, seeded rollouts, and simulation reports.
-3. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
-4. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
-5. **Phase 9A — Product polish:** final interface, accessibility, performance, and reliability pass.
-6. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook,
+1. **Phase 7A — Project and emulators:** Firebase development project, Auth, Firestore, Functions,
+   emulator configuration, and deny-by-default rules.
+2. **Phase 7B/7C — Authoritative backend:** match service, recipient projections, turn records, and
+   callable operations.
+3. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
+4. **Phase 9A — Product polish:** final interface, accessibility, performance, and reliability pass.
+5. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook,
    deliberately executed after the final interaction and progression model stabilizes.
-7. **Phase 9B — Release acceptance:** final content, telemetry, cross-platform, and release checks.
+6. **Phase 9B — Release acceptance:** final content, telemetry, cross-platform, and release checks.
 
 No later phase may bypass the acceptance gate of the preceding phase.
 

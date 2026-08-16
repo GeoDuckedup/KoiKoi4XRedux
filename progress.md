@@ -2,6 +2,25 @@ Original prompt: read the package and understand it, then let me know when we ar
 
 # KoiKoi4x Progress
 
+## 2026-08-16 — Phase 6C locally complete and accepted
+
+- ADR 0034 locks an observation-only, non-authoritative belief evaluator over exact existing legal
+  actions. It explicitly forbids live-authority reconstruction and describes its capture lookahead as
+  abstract belief evaluation rather than complete engine simulation.
+- Easy/Standard/Hard budgets are fixed at 4/12/24 sampled worlds and 1/2/4 capture plies, capped at
+  2,048 nodes. A predictable public-derived seed is session-only and tie-only.
+- `AI-6C-001`–`AI-6C-010`, `validate:phase6c`, benchmark, generated, and Root/Pages commands are
+  implemented. The initial matrix is 270 complete matches in four whole-seed shards; reports are
+  aggregate-only and exclude card IDs, hidden assignments, seeds, raw scores, per-match traces, and
+  command/checkpoint data.
+- `npm run check` passed 61 files / 557 ordinary tests, 10,002 seeded matches, both complete decks,
+  and the 784-module worker build. The final `validate:phase6c` exited 0 through all inherited gates,
+  27 Phase 6C focused tests, 270 report matches, and Root/Pages worker smoke. The reports have zero
+  safety counters; 12 browser PNGs were produced and representative artifacts inspected.
+- Independent review is B0/H0 after tie-only seed, root-inclusive node-cap, and worker-ownership
+  repairs. Commit, push, hosted CI/Pages, deployment, and live verification remain pending. Phase 7A
+  project/emulator setup is next after release close-out.
+
 ## 2026-08-16 — Phase 6B deployed, live-verified, and accepted
 
 - ADR 0033 and `AI-6B-001`–`AI-6B-007` define the implemented bounded CPU subphase: deterministic Easy,

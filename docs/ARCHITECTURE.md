@@ -264,6 +264,21 @@ redaction, after-settlement explanation, explicit landscape Options bounds, and 
 persistence evidence under `output/phase-6b/e2e/`. Implementation and runtime evidence remain
 pending until this gate exists and passes.
 
+Phase 6C keeps the same authority boundary while adding a pure observation-only belief evaluator.
+It may derive the unseen-card complement from `PlayerObservationV1` and sample plausible private
+assignments, but the resulting abstract rollout state is never an `AuthoritativeGameStateV1` and
+cannot generate legality, commands, events, replay, or persistence. Candidate roots are exact
+already-issued legal actions; the established runtime alone revalidates and submits the selected
+member through the normal engine/public-event/animation path. Easy/Standard/Hard use fixed 4/12/24
+world and 1/2/4 capture-ply budgets with a 2,048-node hard cap. A public-derived session seed breaks
+ties only and is never rendered or persisted. Node-only simulation reporting is aggregate-only and
+forbids card IDs, assignments, seeds, per-match traces, commands/checkpoints, and raw candidate
+scores. The initial acceptance matrix is 270 matches in four sequential whole-seed shards, preceded
+by a one-matrix benchmark. The implemented worker boundary accepts only `PlayerObservationV1`,
+rejects stale generation/match/version/configuration results before exact runtime resubmission, and
+keeps player A as the sole renderer. The local gate passes the complete 270-match matrix and
+Root/Pages worker smoke without changing protocol, replay, or local-save schemas.
+
 Phase 2E keeps deck authoring outside the production client. Portable package, transform,
 contact-sheet, and approval contracts live in `packages/deck-format/src`; Sharp, filesystem access,
 atomic writes, source decoding, and deterministic raster generation live only under

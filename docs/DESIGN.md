@@ -2253,11 +2253,25 @@ probability claim. The UI maps confidence to compact bands without changing the 
 
 ### Stage 2 — Determinization rollouts
 
-1. Generate plausible assignments of unseen cards consistent with public information.
-2. Simulate candidate actions.
-3. Aggregate expected outcomes.
-4. Select according to personality utility.
-5. Use seeded randomness for ties/noise.
+Phase 6C implements Stage 2 as a non-authoritative observation-only belief evaluator. The public
+observation does not contain enough formation chronology or private seen-yaku history to rebuild a
+valid `AuthoritativeGameStateV1`; CPU code therefore must not attempt that reconstruction or receive
+the live authority.
+
+1. Build the exact unseen-card complement from the CPU observation and sample plausible
+   opponent-hand/draw hypotheses consistent with public card counts.
+2. Evaluate only exact root candidates already present in `observation.legalActions`.
+3. Run bounded abstract capture lookahead for month/category/yaku opportunity and visible opponent
+   pressure. This is belief evaluation, not a complete engine match simulation or a source of legal
+   actions.
+4. Aggregate expected personality utility with fixed Easy/Standard/Hard budgets of 4/12/24 sampled
+   worlds and 1/2/4 capture plies, capped at 2,048 evaluated nodes per decision.
+5. Use a predictable public-derived session seed only to break utility ties. Seeded noise may not
+   overturn a non-tied result.
+
+Only the normal engine command path executes the chosen offered action. Seeds, belief assignments,
+candidate margins, and raw scores never enter public explanation, renderer/text diagnostics,
+persistence, replay, or network output.
 
 ## 21.4 AI decision explanation
 
@@ -3865,9 +3879,15 @@ Phase 5 acceptance:
 
 ### Phase 6C — Rollout AI and tuning
 
-- determinization;
-- seeded rollouts;
-- simulation reports.
+- observation-only unseen-card belief sampling without authoritative reconstruction;
+- fixed Easy/Standard/Hard budgets of 4/12/24 samples and 1/2/4 abstract capture plies, with a 2,048
+  node cap;
+- predictable session-local public-derived seed used for ties only;
+- exact existing-legal-action submission through the standard command/event/animation path;
+- aggregate-only simulation reports containing balance metrics but no card IDs, hidden assignments,
+  seeds, commands/checkpoints, per-match traces, or raw candidate scores;
+- an initial 270-match 3-personality × 3-difficulty × 3-format × 10-seed report matrix in four
+  sequential whole-seed shards, benchmarked before any count increase.
 
 Phase 6 acceptance:
 
