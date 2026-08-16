@@ -8,8 +8,8 @@ reference/native gesture polish is deployed, live-verified, and accepted; Phase 
 start cue is deployed, live-verified, and accepted; Phase 3F-I Reveal start cue is deployed,
 live-verified, and accepted; Phase 3F-J legal destination pulse is deployed, live-verified, and
 accepted; Phase 5A full local match formats is deployed, live-verified, and accepted; Phase 5B local
-persistence is deployed, live-verified, and accepted; next governed phase is Phase 6A fair heuristic
-AI
+persistence is deployed, live-verified, and accepted; Phase 6A fair heuristic AI is deployed,
+live-verified, and accepted; next governed phase is Phase 6B difficulty and explanations
 
 This file tracks the currently approved implementation sequence. [`DESIGN.md`](./DESIGN.md) contains the complete product plan; this file is the concise handoff for the next coding session.
 
@@ -96,7 +96,7 @@ Status: **deployed, live-verified, and accepted**.
 
 ## Phase 6A contract — fair heuristic AI
 
-Status: **locally complete and accepted; hosted release evidence pending**.
+Status: **deployed, live-verified, and accepted**.
 
 - `apps/web/src/ai` owns a pure deterministic `PlayerObservationV1 -> LegalActionV1 | null` selector.
   It receives neither authoritative state nor a random source, and it can return only an exact
@@ -126,8 +126,13 @@ Status: **locally complete and accepted; hosted release evidence pending**.
   focused/runtime/Workshop/density/Root/Pages/persistence suites, 2 Phase 6A files / 16 tests, four
   90-trial generated shards with zero illegal/no-action outcomes and directional Bank/Koi metrics, and
   dedicated Root/Pages CPU smoke. All 26 artifacts plus bundled-client one-canvas/48-CardView/no-
-  diagnostics evidence were inspected; independent Terra final review was B0/H0. Commit/push, hosted
-  CI/Pages, deployment, and live verification remain pending.
+  diagnostics evidence were inspected; independent Terra final review was B0/H0. Implementation commit
+  `9be2a78d1b26081dd174f55a825c9499057798b4` passed CI `31923716009` (verify 03:13:04Z–03:48:58Z,
+  check 03:13:47–03:19:22, validation 03:19:22–03:48:53, artifacts uploaded) and Pages `31923716038`
+  (build 03:13:04–03:36:26, check 4m03s, validation 18m32s, deploy 03:36:32–03:36:42). The cache-
+  busted live site returned HTTP/2 200 MISS, `Last-Modified: 03:36:37Z`, and
+  `index-CsVf0PRK.js`; live Gambler CPU play verified a no-match Hand, Draw capture, status, utility
+  lock, privacy, no diagnostics, and an inspected screenshot.
 - Nonblocking future hardening: add an explicit landscape Options bounds assertion. Existing CSS and
   internal scroll behavior, including successful lower-action access, were reviewed.
 
@@ -1229,16 +1234,15 @@ Phase 3F-J, Phase 5A, and Phase 5B are deployed, live-verified, and accepted.
 
 ## Later phases
 
-1. **Phase 6A — Fair heuristic AI:** observation-only API, three personalities, and legal decisions.
-2. **Phase 6B — Difficulty and explanations:** difficulty tiers, reason tokens, and match-context
+1. **Phase 6B — Difficulty and explanations:** difficulty tiers, reason tokens, confidence, and match-context
    strategy.
-3. **Phase 6C — Rollout AI and tuning:** determinization, seeded rollouts, and simulation reports.
-4. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
-5. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
-6. **Phase 9A — Product polish:** final interface, accessibility, performance, and reliability pass.
-7. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook,
+2. **Phase 6C — Rollout AI and tuning:** determinization, seeded rollouts, and simulation reports.
+3. **Phase 7 — Firebase backend:** new project/emulators, authoritative service, projections, and turn publication.
+4. **Phase 8 — Online client:** invite/current-games flow, confirmed commands, opponent-turn replay, and transitions.
+5. **Phase 9A — Product polish:** final interface, accessibility, performance, and reliability pass.
+6. **Phase 4 — Onboarding:** tutorial director, Learn in 60 Seconds, contextual help, and rulebook,
    deliberately executed after the final interaction and progression model stabilizes.
-8. **Phase 9B — Release acceptance:** final content, telemetry, cross-platform, and release checks.
+7. **Phase 9B — Release acceptance:** final content, telemetry, cross-platform, and release checks.
 
 No later phase may bypass the acceptance gate of the preceding phase.
 

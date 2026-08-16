@@ -9,14 +9,15 @@ deployed, live-verified, and accepted; Phase 3F-H active-hand start cue is deplo
 and accepted; Phase 3F-I Reveal start cue is deployed, live-verified, and accepted; Phase 3F-J legal
 destination pulse is deployed, live-verified, and accepted; Phase 5A full local match formats is
 deployed, live-verified, and accepted; Phase 5B local persistence is deployed, live-verified, and
-accepted; Phase 6A fair heuristic AI is locally complete and accepted; hosted release evidence is pending
+accepted; Phase 6A fair heuristic AI is deployed, live-verified, and accepted; Phase 6B difficulty
+and explanations is next
 
 **Runtime state:** Complete deterministic headless match engine plus playable browser-local 3/6/12-round
 formats using real player observations and commands, the owner-approved primary deck, persistent Pixi
 cards, deterministic public-event animation, private pass-the-device handoff, accessible recap/result
 evidence, and the retained local-only deterministic deck Workshop/raster review pipeline
 
-## Phase 6A — locally complete and accepted
+## Phase 6A — deployed, live-verified, and accepted
 
 Phase 6A is scoped to a deterministic, observation-only fair heuristic in `apps/web/src/ai`: one
 `PlayerObservationV1` becomes one exact existing `LegalActionV1` or `null`. It has no authoritative
@@ -39,9 +40,16 @@ focused/runtime/Workshop/density/Root/Pages/persistence coverage, 2 Phase 6A fil
 complete AI trials in four 90-trial shards with zero illegal/no-action results and directional Bank/Koi
 metrics, and dedicated Root/Pages CPU smoke. All 26 Phase 6A PNGs and bundled-client one-canvas/48-
 CardView/no-diagnostics evidence were inspected. Independent Terra final review is B0/H0; earlier
-H/M findings were repaired. Commit/push, hosted CI/Pages, deployment, and live verification remain
-pending. A nonblocking future hardening item is an explicit landscape Options bounds assertion;
-CSS/internal scrolling and successful lower-action access were reviewed.
+H/M findings were repaired. Implementation commit `9be2a78d1b26081dd174f55a825c9499057798b4` passed
+CI `31923716009`: verify 03:13:04Z–03:48:58Z, check 03:13:47–03:19:22, validation
+03:19:22–03:48:53, and artifact upload. Pages `31923716038` passed build 03:13:04–03:36:26, check
+4m03s, validation 18m32s, and deploy 03:36:32–03:36:42 (Deploy 03:36:34–03:36:40). Cache-busted live
+HTTP/2 was 200 MISS with `Last-Modified: 03:36:37Z` and `index-CsVf0PRK.js`; the exact CPU/resume
+markers were present. Live Gambler CPU play verified human no-match Hand then Draw capture, CPU status,
+locked utilities, player-A face-up/player-B back-only privacy, no console diagnostics, and an inspected
+screenshot. A nonblocking future hardening item is an explicit landscape Options bounds assertion;
+CSS/internal scrolling and successful lower-action access were reviewed. Next is Phase 6B: difficulty
+and explanations (reasons, confidence, and match-context strategy); rollouts remain Phase 6C.
 
 ## Phase 5A — deployed, live-verified, and accepted
 
@@ -758,5 +766,5 @@ The deployed baseline is
 
 ## Next governed phase
 
-**Phase 6A — Fair heuristic AI:** the approved next subphase is an observation-only API with three
-personalities and legal decisions. Difficulty/explanations and rollout tuning remain Phase 6B/6C.
+**Phase 6B — Difficulty and explanations:** the approved next subphase adds reasons, confidence, and
+match-context strategy. Rollout, determinization, and tuning remain Phase 6C.

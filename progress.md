@@ -23,9 +23,21 @@ Original prompt: read the package and understand it, then let me know when we ar
 - All 26 Phase 6A PNGs and bundled client one-canvas/48-CardView/no-diagnostics evidence were
   inspected. Independent Terra final review was B0/H0 after repairs to legal-action preview,
   production-B hidden mutation, metrics, `opponentTurn` precedence, Pages keyboard placement,
-  screenshot settlement, and documentation. Commit/push, hosted CI/Pages, deployment, and live
-  verification remain pending. Nonblocking future hardening: explicit landscape Options bounds
+  screenshot settlement, and documentation. Nonblocking future hardening: explicit landscape Options bounds
   assertion; CSS/internal scroll and successful lower action were reviewed.
+- Implementation commit `9be2a78d1b26081dd174f55a825c9499057798b4` is deployed. CI `31923716009`
+  passed: verify 03:13:04Z–03:48:58Z (35m54s), check 03:13:47–03:19:22 (5m35s),
+  `validate:phase6a` 03:19:22–03:48:53 (29m31s), and artifact upload. Pages `31923716038` passed:
+  build 03:13:04–03:36:26 (23m22s), check 4m03s, validation 18m32s, deploy 03:36:32–03:36:42, and
+  Deploy 03:36:34–03:36:40.
+- Live cache-busted HTTP/2 was 200 MISS, `Last-Modified: 03:36:37Z`, bundle
+  `index-CsVf0PRK.js`, and exact `data-match-mode-select` / `Play vs CPU` / session-only / resume-CPU
+  markers. Live browser verification selected Gambler in Options, started a real CPU match, played
+  human A's no-match Hand then Draw capture, observed `The Gambler is choosing a card`, locked
+  utilities, A face-up/B back-only privacy, no console diagnostics, and an inspected screenshot.
+- Phase 6A is deployed, live-verified, and accepted. Next: **Phase 6B — Difficulty and
+  explanations**, covering reasons, confidence, and match-context strategy; no rollout work until
+  Phase 6C.
 
 ## 2026-08-16 — Phase 5B deployed, live-verified, and accepted
 
@@ -53,8 +65,8 @@ Original prompt: read the package and understand it, then let me know when we ar
   markers. Three fresh browser iterations were ready with one canvas, 48 unique CardViews, 24/8/8/8
   zones, idle unlocked 16 semantic controls, approved `new-primary-deck`, and available idle
   persistence with `lastSavedAt` and round/month 1; clean `shot-2` was visually inspected.
-- Next governed phase: **Phase 6A — Fair heuristic AI**, beginning with an observation-only API,
-  three personalities, and legal decisions. Phase 6B/6C remain later governed work.
+- Next governed phase: **Phase 6B — Difficulty and explanations**, covering reasons, confidence, and
+  match-context strategy. Rollout work remains Phase 6C.
 
 ## 2026-08-15 — Phase 5A deployed, live-verified, and accepted
 

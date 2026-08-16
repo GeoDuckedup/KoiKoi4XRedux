@@ -390,7 +390,8 @@ HTTP/2 request returned 200 MISS, `Last-Modified: Sun, 16 Aug 2026 01:52:53 GMT`
 browser iterations were `ready:true` with one canvas, 48 unique CardViews, 24/8/8/8 zones, idle
 unlocked input with 16 semantic controls, approved `new-primary-deck`, and available idle persistence
 with a saved round/month 1 checkpoint; the clean `shot-2` was visually inspected. Phase 5B is
-deployed, live-verified, and accepted. Next governed phase: Phase 6A fair heuristic AI.
+deployed, live-verified, and accepted. Phase 6A is deployed, live-verified, and accepted. Next
+governed phase: Phase 6B difficulty and explanations.
 
 Phase 6A is locally complete and accepted. It adds a deterministic session-only player-A human versus
 player-B CPU mode for the existing 3/6/12 formats. The CPU receives only a
@@ -407,7 +408,17 @@ focused/runtime/Workshop/density/Root/Pages/persistence coverage, the two Phase 
 360 complete AI trials in four 90-trial shards with zero illegal/no-action outcomes and directional
 Bank/Koi metrics, and the dedicated Root/Pages CPU suites. All 26 Phase 6A PNGs and the bundled
 client's one-canvas/48-CardView/no-diagnostics evidence were inspected; independent Terra final review
-reported B0/H0. Commit/push, hosted CI/Pages, deployment, and live verification remain pending.
+reported B0/H0. Implementation commit `9be2a78d1b26081dd174f55a825c9499057798b4` passed hosted CI
+`31923716009`: verify 03:13:04Z–03:48:58Z (35m54s), check 03:13:47–03:19:22 (5m35s),
+`validate:phase6a` 03:19:22–03:48:53 (29m31s), and artifact upload. Pages `31923716038` passed:
+build 03:13:04–03:36:26 (23m22s), check 4m03s, validation 18m32s, and deploy 03:36:32–03:36:42
+(Deploy 03:36:34–03:36:40). A cache-busted live HTTP/2 request returned 200 MISS with
+`Last-Modified: 03:36:37Z` and `index-CsVf0PRK.js`; live HTML exposed the exact CPU selectors and
+session-only/resume markers. Live browser verification selected Gambler, started a real CPU match,
+played A's no-match Hand then Draw capture, observed `The Gambler is choosing a card`, locked
+utilities, A face-up/B back-only hands, no console diagnostics, and an inspected screenshot. Phase 6A
+is deployed, live-verified, and accepted. Next: Phase 6B difficulty and explanations—reasons,
+confidence, and match-context strategy; no rollout work until 6C.
 
 `npm run dev:workshop` starts the local-only 48-card Deck Workshop. `npm run build:deck` renders all
 available sources into deterministic table/thumbnail derivatives plus the two required 48-slot

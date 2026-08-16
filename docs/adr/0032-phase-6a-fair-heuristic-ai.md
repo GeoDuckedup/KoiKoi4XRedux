@@ -1,6 +1,6 @@
 # ADR 0032: Phase 6A fair heuristic AI boundary
 
-**Status:** Locally complete and accepted; hosted release evidence pending.
+**Status:** Deployed, live-verified, and accepted.
 
 ## Context
 
@@ -64,5 +64,12 @@ complete trials in four 90-trial shards with zero illegal/no-action outcomes and
 metrics, and dedicated Root/Pages CPU smoke. All 26 Phase 6A PNGs and bundled-client one-canvas/48-
 CardView/no-diagnostics evidence were inspected. Independent Terra final review was B0/H0, after
 repairing the full legal-action preview, production-B hidden mutation, metrics, `opponentTurn`
-precedence, Pages keyboard placement, screenshot settlement, and documentation findings. Commit/push,
-hosted CI/Pages, deployment, and live verification remain pending.
+precedence, Pages keyboard placement, screenshot settlement, and documentation findings. Implementation
+commit `9be2a78d1b26081dd174f55a825c9499057798b4` passed CI `31923716009`: verify
+03:13:04Z–03:48:58Z, check 03:13:47–03:19:22, validation 03:19:22–03:48:53, and artifact upload.
+Pages `31923716038` passed build 03:13:04–03:36:26, check 4m03s, validation 18m32s, and deploy
+03:36:32–03:36:42 (Deploy 03:36:34–03:36:40). Cache-busted live HTTP/2 was 200 MISS with
+`Last-Modified: 03:36:37Z` and `index-CsVf0PRK.js`; live Gambler CPU play verified the CPU controls,
+session-only/resume markers, no-match Hand then Draw capture, status, locked utilities, privacy, no
+console diagnostics, and an inspected screenshot. Phase 6B owns reasons, confidence, and match-context
+strategy; rollout work remains Phase 6C.
